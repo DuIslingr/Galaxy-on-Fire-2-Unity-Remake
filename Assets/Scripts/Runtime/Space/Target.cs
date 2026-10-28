@@ -104,6 +104,13 @@ namespace GoF2Remake.Flight
         [NonSerialized] public Func<bool> SaveFromDeath;
         /// <summary>Takes no damage (a sentry gun's first 3 s, Player+0xc2 cleared).</summary>
         [NonSerialized] public bool invulnerable;
+        /// <summary>Remake mods (World.CapitalSubsystems): every hit x this (a capital ship behind its shield generators: 0 = it
+        /// shrugs the hits off, the Damaged event still sees them).</summary>
+        [NonSerialized] public float damageFactor = 1f;
+        /// <summary>Remake mods (World.CapitalSubsystems): a weak spot's hits also go to this target (its capital ship) x
+        /// 'forwardFactor'.</summary>
+        [NonSerialized] public Target forwardTo;
+        [NonSerialized] public float forwardFactor;
         [Tooltip("Local-space hit boxes (metres) instead of the cube (big ships).")]
         public Bounds[] boxes;
         /// <summary>Remake: the hull of MeshColliders shots hit instead of the cube / boxes (HullCollision), null = none.</summary>
@@ -129,7 +136,9 @@ namespace GoF2Remake.Flight
 
         /// <summary>PlayerAsteroid::getQualityString: A (7) .. D (4).</summary>
         public string QualityLetter => ((char)('A' + Mathf.Clamp(7 - quality, 0, 4))).ToString();
-        public int CoreItem => oreItem == 217 ? 218 : oreItem + 11;
+        /// <summary>The core a class-A asteroid of this ore gives (ore + 11, Novanium's 218); -1 for an ore without one: a
+        /// mod's ore (remake mods' orbit "ores") is no game ore, and ore + 11 was whatever item came 11 numbers after it.</summary>
+        public int CoreItem => oreItem == 217 ? 218 : oreItem >= 154 && oreItem <= 164 ? oreItem + 11 : -1;
 
         public bool Alive => hitpoints != null ? hitpoints.Alive : hp > 0f;
         public float HullFraction => hitpoints != null ? hitpoints.HullFraction : maxHp > 0f ? hp / maxHp : 0f;
@@ -151,6 +160,10 @@ namespace GoF2Remake.Flight
             if (isPlayer && Data.Cheats.GodMode) return;   // remake: the Debug panel's god mode
             if (playerProof && !byNpc) return;
             if (RemoteDamage != null) { RemoteDamage(amount, hitVector, byNpc, shieldFactor); return; }
+            // (a weak spot passes on what it takes, not the overkill of the hit that destroys it)
+            if (forwardTo != null && forwardTo != this && forwardFactor > 0f && forwardTo.Alive)
+                forwardTo.Damage(Mathf.Min(amount * damageFactor, hitpoints != null ? hitpoints.Combined : hp) * forwardFactor, byNpc, hitVector, shieldFactor);
+            amount *= damageFactor;
             int dmg = Mathf.Max(0, (int)amount);
             lastHitVector = hitVector;
             bool dead;
@@ -350,7 +363,7 @@ namespace GoF2Remake.Flight
         /// race rules on the capture.</summary>
         void DropAsteroidCrate()
         {
-            bool classA = quality == 7;
+            bool classA = quality == 7 && CoreItem >= 0;   // (a class-A rock of an ore without a core drops its ore)
             if (UnityEngine.Random.Range(0, 100) > (classA ? 3 : 19)) return;
             var stack = new GoF2Remake.Data.ItemStack(classA ? CoreItem : oreItem, classA ? 1 : UnityEngine.Random.Range(0, 3) + 1);
             Crate.Spawn(transform.position, new[] { stack }, -1, oreItem == 164 ? Crate.LookVoidRock : Crate.LookRock);

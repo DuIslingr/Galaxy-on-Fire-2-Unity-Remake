@@ -54,59 +54,67 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   ship names (no sprite). Code that sizes a ship by its renderers must skip trails (empty at the origin): the item window and
   `NetPlayer` use mesh renderers only. Another player's ship built before the session's mods were on (they join before
   NetState applies them) is built again on `ModShips.ModelsChanged`.
+- **How a ship is seen** (`ModShipView`, 2026-10-24; GoF3's ship files): ships.json `"camera"` { distance, height,
+  lookHeight, lookAhead } game units (`ShipData.chaseCamera`; `ModShipView.CameraOffsets` in `SpaceLevel`'s camera
+  set-up and `PlayerHull.FitCamera`'s ordinary path, the original's 1338 / 600 / 600 / -650 for a field left out),
+  `"cockpit"` [x, y, z] (`ShipData.cockpit`, mount axes; `ChaseCamera.FirstPersonSeat` takes it, still behind the
+  frontmost primary, not for the debug Big hulls), `"smoke"` up to 4 points (`ShipData.smokePoints`; `ShipSmoke` makes a
+  smoke / fire pair at each, the rate and pool shared, the fire on the point) and `"explosionScale"` 0.25..20
+  (`NpcShip.FighterExplosionScale`, mirrored by `NetProxy`; the player's death, `PlayerHealth`, and other players'
+  ships, `NetPlayer`). The Mod Builder's ship page, **Camera and damage** (`ModBuilderView.BuildShipView`). The GoF3
+  builder writes the cockpit and smoke from the hulls' `_cam` / `_damaged_NNN` helpers, the explosion from EffectScale /
+  1.5 and the camera from the hull's length past 1400 units x CameraThirdPerson's distance (field 89702: 7 fighters, 8
+  gunships). Tests in `ModContentTests`.
 - **Engine effect** (`EngineFx`, ships.json `engineFx`, `CustomEngineFx`; the GoF3 Ships mod): Galaxy on Fire 3's engine at every
   exhaust mount in place of the glow discs (`BuildEngineGlow` without discs: the empty part marks the engines on / off) and the
-  exhaust particles (`ShipExhaust` skips the ship): GoF3's NivelianEngine / TerranEngine / VosskEngine scenes
-  (`assets/vfx/engines/<race>`: the flare `glow_mesh`, two camera-facing quads, a 9 x 9 unit square and a 27 x 2.7 streak at half
-  brightness with the texture turned a quarter; the exhaust, four crossed cards 12.1 x 1.62 units with the texture's middle band
-  u 0.39 -> 0.69 along and vertex brightness 0 / 0.77 / 0.2 / 0 at 0 / 1.73 / 6.91 / 12.09) and its VfxList trail (TrailNivelian =
-  `particles/ship_engine_nivelian.psb`, Fork Particle Studio, unreadable: `beam_001.bmp` streaks drifting apart), the trail rebuilt
-  as camera-facing ribbons of points that keep the ship's velocity plus their own backward speed (they bend when the ship turns,
-  as in GoF3's ship viewer) and sway in smooth waves (each trail eases toward random sideways speeds, `SwayEase`; independent
-  points made a zigzag), the streak's middle row across them (whole copies per segment read as beads) and a random brightness
-  per point. EngineDrive levels (thrust 0.3..1 length, boost longer; a third of the glow at idle, unlike the ES2
-  flames); in the station capped; materials copies of
-  `ModAssets.fxAdditive` (`ModMaterials.CopyOf`) at `_Glow` 0.75 / 0.5 / 1 / 0.45 (flare, cone, trail, helix). A mount's
-  `fxScale` sizes it (GoF3's helper scale:
-  the Retro 0.5 / 1.62) and its `rotation` turns it (`ModHardpoints.MountTurn`; five Vossk hulls' engines 8.5-10 deg inward;
-  an engine on the centreline keeps no sideways turn, the builder's `centreline_turn`: the K'ssshar Ka's centre helper
-  carried its right engine's 8.5 deg, so its plume crossed toward that engine).
-  The helix (`spiral*`, only the Nivelian engine has one: `_spiral.ae4meshgroup`, two ribbon strands, radius 0.5 -> 0.1 over
-  10.5 units, spun by its animation): camera-facing strands rebuilt each frame round the exhaust's axis, the texture (GoF3's
-  `vfx_generic_electricity_000`, a guess: the spiral's material names its flow textures by GUID only) along them, scrolled, faded
-  by (1 - s)^2 (in flight GoF3's crackle is gone well before the strands' end). Part colours (`flareColor` / `coneColor` / `trailColor` /
-  `spiralColor`, over the exhaust's; the flare's until then was always the exhaust's): the builder reads them from
-  GoF3's materials for the helix engine (Colorize_Color1 = the
-  EngineAttachment colour, unless Colorize_Custom; times DiffuseColor when DiffuseColorMultiply: cone 0.08 / 0.51 / 1, helix and
-  trails 0.22 / 0.56 / 1) with the flare 0.75, cone 0.4 and trails 0.35 dimmer under it; the Terran / Vossk engines keep the hull's
-  nozzle colour (their hulls light the nozzles orange / yellow-green while their effect materials colour blue / green; nothing
-  shows which GoF3 draws; corrected for the Terran engine below). The Terran engine (checked against a clip of the Argus rotating in
-  GoF3's ship viewer): its materials' Colorize_Options 1 draw the textures in their own colour, so every part takes the decoded
-  textures' brightness-weighted colour (amber: flare 1 / 0.65 / 0.28, cone and trail 1 / 0.54 / 0.27; `texture_colour`), not the
-  EngineAttachment's blue or the hull's pale nozzle colour; no wavering streams but one thin straight streak (`RACE_TRAIL`: 1 per
-  exhaust, 0.45 units wide, wander 0.6, x2 the cards' length, intensity 0.35) behind a cone 2.5 x brighter, the spike GoF3
-  shows. A Terran engine on a hull whose nozzles glow yellower than that amber takes its parts halfway to the
-  nozzles' colour (the builder's `nozzle_tinted`: GoF3 draws the flare additively over the lit nozzle; the Retro / Groza
-  Gr'Gath's gold nozzles, checked against a GoF3 video: (1, 0.75, 0.35) measured, (1, 0.80, 0.35) the blend; also the
-  Acheron and Cronus). Matched by eye against two clips of the Moornta (GoF3's ship viewer, and in flight from the side and
-  behind; Play mode: behind, below, above, the side, a hard turn; the Terran, Vossk and Retro hulls; the hangar hides it).
-  The cone's own shape and edge-on fade (2026-10-17): `coneProfile` ([share of the length, brightness, u] per ring, the engine's
-  own exhaust mesh: the Terran's peak at 0.93 and run the whole texture, the Vossk's a short spike, nothing past 0.84; default
-  the Nivelian rings above) and `coneFade` ([from, to], the exhaust material's AngleBlend: each card's vertex colours x
-  smoothstep(from, to, |N.V|) every frame, `EngineFx.FadeCards`, a cone mesh per nozzle), so from straight behind only the
-  flares show, as in GoF3's ship viewer; the builder had written both since 2026-10-12 but nothing read them. Checked against
-  GoF3 ship-viewer clips of the Atauno Rheep, Nestaar, K'ssshar Ka, Na'takath and Shaan'ra-Grth (one horizontal, one vertical
-  turn each; the flares on the nozzles, the directions): the Vossk engine's streak is the Terran's, as long (1121 units: the
-  builder's `trailSpan`, 2 x the Terran cards; 2 x its own longer cards ran past those hulls) and straight (wander 0); its
-  flares take the hull's nozzle colour (`NOZZLE_FLARE`: the clips' flares sample at hue 80-90, lime, the plume around them
-  teal at 130-160; the style's flare the Vossk hulls' mean 0.65 / 1 / 0.11); the Nivelian streams 1.5 x the cards (970 units,
-  wander 3: GoF3's viewer shows short wisps a fifth of the hull, 4.33 x ran 1.5 hulls behind). The Inouac engine (no exhaust
-  material of its own) takes the Nivelian exhaust's rings and fade, whose textures it borrows.
+  exhaust particles (`ShipExhaust` skips the ship), drawn as GoF3 draws it (next bullet). A mount's `fxScale` sizes it
+  (GoF3's helper scale) and its `rotation` turns it (`ModHardpoints.MountTurn`; five Vossk hulls' engines 8.5-10 deg
+  inward; an engine on the centreline keeps no sideways turn, the builder's `centreline_turn`). Removed 2026-10-24 (the
+  user: "completely remove the imitations"): the remake's own imitation of GoF3's engines from PNGs, camera-facing flare
+  and crossed cone cards (`coneProfile` / `coneFade` / `coneFlow` with `ModEngineFlow.shader`), a ribbon helix with a
+  lightning texture and wavering ribbon streams, with per-part colours and the importer's tuning (`RACE_TRAIL`,
+  `NOZZLE_FLARE`, `nozzle_tinted`...); old files' card fields are ignored. In git history before that date if ever
+  needed.
+- **GoF3's engines as GoF3 draws them** (2026-10-24, the user's request: "decompile the GoF3 binary and use it";
+  libgofm.so of the Android APK, Ghidra headless without auto analysis, `~/GOF2UnityRemakeMods/gof3_re`: the full
+  analysis ran out of Java heap; the library is Thumb and Ghidra loads it at 0x10000). GoF3's resource ids
+  (`ae::resource::getResourceId` 0x15fdad8): MurmurHash3_x86_128 of "/assets/<path>" with seed 1, the 64-bit halves
+  xor-ed (importer `ae4_ids.py`), which resolves every texture a material names (the large flare's is
+  `vfx_generic_lens_flare_000`, the core's `smoke_001`; before, "GUID only"). engineFx `"meshes":
+  "fx/engines/<name>.json"` (+ `meshScale` 53.5, `meshGlow`; `Modding.EngineModel`, the importer's `engine_meshes.py`):
+  each part of the engine scene (vfx/engines/<race>/vfx_engine_<race>_000, the capitals'
+  vfx/engines/large/vfx_enigne_large_<race>) with its own mesh, place, textures, the options of the shader variant GoF3
+  compiled for its material (read from the variant's GLSL in romfs shaders/: the material's own flags overstate them,
+  e.g. the Vossk exhaust's DiffuseColor and the Terran exhaust's Colorize are compiled out) and its animations (the
+  Nivelian spiral's turn, the Terran "ignite" burst on lighting and boosting, the capitals' "engines_off" flicker),
+  drawn by `GoF2/ModEngineMesh` (`Resources/GoF2Mods`: GoF3's sprite, flow map, UV scroll, colourise 1 / 2, angle blend
+  |N.E| / -N.E / N.E, pulsate, vertex wobble; computed on raw texture values, clamped and turned to linear as GoF3's
+  8-bit gamma frame; the addition x the part's `intensity` before the clamp, `_Intensity`: GoF3's ship viewer shows them
+  brighter than the formula (a bloom none of its shaders holds), matched by eye against clips of the Argus, Moornta and
+  Shamash rotating there: 4 for the Terran and capital engines, the Nivelian / Inouac flare 1.5, plume 2, helix 5, the
+  Vossk flare 1.5 and plume 5, the importer's `INTENSITY` table; linear-light blending was tried and dropped: it lost
+  the dim helix; an exhaust style's colours as `_Tint` per renderer, each pixel's hue replaced and its smallest channel,
+  its white, kept: the second colour on the helix (a part named "...spiral" or `"tint": "second"`) and the Fork
+  particles, the first on the rest), in the engine frame (+z backward: the holder's z scale negative), each exhaust by
+  its fxScale, warped to its outline (not sprites), 0.6 x long at idle. GoF3's trails / contrails / booster flash
+  (`trailParticles` / `contrailParticles` + `contrails` / `boostParticles`, `Data.CustomForkEmitter`; importer
+  `fork_psb.py`): the Fork Particle Studio .psb emitters each ship's VfxList names (Trail* at the engine helpers,
+  Contrails at the contrail helpers; not the buffs), decoded from the Fork runtime (chunks: a 256-byte name, +0x100
+  size, +0x104 data, +0x108 type; EData: colour keys +0x10.., key times +0x50 / 0x54, life +0x58 / 0x5c, speed +0x60 /
+  0x64, sizes +0x6c.. / +0xb8.., mid time +0x78, rate +0xcc, max +0xe4) and run as Fork runs them
+  (`EngineFx.UpdateFork`): still particles born at the rate along the path moved, quads facing the camera stretched
+  along the wake, each x N^1.2 (N its overlap: GoF3 sums the streaks in its gamma frame, `_VertexGain`), none while the
+  ship stands still (`EngineFx.MinWakeSpeed` 2 m/s: parked in the Customize preview they piled into a blot on the
+  nozzle, which GoF3's viewer never shows). Checked in Play mode: the Manticore and a capital freighter (body, core,
+  flare per nozzle), the Moornta and Argus flying with their wakes, the Argus, Moornta and Shamash in the Customize
+  preview and the three races' capitals in space. Tests `EngineModelTests`.
 - **Exhaust styles** (`ModExhausts`, a mod's `exhausts.json`; the guide's "Exhaust styles"): engine effects any ship can wear,
   picked in the hangar's Customize screen (`ShipCustomizePanel`'s Exhaust row and the style's two colour rows; with styles in
   the mods that are on every ship has the screen: `ModShipKits.CustomizationOf` gives a ship without other customizations a
-  kit of its own with nothing else, `Kit.weaponColorRow` false). A style is a GoF3 `engineFx` (`EngineFx.Create`; its colours:
-  flare + cone, trails + helix) or a flame `model` with flame `materials` (an ES2 thruster: loaded with the mod ships as the one
+  kit of its own with nothing else, `Kit.weaponColorRow` false). A style is a GoF3 `engineFx` (`EngineFx.Create`: GoF3's
+  own engine meshes and particles; its colours, `_Tint` per renderer: every part but the helix, then the helix and the
+  particles; "Original" GoF3's own) or a flame `model` with flame `materials` (an ES2 thruster: loaded with the mod
+  ships as the one
   part of the style's own kit, `ModShips.LoadAll` / `EnsureExhaust`; per exhaust an instance named `exhaust_nozzle_N` at the
   mount, `MountTurn` x the style's `yaw`, scaled by its nozzle's size (below) against the style's `nozzle`, driven by an `EngineFlame` on
   the holder that blows each along its nozzle's -Z; colours: copies of the flame materials with `_EmissionColor` / `_BoostColor`
@@ -121,9 +129,19 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `glowSize` as an oval, else the game ship's measured glow (`nozzle_shapes.json`, x1.1: the glow sits inside the nozzle, median
   0.91 of the round size), else round (`NozzleRadius`). Sized by its mean radius; the shape itself: a flame model's meshes are
   copied per nozzle and bent to the outline (`Warp`: each vertex's distance from the axis x the profile's factor at its angle;
-  freed with the holder's `EngineFlame.ownedMeshes`), an engineFx's cone cards reach the outline (a cone mesh per shaped
-  nozzle), its helix runs along it and its trails spread along the long side (`EngineFx.profiles`, `Trail.start`), centred on
-  the nozzle. Checked in Play mode: ship 7's wide nozzle blocks (both styles fill them), an ES2 Sentinel's hexagon (measured
+  freed with the holder's `EngineFlame.ownedMeshes`), an engineFx's parts (all but sprites) are spread to it (a mesh
+  copy per shaped nozzle, `EngineFx.Warped`), centred on the nozzle. A GoF3 engine is also drawn longer than its width's
+  fit by how much smaller the ship's nozzles are for its length than GoF3's hulls' (`ModExhausts.EngineLength`: GoF3's
+  median nozzle is 0.062 of its hull, `Gof3NozzleToLength`; the Phantom's 25 on 940 game units, 0.027, so its plume
+  x2.3; 1 on GoF3's own hulls, at most 3; a player's report on the Phantom, 2026-10-24: fitted across its small nozzles
+  the plume was short for the ship. The stretch skewed GoF2/ModEngineMesh's angle blend while it was computed in object
+  space: the glare and the body faded out seen a little from the side, only the helix left; it is computed in world
+  space now. A sprite (the glare) is drawn `_SpriteBias` (1.6 GoF3 units x its scale) toward the camera: on the game's
+  ships the near rim of the nozzle housing cut a dark crescent out of it seen at an angle (the Betty, the Phantom).
+  Tested on a spread of ships (2026-10-24): the Betty, Phantom, Inflict, ship 7, Groza, Veteran (also with the Terran
+  capital drive: large, very bright plumes), S'Kanarr, 45, 55, two ES2 ships. Its exhaust points do sit at the nozzle
+  exits: measured, the hull ends 0.11 m in front of the Phantom's mount). Checked in Play mode: ship 7's wide nozzle
+  blocks (both styles fill them), an ES2 Sentinel's hexagon (measured
   from its nozzle meshes) with a GoF3 drive, the Moornta's GoF3 outlines with an ES2 thruster. `NozzleRadius`: a mount's
   `glowSize`, a mod ship's `engineGlowRadius`, else 55 game units x the game
   ship's exhaust anchor scale (`turretAngles`). An `outline` is used only when plausible against the mount's `glowSize` (mean
@@ -132,15 +150,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   its mount), which shrank any style on them to nothing. Sizes (2026-10-17): every source but one measures the whole nozzle
   (the game ships, ES2's nozzle meshes); the GoF3 builder's `glowSize` / `outline` are the hottest core of the nozzle's glow,
   1 to 5 x smaller (the Atauno Rheep's 16 units in its ~90-unit hexagon). An `engineFx` now says which nozzle it is drawn
-  for (`nozzle`, game units, default `coneWidth`; `CustomEngineFx.NozzleRadius`), measured by the builder on the hulls from
-  behind (`ENGINE_NOZZLE`: Nivelian 87, the cone fills its nozzles; Terran 100, the Argus' 75-110 under a 138 cone; Vossk
-  45, the K'ssshar Ka's ~46 and the Shaan'ra-Grth's ~34 under a 138 cone); on a ship with an `engineFx` of its own that gives a `nozzle` the shapes
+  for (`nozzle`, game units, default 87; `CustomEngineFx.NozzleRadius`), measured by the builder on the hulls from
+  behind (`ENGINE_NOZZLE`: Nivelian 60 (its exhaust's 87 fills its nozzles, but as a style on the Phantom it was the
+  smallest of the three, its glare dimmer: 87 / 1.45 by eye, the user's report); Terran 100, the Argus' 75-110 under a
+  138 exhaust; Vossk 45, the K'ssshar Ka's ~46 and the Shaan'ra-Grth's ~34 under a 138 exhaust; the others their exhaust
+  mesh's radius, Inouac 138, the capital engines 108-117); on a ship with an `engineFx` of its own that gives a `nozzle`
+  the shapes
   are scaled to it (`FitToOwnEffect`: the median of mean / fxScale becomes `nozzle`; without one, a mod written before
   the field, the shapes are kept, each keeping its shape and its
   size against the others), and an `engineFx` style's default `nozzle` is its `NozzleRadius`: a GoF3 hull wearing its own
   race's style shows it exactly as its own effect, and the styles fit game, GoF3 and ES2 hulls alike (on GoF3 hulls they
-  were a fifth of the size, on the Vossk ones next to nothing; with the cone as every engine's nozzle the Vossk hulls' were
-  three times too big). Offered (`ModExhausts.For`,
+  were a fifth of the size, on the Vossk ones next to nothing; with the exhaust's width as every engine's nozzle the
+  Vossk hulls' were three times too big). Offered (`ModExhausts.For`,
   `Offered`, `Find(key, ship)`; the Customize panel takes the ship, `Apply` ignores a style the ship isn't offered): every
   style but a flame style on its own mod's ships (ES2's thrusters are cut from the ES2 ships' own rear parts, which choose
   their exhaust there). Checked in Play mode (2026-10-17): the Phantom (Nivelian drive, ES2 thruster), the Cronus (Terran),
@@ -161,12 +182,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   particles: `ShipExhaust` finds the holder's effect), the manoeuvring jets kept. The Customize screen runs the turntable's
   engines (`StationLevel.PreviewEngines` / `PreviewEngineDrive`, `Visuals.EnginePreview` read by `EngineDrive`, past the
   station's full-throttle cap: boosting while a boost colour row is selected, `ShipCustomizePanel.BoostRowSelected`). The GoF3
-  Ships mod's builder writes GoF3's Nivelian (helix), Terran and Vossk drives (`exhaust_styles`, GoF3's engine colours as the
-  palette); the ES2 importer three thrusters cut from one-nozzle rear parts (`exhaust_module`: the flame cards with their UV1,
+  Ships mod's builder writes GoF3's Nivelian (helix), Terran and Vossk drives with their trails and booster flashes and
+  its three capital drives (`exhaust_styles`, `STYLE_TRAIL`, GoF3's engine colours as the palette); the ES2 importer
+  three thrusters cut from one-nozzle rear parts (`exhaust_module`: the flame cards with their UV1,
   the main cards' nozzle ring at the origin, ES2's +X nose turned to +Z; ES2's exhaust palette). Verified in Play mode: the
   Nivelian helix and an ES2 thruster on the Phantom, a GoF3 Terran drive on an ES2 Sentinel (its flames dark), an ES2 ring
   thruster in custom colours on the GoF3 Moornta (its engine effect off, the boost cards in the second colour), the Customize
-  screen's rows and the turntable preview. Not tested in multiplayer.
+  screen's rows and the turntable preview; after the imitation was removed (2026-10-24) all six GoF3 styles on the
+  Phantom (Original and recoloured: gold with a red helix), the Moornta's own engine. Not tested in multiplayer.
 - **Textures / skins** (`ModTextures`, a mod's `textures/<game texture name>.png | .jpg`, e.g. `ship_028_terran_diffuse` for
   the Veteran's hull; `textures/<assembly>/<name>` for one model only, e.g. `textures/ship_028_terran/glow_terran.png`: the
   shared lights / engine glow on the Veteran alone, before the every-object file; the scope is `AssembledObject.ModScope`,

@@ -80,7 +80,7 @@ namespace GoF2Remake.EditorTools
         public const string Description = "Description", MissionTitle = "MissionTitle", MissionOffer = "MissionOffer",
             MissionClient = "MissionClient", MissionReward = "MissionReward", MissionStations = "MissionStations",
             MinPlayers = "MinPlayers", MaxPlayers = "MaxPlayers", Kind = "Kind", StartsWhen = "StartsWhen", MissionChance = "MissionChance",
-            MissionTakers = "MissionTakers";
+            MissionTakers = "MissionTakers", RepeatMinutes = "RepeatMinutes";
         protected override bool HasIn => false;
 
         protected override void OnDefineOptions(IOptionDefinitionContext context)
@@ -94,6 +94,9 @@ namespace GoF2Remake.EditorTools
             context.AddOption<string>(StartsWhen).WithDisplayName("Starts when").WithTooltip("A story mission: the condition that starts it, checked " +
                 "every second in a game (an expression: \"campaign >= 20\", \"visited(Kepler Prime)\", \"quest(first_contact) == 2\", " +
                 "\"credits > 50000\"). Empty: at once; \"never\": only by another graph's Start Mission.").Delayed().Build();
+            context.AddOption<float>(RepeatMinutes).WithDisplayName("Comes again after (minutes)").WithTooltip("A story mission that " +
+                "comes again (an encounter): this many minutes of playing time after it was done, once Starts when has been false (the " +
+                "player left) and holds again. 0: once.").Delayed().Build();
             context.AddOption<string>(MissionTitle).WithDisplayName("Mission title").WithTooltip("Set it to offer this event as a bar " +
                 "mission: a visitor in the multiplayer Space Lounge offers it, and it runs for the squad that takes it (its selectors, " +
                 "counts, triggers and scoreboard cover only them). Empty: only /event starts it, for everyone.").Delayed().Build();

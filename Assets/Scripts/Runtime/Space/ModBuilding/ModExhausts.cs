@@ -2,13 +2,14 @@
 // Remake mods: exhaust styles, engine effects a mod offers for every ship (the hangar's Customize screen: the game's own
 // ships, mod ships and customizable ones alike). A mod's exhausts.json lists them:
 //   [ { "id": "nivelian", "name": "Nivelian drive" | { "en": ..., "de": ... },
-//       "engineFx": { ... },          Galaxy on Fire 3's engine effect (ships.json's "engineFx", EngineFx), or
+//       "engineFx": { ... },          Galaxy on Fire 3's engine effect as GoF3 draws it (ships.json's "engineFx", EngineFx:
+//                                     its engine scene's "meshes" and its Fork particles), or
 //       "model": "exhausts/thruster.glb", "materials": [ { "material": "EngineExhaust", "flame": true, ... } ],
 //                                     a flame model put at each exhaust (EVERSPACE 2's thrusters: flame cards GoF2/ModEngineFlame
 //                                     stretches with the thrust, EngineFlame); its origin at the nozzle's exit, the flame
 //                                     blowing along -Z (the ship's back), "yaw" degrees about y when the model faces another way
 //       "nozzle": 87,                 the nozzle radius the effect is made for: game units for "engineFx" (default its
-//                                     engineFx's "nozzle", else its coneWidth), model units for "model" (default 1); each
+//                                     engineFx's "nozzle", else 87), model units for "model" (default 1); each
 //                                     exhaust is scaled by its own nozzle's size against it (NozzleRadius: a mod mount's
 //                                     glowSize, a mod ship's engineGlowRadius, a game ship's exhaust anchor scale)
 //       "palette": [ { "id", "name", "color": "#RRGGBB" }, ... ],   the colours offered (default the built-in bright ones)
@@ -17,7 +18,8 @@
 //                                     else its first's name): each nozzle wears the member whose nozzle (x "scale",
 //                                     Unity metres per model unit as the model's own ships show it) is nearest its size
 //       "mainName" / "secondName": the colour rows' names (default "Exhaust colour" / "Second colour": the flames and their
-//                                 boost cards; the flare and cone, then the trails and helix of an "engineFx")
+//                                 boost cards; an "engineFx"'s parts, then its helix and particles, each pixel's hue
+//                                 replaced and its white kept)
 //   } ]
 // A build carries the choice ("exhaust=<mod_id:id>", "exhaustcolor=<palette id or #RRGGBB>", "exhaustcolor2=...", and
 // "exhaustsize=1.2", the player's resizing of it, x the fitted size; ModShipKits Build), so the save, other players' views (NetPlayer's build text) and the hangar guests show it. Apply puts it on a ship
@@ -32,7 +34,7 @@
 // (NozzleRadius); a mount's outline only when plausible against its glowSize (Plausible). On a ship with GoF3's engine effect of
 // its own the shapes are scaled so that their typical size is the nozzle that effect is drawn for (FitToOwnEffect: the GoF3
 // builder measures only the hot core of each nozzle's glow). A flame model is scaled per axis to it, an
-// engineFx's cone and helix become ellipses and its trails spread along the nozzle's long side; both centred on it.
+// engineFx's parts are spread to it (all but its sprites); both centred on it.
 // Offered (For / Offered): every style on every ship but a flame style on its own mod's ships, whose own exhaust parts it
 // was cut from (the ES2 thrusters on the ES2 ships).
 // A flame style's boost cards are its own mod's ships' boost jets (EVERSPACE 2's): on any other ship (the game's, another
@@ -76,8 +78,6 @@ namespace GoF2Remake.Modding
             public List<ModShipKits.ColorChoice> palette;
             /// <summary>A flame style's model loads as a part of this kit (ModShips); null for an "engineFx" style.</summary>
             public ModShipKits.Kit kit;
-            /// <summary>An "engineFx" style's materials, made once (EngineFx.Create).</summary>
-            public readonly Dictionary<string, Material> fxMaterials = new Dictionary<string, Material>();
             /// <summary>A flame style's recoloured flame materials, by source and colours.</summary>
             public readonly Dictionary<(Material, Color32, Color32), Material> flameCopies = new Dictionary<(Material, Color32, Color32), Material>();
             /// <summary>Flame styles of one mod with the same "group" are one choice (the first of them, Lead): each nozzle
@@ -181,9 +181,10 @@ namespace GoF2Remake.Modding
                 {
                     try { s.fx = JsonUtility.FromJson<CustomEngineFx>(ft.ToString()); }
                     catch (Exception e) { throw new ModJsonException($"{where}: \"engineFx\": {e.Message}"); }
-                    if (s.fx == null || !s.fx.Any) throw new ModJsonException($"{where}: \"engineFx\" names no picture (glow, cone, trail or spiral)");
-                    foreach (var f in new[] { s.fx.glow, s.fx.cone, s.fx.trail, s.fx.spiral })
-                        if (!string.IsNullOrEmpty(f) && !mod.Source.Exists(f)) throw new ModJsonException($"{where}: the picture \"{f}\" isn't in the mod");
+                    if (s.fx == null || !s.fx.Any) throw new ModJsonException($"{where}: \"engineFx\" names no engine (\"meshes\" or \"trailParticles\")");
+                    if (!string.IsNullOrEmpty(s.fx.meshes) && !mod.Source.Exists(s.fx.meshes)) throw new ModJsonException($"{where}: the engine \"{s.fx.meshes}\" isn't in the mod");
+                    foreach (var em in new[] { s.fx.trailParticles, s.fx.boostParticles })
+                        if (em?.Any == true && !mod.Source.Exists(em.texture)) throw new ModJsonException($"{where}: the picture \"{em.texture}\" isn't in the mod");
                 }
                 if (s.IsFlame)
                 {
@@ -344,6 +345,17 @@ namespace GoF2Remake.Modding
             return hull;
         }
 
+        /// <summary>A mount's own "outline" (game units: [x0, y0, x1, y1, ...] around it, position_engine's axes) as its nozzle's
+        /// shape, when it is plausible for the mount (Plausible); null otherwise.</summary>
+        public static NozzleShape OutlineOf(WeaponMount m)
+        {
+            if (m?.outline == null || m.outline.Length < 6) return null;
+            var pts = new List<Vector2>();
+            for (int k = 0; k + 1 < m.outline.Length; k += 2) pts.Add(new Vector2(-m.outline[k] * M, m.outline[k + 1] * M));   // game x -> Unity's -x
+            var o = FromPoints(pts, false);
+            return Plausible(o, m) ? o : null;
+        }
+
         /// <summary>An oval nozzle (half width / height, game units).</summary>
         static NozzleShape Ellipse(float hw, float hh)
         {
@@ -411,13 +423,7 @@ namespace GoF2Remake.Modding
             for (int i = 0; i < exhausts.Count; i++)
             {
                 var m = exhausts[i];
-                if (m.outline != null && m.outline.Length >= 6)
-                {
-                    var pts = new List<Vector2>();
-                    for (int k = 0; k + 1 < m.outline.Length; k += 2) pts.Add(new Vector2(-m.outline[k] * M, m.outline[k + 1] * M));   // game x -> Unity's -x
-                    var o = FromPoints(pts, false);
-                    if (Plausible(o, m)) { shapes[i] = o; continue; }
-                }
+                if (OutlineOf(m) is NozzleShape o) { shapes[i] = o; continue; }
                 if (meshes?[i] != null) { shapes[i] = meshes[i]; continue; }
                 if (m.glowSize != null && m.glowSize.Length >= 2 && m.glowSize[0] > 0f && m.glowSize[1] > 0f)
                 {
@@ -439,7 +445,7 @@ namespace GoF2Remake.Modding
         /// 5 x less than the nozzle (the Atauno Rheep's 16 units in its ~85-unit hexagon), while the game's ships' and EVERSPACE
         /// 2's nozzles are measured whole: a style was a fifth of its size on a GoF3 hull, and a GoF3 hull wearing its own
         /// race's style now shows it as large as its own effect. Without "nozzle" the shapes are kept (a mod written before it:
-        /// coneWidth as every engine's nozzle made the GoF3 Vossk hulls' styles three times too big).</summary>
+        /// the exhaust's width as every engine's nozzle made the GoF3 Vossk hulls' styles three times too big).</summary>
         static NozzleShape[] FitToOwnEffect(int ship, List<WeaponMount> exhausts, NozzleShape[] shapes)
         {
             var fx = CustomShips.Get(ship)?.engineFx;
@@ -592,10 +598,11 @@ namespace GoF2Remake.Modding
             Vector2 Centre(WeaponMount m) => new Vector2(shapeOf[m].centreX, shapeOf[m].centreY);
             if (!style.IsFlame)
             {
-                // The style's own colours (its "color" and part colours), not the ship's nozzle colours: it looks the same on
-                // every ship unless the build picks others.
-                EngineFx.Create(holder, holder, style.fx, exhausts, style.mod, style.Key, Scale, null, main, second, style.fxMaterials, Centre,
-                                m => shapeOf[m].Normalized());
+                // GoF3's own colours, not the ship's nozzle colours: it looks the same on every ship unless the build picks
+                // others. As long for the ship as on GoF3's own hulls (EngineLength).
+                float length = EngineLength(model, shapes);
+                EngineFx.Create(holder, holder, style.fx, exhausts, style.mod, style.Key, Scale, main, second, Centre,
+                                m => shapeOf[m].Normalized(), m => length);
                 return holder;
             }
             var flame = holder.AddComponent<EngineFlame>();
@@ -624,6 +631,25 @@ namespace GoF2Remake.Modding
             }
             flame.boostOverride = !OwnShip(ship, style);
             return holder;
+        }
+
+        /// <summary>Galaxy on Fire 3's hulls carry nozzles of about this share of their length (their median, 0.062: the
+        /// Moornta's 87 on 914 game units); the game's ships far smaller ones (the Phantom's 25 on 940).</summary>
+        public const float Gof3NozzleToLength = 0.062f;
+
+        /// <summary>How much longer a Galaxy on Fire 3 engine is drawn on 'model' than its nozzles' width alone makes it: GoF3
+        /// sized its plumes for its own hulls' big nozzles, so on a hull whose nozzles are a smaller share of its length (the
+        /// game's ships: the Phantom's a third of the Moornta's for the same length) the plume, fitted across the nozzle,
+        /// came out short for the ship (a player's report on the Phantom, 2026-10-24); stretched by that share (1 on GoF3's
+        /// own hulls, at most 3).</summary>
+        static float EngineLength(GameObject model, NozzleShape[] shapes)
+        {
+            var means = shapes.Where(s => s != null && s.Mean > 0f).Select(s => s.Mean).OrderBy(x => x).ToList();
+            if (means.Count == 0) return 1f;
+            float nozzle = means[means.Count / 2];
+            float length = World.PlayerHull.HullBounds(model.transform, model.transform).size.z / M;
+            if (length <= 0f || nozzle <= 0f) return 1f;
+            return Mathf.Clamp(Gof3NozzleToLength / (nozzle / length), 1f, 3f);
         }
 
         /// <summary>A flame model's cross-section bent to a nozzle's outline: each vertex's distance from the flame's axis (in

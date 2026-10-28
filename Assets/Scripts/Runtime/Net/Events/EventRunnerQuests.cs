@@ -101,7 +101,7 @@ namespace GoF2Remake.Events
         public static string StartQuest(string name, bool quiet = false)
         {
             if (!EventHost.Local) return X("mpEventQuestSingle", "Story missions run in single player only.");
-            if (Session.GraphQuestsDone.Contains(name) || Session.GraphQuests.Exists(q => q.name == name))
+            if (Session.GraphQuestsDone.Contains(name) || Session.GraphQuestRepeats.ContainsKey(name) || Session.GraphQuests.Exists(q => q.name == name))
                 return quiet ? null : string.Format(X("mpEventQuestTaken", "The mission {0} is under way or done."), name);
             string text = Load(name, out string from, out string error);
             if (text == null) return string.Format(X("mpEventMissing", "No event \"{0}\". /event list shows them."), name);
@@ -117,6 +117,36 @@ namespace GoF2Remake.Events
             return null;
         }
 
+        /// <summary>A quest is done: for good, or (a "mission repeat" quest) until its cooldown in playing time has passed;
+        /// then it starts again when its start condition holds.</summary>
+        static void QuestDone(string name, MissionInfo info)
+        {
+            if (info != null && info.repeatMinutes > 0f) Session.GraphQuestRepeats[name] = Session.PlaySeconds + info.repeatMinutes * 60f;
+            else Session.GraphQuestsDone.Add(name);
+        }
+
+        /// <summary>randomstation(): a station of a system on the map where an encounter may come (a quest's roaming event: the
+        /// ES2 Ships mod's Dreadnought raids): not the player's own orbit, an empty or special orbit (the deep science and
+        /// Valkyrie stations, the Kaamo Club, the dropship orbits, Thynome), Loma, the supernova and Void systems 27 / 32 / 33, a
+        /// pirate base's system, a story's orbit, a mobile or missing mod station. -1 when there is none.</summary>
+        static int RandomStation()
+        {
+            var db = NetGame.Db;
+            var visible = GalaxyMap.Visibility(db);
+            var picks = new List<int>();
+            foreach (var st in db.Stations)
+            {
+                int i = st.index, sys = st.system;
+                if (i < 0 || i == Session.StationIndex || sys < 0 || sys >= visible.Length || !visible[sys]) continue;
+                if (i == 10 || i == 100 || i == 101 || i == 108 || (i >= 102 && i <= 104)) continue;
+                if (sys == 25 || sys == 27 || sys == 32 || sys == 33 || PirateBases.SystemHasBase(db, sys)) continue;
+                if (World.OrbitLayout.IsEmptyOrbit(i, Session.WorldIndex) || PirateEventRules.InStoryline(i)) continue;
+                if (Modding.ModWorld.IsMobile(i) || Modding.ModWorld.IsMissingStation(i)) continue;
+                picks.Add(i);
+            }
+            return picks.Count == 0 ? -1 : picks[UnityEngine.Random.Range(0, picks.Count)];
+        }
+
         /// <summary>LocalEvents, in a game scene: every second each quest graph not done nor under way whose start condition
         /// holds ("mission starts"; none: at once, "never": only by startquest) starts.</summary>
         internal static void CheckQuestStarts()
@@ -127,14 +157,19 @@ namespace GoF2Remake.Events
             foreach (var info in QuestGraphs())
             {
                 if (Session.GraphQuestsDone.Contains(info.name) || Session.GraphQuests.Exists(q => q.name == info.name)) continue;
+                bool again = Session.GraphQuestRepeats.TryGetValue(info.name, out float readyAt);
+                if (again && Session.PlaySeconds < readyAt) continue;
                 string when = info.starts.Trim();
                 if (when.Equals("never", StringComparison.OrdinalIgnoreCase)) continue;
+                bool holds = true;
                 if (when.Length > 0)
                 {
                     var probe = new EventRun(info.name, new List<Step>(), info, new HashSet<ulong> { 0 }, -1, LocalPilot.Instance, new Dictionary<string, double>());
-                    try { if (probe.Probe(when) == 0) continue; }
+                    try { holds = probe.Probe(when) != 0; }
                     catch (Exception e) { Debug.LogWarning($"Event: quest {info.name}'s start condition: {e.Message}"); continue; }
                 }
+                if (!holds) continue;
+                if (again) Session.GraphQuestRepeats.Remove(info.name);
                 string why = StartQuest(info.name, true);
                 if (why != null) Debug.LogWarning($"Event: quest {info.name}: {why}");
             }

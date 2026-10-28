@@ -32,6 +32,30 @@ half3 _GoF2PbrLightColor;
 // the Android build (Forward on the Mobile renderer).
 TEXTURECUBE(_GoF2ReflectionCube);
 SAMPLER(sampler_GoF2ReflectionCube);
+// A kit's livery (ModShips.ApplyLivery; its values in HullInput.hlsl's UnityPerMaterial).
+TEXTURE2D(_LiveryMap);
+SAMPLER(sampler_LiveryMap);
+
+// Remake mods: a livery, EVERSPACE 2's projection decal (M_ShipModules_Hull_Parent's compiled pixel shader, its
+// ProjectionDecal parameters): a mask projected from above in the ship's own space. p = (forward, right) / (2 x the ship's
+// largest half-extent) + 0.5 (the nose at the image's right); on an axis with mirror, the half at or below 0.5 sign -1
+// (offset and scale flipped there, so the image mirrors at the middle); p = (p + sign x offset - 0.5) / (sign x scale) + 0.5;
+// outside 0..1 nothing unless tiling; mask = tex^(1 + 1.2 luminance(colour)) x opacity, none on faces whose object-space
+// normal's up part is at most the clip (1 - clipAngle / 90). The engine's image rows run down from v 0, Unity's up: v flipped.
+half GoF2LiveryMask(float3 positionWS, half3 normalWS)
+{
+    float3 p3 = TransformWorldToObject(positionWS);
+    float2 p = float2(dot(p3, _LiveryForward.xyz), dot(p3, _LiveryRight.xyz)) * _LiveryParams.x + 0.5;
+    float2 sgn = float2(p.x <= 0.5 && _LiveryParams.z > 0.5 ? -1.0 : 1.0, p.y <= 0.5 && _LiveryParams.w > 0.5 ? -1.0 : 1.0);
+    p += sgn * _LiveryTransform.zw;
+    p = (p - 0.5) / (sgn * _LiveryTransform.xy) + 0.5;
+    half m = SAMPLE_TEXTURE2D(_LiveryMap, sampler_LiveryMap, float2(p.x, 1.0 - p.y)).r;
+    half inside = (p.x > 0.0 && p.x <= 1.0 && p.y > 0.0 && p.y <= 1.0) ? 1.0h : (half)_LiveryParams2.x;
+    m = m <= 2.98e-8h ? 0.0h : pow(m, (half)_LiveryParams2.z) * inside;
+    half3 nOS = normalize(TransformWorldToObjectNormal(normalWS));
+    m *= abs(dot(nOS, (half3)_LiveryUp.xyz)) <= _LiveryParams2.y ? 0.0h : 1.0h;
+    return m * (half)_LiveryParams.y;
+}
 
 // Remake: the distance fog by the real distance to the camera, as the original (computeLinearFogFactor(eyeDist), the
 // eye-to-vertex distance). URP's fog goes by the view depth (clip z), which is shorter for the same distance toward the
@@ -84,6 +108,25 @@ void HullPassFragment(
 #endif
 
     InitializeBakedGIData(input, inputData);
+
+    if (_DecalParams.x > 0.0)
+    {
+        // A kit's decal (EVERSPACE 2's M_ShipModules_Decals_Parent, its compiled pixel shader): the mask's R x colour 1 +
+        // G x colour 2 + B x the border colour, saturated; its A is the base alpha (cut by the material's alpha clip).
+        if (_DecalParams.y > 0.0) clip(-1.0);
+        half4 dm = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
+        surfaceData.albedo = saturate(dm.r * _DecalColor1.rgb + dm.g * _DecalColor2.rgb + dm.b * _DecalColor3.rgb);
+    }
+
+    if (_LiveryParams.y > 0.0)
+    {
+        // The livery's colour over the base colour, keeping the base map's shading (its AO and plating).
+        half m = GoF2LiveryMask(inputData.positionWS, input.normalWS.xyz);
+        half3 shade = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb;
+        surfaceData.albedo = lerp(surfaceData.albedo, shade * _LiveryColor.rgb, m);
+        surfaceData.metallic = lerp(surfaceData.metallic, _LiveryColor.a, m);
+        surfaceData.smoothness = lerp(surfaceData.smoothness, (half)_LiveryParams2.w, m);
+    }
 
 #if defined(_GOF2_PBR)
     // A mod's PBR hull has no occlusion map (the GoF3 and ES2 hulls), and in a hangar the flat room ambient and the

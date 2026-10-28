@@ -9,8 +9,11 @@
 // "traffic": { "weight": 1, "races": [8] } ("weight": 0 = never; "races" = the races that fly it, default its own). A
 // strong fighter (a capital ship's escort) is one of the dearer half. NPC hulls and guns don't depend on the ship flown
 // (NpcTables), so only the look changes. A customizable (kit) ship's NPCs fly random builds of it (RandomBuild, Traffic.Create:
-// parts, tier, colour scheme, now and then a skin; "traffic": { "randomBuild": false } = its default build), drawn from the
-// parts already loaded; each docking loads a few more random builds' parts in the background (Warm).
+// parts, tier, colour scheme, now and then a skin, a livery or a decal; "traffic": { "randomBuild": false } = its default build), drawn from the
+// parts already loaded; each docking loads a few more random builds' parts in the background (Warm). A boss hull ("traffic":
+// { "boss": true }, the GoF3 Ships mod's five GoF3 bosses) never flies as a fighter: the pirate bosses fly it instead
+// (PickBoss, at the same chance, up to MaxBossLength long). A capital ship or freighter ("traffic": { "capital": ... })
+// never flies as a fighter either (ModCapitalShips).
 
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +27,8 @@ namespace GoF2Remake.Modding
     {
         /// <summary>The longest hull that flies as a fighter (Unity metres; PlayerHull.Big's 150 m).</summary>
         const float MaxLength = 150f;
+        /// <summary>The longest boss hull (Unity metres): a pirate boss leads its escorts, it doesn't dock or land.</summary>
+        const float MaxBossLength = 400f;
 
         static readonly Dictionary<int, float> lengths = new Dictionary<int, float>();
         static int lengthRevision = -1;
@@ -31,6 +36,8 @@ namespace GoF2Remake.Modding
         // change of the mods: a fighter roll is cheap again (a full scan took ~2 ms).
         static readonly Dictionary<int, (List<(int ship, float weight)> list, float made, int revision)> cache =
             new Dictionary<int, (List<(int, float)>, float, int)>();
+        /// <summary>The cache's key for the boss hulls (no race key is below -1).</summary>
+        const int BossKey = -100;
         const float CacheSeconds = 5f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -39,8 +46,10 @@ namespace GoF2Remake.Modding
         /// <summary>The fighter 'fallback' (the game's pick for 'race'), or now and then one of the mods' ships of that race.</summary>
         public static int Pick(int race, int fallback, bool strong = false)
         {
-            float chance = Settings.ModShipTrafficChance;
-            if (chance <= 0f || ModCampaigns.HasTrafficShips(race) || Random.value >= chance) return fallback;
+            // A mod faction (ModFactions) flies its mods' ships whenever it has any, whatever the chance: the game has none of its own.
+            bool faction = ModFactions.Is(race);
+            float chance = faction ? 1f : Settings.ModShipTrafficChance;
+            if (chance <= 0f || (!faction && ModCampaigns.HasTrafficShips(race)) || Random.value >= chance) return fallback;
             var pool = Candidates(race);
             if (pool.Count == 0) return fallback;
             if (strong && pool.Count > 1)
@@ -53,11 +62,28 @@ namespace GoF2Remake.Modding
             return pool[pool.Count - 1].ship;
         }
 
+        /// <summary>TrafficPlan's pirate boss: the game's 'fallback', or now and then one of the mods' boss hulls (at the
+        /// "Mod ships in traffic" chance).</summary>
+        public static int PickBoss(int fallback)
+        {
+            float chance = Settings.ModShipTrafficChance;
+            if (chance <= 0f || Random.value >= chance) return fallback;
+            var pool = Cached(BossKey);
+            if (pool.Count == 0) return fallback;
+            float total = pool.Sum(p => p.weight), at = Random.value * total;
+            foreach (var (ship, weight) in pool) { if ((at -= weight) <= 0f) return ship; }
+            return pool[pool.Count - 1].ship;
+        }
+
         /// <summary>The mods' ships an NPC of 'race' may fly now, with their weights (a copy).</summary>
         public static List<(int ship, float weight)> Candidates(int race)
         {
             int key = Key(race);
-            if (key < 0) return new List<(int, float)>();
+            return key < 0 ? new List<(int, float)>() : Cached(key);
+        }
+
+        static List<(int ship, float weight)> Cached(int key)
+        {
             if (cache.TryGetValue(key, out var have) && have.revision == ModManager.Revision
                 && Time.realtimeSinceStartup - have.made < CacheSeconds) return new List<(int, float)>(have.list);
             var list = Scan(key);
@@ -74,10 +100,13 @@ namespace GoF2Remake.Modding
             {
                 float weight = c.traffic != null ? c.traffic.weight : 1f;
                 if (weight <= 0f || !CustomShips.Offered(c.index) || db.Ship(c.index) == null) continue;
-                bool flies = c.traffic?.races != null && c.traffic.races.Length > 0 ? c.traffic.races.Any(r => Key(r) == key) : Key(c.race) == key;
+                bool boss = c.traffic != null && c.traffic.boss;
+                if (boss != (key == BossKey)) continue;   // (a boss hull is never a fighter)
+                if (!string.IsNullOrEmpty(c.traffic?.capital)) continue;   // a capital ship or freighter (ModCapitalShips)
+                bool flies = boss || (c.traffic?.races != null && c.traffic.races.Length > 0 ? c.traffic.races.Any(r => Key(r) == key) : Key(c.race) == key);
                 if (!flies || !ModUnlocks.ShipAvailable(c.index)) continue;
                 float length = Length(c.index);
-                if (length <= 0f || length > MaxLength) continue;   // not built (yet), or a capital-sized hull
+                if (length <= 0f || length > (boss ? MaxBossLength : MaxLength)) continue;   // not built (yet), or too big
                 list.Add((c.index, weight));
             }
             return list;
@@ -129,11 +158,26 @@ namespace GoF2Remake.Modding
                 }
             var skins = kit.SkinsFor(c.kitType);
             b.skin = skins.Count > 0 && Random.value < 0.3f ? skins[Random.Range(0, skins.Count)].id : ModShipKits.Build.NoSkin;
+            var liveries = kit.LiveriesFor(c.kitType);
+            b.livery = liveries.Count > 0 && Random.value < 0.2f ? liveries[Random.Range(0, liveries.Count)].id : ModShipKits.Build.NoSkin;
+            var decals = kit.DecalsFor(c.kitType);
+            b.decal = decals.Count > 0 && Random.value < 0.3f ? decals[Random.Range(0, decals.Count)].id : ModShipKits.Build.NoSkin;
+            if (kit.FindSkin(b.skin) is ModShipKits.Skin picked)
+            {
+                // A skin with colours and a livery (EVERSPACE 2's) wears them, as when the player picks it.
+                foreach (var kv in picked.colors) b.colors[kv.Key] = kv.Value;
+                if (picked.livery != null) b.livery = picked.livery;
+                if (picked.decal != null) b.decal = picked.decal;
+            }
             var n = ModShipKits.Normalize(kit, c.kitType, b, fallback);
             if (!loadedOnly) return n;
             // The tier's extensions or the skin's textures not loaded yet: lower tiers, then without the skin.
             while (n.tier > 0 && !ModShips.BuildLoaded(ship, n)) n.tier--;
-            if (!ModShips.BuildLoaded(ship, n) && n.skin != ModShipKits.Build.NoSkin) { n.skin = ModShipKits.Build.NoSkin; n = ModShipKits.Normalize(kit, c.kitType, n, fallback); }
+            if (!ModShips.BuildLoaded(ship, n) && (n.skin != ModShipKits.Build.NoSkin || n.livery != ModShipKits.Build.NoSkin || n.decal != ModShipKits.Build.NoSkin))
+            {
+                n.skin = n.livery = n.decal = ModShipKits.Build.NoSkin;
+                n = ModShipKits.Normalize(kit, c.kitType, n, fallback);
+            }
             return ModShips.BuildLoaded(ship, n) ? n : fallback;
         }
 
@@ -154,9 +198,11 @@ namespace GoF2Remake.Modding
 
         /// <summary>A race as the traffic groups it: the four races, pirates (8, also the minor races), the Void (9); the
         /// Specters (10) -1.</summary>
-        static int Key(int race) => race >= 0 && race <= 3 ? race : race == 9 ? 9 : race == 10 ? -1 : race < 0 ? -1 : 8;
+        static int Key(int race) => Modding.ModFactions.Is(race) ? race : race >= 0 && race <= 3 ? race : race == 9 ? 9 : race == 10 ? -1 : race < 0 ? -1 : 8;
 
         /// <summary>A built mod ship's length (Unity metres, its meshes' bounds along its nose; 0: not built).</summary>
+        public static float HullLength(int ship) => Length(ship);
+
         static float Length(int ship)
         {
             if (lengthRevision != ModManager.Revision) { lengths.Clear(); lengthRevision = ModManager.Revision; }

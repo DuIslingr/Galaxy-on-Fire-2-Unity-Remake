@@ -317,7 +317,7 @@ namespace GoF2Remake.UI
             var st = level != null ? level.Station : null;
             string T(int id) => Localization.Get(id);
             root.Q<Label>("stationTitle").text = st == null ? "" :
-                (st.index == 101 ? st.name : $"{st.name} {T(136)}").ToUpperInvariant();   // no suffix for station 101
+                (st.index == 101 || Modding.ModWorld.IsMobile(st.index) ? st.name : $"{st.name} {T(136)}").ToUpperInvariant();   // no suffix for station 101 or a mobile station (a ship)
             root.Q<Label>("systemName").text = st == null ? "" : $"{st.systemName} {T(137)}";
             // Multiplayer: the faction holding this station (NetFactions).
             string holder = st == null ? "" : GoF2Remake.Multiplayer.NetFactionsClient.OwnerText(st.index);
@@ -325,7 +325,7 @@ namespace GoF2Remake.UI
             root.Q<Label>("techLevel").text = st == null ? "" : $"{T(133)}: {st.techLevel}";
             int race = level != null ? level.Layout.raceId : -1;
             var raceLabel = root.Q<Label>("raceName");
-            raceLabel.text = race >= 0 && race < 4 ? T(406 + race) : "";
+            raceLabel.text = race >= 0 && race < 4 || Modding.ModFactions.Is(race) ? GoF2Remake.Flight.Standing.RaceName(race) : "";   // (a mod faction's name)
             raceLabel.style.display = raceLabel.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             ShowRaceIcon(raceLabel.parent, race, st != null ? st.index : -1);
             shownCredits = shownLoad = shownMaxLoad = int.MinValue;   // the funds plates again in this language (UpdateFunds)
@@ -421,6 +421,8 @@ namespace GoF2Remake.UI
             mapButton.SetEnabled(Story.MapUnlocked);
             missionsButton.SetEnabled(Story.MapUnlocked);   // Missions: locked before campaign 9 like the Map
             loungeButton.SetEnabled(Story.LoungeUnlocked(station));
+            // Remake mods: a station without a Space Lounge ("bar": "none") has no button for it
+            loungeButton.style.display = Modding.ModWorld.NoBar(station) ? DisplayStyle.None : DisplayStyle.Flex;
             if (hints != null) BuildHints(InputMode.Current);   // the key hints follow the enabled buttons
         }
 
@@ -941,6 +943,7 @@ namespace GoF2Remake.UI
             }
             // The Kaamo Club: a skull until it is bought (or owned from the start), then the orange house.
             var tex = station == KaamoClub.Station ? Resources.Load<Texture2D>(KaamoClub.Owned ? "GoF2Races/kaamo_club_icon" : "GoF2Races/kaamo_club_locked_icon") : null;
+            if (tex == null && Modding.ModFactions.Is(race)) tex = Modding.ModFactions.Icon(race);   // remake mods: a faction's emblem
             if (tex == null) tex = race >= 0 && race <= 3 ? Resources.Load<Texture2D>($"GoF2Races/{StatusWindow.RaceFile(race)}_icon")
                     : race == 8 || race == 9 ? Resources.Load<Texture2D>("GoF2Hud/race_" + race) : null;
             icon.style.backgroundImage = tex != null ? new StyleBackground(tex) : new StyleBackground(StyleKeyword.None);

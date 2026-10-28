@@ -111,7 +111,7 @@ namespace GoF2Remake.UI
                 case OptionPage.Sound: Settings.Reset(Settings.SoundKeys); break;
                 case OptionPage.Graphics: Settings.Reset(Settings.GraphicsKeys); break;
                 case OptionPage.Controls: Settings.Reset(Settings.ControlsKeys); break;
-                case OptionPage.Gameplay: Settings.Reset(Settings.GameplayKeys); break;
+                case OptionPage.Gameplay: Settings.Reset(Settings.GameplayKeys); Modding.ModGameOptions.ResetSettings(); break;
                 case OptionPage.Language: Settings.Reset(Settings.LanguageKeys); break;
                 case OptionPage.Accessibility: Settings.Reset(Settings.AccessibilityKeys); break;
                 case OptionPage.Bindings: Flight.GameControls.ResetToDefaults(); break;
@@ -653,6 +653,14 @@ namespace GoF2Remake.UI
                 i => SetLanguage(LanguageTables.Offered[Mathf.Clamp(i, 0, LanguageTables.Offered.Length - 1)].code));
             language.inGameOnly = true;
             list.Add(language);
+            // Remake mods: the gameplay settings of the mods that are on (gameoptions.json "setting": true), only while they are.
+            foreach (var m in Modding.ModGameOptions.GameplaySettings())
+            {
+                var def = m;
+                var row = Toggle("mod:" + def.Key, OptionPage.Gameplay, () => def.Name, () => Modding.ModGameOptions.Setting(def), v => Modding.ModGameOptions.SetSetting(def, v));
+                if (def.Description.Length > 0) row.description = () => def.Description;
+                list.Add(row);
+            }
             // Remake: the testing tools (Cheats.Unlocked), also opened by F10, LB + RB or three fingers on the main menu.
             var debug = Toggle("debugTools", OptionPage.Gameplay, () => X("debugTools", "Debug tools"), () => Cheats.Unlocked, v => Cheats.Unlocked = v);
             debug.description = () => X("debugToolsHelp", "A Debug button in the main menu and a Debug page in the pause and station menus.");

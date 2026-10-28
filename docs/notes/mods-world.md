@@ -45,6 +45,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   planet behind it, the sun, a ship placed inside pushed out to the box face, Dock offered there, the Nivelian hangar docked.
   A sun PNG with a bright glow out to its edge blows up when the sun swells near the screen centre: the originals fade to black
   well inside the edge (the guide says so).
+  **System jumpgates** (remake, 2026-10-25, for GoF3's systems; systems.json `"jumpgate"`: model, size (default 15000),
+  yaw, radius (default size / 2), materials; `ModWorld.GateModelOf` / `GateKey`): a `StationModel` with `gateSystem`,
+  loaded by `ModStations` with the station models as "modgate_NNN" (category level; `Template`, `IsStationAssembly`);
+  `OrbitLayout.ModJumpgateAssembly` / `JumpgateRadius` and `OrbitBuilder.SpawnJumpgate` (the race's gate while it isn't
+  built). No `_jump_anim_add`, so `SystemJump.PlayGateJump` plays no flash. Tests `ModWorldTests.ASystemsOwnJumpgate`.
   **Star map planets** (remake, 2026-10-23, the user's request): stations.json `"mapTexture"` (an image wrapped round the
   map's sphere; `StarMap.ApplyModPlanet` swaps the planet mesh, whose UVs are one 0.2 x 0.2 cell of the
   galaxymap_planets atlas, for a generated UV sphere of the same radius (`WrappedSphere`, equirectangular) with a copy of
@@ -52,6 +57,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (`FaceDiscs`, a copy of `ModAssets.fxAlpha`, the sphere's renderers off), else the game's planet; `"mapRing": true` adds
   `AddPlanetRing`'s copy of planet 9's ring (`ModWorld.MapTexture` / `MapRing`; the map image is preloaded with the other
   backdrops). The example's Kepler Prime has both (`textures/kepler_prime_map.png`).
+  **Station lore** (remake, 2026-10-25, the user's request; stations.json `"subtitle"` / `"description"`, new or
+  override, translated as `stations.<id>.subtitle` / `.description`; `ModWorld.Subtitle` / `Description` /
+  `StationsWithLore`): the subtitle under the planet's name on the star map, the description in a panel at the map's
+  left while that planet is picked in the system view (`StarMap.UpdatePlanetLore`, `.planet-lore`), and up to three
+  stations' lore of the docked system in the station ticker in place of the game's two random items
+  (`NewsTicker.Build`). The ES2 importer writes them from ES2's locations.CSV (Windows-1252, "|~"-separated). Tests
+  `ModWorldTests.AStationsSubtitleAndLore`. Verified in Play mode at Union Bridge (the ticker, the map panel).
   **Orbit layouts and map places** (remake, 2026-10-23, the user's request): stations.json `"orbit"` (`ModWorld.OrbitSpec`,
   `OrbitOf`; parsed with the rest, ores resolved in Apply) is applied by `OrbitLayout.ApplyMod` after the seeded layout:
   station (`hasStation` / `stationObject`: dock, `"nodock"`, none), the visible jumpgate (a forced one at the spot
@@ -113,3 +125,19 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `TextReveal.Names` tints character names as people (rebuilt when `ModManager.Revision` changes). Portraits
   through `ModMaterials` (Preload from the main menu). Example: frontier_systems' Captain Vega. Verified in Play mode: a
   dialogue page by id, one by key with a rename, a replaced story speaker (mirrored), a radio call in flight.
+- **Factions** (remake, 2026-10-25, the user's request for the ES2 galaxy; `Modding.ModFactions`, a mod's
+  `factions.json`): factions are race numbers from `ModFactions.FirstRace` (32), numbered by the registry
+  (`ModRegistry.Kind.Faction`, afresh in a session), with a `look` race (0-3, 8, 9) for every table indexed by race
+  (hangar, bar, visitors, music, NPC guns, freighter model, jumpgate: `Standing.Look`), an emblem (`ModFactions.Icon`),
+  a standing of their own (`Session.FactionStanding`, key -> -100..100, saved as `factionStanding`; hostile at -71,
+  friend at 71; `hostile` = always an enemy) and relations (`ModFactions.Relation`, `Standing.RacesHostile`: unnamed =
+  enemies if either is hostile or the other is pirates / Void / Specters, else neutral). `Standing` handles them
+  everywhere the game races go (Toward / IsEnemy / IsFriend / ApplyKill / ApplyDelict / EnemyRaceOf / RaceName).
+  systems.json `race` may name one, `"traffic": "mod"` (`ModWorld.ModTrafficOnly`: no game freighters, no pirate
+  events), `locals`, `raiders` (`TrafficPlan`); ships.json `race` / `traffic.races` (resolved in `ModContent.ShipData`:
+  JsonUtility can't read strings into ints); a faction's fighters always fly mods' ships (`ModTraffic.Pick` chance 1,
+  `ModCapitalShips.ChanceFor`). Lounge diplomats in a faction's system (`AgentGenerator. AddFactionDiplomats`,
+  `Agent.faction`, `LoungeChat`: restores to 0). The Status window lists the non-hostile factions in the game's
+  reputation look (the race status bar, the emblem with a standing-coloured glow, `StatusWindow.FactionEmblem`). The
+  station header, star map, lock plate and HUD use the faction's name and emblem. Not yet: multiplayer sync of faction
+  standings (each game keeps its own). Tests `ModFactionsTests`.

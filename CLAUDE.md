@@ -44,10 +44,10 @@ This file holds only what every task needs. Everything about one area of the gam
 | [multiplayer-social.md](docs/notes/multiplayer-social.md) | Squads, squad bar missions, arena matches, trades, distress calls |
 | [chat-and-commands.md](docs/notes/chat-and-commands.md) | Chat, chat commands, admin tools, selectors |
 | [event-graphs.md](docs/notes/event-graphs.md) | Events, event graph files and nodes, quests, bar missions, cutscenes, ship orders, wormholes |
-| [mods.md](docs/notes/mods.md) | Mod format, items, ships, numbers, saves, campaigns, options, flight styles, conditions, traffic, blueprints, browser, multiplayer |
-| [mods-models.md](docs/notes/mods-models.md) | Ship models, engine effects, exhaust styles, textures / skins, image formats, loading |
-| [mods-ship-kits.md](docs/notes/mods-ship-kits.md) | Ship kits, builds, colours, skins, hardpoint models, engine flames, lateral thrusters |
-| [mods-world.md](docs/notes/mods-world.md) | Systems, stations, station models, planets, suns, skies, interiors, characters |
+| [mods.md](docs/notes/mods.md) | Mod format, items, ships, numbers, saves, campaigns, options, flight styles, conditions, traffic, capital ships, mobile stations, ES2 docking, blueprints, browser, multiplayer |
+| [mods-models.md](docs/notes/mods-models.md) | Ship models, how a ship is seen, engine effects, exhaust styles, textures / skins, image formats, loading |
+| [mods-ship-kits.md](docs/notes/mods-ship-kits.md) | Ship kits, builds, colours, skins, hardpoint models, engine flames, lateral thrusters, liveries, decals, engine trails |
+| [mods-world.md](docs/notes/mods-world.md) | Systems, stations, station models, planets, suns, skies, interiors, characters, factions |
 | [mods-weapons-audio.md](docs/notes/mods-weapons-audio.md) | Weapon fx, missile turrets, game models, sounds, voices, music |
 | [mod-builder.md](docs/notes/mod-builder.md) | The in-game mod editor, its kinds, quest graph, optimizer, imports |
 | [mod-builder-mcp.md](docs/notes/mod-builder-mcp.md) | The builder's MCP server for AI assistants |
@@ -179,7 +179,10 @@ The full list with what each item makes and writes: [docs/notes/editor-tools.md]
 - `Database.Load()` parses every table again (~6 ms and several MB of garbage): use it once per scene (the levels keep
   their own, `level.Database`) or where the result is changed; read-only lookups that run more often (UI rebuilds, spawns,
   multiplayer mirrors, the Mod Builder) take `Database.Shared`, made again only when the economy or the mods change, and
-  never write to it.
+  never write to it. While a Load applies the mods, `Shared` answers with the database being loaded (`applying`): a kit
+  ship's mounts read through `Shared` while `ModContent.ApplyNpcTurrets` counted them, so `Shared` loaded itself again
+  without end (a stack overflow that took the Editor down, 2026-10-24). Tests: `SandboxTest` drops `ModManager`'s lists
+  too, else a scan of the player's own Mods folder made before the run leaked the player's mods into the tests.
 
 - `ships`, `items`, `systems`, `stations`: the economy and universe.
   - `items[].statList` has named stats (damage, range, boostSpeed, agility…).

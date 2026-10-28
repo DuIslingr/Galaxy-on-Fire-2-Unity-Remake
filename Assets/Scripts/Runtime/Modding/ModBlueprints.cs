@@ -8,11 +8,15 @@
 //       "autocomplete": true | false | 1500000 (the price; true = the original's 1.25 x the product's price),
 //       "available": "condition"               (EventRunner.Condition: before any source offers it),
 //       "unlocked": false                      (true: known as soon as it is available),
-//       "lounge": { "chance": 10, "price": 250000, "systemRace": -1 }   (a Space Lounge visitor sells it),
+//       "lounge": { "chance": 10, "price": 250000, "systemRace": -1 }   (a Space Lounge visitor sells it;
+//                 "stations": [ 78, "mod:id" ]  only in those bars (then the chance defaults to 100): like the game's own
+//                                               blueprint sellers, one at a fixed station),
 //       "derelict": { "chance": 5, "race": "terran" }                    (a hackable freighter wreck in an orbit holds it;
 //                   "stations": [ 78, "mod:id" ]  only in those orbits (then the chance defaults to 100),
 //                   "position": [ x, y, z ]       there, in game units like /pos, instead of somewhere out in front),
-//       "drops": [ { "race": "pirate", "chance": 1.5 } ]                 (a ship of that race the player destroys drops it) } ]
+//       "drops": [ { "race": "pirate", "chance": 1.5 } ]                 (a ship of that race the player destroys drops it;
+//                  { "ship": "mod_id:ship_id" | number, "chance": 100 }   or a ship of that type, whatever its race: a boss
+//                                                                          hull dropping its own blueprint) } ]
 // A ship product is a hidden "blueprint item" of its own (registered like a mod item, key "<mod>:blueprint:<id>"), so the
 // Blueprints tab, saving (Session.UnlockedBlueprints / Blueprints) and the data crates work on it as on any product. Its
 // name and icon are the ship's; finished, it never enters the hold: it waits at the production station and the player
@@ -48,12 +52,18 @@ namespace GoF2Remake.Modding
             public int autocompletePrice = -1;          // -1: the original's formula
             public float loungeChance, derelictChance;  // 0: no such source
             public int loungePrice, loungeRace = -1, derelictRace = -1;
+            /// <summary>"lounge" "stations" as written (empty: any bar of its systemRace) and resolved (ModBlueprints.Apply).</summary>
+            public readonly List<string> loungeStationRefs = new List<string>();
+            public readonly List<int> loungeStations = new List<int>();
             /// <summary>"derelict" "stations" as written (empty: any orbit) and resolved (ModBlueprints.Apply).</summary>
             public readonly List<string> derelictStationRefs = new List<string>();
             public readonly List<int> derelictStations = new List<int>();
             /// <summary>"derelict" "position": game units in the orbit (null: somewhere out in front of the station).</summary>
             public Vector3? derelictPosition;
             public readonly List<(int race, float chance)> drops = new List<(int, float)>();
+            /// <summary>"drops" naming a "ship" (as written, then resolved by Apply): only that ship type drops it.</summary>
+            public readonly List<(string ship, float chance)> shipDropRefs = new List<(string, float)>();
+            public readonly List<(int ship, float chance)> shipDrops = new List<(int, float)>();
             // The current numbering's (ModContent.EnsureMapping / Apply):
             public int product = -1, ship = -1, requiresShip = -1;
             public string DeedKey => mod.Id + ":blueprint:" + localId;
@@ -103,7 +113,8 @@ namespace GoF2Remake.Modding
                 }
                 if (ModJson.Get(o, "lounge") is JObject lo)
                 {
-                    d.loungeChance = ModJson.Float(lo, "chance", 10f, File);
+                    d.loungeStationRefs.AddRange(ModJson.Strings(lo, "stations"));
+                    d.loungeChance = ModJson.Float(lo, "chance", d.loungeStationRefs.Count > 0 ? 100f : 10f, File);
                     d.loungePrice = Math.Max(0, ModJson.Int(lo, "price", 0, File));
                     d.loungeRace = ModJson.Int(lo, "systemRace", -1, File);
                 }
@@ -128,6 +139,12 @@ namespace GoF2Remake.Modding
                     foreach (var e in dr)
                     {
                         if (!(e is JObject eo)) throw new ModJsonException($"{ModJson.Where(e, File)}: a drop is {{ \"race\": \"pirate\", \"chance\": 1 }}");
+                        if (ModJson.Str(eo, "ship") is string dropShip)
+                        {
+                            if (ModJson.Has(eo, "race")) mod.Warnings.Add($"{ModJson.Where(e, File)}: a drop names a \"ship\" or a \"race\"; the race is ignored");
+                            d.shipDropRefs.Add((dropShip, ModJson.Float(eo, "chance", 1f, File)));
+                            continue;
+                        }
                         string race = ModJson.Str(eo, "race", "any");
                         int r = RaceOf(race);
                         if (r == -2) throw new ModJsonException($"{ModJson.Where(e, File)}: unknown race \"{race}\" (terran, vossk, nivelian, midorian, pirate, void, specter, any)");
@@ -207,12 +224,21 @@ namespace GoF2Remake.Modding
                         parts.Add(new BlueprintPart { item = ii, name = db.Item(ii).name, amount = amount });
                     }
                     if (parts == null) continue;
+                    d.loungeStations.Clear();
+                    foreach (string st in d.loungeStationRefs)
+                        if (ModWorld.TryResolveStation(st, out int ls)) d.loungeStations.Add(ls);
+                        else Warn(d, $"\"lounge\" \"stations\": {st} is no station");
+                    if (d.loungeStationRefs.Count > 0 && d.loungeStations.Count == 0) d.loungeChance = 0f;
                     d.derelictStations.Clear();
                     foreach (string st in d.derelictStationRefs)
                         if (ModWorld.TryResolveStation(st, out int si)) d.derelictStations.Add(si);
                         else Warn(d, $"\"derelict\" \"stations\": {st} is no station");
                     // Every station it names unknown: none at all, not everywhere.
                     if (d.derelictStationRefs.Count > 0 && d.derelictStations.Count == 0) d.derelictChance = 0f;
+                    d.shipDrops.Clear();
+                    foreach (var (sr, chance) in d.shipDropRefs)
+                        if (ModContent.TryResolveShip(sr, out int si) && db.Ship(si) != null) d.shipDrops.Add((si, chance));
+                        else Warn(d, $"\"drops\" \"ship\": {sr} is no ship");
                     product.blueprint = parts;
                     byProduct[d.product] = d;
                 }
@@ -266,10 +292,15 @@ namespace GoF2Remake.Modding
                 if (d.unlocked && d.product >= 0 && !Blueprints.IsUnlocked(d.product) && Available(d)) Blueprints.Unlock(d.product);
         }
 
-        /// <summary>A ship of 'race' the player destroyed: the first mod blueprint whose drop for that race (or any) rolls
-        /// its chance, -1 for none.</summary>
-        public static int RollDrop(int race)
+        /// <summary>A ship of 'race' and type 'ship' the player destroyed: the first mod blueprint whose drop for that ship
+        /// type, else that race (or any), rolls its chance, -1 for none. A ship's own drops come first, so a boss hull's
+        /// blueprint isn't beaten by a race-wide one.</summary>
+        public static int RollDrop(int race, int ship = -1)
         {
+            if (ship >= 0)
+                foreach (var d in Offerable(b => b.shipDrops.Count > 0))
+                    foreach (var (s, chance) in d.shipDrops)
+                        if (s == ship && UnityEngine.Random.value * 100f < chance) return d.product;
             foreach (var d in Offerable(b => b.drops.Count > 0))
                 foreach (var (r, chance) in d.drops)
                     if ((r < 0 || r == race) && UnityEngine.Random.value * 100f < chance) return d.product;
@@ -284,6 +315,11 @@ namespace GoF2Remake.Modding
                 if (UnityEngine.Random.value * 100f < d.derelictChance) return d;
             return null;
         }
+
+        /// <summary>The lounge seller may stand in this bar: its "stations" name it, or it names none and the system's race
+        /// fits its "systemRace" (-1: any).</summary>
+        public static bool LoungeAllowedAt(Def d, int station, int systemRace) =>
+            d.loungeStationRefs.Count > 0 ? d.loungeStations.Contains(station) : d.loungeRace < 0 || d.loungeRace == systemRace;
 
         /// <summary>The derelict may lie in this orbit: its "stations" name it, or it names none.</summary>
         public static bool DerelictAllowedAt(Def d, int station) => d.derelictStationRefs.Count == 0 || d.derelictStations.Contains(station);

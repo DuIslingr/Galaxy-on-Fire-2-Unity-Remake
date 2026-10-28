@@ -41,8 +41,16 @@ namespace GoF2Remake.Visuals
             var chars = s.ToCharArray();
             var bad = Path.GetInvalidFileNameChars();
             for (int i = 0; i < chars.Length; i++) if (System.Array.IndexOf(bad, chars[i]) >= 0 || chars[i] == '#') chars[i] = '_';
-            return new string(chars);
+            var safe = new string(chars);
+            // A kit ship's variant names its whole build ("ship_156_mod#base=...;color...;tier=2", ~400 characters): past
+            // a file name's 255 bytes, so it is cut to its start and a hash of the rest.
+            if (safe.Length <= MaxName) return safe;
+            ulong h = 14695981039346656037UL;   // FNV-1a
+            foreach (char ch in s) { h ^= ch; h *= 1099511628211UL; }
+            return safe.Substring(0, MaxName - 17) + "_" + h.ToString("x16");
         }
+
+        const int MaxName = 96;
 
         /// <summary>The levels of a mod mesh (level 1, level 2...): null while they are being made (ask again next frame),
         /// empty when it gets none. 'modId' / 'slot' name its cache file.</summary>

@@ -149,8 +149,13 @@ namespace GoF2Remake.World
 
         static readonly string[] JumpgateByRace = { "jumpgate_terran", "jumpgate_vossk_anim", "jumpgate_nivelian", "jumpgate_midorian" };
 
-        public string JumpgateAssembly => JumpgateByRace[raceId >= 0 && raceId < 4 ? raceId : 0];
-        public int JumpgateRadius => raceId == 1 ? GateRadiusVossk : GateRadius;
+        public string JumpgateAssembly => JumpgateByRace[Look >= 0 && Look < 4 ? Look : 0];
+        /// <summary>The system's own gate (a mod's systems.json "jumpgate", Modding.ModWorld.GateModelOf), else null: the race's.</summary>
+        public string ModJumpgateAssembly => Modding.ModWorld.GateModelOf(systemIndex)?.Assembly;
+        public int JumpgateRadius => Modding.ModWorld.GateModelOf(systemIndex) is Modding.ModWorld.StationModel g && g.gateRadius > 0f
+            ? Mathf.RoundToInt(g.gateRadius) : Look == 1 ? GateRadiusVossk : GateRadius;
+        /// <summary>The race whose tables the orbit uses (a mod faction's look, Standing.Look).</summary>
+        int Look => Flight.Standing.Look(raceId);
 
         static float Angle(int v) => v * 1.52587890625e-05f * 6.2831855f;   // 65536 per turn
 
@@ -170,7 +175,8 @@ namespace GoF2Remake.World
                 systemIndex = sys != null ? sys.index : -1,
                 systemTexture = sys != null ? sys.textureIndex : 10,
                 stationTexture = st != null ? st.textureIndex : 23,
-                raceId = sys != null ? sys.raceId : 0,
+                // A mobile station (ModWorld "mobile") keeps its own race wherever it is.
+                raceId = Modding.ModWorld.MobileOf(stationIndex) is Modding.ModWorld.MobileSpec ms ? ms.race : sys != null ? sys.raceId : 0,
                 hasStation = st != null && !IsEmptyOrbit(stationIndex, mission),
                 alienOrbit = alien,
             };

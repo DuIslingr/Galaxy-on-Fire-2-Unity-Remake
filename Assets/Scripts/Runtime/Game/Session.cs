@@ -92,6 +92,9 @@ namespace GoF2Remake.Data
         /// (EventRunner), and the quests finished (by graph name).</summary>
         public static List<GraphQuestState> GraphQuests = new List<GraphQuestState>();
         public static HashSet<string> GraphQuestsDone = new HashSet<string>();
+        /// <summary>Remake: the repeatable quests finished ("mission repeat"), each with the playing time (PlaySeconds) from which
+        /// it may start again (EventRunner.CheckQuestStarts).</summary>
+        public static Dictionary<string, float> GraphQuestRepeats = new Dictionary<string, float>();
         /// <summary>Status+0x18: each touched blueprint's progress (Blueprints); +0x1c products waiting at a station;
         /// +0x1d4 goods produced (completed runs).</summary>
         public static List<BlueprintState> Blueprints = new List<BlueprintState>();
@@ -317,6 +320,15 @@ namespace GoF2Remake.Data
         /// <summary>Remake: the player docked from space (SpaceLevel.Dock), so the station opens with the hangar fly-in.</summary>
         public static bool DockedFromSpace;
 
+        /// <summary>Remake mods: the station's launch at a station docked EVERSPACE 2's way (World.Es2Dock): the flight level
+        /// starts on its pad with ES2's take-off instead of the launch camera.</summary>
+        public static bool Es2TakeOff;
+        /// <summary>Remake mods: the station scene was loaded on its own for a station docked EVERSPACE 2's way (a save, a story
+        /// move): the flight level starts docked on its pad and loads the station on top (World.Es2Dock).</summary>
+        public static bool Es2StartDocked;
+        /// <summary>The flight level found no dock to start on (its model not built): the station opens on its own.</summary>
+        public static bool Es2NoRedirect;
+
         /// <summary>The station was opened by loading a save (ModStation::setGameLoaded, +0xac): no docking fine then
         /// (StationMenu.CheckDockingFine takes and clears it; SpaceLevel clears it too).</summary>
         public static bool ArrivedByLoad;
@@ -350,6 +362,10 @@ namespace GoF2Remake.Data
         /// <summary>Standing: [0] Terran (+) / Vossk (-), [1] Nivelian (+) / Midorian (-), -100..100 (Standing);
         /// a new game starts at 30 / 0.</summary>
         public static int[] Standing = { 30, 0 };
+
+        /// <summary>Remake mods: the player's standing toward each mod faction (Modding.ModFactions), by its key ("mod_id:id"),
+        /// -100..100; a faction not in it stands at its own "standing".</summary>
+        public static Dictionary<string, int> FactionStanding = new Dictionary<string, int>(System.StringComparer.Ordinal);
 
         /// <summary>Stations whose race the player attacked (Station::setAttackedFriends): on the next visit at least 7
         /// hostile local fighters wait there.</summary>
@@ -457,6 +473,7 @@ namespace GoF2Remake.Data
             ModGameOptions = new HashSet<string>();
             ShipBuilds = new Dictionary<string, string>();
             GraphQuestsDone = new HashSet<string>();
+            GraphQuestRepeats = new Dictionary<string, float>();
             GameHooks.ResetLocalEvents?.Invoke();   // single player's graph runs go with the game
             Blueprints = new List<BlueprintState>();
             PendingProducts = new List<PendingProduct>();
@@ -516,6 +533,8 @@ namespace GoF2Remake.Data
             ArrivedByTravel = false;
             LaunchedFromStation = false;
             DockedFromSpace = false;
+            Es2TakeOff = false;
+            Es2StartDocked = false;
             ArrivedByLoad = false;
             ArrivedBySystemJump = false;
             SystemVisible = null;
@@ -526,6 +545,7 @@ namespace GoF2Remake.Data
             EnergyCellsForNextJump = 0;
             JumpgatesUsed = 0;
             Standing = new[] { 30, 0 };
+            FactionStanding = new Dictionary<string, int>(System.StringComparer.Ordinal);
             AttackedStations = new HashSet<int>();
             RecentOrbits = new List<int>();
             Kills = PirateKills = 0;

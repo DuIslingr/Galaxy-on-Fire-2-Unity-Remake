@@ -16,6 +16,8 @@ namespace GoF2Remake.Flight
         {
             public Vector3 position, velocity;   // Unity metres, metres per ms
             public int frame;
+            public Gun gun;                      // whose bullet it is (PointDefense shoots it down) ...
+            public int index;                    // ... and which
         }
 
         static readonly Dictionary<(Gun, int), Missile> live = new Dictionary<(Gun, int), Missile>();
@@ -26,7 +28,7 @@ namespace GoF2Remake.Flight
 
         /// <summary>Gun.Update: bullet 'index' of 'gun' homes on the local player.</summary>
         public static void Report(Gun gun, int index, Vector3 position, Vector3 velocity) =>
-            live[(gun, index)] = new Missile { position = position, velocity = velocity, frame = Time.frameCount };
+            live[(gun, index)] = new Missile { position = position, velocity = velocity, frame = Time.frameCount, gun = gun, index = index };
 
         /// <summary>The missiles reported this frame or the last (the guns and the HUD update in any order); older ones go.</summary>
         public static void Collect(List<Missile> into)

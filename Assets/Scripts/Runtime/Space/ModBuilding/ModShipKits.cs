@@ -27,12 +27,14 @@
 //       ] } ]
 //       "palettes": { "main": [ { "id": "white", "name": "Snow White", "color": "#F9F9F9", "metallic": 0, "smoothness": 0.5 }, ... ] },
 //       "colorSlots": [ { "id": "hull1", "name": "Main colour", "palette": "main", "default": "white",
-//                         "targets": [ { "material": "Paint1", "property": "base" | "emission" | "boost" | "engine", "intensity": 1 } ] } ],
+//                         "targets": [ { "material": "Paint1", "property": "base" | "emission" | "boost" | "engine" | "livery" | "decal1..3", "intensity": 1 } ] } ],
 //       "presets": [ { "id": "scheme_4", "name": "Scheme 4", "colors": { "hull1": "#699CBF/1/0.6", "lights": "white", ... } } ]
 //     The player picks a colour per slot from its palette (or a preset sets them all); each target recolours the materials whose
 //     name contains 'material' (the model's own, or a kit "materials" entry's 'material' filter): base = the base colour (x
 //     intensity; a value's metallic / smoothness too), emission = the emission colour x intensity, boost = an engine flame's
-//     boost colour x intensity (its boost cards; the manoeuvring jets' material is "lateral thruster"), engine = the engine glow.
+//     boost colour x intensity (its boost cards; the manoeuvring jets' material is "lateral thruster"), engine = the engine glow,
+//     livery = the livery's colour (and a value's metallic / smoothness) where a livery shows, decal1 / decal2 / decal3 = a
+//     decal's colour 1, 2 and border.
 //     A colour value: a palette entry's id, or "#RRGGBB" with an optional "/metallic/smoothness".
 //     A strength slot { "id", "name", "steps": [0, 0.25, 0.5, 0.75, 1], "default": "0.5", "scales": "<colour slot id>" } has no
 //     palette: its value (a number) scales that colour slot's emission targets (EVERSPACE 2's Emissive 3 intensity).
@@ -46,6 +48,35 @@
 //     Paint jobs as texture sets (Galaxy on Fire 3's paint schemes): a build's skin swaps the textures of copies of the
 //     materials whose name contains 'material' (the model's own glTF material names; ModShips.ApplySkin); a field left out
 //     keeps the model's own. No skin = the model's own look. A skin's textures load only when a build shows it.
+//     A skin may also carry "colors" (a preset's id, or { slot: value }: picked with the skin in the Customize screen and on
+//     the NPCs' random builds) and a "livery" (below): EVERSPACE 2's skins are a colour scheme and a livery.
+//       "liveries": [ { "id": "blossom", "name": "Nebula Blossom", "texture": "liveries/blossom.png", "icon": "...png",
+//                       "types": [...], "color": "#FFF5F4", "metallic": 0, "smoothness": 0.4, "opacity": 1,
+//                       "mirror": [false, false], "scale": [1, 1], "offset": [0, 0], "tiling": false, "clipAngle": 90 } ],
+//       "liveryAxes": { "forward": "x", "right": "z", "up": "y" }   (the parts' glTF axes, signed; default EVERSPACE 2's)
+//     A livery (EVERSPACE 2's projection decals, M_ShipModules_Hull_Parent's ProjectionDecal: its compiled shader) is a mask
+//     projected from above onto the materials marked "livery": true: the ship's (forward, right) over twice its largest
+//     half-extent, the centre at the image's middle (the nose to the right), mirrored at the middle per axis, scaled and
+//     offset, repeated outside the image only with "tiling"; mask^(1 + 1.2 luminance(colour)) x opacity lerps the base
+//     colour toward 'color' (keeping the map's shading), the metallic and smoothness toward its own, except on faces within
+//     (90 - clipAngle) degrees of vertical (GoF2/Hull: _Livery*). Build.livery ("livery=id", "none") picks it, else the
+//     skin's.
+//       "decals": [ { "id": "ramen_cat", "name": "Ramen Cat", "insignia": "decals/ramen_cat_insignia.png",
+//                     "type": "decals/ramen_cat_type.png", "icon": "...png", "types": [...] } ]
+//     A decal (EVERSPACE 2's ship decals, M_ShipModules_Decals_Parent's compiled shader): two masks, the insignia and the
+//     type (lettering), drawn on the materials marked "decal": "insignia" / "type" (the parts' decal faces): R x colour 1 +
+//     G x colour 2 + B x the border colour, over A (GoF2/Hull's decal mode, _Decal*). The colours are colour slots with
+//     the properties "decal1", "decal2", "decal3". Build.decal ("decal=id", "none") picks it, else the skin's; none = the
+//     decal faces left empty.
+//       "trails": [ { "id": "glitter", "name": "Stardust", "kind": "glitter", "icon": "...png", "curves": [[...], ...],
+//                     "texture": "trails/barcode.png", "mask": "...png", "normal": "...png",
+//                     "mesh": { "positions": [...], "normals": [...], "uv": [...], "indices": [...] } } ]
+//     EVERSPACE 2's customization engine trails (DT_ShipExhaustParticles, Es2Trails): "kind" one of default (the veil
+//     Es2EngineVfx draws by itself), glitter, smoke, bubbles, sparks, darktrail, firetrail, lines, lightning, rings,
+//     squares, triangles, veils; "curves" the systems' curve tables over the normalized age (Es2Trails says which), the
+//     textures the materials sample (sRGB masks, a linear "normal"), "mesh" the shape trails' cross section (EVERSPACE 2's
+//     centimetres and axes: x forward, y right, z up). Build.trail / Build.boostTrail ("trail=id", "boosttrail=id") pick
+//     the engine sockets' and the booster sockets' trail (none: the Default veil); only the player's ship shows them.
 //   Every kit ship also has a weapon colour (Build.weaponColor, "weaponcolor=<id or #RRGGBB>"; none = the weapons' own look):
 //   the energy weapons' shots in that colour (Flight.WeaponTint), picked from the kit's "weapons" palette, else WeaponPalette.
 //   A kit whose "hardpoints" have "toggle": true lets the player hide its weapon models, the mounts' pylons and its turret
@@ -80,9 +111,9 @@ namespace GoF2Remake.Modding
         public const string File = "shipkits.json";
 
         static readonly HashSet<string> KitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "id", "name", "slots", "scale", "yaw", "materials", "parts", "palettes", "colorSlots", "presets", "hardpoints", "skins" };
+            { "id", "name", "slots", "scale", "yaw", "materials", "parts", "palettes", "colorSlots", "presets", "hardpoints", "skins", "liveries", "liveryAxes", "decals", "trails" };
         static readonly HashSet<string> SkinFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "id", "name", "types", "engineColor", "materials" };
+            { "id", "name", "types", "engineColor", "materials", "colors", "livery", "decal" };
         static readonly HashSet<string> SkinMaterialFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "material", "diffuse", "emission", "metallicSmoothness", "normal", "color", "emissionColor", "emissionIntensity" };
         static readonly HashSet<string> PartFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -160,6 +191,14 @@ namespace GoF2Remake.Modding
             public List<string> types = new List<string>();
             public float[] engineColor;
             public List<SkinMaterial> materials = new List<SkinMaterial>();
+            /// <summary>Colour slot values picked with the skin (empty = none).</summary>
+            public Dictionary<string, string> colors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            /// <summary>A preset's id its colours come from (resolved into 'colors' once the kit's presets are read).</summary>
+            public string colorPreset;
+            /// <summary>The livery it shows unless the build picks one (a kit livery's id; null = none).</summary>
+            public string livery;
+            /// <summary>The decal it shows unless the build picks one (a kit decal's id; null = none).</summary>
+            public string decal;
             public string Name => ModManifest.Pick(name) ?? id;
             public bool Allows(string type) => types.Count == 0 || types.Any(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase));
 
@@ -174,6 +213,61 @@ namespace GoF2Remake.Modding
                     if (!string.IsNullOrEmpty(m.normal)) yield return (m.normal, true, true);
                 }
             }
+        }
+
+        /// <summary>A livery: a mask projected onto the ship from above (EVERSPACE 2's projection decals).</summary>
+        public sealed class Livery
+        {
+            public ModInfo mod;
+            public string id, texture, icon;
+            public Dictionary<string, string> name;
+            public List<string> types = new List<string>();
+            public Color color = new Color(1f, 0.909f, 0.901f);
+            public float metallic, smoothness = 0.4f, opacity = 1f, clipAngle = 90f;
+            public bool tiling, mirrorX, mirrorY;
+            public Vector2 scale = Vector2.one, offset;
+            public string Name => ModManifest.Pick(name) ?? id;
+            public bool Allows(string type) => types.Count == 0 || types.Any(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>A decal: the insignia and type masks for the parts' decal faces (EVERSPACE 2's ship decals).</summary>
+        public sealed class Decal
+        {
+            public ModInfo mod;
+            public string id, insignia, type, icon;
+            public Dictionary<string, string> name;
+            public List<string> types = new List<string>();
+            public string Name => ModManifest.Pick(name) ?? id;
+            public bool Allows(string t) => types.Count == 0 || types.Any(x => string.Equals(x, t, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>An engine trail (EVERSPACE 2's customization trails: Es2Trails runs it).</summary>
+        public sealed class EngineTrail
+        {
+            public ModInfo mod;
+            public string id, kind, icon, texture, mask, normal;
+            public Dictionary<string, string> name;
+            public readonly List<float[]> curves = new List<float[]>();
+            public TrailMesh mesh;
+            public string Name => ModManifest.Pick(name) ?? id;
+            /// <summary>EVERSPACE 2's Default: the veil Es2EngineVfx draws by itself.</summary>
+            public bool IsDefault => !Es2Trails.Known(kind);
+
+            /// <summary>Its textures (sRGB masks, a linear normal map).</summary>
+            public IEnumerable<(string path, bool linear, bool normal)> Textures()
+            {
+                if (!string.IsNullOrEmpty(texture)) yield return (texture, false, false);
+                if (!string.IsNullOrEmpty(mask)) yield return (mask, false, false);
+                if (!string.IsNullOrEmpty(normal)) yield return (normal, true, true);
+            }
+        }
+
+        /// <summary>A shape trail's cross section, EVERSPACE 2's centimetres and axes (x forward, y right, z up).</summary>
+        public sealed class TrailMesh
+        {
+            public Vector3[] positions, normals;
+            public Vector2[] uv;
+            public int[] indices;
         }
 
         public sealed class Kit
@@ -193,6 +287,12 @@ namespace GoF2Remake.Modding
             public List<Part> parts = new List<Part>();
             public ModHardpoints.Set hardpoints;   // the weapon / turret models (ModHardpoints), null = none
             public readonly List<Skin> skins = new List<Skin>();
+            public readonly List<Livery> liveries = new List<Livery>();
+            public readonly List<Decal> decals = new List<Decal>();
+            public readonly List<EngineTrail> trails = new List<EngineTrail>();
+            /// <summary>The parts' axes the liveries are projected along, in Unity's object space (glTFast mirrors x): forward,
+            /// right, up. Default EVERSPACE 2's export (glTF x forward, z right, y up).</summary>
+            public Vector3 liveryForward = new Vector3(-1f, 0f, 0f), liveryRight = new Vector3(0f, 0f, 1f), liveryUp = new Vector3(0f, 1f, 0f);
             /// <summary>The Customize screen offers the weapon colour (false: a ship whose only customizations are the mods'
             /// exhaust styles).</summary>
             public bool weaponColorRow = true;
@@ -206,6 +306,23 @@ namespace GoF2Remake.Modding
 
             /// <summary>The skins a ship type may wear, in the file's order.</summary>
             public List<Skin> SkinsFor(string type) => skins.Where(k => k.Allows(type)).ToList();
+
+            public Livery FindLivery(string id) => string.IsNullOrEmpty(id) ? null : liveries.Find(l => string.Equals(l.id, id, StringComparison.OrdinalIgnoreCase));
+            public List<Livery> LiveriesFor(string type) => liveries.Where(l => l.Allows(type)).ToList();
+
+            public EngineTrail FindTrail(string id) => string.IsNullOrEmpty(id) ? null : trails.Find(t => string.Equals(t.id, id, StringComparison.OrdinalIgnoreCase));
+
+            /// <summary>The trail a build gives its engine sockets (or its booster sockets); null = the Default veil.</summary>
+            public EngineTrail TrailOf(Build b, bool booster) => FindTrail(booster ? b?.boostTrail : b?.trail) is EngineTrail t && !t.IsDefault ? t : null;
+
+            public Decal FindDecal(string id) => string.IsNullOrEmpty(id) ? null : decals.Find(d => string.Equals(d.id, id, StringComparison.OrdinalIgnoreCase));
+            public List<Decal> DecalsFor(string type) => decals.Where(d => d.Allows(type)).ToList();
+
+            /// <summary>The decal a build shows: its own, else its skin's (none = "none" or neither).</summary>
+            public Decal DecalOf(Build b) => b == null || b.decal == Build.NoSkin ? null : FindDecal(b.decal) ?? FindDecal(FindSkin(b.skin)?.decal);
+
+            /// <summary>The livery a build shows: its own, else its skin's (none = "none" or neither).</summary>
+            public Livery LiveryOf(Build b) => b == null || b.livery == Build.NoSkin ? null : FindLivery(b.livery) ?? FindLivery(FindSkin(b.skin)?.livery);
 
             /// <summary>Whether the Customize screen has anything for a ship type: a slot with more than one part, a tier, colours
             /// or skins.</summary>
@@ -330,6 +447,9 @@ namespace GoF2Remake.Modding
                     if (!k.slots.Contains(p.slot, StringComparer.OrdinalIgnoreCase))
                         throw new ModJsonException($"{where}: the part \"{p.id}\"'s slot \"{p.slot}\" isn't in \"slots\"");
                 ReadColors(o, k, where);
+                ReadLiveries(o, k, mod, where);
+                ReadDecals(o, k, mod, where);
+                ReadTrails(o, k, mod, where);
                 ReadSkins(o, k, mod, where);
                 k.hardpoints = ModHardpoints.Read(o, mod, File, where);
                 into.Add(k);
@@ -366,7 +486,7 @@ namespace GoF2Remake.Modding
                 if (build.tier > 0 && build.tier <= part.tierMounts.Count) fromParts.AddRange(part.tierMounts[build.tier - 1]);
             }
             var all = new List<WeaponMount>();
-            foreach (int type in new[] { 0, 1, 2, 3, 4 })
+            foreach (int type in new[] { 0, 1, 2, 3, 4, 5 })
             {
                 var own = fromParts.Where(m => m.slotType == type).ToList();
                 all.AddRange(own.Count > 0 ? own : (c.mounts ?? new List<WeaponMount>()).Where(m => m.slotType == type));
@@ -592,8 +712,169 @@ namespace GoF2Remake.Modding
                             if (!string.IsNullOrEmpty(path) && !mod.Source.Exists(path)) throw new ModJsonException($"{mwhere}: the texture \"{path}\" isn't in the mod");
                         skin.materials.Add(m);
                     }
-                if (skin.materials.Count == 0 && skin.engineColor == null) Warn(mod, $"{swhere}: the skin \"{skin.id}\" changes nothing (no \"materials\")");
+                if (ModJson.Get(so, "colors") is JToken ct)
+                {
+                    if (ct.Type == JTokenType.String) skin.colorPreset = (string)ct;
+                    else if (ct is JObject co) { foreach (var c in co.Properties()) if (c.Value.Type == JTokenType.String) skin.colors[c.Name] = (string)c.Value; }
+                    else throw new ModJsonException($"{swhere}: \"colors\" is a preset's id or {{ \"slot\": \"value\" }}");
+                    if (skin.colorPreset != null)
+                    {
+                        var pr = k.presets.Find(x => string.Equals(x.id, skin.colorPreset, StringComparison.OrdinalIgnoreCase));
+                        if (pr == null) Warn(mod, $"{swhere}: \"colors\": no preset \"{skin.colorPreset}\" in this kit (ignored)");
+                        else foreach (var kv in pr.colors) skin.colors[kv.Key] = kv.Value;
+                    }
+                }
+                skin.decal = ModJson.Str(so, "decal");
+                if (skin.decal != null && k.FindDecal(skin.decal) == null) { Warn(mod, $"{swhere}: \"decal\": no decal \"{skin.decal}\" in this kit (ignored)"); skin.decal = null; }
+                skin.livery = ModJson.Str(so, "livery");
+                if (skin.livery != null && k.FindLivery(skin.livery) == null) { Warn(mod, $"{swhere}: \"livery\": no livery \"{skin.livery}\" in this kit (ignored)"); skin.livery = null; }
+                if (skin.materials.Count == 0 && skin.engineColor == null && skin.colors.Count == 0 && skin.livery == null && skin.decal == null)
+                    Warn(mod, $"{swhere}: the skin \"{skin.id}\" changes nothing (no \"materials\", \"colors\" or \"livery\")");
                 k.skins.Add(skin);
+            }
+        }
+
+        static readonly HashSet<string> LiveryFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "id", "name", "texture", "icon", "types", "color", "metallic", "smoothness", "opacity", "mirror", "scale", "offset", "tiling", "clipAngle" };
+
+        static void ReadLiveries(JObject o, Kit k, ModInfo mod, string where, string file = File)
+        {
+            if (ModJson.Get(o, "liveryAxes") is JToken ax)
+            {
+                if (!(ax is JObject ao)) throw new ModJsonException($"{where}: \"liveryAxes\" must be {{ \"forward\": \"x\", \"right\": \"z\", \"up\": \"y\" }}");
+                Vector3 Axis(string field, Vector3 def)
+                {
+                    string w = ModJson.Str(ao, field);
+                    if (w == null) return def;
+                    w = w.Trim().ToLowerInvariant();
+                    float sign = w.StartsWith("-") ? -1f : 1f;
+                    var v = w.TrimStart('-', '+') switch { "x" => new Vector3(-1f, 0f, 0f), "y" => Vector3.up, "z" => Vector3.forward, _ => Vector3.zero };   // glTF x is Unity's -x
+                    if (v == Vector3.zero) throw new ModJsonException($"{where}: \"liveryAxes\": \"{field}\" is \"x\", \"y\" or \"z\" (\"-x\" for the other way)");
+                    return v * sign;
+                }
+                k.liveryForward = Axis("forward", k.liveryForward);
+                k.liveryRight = Axis("right", k.liveryRight);
+                k.liveryUp = Axis("up", k.liveryUp);
+            }
+            if (!(ModJson.Get(o, "liveries") is JToken lt)) return;
+            if (!(lt is JArray list)) throw new ModJsonException($"{where}: \"liveries\" must be a list of liveries");
+            foreach (var t in list)
+            {
+                string lw = ModJson.Where(t, file);
+                if (!(t is JObject lo)) throw new ModJsonException($"{lw}: each livery must be an object {{ \"id\", \"name\", \"texture\" }}");
+                foreach (var prop in lo.Properties())
+                    if (!LiveryFields.Contains(prop.Name)) Warn(mod, $"{ModJson.Where(prop, file)}: unknown field \"{prop.Name}\" (ignored)");
+                var l = new Livery { mod = mod, id = ModJson.Str(lo, "id"), name = ModJson.Text(lo, "name"), texture = ModJson.Str(lo, "texture"),
+                                     icon = ModJson.Str(lo, "icon"), types = ModJson.Strings(lo, "types") ?? new List<string>() };
+                if (string.IsNullOrEmpty(l.id) || !ModManifest.ValidId(l.id)) throw new ModJsonException($"{lw}: a livery's \"id\" is missing or uses more than a-z, 0-9, _ and -");
+                if (l.id == Build.NoSkin) throw new ModJsonException($"{lw}: \"none\" can't be a livery's id");
+                if (k.FindLivery(l.id) != null) throw new ModJsonException($"{lw}: the livery id \"{l.id}\" is used twice in this kit");
+                if (string.IsNullOrEmpty(l.texture) || !mod.Source.Exists(l.texture)) throw new ModJsonException($"{lw}: the livery's \"texture\" is missing or isn't in the mod");
+                if (l.icon != null && !mod.Source.Exists(l.icon)) { Warn(mod, $"{lw}: the icon {l.icon} isn't in the mod (ignored)"); l.icon = null; }
+                if (ModJson.Get(lo, "color") is JToken c)
+                {
+                    if (c.Type == JTokenType.String) { if (!TryHex((string)c, out l.color)) throw new ModJsonException($"{lw}: \"color\" is \"#RRGGBB\" or [r, g, b]"); }
+                    else if (c is JArray ca && ca.Count >= 3) l.color = new Color((float)ca[0], (float)ca[1], (float)ca[2]);
+                    else throw new ModJsonException($"{lw}: \"color\" is \"#RRGGBB\" or [r, g, b]");
+                }
+                l.metallic = Mathf.Clamp01(ModJson.Float(lo, "metallic", 0f, file));
+                l.smoothness = Mathf.Clamp01(ModJson.Float(lo, "smoothness", 0.4f, file));
+                l.opacity = Mathf.Clamp01(ModJson.Float(lo, "opacity", 1f, file));
+                l.clipAngle = Mathf.Clamp(ModJson.Float(lo, "clipAngle", 90f, file), 0f, 90f);
+                l.tiling = ModJson.Bool(lo, "tiling", false, file);
+                Vector2 Pair(string field, Vector2 def)
+                {
+                    if (!(ModJson.Get(lo, field) is JToken pt)) return def;
+                    if (!(pt is JArray pa) || pa.Count < 2) throw new ModJsonException($"{lw}: \"{field}\" must be [x, y]");
+                    return new Vector2((float)pa[0], (float)pa[1]);
+                }
+                l.scale = Pair("scale", Vector2.one);
+                if (Mathf.Abs(l.scale.x) < 1e-3f || Mathf.Abs(l.scale.y) < 1e-3f) throw new ModJsonException($"{lw}: \"scale\" can't be 0");
+                l.offset = Pair("offset", Vector2.zero);
+                if (ModJson.Get(lo, "mirror") is JToken mt)
+                {
+                    if (!(mt is JArray ma) || ma.Count < 2) throw new ModJsonException($"{lw}: \"mirror\" must be [x, y] (true / false)");
+                    l.mirrorX = (bool)ma[0]; l.mirrorY = (bool)ma[1];
+                }
+                k.liveries.Add(l);
+            }
+        }
+
+        static readonly HashSet<string> DecalFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "id", "name", "insignia", "type", "icon", "types" };
+
+        static void ReadDecals(JObject o, Kit k, ModInfo mod, string where, string file = File)
+        {
+            if (!(ModJson.Get(o, "decals") is JToken dt)) return;
+            if (!(dt is JArray list)) throw new ModJsonException($"{where}: \"decals\" must be a list of decals");
+            foreach (var t in list)
+            {
+                string dw = ModJson.Where(t, file);
+                if (!(t is JObject d)) throw new ModJsonException($"{dw}: each decal must be an object {{ \"id\", \"name\", \"insignia\", \"type\" }}");
+                foreach (var prop in d.Properties())
+                    if (!DecalFields.Contains(prop.Name)) Warn(mod, $"{ModJson.Where(prop, file)}: unknown field \"{prop.Name}\" (ignored)");
+                var dc = new Decal { mod = mod, id = ModJson.Str(d, "id"), name = ModJson.Text(d, "name"), insignia = ModJson.Str(d, "insignia"),
+                                     type = ModJson.Str(d, "type"), icon = ModJson.Str(d, "icon"), types = ModJson.Strings(d, "types") ?? new List<string>() };
+                if (string.IsNullOrEmpty(dc.id) || !ModManifest.ValidId(dc.id)) throw new ModJsonException($"{dw}: a decal's \"id\" is missing or uses more than a-z, 0-9, _ and -");
+                if (dc.id == Build.NoSkin) throw new ModJsonException($"{dw}: \"none\" can't be a decal's id");
+                if (k.FindDecal(dc.id) != null) throw new ModJsonException($"{dw}: the decal id \"{dc.id}\" is used twice in this kit");
+                if (dc.insignia == null && dc.type == null) throw new ModJsonException($"{dw}: a decal needs \"insignia\" or \"type\" (a PNG mask)");
+                foreach (var path in new[] { dc.insignia, dc.type })
+                    if (path != null && !mod.Source.Exists(path)) throw new ModJsonException($"{dw}: the texture \"{path}\" isn't in the mod");
+                if (dc.icon != null && !mod.Source.Exists(dc.icon)) { Warn(mod, $"{dw}: the icon {dc.icon} isn't in the mod (ignored)"); dc.icon = null; }
+                k.decals.Add(dc);
+            }
+        }
+
+        static readonly HashSet<string> TrailFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "id", "name", "kind", "icon", "curves", "texture", "mask", "normal", "mesh" };
+
+        static void ReadTrails(JObject o, Kit k, ModInfo mod, string where, string file = File)
+        {
+            if (!(ModJson.Get(o, "trails") is JToken tt)) return;
+            if (!(tt is JArray list)) throw new ModJsonException($"{where}: \"trails\" must be a list of engine trails");
+            foreach (var t in list)
+            {
+                string tw = ModJson.Where(t, file);
+                if (!(t is JObject to)) throw new ModJsonException($"{tw}: each trail must be an object {{ \"id\", \"name\", \"kind\" }}");
+                foreach (var prop in to.Properties())
+                    if (!TrailFields.Contains(prop.Name)) Warn(mod, $"{ModJson.Where(prop, file)}: unknown field \"{prop.Name}\" (ignored)");
+                var tr = new EngineTrail { mod = mod, id = ModJson.Str(to, "id"), name = ModJson.Text(to, "name"), kind = (ModJson.Str(to, "kind") ?? "default").ToLowerInvariant(),
+                                           icon = ModJson.Str(to, "icon"), texture = ModJson.Str(to, "texture"), mask = ModJson.Str(to, "mask"), normal = ModJson.Str(to, "normal") };
+                if (string.IsNullOrEmpty(tr.id) || !ModManifest.ValidId(tr.id)) throw new ModJsonException($"{tw}: a trail's \"id\" is missing or uses more than a-z, 0-9, _ and -");
+                if (k.FindTrail(tr.id) != null) throw new ModJsonException($"{tw}: the trail id \"{tr.id}\" is used twice in this kit");
+                if (tr.kind != "default" && !Es2Trails.Known(tr.kind)) Warn(mod, $"{tw}: unknown trail kind \"{tr.kind}\" (drawn as the Default veil)");
+                foreach (var path in new[] { tr.texture, tr.mask, tr.normal })
+                    if (path != null && !mod.Source.Exists(path)) throw new ModJsonException($"{tw}: the texture \"{path}\" isn't in the mod");
+                if (tr.icon != null && !mod.Source.Exists(tr.icon)) { Warn(mod, $"{tw}: the icon {tr.icon} isn't in the mod (ignored)"); tr.icon = null; }
+                if (ModJson.Get(to, "curves") is JToken ct)
+                {
+                    if (!(ct is JArray ca)) throw new ModJsonException($"{tw}: \"curves\" must be a list of number lists");
+                    foreach (var c in ca)
+                    {
+                        if (!(c is JArray cn) || cn.Count == 0) throw new ModJsonException($"{tw}: each curve must be a list of numbers");
+                        tr.curves.Add(cn.Select(x => (float)x).ToArray());
+                    }
+                }
+                if (ModJson.Get(to, "mesh") is JToken mt)
+                {
+                    if (!(mt is JObject mo)) throw new ModJsonException($"{tw}: \"mesh\" must be {{ \"positions\", \"normals\", \"uv\", \"indices\" }}");
+                    float[] F(string field) => ModJson.Get(mo, field) is JArray a ? a.Select(x => (float)x).ToArray() : new float[0];
+                    var pos = F("positions"); var nrm = F("normals"); var uv = F("uv");
+                    var idx = ModJson.Get(mo, "indices") is JArray ia ? ia.Select(x => (int)x).ToArray() : new int[0];
+                    int n = pos.Length / 3;
+                    if (n == 0 || nrm.Length != n * 3 || uv.Length != n * 2 || idx.Length % 3 != 0 || idx.Any(i => i < 0 || i >= n))
+                        throw new ModJsonException($"{tw}: \"mesh\" needs 3 numbers per position and normal, 2 per uv and triangles of valid indices");
+                    tr.mesh = new TrailMesh
+                    {
+                        positions = Enumerable.Range(0, n).Select(i => new Vector3(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])).ToArray(),
+                        normals = Enumerable.Range(0, n).Select(i => new Vector3(nrm[i * 3], nrm[i * 3 + 1], nrm[i * 3 + 2])).ToArray(),
+                        uv = Enumerable.Range(0, n).Select(i => new Vector2(uv[i * 2], uv[i * 2 + 1])).ToArray(),
+                        indices = idx,
+                    };
+                }
+                if (tr.mesh == null && (tr.kind == "rings" || tr.kind == "squares" || tr.kind == "triangles"))
+                    throw new ModJsonException($"{tw}: a \"{tr.kind}\" trail needs its \"mesh\"");
+                k.trails.Add(tr);
             }
         }
 
@@ -669,9 +950,16 @@ namespace GoF2Remake.Modding
             /// <summary>The kit's weapon models, pylons and turret shown or not (written "weapons=off" / "on"; null = the default
             /// build's choice, else shown): only for a kit whose "hardpoints" have "toggle": true (ModHardpoints.Hidden).</summary>
             public string weapons;
+            /// <summary>The livery (written "livery=id"; null = the skin's, "none" = none).</summary>
+            public string livery;
+            /// <summary>The decal (written "decal=id"; null = the skin's, "none" = none).</summary>
+            public string decal;
+            /// <summary>The engine sockets' and the booster sockets' trails (written "trail=id" / "boosttrail=id"; null = the
+            /// Default veil).</summary>
+            public string trail, boostTrail;
             public const string WeaponsOff = "off", WeaponsOn = "on";
             public bool WeaponsHidden => string.Equals(weapons, WeaponsOff, StringComparison.OrdinalIgnoreCase);
-            const string ColorPrefix = "color.", SkinKey = "skin", WeaponColorKey = "weaponcolor";
+            const string ColorPrefix = "color.", SkinKey = "skin", WeaponColorKey = "weaponcolor", LiveryKey = "livery", DecalKey = "decal", TrailKey = "trail", BoostTrailKey = "boosttrail";
             const string ExhaustKey = "exhaust", ExhaustColorKey = "exhaustcolor", ExhaustColor2Key = "exhaustcolor2", ExhaustSizeKey = "exhaustsize", WeaponsKey = "weapons";
 
             /// <summary>Names a kit can't use for a slot: the build text's own keys.</summary>
@@ -680,6 +968,10 @@ namespace GoF2Remake.Modding
                                                         || string.Equals(slot, SkinKey, StringComparison.OrdinalIgnoreCase)
                                                         || string.Equals(slot, WeaponColorKey, StringComparison.OrdinalIgnoreCase)
                                                         || string.Equals(slot, WeaponsKey, StringComparison.OrdinalIgnoreCase)
+                                                        || string.Equals(slot, LiveryKey, StringComparison.OrdinalIgnoreCase)
+                                                        || string.Equals(slot, DecalKey, StringComparison.OrdinalIgnoreCase)
+                                                        || string.Equals(slot, TrailKey, StringComparison.OrdinalIgnoreCase)
+                                                        || string.Equals(slot, BoostTrailKey, StringComparison.OrdinalIgnoreCase)
                                                         || slot.StartsWith(ExhaustKey, StringComparison.OrdinalIgnoreCase)
                                                         || slot.StartsWith(ColorPrefix, StringComparison.OrdinalIgnoreCase);
 
@@ -700,6 +992,10 @@ namespace GoF2Remake.Modding
                     else if (k == ExhaustColor2Key) b.exhaustColor2 = v.Length > 0 ? v : null;
                     else if (k == ExhaustSizeKey) b.exhaustSize = v.Length > 0 ? v : null;
                     else if (k == WeaponsKey) b.weapons = v.Length > 0 ? v.ToLowerInvariant() : null;
+                    else if (k == LiveryKey) b.livery = v.Length > 0 ? v : null;
+                    else if (k == DecalKey) b.decal = v.Length > 0 ? v : null;
+                    else if (k == TrailKey) b.trail = v.Length > 0 ? v : null;
+                    else if (k == BoostTrailKey) b.boostTrail = v.Length > 0 ? v : null;
                     else if (k.StartsWith(ColorPrefix)) { if (v.Length > 0) b.colors[k.Substring(ColorPrefix.Length)] = v; }
                     else if (v.Length > 0) b.parts[k] = v;
                 }
@@ -716,6 +1012,10 @@ namespace GoF2Remake.Modding
                     if (string.Equals(prop.Name, "tier", StringComparison.OrdinalIgnoreCase)) { b.tier = prop.Value.Type == JTokenType.Integer ? (int)prop.Value : 0; continue; }
                     if (string.Equals(prop.Name, SkinKey, StringComparison.OrdinalIgnoreCase)) { b.skin = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
                     if (string.Equals(prop.Name, "weaponColor", StringComparison.OrdinalIgnoreCase)) { b.weaponColor = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, LiveryKey, StringComparison.OrdinalIgnoreCase)) { b.livery = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, DecalKey, StringComparison.OrdinalIgnoreCase)) { b.decal = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, TrailKey, StringComparison.OrdinalIgnoreCase)) { b.trail = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, "boostTrail", StringComparison.OrdinalIgnoreCase)) { b.boostTrail = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
                     if (string.Equals(prop.Name, ExhaustKey, StringComparison.OrdinalIgnoreCase)) { b.exhaust = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
                     if (string.Equals(prop.Name, "exhaustColor", StringComparison.OrdinalIgnoreCase)) { b.exhaustColor = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
                     if (string.Equals(prop.Name, "exhaustColor2", StringComparison.OrdinalIgnoreCase)) { b.exhaustColor2 = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
@@ -745,7 +1045,7 @@ namespace GoF2Remake.Modding
 
             public Build Clone()
             {
-                var b = new Build { tier = tier, skin = skin, weaponColor = weaponColor, exhaust = exhaust, exhaustColor = exhaustColor, exhaustColor2 = exhaustColor2, exhaustSize = exhaustSize, weapons = weapons };
+                var b = new Build { tier = tier, skin = skin, weaponColor = weaponColor, exhaust = exhaust, exhaustColor = exhaustColor, exhaustColor2 = exhaustColor2, exhaustSize = exhaustSize, weapons = weapons, livery = livery, decal = decal, trail = trail, boostTrail = boostTrail };
                 foreach (var kv in parts) b.parts[kv.Key] = kv.Value;
                 foreach (var kv in colors) b.colors[kv.Key] = kv.Value;
                 return b;
@@ -759,7 +1059,11 @@ namespace GoF2Remake.Modding
                 .Concat(string.IsNullOrEmpty(exhaustColor) ? Enumerable.Empty<string>() : new[] { ExhaustColorKey + "=" + exhaustColor })
                 .Concat(string.IsNullOrEmpty(exhaustColor2) ? Enumerable.Empty<string>() : new[] { ExhaustColor2Key + "=" + exhaustColor2 })
                 .Concat(string.IsNullOrEmpty(exhaustSize) ? Enumerable.Empty<string>() : new[] { ExhaustSizeKey + "=" + exhaustSize })
-                .Concat(string.IsNullOrEmpty(weapons) ? Enumerable.Empty<string>() : new[] { WeaponsKey + "=" + weapons }).Append("tier=" + tier));
+                .Concat(string.IsNullOrEmpty(weapons) ? Enumerable.Empty<string>() : new[] { WeaponsKey + "=" + weapons })
+                .Concat(string.IsNullOrEmpty(livery) ? Enumerable.Empty<string>() : new[] { LiveryKey + "=" + livery })
+                .Concat(string.IsNullOrEmpty(decal) ? Enumerable.Empty<string>() : new[] { DecalKey + "=" + decal })
+                .Concat(string.IsNullOrEmpty(trail) ? Enumerable.Empty<string>() : new[] { TrailKey + "=" + trail })
+                .Concat(string.IsNullOrEmpty(boostTrail) ? Enumerable.Empty<string>() : new[] { BoostTrailKey + "=" + boostTrail }).Append("tier=" + tier));
         }
 
         /// <summary>'b' made valid for this kit and ship type: every slot one part the type may fit ('fallback''s part, else the
@@ -816,6 +1120,17 @@ namespace GoF2Remake.Modding
                 bool hide = b != null && b.weapons == Build.WeaponsOn ? false : b != null && b.WeaponsHidden || fallbackHides;
                 n.weapons = hide ? Build.WeaponsOff : fallbackHides ? Build.WeaponsOn : null;
             }
+            // The livery: 'b''s when the type may wear it, "none" kept, else the fallback's (null = the skin's).
+            Livery LiveryAllowed(string id) => kit.FindLivery(id) is Livery lv && lv.Allows(type) ? lv : null;
+            n.livery = b?.livery == Build.NoSkin ? Build.NoSkin : LiveryAllowed(b?.livery)?.id
+                     ?? (fallback?.livery == Build.NoSkin ? Build.NoSkin : LiveryAllowed(fallback?.livery)?.id);
+            // The decal the same way.
+            Decal DecalAllowed(string id) => kit.FindDecal(id) is Decal dc && dc.Allows(type) ? dc : null;
+            n.decal = b?.decal == Build.NoSkin ? Build.NoSkin : DecalAllowed(b?.decal)?.id
+                    ?? (fallback?.decal == Build.NoSkin ? Build.NoSkin : DecalAllowed(fallback?.decal)?.id);
+            // The trails: 'b''s when the kit has them, else the fallback's (null = the Default veil).
+            n.trail = kit.FindTrail(b?.trail)?.id ?? kit.FindTrail(fallback?.trail)?.id;
+            n.boostTrail = kit.FindTrail(b?.boostTrail)?.id ?? kit.FindTrail(fallback?.boostTrail)?.id;
             return n;
         }
 
@@ -856,11 +1171,14 @@ namespace GoF2Remake.Modding
             // The weapon colour isn't part of the model (Flight.WeaponTint colours the shots): no variant of its own.
             // Nor the exhaust style (ModExhausts.Apply puts it on the instance).
             // Nor the weapon models' toggle (ModHardpoints shows or hides them, and the pylons, on the instance).
+            // Nor the engine trails (Es2EngineVfx reads the player's build).
             if (build != null && (!string.IsNullOrEmpty(build.weaponColor) || !string.IsNullOrEmpty(build.exhaust) || !string.IsNullOrEmpty(build.exhaustColor)
-                                  || !string.IsNullOrEmpty(build.exhaustColor2) || !string.IsNullOrEmpty(build.exhaustSize) || !string.IsNullOrEmpty(build.weapons)))
+                                  || !string.IsNullOrEmpty(build.exhaustColor2) || !string.IsNullOrEmpty(build.exhaustSize) || !string.IsNullOrEmpty(build.weapons)
+                                  || !string.IsNullOrEmpty(build.trail) || !string.IsNullOrEmpty(build.boostTrail)))
             {
                 build = build.Clone();
                 build.weaponColor = build.exhaust = build.exhaustColor = build.exhaustColor2 = build.exhaustSize = build.weapons = null;
+                build.trail = build.boostTrail = null;
             }
             if (KitShip(ship) == null)
             {

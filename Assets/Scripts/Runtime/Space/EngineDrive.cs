@@ -8,6 +8,8 @@
 // An inactive 'engineState' (a player engine part the game turns off while mining, object docking, cutscenes) reads 0.
 // Free flight with no forward thrust held (FlightModel.EnginesOff) reads 0 with Off set: the effects treat it as engines off.
 // A ship under an EnginePreview (the hangar's Customize screen) reads its 'drive'.
+// A mod battleship that isn't the player's ship never reads under its idle drive (Modding.ModCapitalShips.ParkedDrive): it
+// is parked, and its engine effects would be dark.
 
 using GoF2Remake.Flight;
 using UnityEngine;
@@ -27,6 +29,7 @@ namespace GoF2Remake.Visuals
         Vector3 lastPosition;
         bool hasLast;
         float measured;      // the moved-speed estimate (0..2: 1 = base speed)
+        float idle = -1f;    // the least drive of a ship without a throttle (-1: not looked up yet)
 
         public EngineDrive(Transform transform)
         {
@@ -44,6 +47,16 @@ namespace GoF2Remake.Visuals
 
         /// <summary>Forget the last position (after a scene change or a re-enable: no speed from the jump).</summary>
         public void Reset() { hasLast = false; Lookup(); }
+
+        /// <summary>The least drive of a ship without a throttle of its own (a parked mod battleship's idle engines).</summary>
+        public float Idle
+        {
+            get
+            {
+                if (idle < 0f) idle = Modding.ModCapitalShips.IdleDriveOf(transform.gameObject);
+                return idle;
+            }
+        }
 
         /// <summary>The player's main engines are off (free flight with no forward thrust held: FlightModel.EnginesOff), as
         /// of the last Sample: the effects go dark as with the engine part off.</summary>
@@ -82,7 +95,7 @@ namespace GoF2Remake.Visuals
             }
             lastPosition = p;
             hasLast = true;
-            return measured;
+            return Mathf.Max(measured, Idle);
         }
     }
 }

@@ -337,6 +337,9 @@ namespace GoF2Remake.UI
             int shown = StationNumberOf(s);
             if (shown >= 0 && shown != Session.StationIndex) Act(stationPage, T("mbShowOrbit", "Show its orbit"), () => { SaveNow(); ModBuilder.ReloadSpace(shown); });
             Text(stationPage, T("mbName", "Name"), s.Name, 40, v => { s.Name = v.Trim(); Edited(false); RebuildStations(); });
+            Text(stationPage, T("mbStationSubtitle", "What it is (under its name on the star map)"), s.Subtitle, 60, v => { s.Subtitle = v.Trim(); Edited(false); });
+            Text(stationPage, T("mbStationLore", "Description (on the star map and in its system's news ticker)"), s.Description, 1000,
+                 v => { s.Description = v.Trim(); Edited(false); }, multi: true);
             if (isNew)
             {
                 RefField(stationPage, T("mbSystem", "System"), RefKind.System, s.System, v => { if (v != null) { s.System = v; Edited(true); } }, clear: false);

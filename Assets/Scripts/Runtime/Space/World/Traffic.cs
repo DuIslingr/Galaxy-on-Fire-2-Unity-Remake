@@ -62,7 +62,8 @@ namespace GoF2Remake.World
             systemIndex = layout.systemIndex;
             this.storyOrbit = storyOrbit;
             var sys = db.Systems.Find(s => s.index == layout.systemIndex);
-            SystemRace = Mathf.Clamp(sys?.raceId ?? 0, 0, 3);
+            // (a mod faction's system keeps its faction: its locals, kills and alarms; the tables use its look, Standing.Look)
+            SystemRace = Modding.ModFactions.Is(sys?.raceId ?? 0) ? sys.raceId : Mathf.Clamp(sys?.raceId ?? 0, 0, 3);
             AttackRace = Standing.EnemyRaceOf(SystemRace);
             Security = sys?.securityLevel ?? 0;
             blackMarket = layout.systemIndex == 25;
@@ -141,7 +142,7 @@ namespace GoF2Remake.World
                       : spec.fixedObject != null ? db.AssemblyByName(spec.fixedObject)
                       // Ship 13 is the Vossk freighter whatever the race (Globals::getShipGroup; its boxes too): step 40's
                       // Errkt flies it as race 0 until it appears (createShip(0, 1, 0xd)) and showed the Terran model.
-                      : spec.freighter ? db.AssemblyByName(NpcTables.FreighterAssembly(spec.ship == 13 ? 1 : spec.race))
+                      : spec.freighter && !spec.modCapital ? db.AssemblyByName(NpcTables.FreighterAssembly(spec.ship == 13 ? 1 : spec.race))
                                        : Modding.ModTraffic.Assembly(spec.ship) ?? ShipAssembly(spec.ship, spec.race);   // remake mods: a kit ship's random build
             var prefab = AssembledObject.LoadPrefab(entry);
             // Remake: a turret object built from a turret item shows the item's turret (a mod's own model too).
@@ -160,6 +161,11 @@ namespace GoF2Remake.World
                 && ship.MountedTurrets == null)
                 AttachFighterTurret(ship);
             if (spec.capital != 0 && spec.capitalEnhanced) CapitalShip.Attach(ship, this, db);   // remake option (CapitalShips)
+            // Remake mods: a mod capital ship's subsystems (turrets, shield generators, weak spots, hangars) on its hull.
+            if (spec.modCapital && db.ShipSubsystems.TryGetValue(spec.ship, out var subsystems) && subsystems.Count > 0)
+                CapitalSubsystems.Attach(ship, this, db, subsystems);
+            // ... one that jumps away instead of dying (ships.json "retreat": EVERSPACE 2's Dreadnought)
+            if (spec.modCapital && CustomShips.Get(spec.ship)?.retreat == true) CapitalRetreat.Attach(ship, this);
             return ship;
         }
 
@@ -214,7 +220,7 @@ namespace GoF2Remake.World
             {
                 var state = UnityEngine.Random.state;
                 UnityEngine.Random.InitState(5 * names[i].Length);
-                int ship = NpcTables.RandomFighter(race <= 3 ? race : Standing.Pirate);   // races 4-7: the pirate pool
+                int ship = NpcTables.RandomFighter(race <= 3 || Modding.ModFactions.Is(race) ? race : Standing.Pirate);   // races 4-7: the pirate pool
                 UnityEngine.Random.state = state;
                 var pos = player.position + (player.right * right[i] - player.forward * 2000f + Vector3.up * (i == 2 ? 1000f : 0f)) * 0.05f;
                 var spec = new SpawnSpec
@@ -801,9 +807,11 @@ namespace GoF2Remake.World
         {
             if (ship != null && ship.Spec.modBlueprint >= 0)
             {
-                // Remake mods: a derelict's blueprint, in a data crate drifting off the wreck (pulled in, it is learnt).
+                // Remake mods: a derelict's blueprint, in a data crate drifting off the wreck (pulled in, it is learnt); none
+                // when it was learnt meanwhile (a blueprint is handed out once).
                 ship.DockingType = 0;
-                Crate.Spawn(ship.transform.position + ship.transform.up * 300f * M, new[] { new ItemStack(ship.Spec.modBlueprint, 1) },
+                if (!Blueprints.IsUnlocked(ship.Spec.modBlueprint) && !Crate.HoldsAny(ship.Spec.modBlueprint))
+                    Crate.Spawn(ship.transform.position + ship.transform.up * 300f * M, new[] { new ItemStack(ship.Spec.modBlueprint, 1) },
                             ship.Spec.race, Crate.LookJunk);
                 return;
             }
@@ -1035,7 +1043,7 @@ namespace GoF2Remake.World
 
         /// <summary>DAT_00252010[race]: the system race's space track (Globals::playMusicAndFadeOutCurrent(1)).</summary>
         public AudioClip RaceSpaceMusic() => Modding.ModWorld.SpaceMusic(StationIndex)   // remake mods: a system's own space music
-            ?? (assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null);
+            ?? (assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[Mathf.Clamp(Standing.Look(SystemRace), 0, 3)] : null);
 
         /// <summary>Radar::draw 0x157c6c: the calm track (no hostile ship). The alien orbit and a Void-attacked station 145,
         /// campaign 1 (the rescue) 143, the Kaamo Club 146, 101 147, the supernova system the mission target's 2241 (before
@@ -1057,7 +1065,7 @@ namespace GoF2Remake.World
                 return target ? (Session.CampaignMission < 0x6a ? sn?.mission102Loop : sn?.mission102Loop2) : sn?.gammaRayMusic;
             }
             if (StationIndex == 10 || StationIndex == 100) return assets.deepScienceMusic;
-            return assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null;
+            return assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[Mathf.Clamp(Standing.Look(SystemRace), 0, 3)] : null;
         }
 
         void UpdateMusic(float dt)

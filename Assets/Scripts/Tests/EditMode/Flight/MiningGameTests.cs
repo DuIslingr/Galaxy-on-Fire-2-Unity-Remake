@@ -40,6 +40,35 @@ namespace GoF2Remake.Tests
             finally { Random.state = saved; }
         }
 
+        [Test]
+        public void AnOresMiningTimeStretchesTheLayersForTheSameOre()
+        {
+            // items.json "miningTime" 200 (EVERSPACE 2's crystals, DT_Mining_Yield's 10 s against 5): every layer twice as long,
+            // the same ore in the end. Held on the centre, no drift reaches the edge.
+            var plain = new MiningGame(4, Gold, 100, 60);
+            var slow = new MiningGame(4, Gold, 100, 60, miningTime: 200);
+            Assert.AreEqual(MiningGame.LayerMs * 2f, slow.LayerDurationMs);
+            float plainMs = 0f, slowMs = 0f;
+            var saved = Random.state;
+            try
+            {
+                Random.InitState(5);
+                for (int guard = 0; guard < 100000 && plain.Update(16f); guard++) { plainMs += 16f; Hold(plain); }
+                Random.InitState(5);
+                for (int guard = 0; guard < 100000 && slow.Update(16f); guard++) { slowMs += 16f; Hold(slow); }
+            }
+            finally { Random.state = saved; }
+            Assert.IsTrue(plain.Won && slow.Won);
+            Assert.AreEqual(plainMs * 2f, slowMs, 16f * 8);   // (each layer ends on a 16 ms frame)
+            Assert.AreEqual(plain.Ore, slow.Ore, 0.1f);
+        }
+
+        static void Hold(MiningGame g)
+        {
+            var d = g.Drill;
+            g.SetInput(new Vector2(Mathf.Clamp(-d.x / 10f, -1f, 1f), Mathf.Clamp(-d.y / 10f, -1f, 1f)));
+        }
+
         [TestCase(4, 14)]
         [TestCase(5, 20)]
         [TestCase(6, 28)]

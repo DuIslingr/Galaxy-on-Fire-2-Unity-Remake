@@ -35,6 +35,10 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<Color32, Texture2D> solids = new Dictionary<Color32, Texture2D>();
         static readonly List<Object> made = new List<Object>();
 
+        /// <summary>The override tag on a material whose emission map is its "damageEmission" mask (DamageEmbers drives only
+        /// those; a material with an emission of its own keeps it, its charring still follows the damage).</summary>
+        public const string DamageEmbersTag = "GoF2DamageEmbers";
+
         static int revision = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -460,6 +464,12 @@ namespace GoF2Remake.Modding
             var diffuse = Texture(mod, e.diffuse, false);
             m.SetTexture("_BaseMap", diffuse);
             m.SetTexture("_MainTex", diffuse);
+            if (e.tiling > 0f && !Mathf.Approximately(e.tiling, 1f))
+            {
+                // (URP Lit's base, normal, metallic and emission maps share _BaseMap's scale)
+                m.SetTextureScale("_BaseMap", Vector2.one * e.tiling);
+                m.SetTextureScale("_MainTex", Vector2.one * e.tiling);
+            }
             var baseColor = Rgb(e.color, Color.white);
             if (glass) baseColor.a = e.opacity;
             m.SetColor("_BaseColor", baseColor);
@@ -483,7 +493,7 @@ namespace GoF2Remake.Modding
             {
                 // Battle damage embers: dark until DamageEmbers lights them with the hull damage.
                 var dmg = Texture(mod, e.damageEmission, false);
-                if (dmg != null) { m.SetTexture("_EmissionMap", dmg); m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None; }
+                if (dmg != null) { m.SetTexture("_EmissionMap", dmg); m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None; m.SetOverrideTag(DamageEmbersTag, "1"); }
             }
             if (clip && !glass) m.SetFloat("_Cutoff", e.alphaClip);
             m.SetFloat("_Cull", e.doubleSided ? (float)CullMode.Off : (float)CullMode.Back);
@@ -511,6 +521,11 @@ namespace GoF2Remake.Modding
             return m;
         }
 
+        /// <summary>EVERSPACE 2's flame emits 1000 x its colour, alpha-blended by its opacity, which its exposure brings down:
+        /// the remake adds colour x opacity x this (matched by eye against EVERSPACE 2 screenshots of the Wraith: a short
+        /// white-hot core ringed in orange, a little longer than its nozzle is wide).</summary>
+        public static float Es2FlameGain = 300f;
+
         /// <summary>A "flame" entry: a copy of GoF2/ModEngineFlame (EngineFlame drives it per ship) in the entry's colour
         /// (emissionColor x emissionIntensity, the kit colour slots' emission target too), boost colour, length and noise.</summary>
         static Material Flame(ModInfo mod, CustomShipMaterial e, string name, ModAssets a)
@@ -524,6 +539,9 @@ namespace GoF2Remake.Modding
             m.SetColor("_BoostColor", b);
             m.SetFloat("_Length", e.flameLength > 0f ? e.flameLength : 5f);
             m.SetFloat("_IdleLength", Mathf.Clamp01(e.flameIdle));
+            // EVERSPACE 2's own exhaust formula (GoF2/ModEngineFlame's _Es2: its M_Vehicle_EngineExhaust, decompiled)
+            m.SetFloat("_Es2", 1f);
+            m.SetFloat("_Brightness", Es2FlameGain);
             var noise = Texture(mod, e.flameNoise, true);
             if (noise != null) { noise.wrapMode = TextureWrapMode.Repeat; m.SetTexture("_NoiseMap", noise); }
             else m.SetFloat("_NoiseStrength", 0f);
@@ -638,14 +656,22 @@ namespace GoF2Remake.Modding
         static Material mrBlit;
 
         /// <summary>A mod's hangar or bar: its materials (copies of the GoF2/Hull templates) back on URP Lit, like the game's
-        /// rooms, which don't have the original's hull reflection.</summary>
+        /// rooms, which don't have the original's hull reflection. The keywords are enabled again on the new shader: a shader
+        /// switch keeps only those both declare alike, and URP Lit's _EMISSION was dropped, so every mod room lost its glow.</summary>
         public static void PlainLit(GameObject room)
         {
             var lit = Shader.Find("Universal Render Pipeline/Lit");
             if (lit == null || room == null) return;
             foreach (var r in room.GetComponentsInChildren<Renderer>(true))
                 foreach (var m in r.sharedMaterials)
-                    if (m != null && m.shader != null && m.shader.name == "GoF2/Hull") { int q = m.renderQueue; m.shader = lit; m.renderQueue = q; }
+                    if (m != null && m.shader != null && m.shader.name == "GoF2/Hull")
+                    {
+                        int q = m.renderQueue;
+                        var keywords = m.shaderKeywords;
+                        m.shader = lit;
+                        foreach (var k in keywords) m.EnableKeyword(k);
+                        m.renderQueue = q;
+                    }
         }
 
         /// <summary>Material for renderers without one.</summary>

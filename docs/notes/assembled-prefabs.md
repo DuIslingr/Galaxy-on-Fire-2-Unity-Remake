@@ -60,7 +60,9 @@ prefabs + `LODGroup`).
   meshes of their own, hull models only (`IsHullModel`: readable in a build); `GameLods` makes a level's mesh on first use.
   The mods' ships and stations (`AutoLods.MarkRuntime` in `ModShipBuilder` / `ModStations`) get theirs at run time from
   the hull as shipped, optimized or not (`ModLodCache`: a worker thread; until then LOD 0 alone), kept in
-  persistentDataPath/ModCache/Lods/<mod id>/<assembly>_<n>.lods headed by the mesh's hash: a changed model (optimized
+  persistentDataPath/ModCache/Lods/<mod id>/<assembly>_<n>.lods (a name over 96 characters, a kit variant's whole build,
+  cut to its start + an FNV-1a hash: past 255 bytes the write failed) headed by the mesh's hash: a changed model
+  (optimized
   again, undone) is cut again and its old file deleted; the Optimize window drops the mod's folder (`Forget`) before the
   reload, `ModManager.Scan` the uninstalled mods' (`PruneCache`). Full detail (`AutoLods.FullDetail`, no made levels):
   the player's own ship, the hangar's close-up rooms, the previews, icons, model viewer, menu backdrop, sky layers and gun

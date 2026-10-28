@@ -367,6 +367,49 @@ namespace GoF2Remake.Tests
             Assert.IsNull(plain.modOres);
         }
 
+        [Test]
+        public void AStationsSubtitleAndLore()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("systems.json",
+                "[ { 'id': 'far', 'name': 'Far', 'race': 0, 'position': [1, 2, 3] } ]"), ("stations.json",
+                "[ { 'id': 'post', 'system': 't_world:far', 'name': 'Post', 'subtitle': 'Trading Post', 'description': { 'en': 'An old post.', 'de': 'Ein alter Posten.' } }, " +
+                "  { 'id': 'bare', 'system': 't_world:far', 'name': 'Bare' } ]"));
+            ScanAndEnable("t_world");
+            var db = Database.Load();
+            Assert.IsTrue(GoF2Remake.Modding.ModWorld.TryResolveStation("t_world:post", out int post));
+            Assert.IsTrue(GoF2Remake.Modding.ModWorld.TryResolveStation("t_world:bare", out int bare));
+            Assert.AreEqual("Trading Post", GoF2Remake.Modding.ModWorld.Subtitle(post));
+            Assert.AreEqual("An old post.", GoF2Remake.Modding.ModWorld.Description(post));
+            Assert.IsNull(GoF2Remake.Modding.ModWorld.Description(bare));
+            int system = db.Stations.Find(s => s.index == post).system;
+            CollectionAssert.AreEqual(new[] { post }, GoF2Remake.Modding.ModWorld.StationsWithLore(db, system));
+            // the ticker of that system runs the lore in place of the game's random items
+            StringAssert.Contains("Post (Trading Post): An old post.", NewsTicker.Build(db, system, 0));
+        }
+
+        [Test]
+        public void ASystemsOwnJumpgate()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("systems.json",
+                "[ { 'id': 'far', 'name': 'Far', 'race': 1, 'position': [1, 2, 3], 'jumpgate': { 'model': 'models/gate.glb', 'size': 20000 } }, " +
+                "  { 'id': 'near', 'name': 'Near', 'race': 1, 'position': [4, 5, 6] } ]"), ("stations.json",
+                "[ { 'id': 'post', 'system': 't_world:far', 'name': 'Post' }, { 'id': 'other', 'system': 't_world:near', 'name': 'Other' } ]"));
+            ScanAndEnable("t_world");
+            var db = Database.Load();
+            Assert.IsTrue(GoF2Remake.Modding.ModWorld.TryResolveSystem("t_world:far", out int far));
+            Assert.IsTrue(GoF2Remake.Modding.ModWorld.TryResolveSystem("t_world:near", out int near));
+            var gate = GoF2Remake.Modding.ModWorld.GateModelOf(far);
+            Assert.IsNotNull(gate);
+            Assert.AreEqual($"modgate_{far:000}", gate.Assembly);
+            Assert.AreEqual(10000f, gate.gateRadius, "half its size unless 'radius' is given");
+            Assert.IsNotNull(db.Assemblies.Find(a => a.name == gate.Assembly), "registered for AssembledObject.LoadPrefab");
+            Assert.IsNull(GoF2Remake.Modding.ModWorld.GateModelOf(near), "the race's gate");
+            // Models() loads the tables again, which makes new model objects: compare by assembly
+            CollectionAssert.Contains(GoF2Remake.Modding.ModWorld.Models().Select(m => m.Assembly).ToList(), gate.Assembly);
+        }
+
+        [Test] public void ABadJumpgate() => StringAssert.Contains("\"jumpgate\" must be", WorldError("systems.json", "[ { 'override': 1, 'jumpgate': 'gate.glb' } ]"));
+
         [Test] public void ABadOrbitStation() => StringAssert.Contains("orbit \"station\" is true, false", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'station': 'maybe' } } ]"));
         [Test] public void ABadAsteroidType() => StringAssert.Contains("asteroids \"type\" is rock, void, ice or magma", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'asteroids': { 'type': 'cheese' } } } ]"));
         [Test] public void ABadOrbitPosition() => StringAssert.Contains("\"arrival\" must be [x, y, z]", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'arrival': [1, 2] } } ]"));

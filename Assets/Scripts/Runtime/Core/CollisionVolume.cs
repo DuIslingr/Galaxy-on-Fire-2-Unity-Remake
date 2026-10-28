@@ -235,9 +235,14 @@ namespace GoF2Remake.Flight
                           0, 2004, -15852, 15860, 2510, 10910,   0, -2610, -15852, 15860, 2510, 10910 },
         };
 
+        /// <summary>Remake mods: a mod ship flying as a freighter or capital ship (Modding.ModCapitalShips) has boxes measured
+        /// on its own model (ship, race -> volumes; null = the race's freighter boxes). Filled by SpaceHooksInstaller.</summary>
+        public static Func<int, int, List<CollisionVolume>> ShipVolumes;
+
         /// <summary>A freighter's boxes (Level::createShip): Terran / pirate 0, Vossk 1, Nivelian 2, Midorian 3.</summary>
         public static List<CollisionVolume> ForFreighter(int ship, int race)
         {
+            if (ship > 15 && ShipVolumes?.Invoke(ship, race) is List<CollisionVolume> own) return own;
             int k = ship == 14 ? 4 : ship == 13 || race == 1 ? 1 : race == 2 ? 2 : race == 3 ? 3 : 0;
             var t = FreighterBoxes[k];
             var list = new List<CollisionVolume>();

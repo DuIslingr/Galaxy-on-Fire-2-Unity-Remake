@@ -31,6 +31,24 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AKitShipWithNpcTurretsLoads()
+        {
+            // ModContent.ApplyNpcTurrets counts the ship's turret mounts while the mods are applied; a kit ship's come from
+            // its build through Database.Shared, which then answers with the database being loaded (it loaded itself again,
+            // a stack overflow that took the Editor down).
+            string dir = WriteMod("t_kitnpc", "t_kitnpc", "1.0", "", ("shipkits.json", Kits(false)),
+                ("ships.json", "[ { 'id': 'boss', 'name': 'Boss', 'kit': 'hulls', 'kitType': 'fighter', 'build': { 'body': 'b' }, " +
+                               "'mounts': [ { 'slotType': 2, 'position_engine': [ 0, 100, 0 ], 'builtIn': true } ], 'npcTurrets': [ 48, 48 ] } ]"));
+            foreach (var f in new[] { "b.glb", "turret.glb", "gun.glb" }) WriteFile(dir, f, Dummy);
+            ScanAndEnable("t_kitnpc");
+            var db = Database.Load();
+            int ship = ModContent.ShipIndexOf("t_kitnpc:boss");
+            CollectionAssert.AreEqual(new[] { 48, 48 }, db.NpcTurretsOf(ship));
+            Assert.IsTrue(Installed("t_kitnpc").Warnings.Exists(w => w.Contains("1 turret mounts")), AllMessages(Installed("t_kitnpc")));
+            Assert.AreEqual(1, Database.Shared.MountsOf(ship, 2).Count, "Shared is itself again afterwards");
+        }
+
+        [Test]
         public void TheBuildTextCarriesTheWeaponModelsChoice()
         {
             var b = ModShipKits.Build.Parse("body=b;weapons=OFF;tier=0");

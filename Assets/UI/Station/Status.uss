@@ -216,6 +216,16 @@
     background-color: #FFFFFF;
 }
 
+/* Remake mods: a faction's emblem (StatusWindow.FactionEmblem): its glow's copies and the icon stacked. */
+.rep-emblem-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
 .rep-names {
     flex-direction: row;
     justify-content: space-between;

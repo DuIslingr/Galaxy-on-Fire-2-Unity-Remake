@@ -50,8 +50,9 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   space (a data texture imported as colour: linearised, the picture shifted down-left); Discord report 2026-10-18: an
   invisible sphere bending the screen behind it, the rim from the noise texture read as a tangent-space normal, no
   scroll; the scene it shows clamped to LDR (#45: the HDR sun core smeared over it bloomed the screen white); grows /
-  shrinks over 5 %), sound 1115 looped until it ends; the item is used up. Kills meanwhile count for medal 43
-  (`Session.GraveRiserKills`).
+  shrinks over 5 %), sound 1115 looped until it ends; the item is used up (the one mounted,
+  `PlayerHealth.emergencyItem`: a mod's emergency system based on 185 too, which the removal of 185 alone left mounted
+  for good). Kills meanwhile count for medal 43 (`Session.GraveRiserKills`).
 - **Time extender** (184): the fast-forward slot shows its clock outside the autopilot (touch), or X / left stick press:
   15 s (attr 42) of world ×0.3 (`Time.timeScale`, `Navigation.ApplyTimeScale`) with the player's own updates (flight,
   chase camera, guns, cloak, beams) at ×0.7 (`TimeExtender.PlayerFactor`), sounds pitched down, sound 1120
@@ -62,6 +63,18 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   damage, the same into the player's shield; both only while the shield isn't full, and only then are hostile ships
   picked: a full shield leaves the beams idle, which players took for switching on and off at random) within attr 53;
   beam meshes 19092 / 19093, loop sounds.
+- **Missile defense** (remake, for mods: EVERSPACE 2's Missile Defense System, the user's idea; `Flight.PointDefense`,
+  items.json stat `missileDefense`, attr 131, a reach in game units, on any mounted item, `PointDefense.ReachUnits`):
+  the ship's auto turrets (`PlayerTurret.DefenseAim`, before `AutoAim`) turn to the nearest homing missile flying at the
+  ship within the reach (`IncomingMissiles`, which now carries each missile's gun and bullet index), led by the turret
+  shot's flight time (`PointDefense.Lead`), and fire when aligned; each shot claims one missile (`Claim`: several
+  turrets spread over a salvo) and destroys it when the shot arrives (`Tick` -> `Gun.ShootDown`, the rocket impact's
+  burst `ShipBurn.ManualBurst`). Another game's mirrored missile (`Gun.Mirror`, set by `NetShotMirror`) is left alone:
+  its real copy flies on in the shooter's game. An item with it is listed as "Missile defense" (`ItemInfo.Category`,
+  Extra `catMissileDefense`) with its reach (`statMissileDefense`); the ES2 Ships mod's Missile Defense System is one on
+  a seatless cabin (base 91, cabinSize 0: stackable, no other effect). Tests `PointDefenseTests`. Verified in Play mode
+  (a Teneta with the Berger AGT and the ES2 item, a hostile Vossk battleship 700 m off): 12 missiles of its salvos shot
+  down in a minute. Not tested in multiplayer.
 - **Shield injector** (227): an empty shield takes 30 t Blue Plasma (202, "-30t Blue Plasma") and refills at 0.15 per ms; sounds 2258 / 2257 / 2259.
 - **Gamma** (supernova stations 109-113, `PlayerHealth`): a 0..100 pool drains at the station's rate by campaign
   progress (gamma shields 205 / 206 cut it by attr 52 %), "Warning: Gamma shield low" (3201) below 15, death at 0,

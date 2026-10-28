@@ -19,7 +19,7 @@ namespace GoF2Remake.Modding
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class ModRegistry
     {
-        public enum Kind { Item, Ship, System, Station }
+        public enum Kind { Item, Ship, System, Station, Faction }
 
         static Dictionary<Kind, Dictionary<string, int>> table;
 
@@ -50,7 +50,7 @@ namespace GoF2Remake.Modding
             }
         }
 
-        static string Key(Kind k) => k switch { Kind.Item => "items", Kind.Ship => "ships", Kind.System => "systems", _ => "stations" };
+        static string Key(Kind k) => k switch { Kind.Item => "items", Kind.Ship => "ships", Kind.System => "systems", Kind.Faction => "factions", _ => "stations" };
 
         /// <summary>Every key of a kind with its number.</summary>
         public static IReadOnlyDictionary<string, int> All(Kind kind) => Table[kind];

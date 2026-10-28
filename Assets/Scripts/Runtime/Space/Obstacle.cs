@@ -97,6 +97,42 @@ namespace GoF2Remake.Flight
         /// <summary>projectCollisionOnSurface: 'world' moved out of every volume containing it.</summary>
         public Vector3 PushOut(Vector3 world) => ToWorld(CollisionVolume.ProjectOut(Local(world), volumes));
 
+        /// <summary>Remake (Flight.LineOfFire, without hull meshes: the Original ship collision): a ray from 'from' along 'dir'
+        /// (unit) runs into these volumes: it enters one it isn't in, sampled along its way, or it heads inward through the face
+        /// of the one it starts in nearest its start (a turret on the hull firing into its own ship; along the face or out of it
+        /// is free).</summary>
+        public bool RayInto(Vector3 from, Vector3 dir)
+        {
+            if (!Active) return false;
+            var p0 = Local(from);
+            var d = rotates ? baseRotation * (Quaternion.Inverse(transform.rotation) * dir) : dir;
+            float reach = 0f;
+            foreach (var v in volumes) reach = Mathf.Max(reach, (v.centre - p0).magnitude + (v.sphere ? v.radius : v.half.magnitude));
+            int start = -1;
+            for (int i = 0; i < volumes.Count; i++)
+                if (volumes[i].Contains(p0)) { start = i; if (Vector3.Dot(d, OutwardNormal(volumes[i], p0)) < -0.1f) return true; }
+            const int Samples = 24;
+            for (int k = 1; k <= Samples; k++)
+            {
+                var p = p0 + d * (reach * k / Samples);
+                for (int i = 0; i < volumes.Count; i++)
+                    if (i != start && volumes[i].Contains(p) && !volumes[i].Contains(p0)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>The outward normal of the face of 'v' nearest 'p' (a point in it), a sphere's radial direction.</summary>
+        static Vector3 OutwardNormal(CollisionVolume v, Vector3 p)
+        {
+            var q = p - v.centre;
+            if (v.sphere) return q.sqrMagnitude > 1e-8f ? q.normalized : Vector3.up;
+            var f = new Vector3(v.half.x > 0f ? q.x / v.half.x : 0f, v.half.y > 0f ? q.y / v.half.y : 0f, v.half.z > 0f ? q.z / v.half.z : 0f);
+            float ax = Mathf.Abs(f.x), ay = Mathf.Abs(f.y), az = Mathf.Abs(f.z);
+            if (ax >= ay && ax >= az) return new Vector3(Mathf.Sign(f.x), 0f, 0f);
+            if (ay >= az) return new Vector3(0f, Mathf.Sign(f.y), 0f);
+            return new Vector3(0f, 0f, Mathf.Sign(f.z));
+        }
+
         /// <summary>getProjectionVector: the unit vector away from the touched volume (or the owner).</summary>
         public Vector3 ProjectionVector(Vector3 world, int index)
         {

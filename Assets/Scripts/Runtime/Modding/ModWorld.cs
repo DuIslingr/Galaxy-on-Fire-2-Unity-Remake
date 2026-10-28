@@ -8,6 +8,11 @@
 //   the route back), "gateStation" (the station orbit with the jumpgate; default its first station) } or
 //   { "override": n | "mod:id", name, security, visible, gates (added) }; both may name "spaceMusic" / "stationMusic" (a
 //   mod's track, ModMusic: the calm space music in the system's orbits, the music docked at its stations).
+//   "race" may also name a mod's faction (ModFactions: "mod_id:id" or the mod's own id): it owns the system (its locals,
+//   lounge visitors, docking fines; its hangar and bar its "look"). Remake mods, also on overrides: "traffic": "mod" (only
+//   mods' ships fly there: no game fighters, freighters or capital ships, no GoF2 pirate events; ModTraffic and
+//   ModCapitalShips without the "Mod ships in traffic" chance), "locals": [races / factions] (the local fighters' sides,
+//   default the owner), "raiders": [races / factions] (who raids it, default the owner's hostile enemies, else pirates).
 //   Both may name "available": a condition (ModUnlocks, the event graphs' expressions): while it holds the system is on
 //   the map, while it doesn't it is hidden, revealed or not (GalaxyMap.Visibility); a player in it is taken out.
 // stations.json may name "music" too (that station's docked music).
@@ -27,7 +32,14 @@
 // 0..1 (the sun's light; default from "sky").
 // stations.json: { "id", "system": "mod:id" | number, "name", "techLevel" (0-10), "planet" (its planet texture: 0-22 or
 //   24-26 like the originals), "looksLike": a station number (its model and collision; default the first original
-//   station of the system's race) } or { "override": n | "mod:id", name, techLevel }.
+//   station of the system's race) } or { "override": n | "mod:id", name, techLevel }. Both may have "subtitle" (what the
+//   place is, under its name on the star map) and "description" (its lore: the star map's planet panel, and items of its
+//   system's news ticker), each a string or one per language like "name".
+// A new station may be "mobile": true or { "route", "stayMinutes", "speed", "race" } (MobileStations, MobileSpec): no planet
+//   (not one of any system's stations, not on the star map), it cruises through the orbits of its route's stations in turn
+//   (any systems; default its own system's) and is docked at where it is: its "system" is its home, while each Database.Load
+//   gives it the system of the orbit it is in (its header, prices, the star map's "you are here"); its race (its hangar,
+//   the header's race) stays "race", else its interior's, else its home system's; its title has no "Station".
 // A system takes at most 7 stations (OrbitLayout places 7 planet slots around the sun). Numbering as ModContent: the
 // registry in single player (a mod turned off leaves placeholders: a hidden system without stations or routes, a
 // station in no system; ModSaves moves a save docked there to Var Hastra), afresh in a session.
@@ -73,26 +85,35 @@ namespace GoF2Remake.Modding
 
         static readonly HashSet<string> SystemFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "race", "security", "visible", "position", "sky", "gates", "gateStation", "spaceMusic", "stationMusic",
-              "sunTexture", "sunColor", "skybox", "available" };
+              "sunTexture", "sunColor", "skybox", "available", "traffic", "locals", "raiders", "jumpgate" };
         static readonly HashSet<string> StationFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "system", "techLevel", "planet", "looksLike", "music", "model", "modelSize", "modelYaw", "modelCentre",
-              "materials", "collision", "volumes", "interior", "planetTexture", "mapTexture", "mapRing", "mapPlace", "orbit", "hangar", "bar" };
+              "materials", "collision", "volumes", "interior", "planetTexture", "mapTexture", "mapRing", "mapPlace", "orbit", "hangar", "bar", "mobile",
+              "subtitle", "description" };
 
         /// <summary>ModContent.Parse: a mod's systems.json and stations.json into 'systems' / 'stations'.</summary>
         public static void Parse(ModInfo mod, List<Def> systems, List<Def> stations)
         {
             Read(mod, SystemsFile, SystemFields, systems, (o, d) =>
             {
-                ModJson.Int(o, "race", 0, d.file); ModJson.Int(o, "security", 0, d.file); ModJson.Int(o, "sky", 0, d.file);
+                if (!(ModJson.Get(o, "race") is JToken rt) || rt.Type != JTokenType.String) ModJson.Int(o, "race", 0, d.file);   // (a faction: resolved in Apply)
+                ModJson.Int(o, "security", 0, d.file); ModJson.Int(o, "sky", 0, d.file);
+                if (ModJson.Str(o, "traffic") is string tr && tr != "mod" && tr != "all")
+                    throw new ModJsonException($"{d.where}: \"traffic\" must be \"mod\" (only mods' ships) or \"all\"");
                 if (ModJson.Has(o, "sunColor") && !(ModJson.Get(o, "sunColor") is JArray c && c.Count == 3))
                     throw new ModJsonException($"{d.where}: \"sunColor\" must be [r, g, b] (0..1)");
                 if (ModJson.Get(o, "skybox") is JToken sb) ParseSkybox(mod, sb, d.where);
+                if (ModJson.Get(o, "jumpgate") is JToken jg && !(jg is JObject jo && ModJson.Str(jo, "model") != null))
+                    throw new ModJsonException($"{d.where}: \"jumpgate\" must be {{ \"model\": \"models/gate.glb\", \"size\": 15000 }}");
                 if (d.localId != null)
                 {
                     if (!(ModJson.Get(o, "position") is JArray p) || p.Count != 3)
                         throw new ModJsonException($"{d.where}: a new system needs \"position\": [x, y, z] on the star map");
-                    int race = ModJson.Int(o, "race", 0, d.file);
-                    if (race < 0 || race > 3) throw new ModJsonException($"{d.where}: \"race\" must be 0-3 (Terran, Vossk, Nivelian, Midorian)");
+                    if (!(ModJson.Get(o, "race") is JToken r2) || r2.Type != JTokenType.String)
+                    {
+                        int race = ModJson.Int(o, "race", 0, d.file);
+                        if (race < 0 || race > 3) throw new ModJsonException($"{d.where}: \"race\" must be 0-3 (Terran, Vossk, Nivelian, Midorian) or a faction");
+                    }
                 }
             });
             Read(mod, StationsFile, StationFields, stations, (o, d) =>
@@ -115,6 +136,11 @@ namespace GoF2Remake.Modding
                 ModJson.Bool(o, "mapRing", false, d.file);
                 if (ModJson.Get(o, "orbit") is JToken orbitToken) ParseOrbit(mod, orbitToken, d.where, null);
                 if (ModJson.Get(o, "mapPlace") is JToken placeToken) ParseMapPlace(placeToken, d.where);
+                if (ModJson.Get(o, "mobile") is JToken mobileToken)
+                {
+                    if (d.localId == null) throw new ModJsonException($"{d.where}: only a new station can be \"mobile\"");
+                    ParseMobile(mobileToken, d.where, d.file);
+                }
             });
 
         }
@@ -228,8 +254,20 @@ namespace GoF2Remake.Modding
             public bool centre = true;
             public List<CustomShipMaterial> materials = new List<CustomShipMaterial>();
             public List<(bool sphere, Vector3 centre, Vector3 half, float radius)> volumes;   // game units; null = from "collision"
-            public string Assembly => $"modstation_{station:000}";
+            /// <summary>A system's own jumpgate (systems.json "jumpgate"): its system, else -1 (a station's model).</summary>
+            public int gateSystem = -1;
+            /// <summary>The gate's collision and approach radius in game units (0: the race gate's).</summary>
+            public float gateRadius;
+            public string Assembly => gateSystem >= 0 ? $"modgate_{gateSystem:000}" : $"modstation_{station:000}";
         }
+
+        static readonly Dictionary<int, StationModel> gateModels = new Dictionary<int, StationModel>();
+
+        /// <summary>A system's own jumpgate model (systems.json "jumpgate"), null: its race's gate.</summary>
+        public static StationModel GateModelOf(int system) => gateModels.TryGetValue(system, out var m) ? m : null;
+
+        /// <summary>The key a gate's model is kept under beside the stations' (ModStations: below every station number).</summary>
+        public static int GateKey(int system) => -1000 - system;
 
         static readonly Dictionary<int, StationModel> stationModels = new Dictionary<int, StationModel>();
         static readonly Dictionary<int, int> stationInterior = new Dictionary<int, int>();
@@ -237,7 +275,10 @@ namespace GoF2Remake.Modding
 
         /// <summary>A station's custom hangar / bar (stations.json "hangar" / "bar": an interiors.json key; ModInteriors), null: none.</summary>
         public static string HangarKey(int station) => stationHangar.TryGetValue(station, out var k) ? k : null;
-        public static string BarKey(int station) => stationBar.TryGetValue(station, out var k) ? k : null;
+        public static string BarKey(int station) => stationBar.TryGetValue(station, out var k) && k != NoBarKey ? k : null;
+        const string NoBarKey = "none";
+        /// <summary>stations.json "bar": "none": the station has no Space Lounge (its button hidden, Story.LoungeUnlocked false).</summary>
+        public static bool NoBar(int station) => stationBar.TryGetValue(station, out var k) && k == NoBarKey;
         static readonly Dictionary<int, string> planetTextures = new Dictionary<int, string>(), sunTextures = new Dictionary<int, string>(),
                                                 mapTextures = new Dictionary<int, string>();
         static readonly HashSet<int> mapRings = new HashSet<int>();
@@ -247,7 +288,7 @@ namespace GoF2Remake.Modding
         public static StationModel ModelOf(int station) => stationModels.TryGetValue(station, out var m) ? m : null;
 
         /// <summary>Every station with its own model (ModStations loads them).</summary>
-        public static IEnumerable<StationModel> Models() { Database.Load(); return stationModels.Values.ToList(); }
+        public static IEnumerable<StationModel> Models() { Database.Load(); return stationModels.Values.Concat(gateModels.Values).ToList(); }
 
         /// <summary>The race whose hangar and bar a station uses (stations.json "interior"; -1: the system's).</summary>
         public static int InteriorRace(int station) => stationInterior.TryGetValue(station, out int r) ? r : -1;
@@ -493,9 +534,22 @@ namespace GoF2Remake.Modding
             return s;
         }
 
-        static int InteriorOf(JObject o)
+        static int InteriorOf(JObject o) => RaceToken(ModJson.Get(o, "interior"));
+
+        /// <summary>A system's "race": 0-3, or a mod faction ("mod_id:id", the mod's own id) by its race number.</summary>
+        static int RaceOf(JObject o, Def d, ModInfo mod)
         {
-            var t = ModJson.Get(o, "interior");
+            var t = ModJson.Get(o, "race");
+            if (t == null) return 0;
+            if (t.Type != JTokenType.String) return Mathf.Clamp(ModJson.Int(o, "race", 0, d.file), 0, 3);
+            if (ModFactions.TryResolve((string)t, mod, out int race)) return race;
+            Report(mod, $"{d.where}: \"race\": {(string)t} is no faction (Terran instead)");
+            return 0;
+        }
+
+        /// <summary>terran / vossk / nivelian / midorian or 0-3; -1 otherwise.</summary>
+        static int RaceToken(JToken t)
+        {
             if (t == null) return -1;
             if (t.Type == JTokenType.Integer) { int v = (int)t; return v >= 0 && v <= 3 ? v : -1; }
             switch (((string)t ?? "").Trim().ToLowerInvariant())
@@ -537,6 +591,36 @@ namespace GoF2Remake.Modding
 
         static readonly Dictionary<int, string> systemSpaceMusic = new Dictionary<int, string>(), systemStationMusic = new Dictionary<int, string>(),
                                                 stationMusic = new Dictionary<int, string>();
+        static readonly Dictionary<int, string> stationSubtitle = new Dictionary<int, string>(), stationLore = new Dictionary<int, string>();
+        static readonly HashSet<int> modTrafficSystems = new HashSet<int>();
+        static readonly Dictionary<int, List<int>> systemLocals = new Dictionary<int, List<int>>(), systemRaiders = new Dictionary<int, List<int>>();
+
+        /// <summary>systems.json "traffic": "mod": only mods' ships fly in the system (no game fighters, freighters, capital
+        /// ships or GoF2 pirate events).</summary>
+        public static bool ModTrafficOnly(int system) => modTrafficSystems.Contains(system);
+
+        /// <summary>systems.json "locals": the races / factions of the system's local fighters (null: its owner).</summary>
+        public static List<int> Locals(int system) => systemLocals.TryGetValue(system, out var l) ? l : null;
+
+        /// <summary>systems.json "raiders": the races / factions that raid the system (null: the game's rule).</summary>
+        public static List<int> Raiders(int system) => systemRaiders.TryGetValue(system, out var l) ? l : null;
+
+        /// <summary>stations.json "subtitle": what the place is ("Satellite Ruins"), under its name on the star map; null without.</summary>
+        public static string Subtitle(int station) => stationSubtitle.TryGetValue(station, out var s) ? s : null;
+
+        /// <summary>stations.json "description": the place's lore, on the star map and in its system's news ticker; null without.</summary>
+        public static string Description(int station) => stationLore.TryGetValue(station, out var s) ? s : null;
+
+        /// <summary>The stations of 'system' with a description (the ticker's lore items).</summary>
+        public static List<int> StationsWithLore(Database db, int system)
+        {
+            var r = new List<int>();
+            if (stationLore.Count == 0) return r;
+            foreach (var kv in stationLore)
+                if (db.Stations.Find(x => x.index == kv.Key) is StationData st && st.system == system) r.Add(kv.Key);
+            r.Sort();
+            return r;
+        }
 
         /// <summary>The calm space music a mod gave the station's system (null: the game's).</summary>
         public static AudioClip SpaceMusic(int station)
@@ -562,10 +646,11 @@ namespace GoF2Remake.Modding
         {
             NoteOriginalCounts(db);
             EnsureMapping();
-            systemSpaceMusic.Clear(); systemStationMusic.Clear(); stationMusic.Clear();
-            stationModels.Clear(); stationInterior.Clear(); planetTextures.Clear(); sunTextures.Clear(); sunColors.Clear(); skyboxes.Clear();
+            systemSpaceMusic.Clear(); systemStationMusic.Clear(); stationMusic.Clear(); stationSubtitle.Clear(); stationLore.Clear();
+            stationModels.Clear(); gateModels.Clear(); stationInterior.Clear(); planetTextures.Clear(); sunTextures.Clear(); sunColors.Clear(); skyboxes.Clear();
             mapTextures.Clear(); mapRings.Clear(); orbits.Clear(); mapPlaces.Clear();
-            stationHangar.Clear(); stationBar.Clear();
+            stationHangar.Clear(); stationBar.Clear(); mobiles.Clear();
+            modTrafficSystems.Clear(); systemLocals.Clear(); systemRaiders.Clear();
             if (systemAt.Count == 0 && stationAt.Count == 0 && missingSystems.Count == 0 && missingStations.Count == 0
                 && !ModManager.Active.Any(m => ModContent.Parse(m).systems.Count + ModContent.Parse(m).stations.Count > 0)) return;
             var gates = new List<(int a, int b)>();
@@ -588,8 +673,9 @@ namespace GoF2Remake.Modding
                         {
                             int index = systemIndex[d.key];
                             var pos = (JArray)ModJson.Get(o, "position");
-                            int race = ModJson.Int(o, "race", 0, d.file);
-                            var template = db.Systems.Find(x => x.index < originalSystems && x.raceId == race) ?? db.Systems[0];
+                            int race = RaceOf(o, d, mod);
+                            int look = ModFactions.Look(race);   // a faction's system: the template of its look race
+                            var template = db.Systems.Find(x => x.index < originalSystems && x.raceId == look) ?? db.Systems[0];
                             s = new SystemData
                             {
                                 index = index, raceId = race, race = template.race, initiallyVisible = true, jumpgateStation = -1,
@@ -602,6 +688,18 @@ namespace GoF2Remake.Modding
                             db.Systems.Add(s);
                         }
                         if (d.name != null) s.name = Text(d, "systems");
+                        if (d.overrideRef != null && ModJson.Has(o, "race")) s.raceId = RaceOf(o, d, mod);
+                        if (ModJson.Str(o, "traffic") == "mod") modTrafficSystems.Add(s.index);
+                        else if (ModJson.Str(o, "traffic") == "all") modTrafficSystems.Remove(s.index);
+                        foreach (var (field, into) in new[] { ("locals", systemLocals), ("raiders", systemRaiders) })
+                        {
+                            if (!ModJson.Has(o, field)) continue;
+                            var l = new List<int>();
+                            foreach (var r in ModJson.Strings(o, field))
+                                if (ModFactions.TryResolve(r, mod, out int rr)) l.Add(rr);
+                                else Report(mod, $"{d.where}: {field}: \"{r}\" is no race or faction");
+                            if (l.Count > 0) into[s.index] = l;
+                        }
                         s.securityLevel = Mathf.Clamp(ModJson.Int(o, "security", s.securityLevel, d.file), 0, 3);
                         s.initiallyVisible = ModJson.Bool(o, "visible", s.initiallyVisible, d.file);
                         s.textureIndex = Mathf.Clamp(ModJson.Int(o, "sky", s.textureIndex, d.file), 0, 18);
@@ -615,6 +713,21 @@ namespace GoF2Remake.Modding
                         if (ModJson.Str(o, "stationMusic") is string stm) systemStationMusic[s.index] = stm;
                         if (ModJson.Str(o, "sunTexture") is string sun) sunTextures[s.index] = BackdropName(mod, sun);
                         if (ModJson.Get(o, "skybox") is JToken skyToken) skyboxes[s.index] = ParseSkybox(mod, skyToken, d.where);
+                        if (ModJson.Get(o, "jumpgate") is JObject jgo && ModJson.Str(jgo, "model") is string gm)
+                        {
+                            var gate = new StationModel
+                            {
+                                mod = mod, station = GateKey(s.index), gateSystem = s.index, model = gm, label = (s.name ?? d.key) + " jumpgate",
+                                size = GameModels.Is(gm) && !ModJson.Has(jgo, "size") ? 0f : Mathf.Max(1000f, ModJson.Float(jgo, "size", 15000f, d.file)),
+                                yaw = ModJson.Float(jgo, "yaw", 0f, d.file), centre = true, collision = "none",
+                            };
+                            gate.gateRadius = Mathf.Max(0f, ModJson.Float(jgo, "radius", gate.size > 0f ? gate.size * 0.5f : 0f, d.file));
+                            if (ModJson.Get(jgo, "materials") is JArray gmats)
+                                foreach (var m in gmats) gate.materials.Add(JsonUtility.FromJson<CustomShipMaterial>(m.ToString()));
+                            gateModels[s.index] = gate;
+                            if (db.Assemblies.Find(a => a.name == gate.Assembly) == null)
+                                db.Assemblies.Add(new AssemblyData { name = gate.Assembly, pack = ModContent.Pack, category = "level", origin = "mod " + mod.Id });
+                        }
                         if (ModJson.Get(o, "sunColor") is JArray sc && sc.Count == 3)
                             sunColors[s.index] = new Color(Mathf.Clamp01((float)sc[0]), Mathf.Clamp01((float)sc[1]), Mathf.Clamp01((float)sc[2]));
                     }
@@ -639,17 +752,22 @@ namespace GoF2Remake.Modding
                             int index = stationIndex[d.key];
                             if (!TryResolveSystem(ModJson.Str(o, "system"), out int sys) || db.Systems.Find(x => x.index == sys) is not SystemData sd)
                             { Report(mod, $"{d.where}: \"system\": {ModJson.Str(o, "system")} is no system"); continue; }
-                            if (sd.stations.Count >= MaxStationsPerSystem)
+                            // A mobile station (MobileStations) has no planet: it isn't one of the system's stations.
+                            var mobileSpec = ModJson.Get(o, "mobile") is JToken mt0 ? ParseMobile(mt0, d.where, d.file) : null;
+                            if (mobileSpec == null && sd.stations.Count >= MaxStationsPerSystem)
                             { Report(mod, $"{d.where}: the system {sd.name} has {MaxStationsPerSystem} stations already (the most a system can hold)"); continue; }
                             st = new StationData { index = index, system = sys, systemName = sd.name, techLevel = 1, textureIndex = 0 };
                             db.Stations.Add(st);
-                            sd.stations.Add(index);
+                            if (mobileSpec == null) sd.stations.Add(index);
+                            else { mobileSpec.mod = mod; mobileSpec.where = d.where; mobiles[index] = mobileSpec; }
                             int look = ModJson.Int(o, "looksLike", -1, d.file);
                             if (look < 0 || look >= originalStations)
                                 look = db.Stations.Find(x => x.index < originalStations && db.Systems.Find(y => y.index == x.system)?.raceId == sd.raceId)?.index ?? 78;
                             stationLook[index] = look;
                         }
                         if (d.name != null) st.name = Text(d, "stations");
+                        if (TextField(d, "stations", "subtitle") is string sub) stationSubtitle[st.index] = sub;
+                        if (TextField(d, "stations", "description") is string lore) stationLore[st.index] = lore;
                         st.techLevel = Mathf.Clamp(ModJson.Int(o, "techLevel", st.techLevel, d.file), 0, 10);
                         st.textureIndex = ModJson.Int(o, "planet", st.textureIndex, d.file);
                         if (ModJson.Str(o, "music") is string mu) stationMusic[st.index] = mu;
@@ -663,7 +781,8 @@ namespace GoF2Remake.Modding
                         if (ModJson.Get(o, "mapPlace") is JToken placeToken) mapPlaces[st.index] = ParseMapPlace(placeToken, d.where);
                         // A custom room: "mod_id:interior_id", or this mod's own id.
                         if (ModJson.Str(o, "hangar") is string hk) stationHangar[st.index] = hk.Contains(":") ? hk : mod.Id + ":" + hk;
-                        if (ModJson.Str(o, "bar") is string bk) stationBar[st.index] = bk.Contains(":") ? bk : mod.Id + ":" + bk;
+                        // ("bar": "none": the station has no Space Lounge, NoBar)
+                        if (ModJson.Str(o, "bar") is string bk) stationBar[st.index] = bk.Contains(":") || bk == NoBarKey ? bk : mod.Id + ":" + bk;
                         if (ModJson.Str(o, "model") is string model)
                         {
                             var sm = new StationModel
@@ -700,6 +819,55 @@ namespace GoF2Remake.Modding
                 if (gateStations.TryGetValue(s.index, out var gsRef) && TryResolveStation(gsRef, out int gst) && s.stations.Contains(gst)) s.jumpgateStation = gst;
                 if (s.jumpRoutesTo.Count > 0 && (s.jumpgateStation < 0 || !s.stations.Contains(s.jumpgateStation)) && s.stations.Count > 0) s.jumpgateStation = s.stations[0];
             }
+            // Mobile stations' routes: the stations they cruise past, in any systems (default all of their own system's);
+            // their race; then the system of the orbit each is in now (MobileStations.HostAt), so the docked station's
+            // header, prices and star map are where it is. A scene's own Load is taken when it starts: docked, the station
+            // stays in the system it was docked in until the next scene.
+            double now = MobileStations.Clock;
+            foreach (var kv in mobiles)
+            {
+                var m = kv.Value;
+                var st = db.Stations.Find(x => x.index == kv.Key);
+                var sys = st != null ? db.Systems.Find(x => x.index == st.system) : null;
+                m.system = st?.system ?? -1;
+                m.route.Clear();
+                m.roamSystems.Clear();
+                if (m.roam)
+                {
+                    // "route": "any": every system with an orbit it may be in (MobileStations.RoamSkip: the story's and the
+                    // Kaamo Club's), the same list in every game with these mods, so a session's players agree where it is.
+                    var skip = new HashSet<int>(MobileStations.RoamSkip);
+                    var skipSystems = new HashSet<int>();
+                    foreach (var r in m.excludeRefs)
+                        if (TryResolveSystem(r, out int xs)) skipSystems.Add(xs);
+                        else Report(m.mod, $"{m.where}: \"exclude\" \"{r}\" is no system");
+                    var onlySystems = new HashSet<int>();
+                    foreach (var r in m.systemRefs)
+                        if (TryResolveSystem(r, out int ys)) onlySystems.Add(ys);
+                        else Report(m.mod, $"{m.where}: \"systems\" \"{r}\" is no system");
+                    foreach (var sy in db.Systems.OrderBy(x => x.index))
+                    {
+                        if (skipSystems.Contains(sy.index) || IsMissingSystem(sy.index)) continue;
+                        if (m.systemRefs.Count > 0 && !onlySystems.Contains(sy.index)) continue;
+                        var orbits = sy.stations.Where(x => !skip.Contains(x) && !mobiles.ContainsKey(x) && !IsMissingStation(x)).ToList();
+                        if (orbits.Count == 0) continue;
+                        m.roamSystems.Add((sy.index, orbits));
+                        m.route.AddRange(orbits);
+                    }
+                }
+                else if (m.routeRefs.Count == 0 && sys != null) m.route.AddRange(sys.stations);
+                foreach (var r in m.roam ? new List<string>() : m.routeRefs)
+                {
+                    if (!TryResolveStation(r, out int host) || mobiles.ContainsKey(host) || !db.Systems.Any(x => x.stations.Contains(host)))
+                    { Report(m.mod, $"{m.where}: route stop \"{r}\" is no station with an orbit"); continue; }
+                    if (!m.route.Contains(host)) m.route.Add(host);
+                }
+                if (m.route.Count == 0) Report(m.mod, $"{m.where}: a mobile station needs a system with stations to cruise past");
+                m.race = m.raceToken >= 0 ? m.raceToken : stationInterior.TryGetValue(kv.Key, out int ir) ? ir : sys?.raceId ?? 0;
+                int now0 = MobileStations.HostAt(m, kv.Key, now);
+                var hs = now0 >= 0 ? db.Stations.Find(x => x.index == now0) : null;
+                if (st != null && hs != null) st.system = hs.system;
+            }
             // Station names carry their system's (StationData.systemName).
             foreach (var st in db.Stations)
                 if (st.index >= originalStations || IsModSystem(st.system)) st.systemName = db.Systems.Find(x => x.index == st.system)?.name ?? st.systemName;
@@ -713,6 +881,20 @@ namespace GoF2Remake.Modding
             for (int i = originalStations; i <= maxStation; i++) if (db.Stations.Find(x => x.index == i) == null) db.Stations.Add(PlaceholderStation(i, "?:" + i));
             db.Systems.Sort((a, c) => a.index.CompareTo(c.index));
             db.Stations.Sort((a, c) => a.index.CompareTo(c.index));
+        }
+
+        /// <summary>stations.json "subtitle" / "description" (a string or one per language, or text/<lang>.json's
+        /// "stations.<id>.subtitle" / ".description"), in the game's language; null without one.</summary>
+        static string TextField(Def d, string kind, string field)
+        {
+            string lang = Localization.Language;
+            var own = ModJson.Text(d.json, field);
+            var text = ModContent.Parse(d.mod).text;
+            string key = $"{kind}.{d.localId ?? d.overrideRef}.{field}";
+            if (own != null && own.TryGetValue(lang, out var s)) return s;
+            if (text.TryGetValue(lang, out var table) && table.TryGetValue(key, out s)) return s;
+            if (own != null && (own.TryGetValue("en", out s) || own.TryGetValue("", out s))) return s;
+            return own?.Values.FirstOrDefault();
         }
 
         static string Text(Def d, string kind)
@@ -735,6 +917,93 @@ namespace GoF2Remake.Modding
 
         static StationData PlaceholderStation(int index, string key) =>
             new StationData { index = index, name = $"Missing station ({key})", system = -1, systemName = "", techLevel = 0 };
+
+        // ---- mobile stations (MobileStations) -----------------------------------------------------------------------
+
+        /// <summary>stations.json "mobile": true or { "route": [stations] | "any", "stayMinutes": 15, "systemMinutes": 90,
+        /// "exclude": [systems], "systems": [systems], "speed": 0.2, "race": "terran", "engines": [mounts], "engineColor": [r, g, b],
+        /// "engineFx": {...} }:
+        /// a station with no planet that cruises from orbit to orbit (MobileStations).</summary>
+        public class MobileSpec
+        {
+            public ModInfo mod;
+            public string where;
+            public int system = -1;
+            public readonly List<string> routeRefs = new List<string>();
+            /// <summary>The orbits it visits, in order (station numbers, any systems).</summary>
+            public readonly List<int> route = new List<int>();
+            /// <summary>Its race (0-3), the same wherever it is: "race", else its interior's, else its home system's.</summary>
+            public int race;
+            internal int raceToken = -1;
+            /// <summary>"route": "any": it roams every system (roamSystems), "systemMinutes" in each before it moves on to
+            /// another, its orbits there "stayMinutes" each.</summary>
+            public bool roam;
+            public float systemMinutes = 90f;
+            public readonly List<string> excludeRefs = new List<string>();
+            /// <summary>"systems": roaming ("route": "any") only these systems (none: every system).</summary>
+            public readonly List<string> systemRefs = new List<string>();
+            public readonly List<(int system, List<int> orbits)> roamSystems = new List<(int, List<int>)>();
+            /// <summary>"engines": its exhausts, mounts like ships.json's (position_engine in game units from its centre,
+            /// glowSize, glowColor), lit while it cruises; "engineColor" [r, g, b] for every one.</summary>
+            public List<WeaponMount> engines;
+            public float[] engineColor;
+            /// <summary>"engineFx": Galaxy on Fire 3's engine effect at the engines instead of the glow discs (ships.json's
+            /// engineFx, EngineFx; each engine sized by its "fxScale").</summary>
+            public CustomEngineFx engineFx;
+            /// <summary>Minutes in each orbit (1..240).</summary>
+            public float stayMinutes = 15f;
+            /// <summary>Its cruising speed, game units per ms (the freighters' 1; 0..2).</summary>
+            public float speed = 0.2f;
+        }
+
+        static readonly Dictionary<int, MobileSpec> mobiles = new Dictionary<int, MobileSpec>();
+
+        /// <summary>A mobile station (stations.json "mobile").</summary>
+        public static bool IsMobile(int station) { _ = Database.Shared; return mobiles.ContainsKey(station); }
+        public static MobileSpec MobileOf(int station) { _ = Database.Shared; return mobiles.TryGetValue(station, out var m) ? m : null; }
+        /// <summary>Every mobile station of the mods that are on.</summary>
+        public static List<int> Mobiles() { _ = Database.Shared; return mobiles.Keys.OrderBy(k => k).ToList(); }
+
+        static MobileSpec ParseMobile(JToken t, string where, string file)
+        {
+            if (t.Type == JTokenType.Boolean) return (bool)t ? new MobileSpec() : null;
+            if (!(t is JObject o)) throw new ModJsonException($"{where}: \"mobile\" must be true or {{ \"route\": [stations], \"stayMinutes\": 15, \"speed\": 0.2 }}");
+            var m = new MobileSpec
+            {
+                stayMinutes = Mathf.Clamp(ModJson.Float(o, "stayMinutes", 15f, file), 1f, 240f),
+                speed = Mathf.Clamp(ModJson.Float(o, "speed", 0.2f, file), 0f, 2f),
+            };
+            if (ModJson.Get(o, "route") is JValue rv && rv.Type == JTokenType.String)
+            {
+                if (!string.Equals(((string)rv).Trim(), "any", StringComparison.OrdinalIgnoreCase))
+                    throw new ModJsonException($"{where}: \"route\" must be a list of stations or \"any\"");
+                m.roam = true;
+            }
+            else m.routeRefs.AddRange(ModJson.Strings(o, "route"));
+            m.systemMinutes = Mathf.Clamp(ModJson.Float(o, "systemMinutes", Mathf.Max(90f, m.stayMinutes), file), m.stayMinutes, 24f * 60f);
+            m.excludeRefs.AddRange(ModJson.Strings(o, "exclude"));
+            m.systemRefs.AddRange(ModJson.Strings(o, "systems"));
+            if (ModJson.Get(o, "engines") is JArray ea)
+            {
+                m.engines = new List<WeaponMount>();
+                foreach (var e in ea)
+                {
+                    var wm = e is JObject eo ? eo.ToObject<WeaponMount>() : null;
+                    if (wm?.position_engine == null || wm.position_engine.Length < 3)
+                        throw new ModJsonException($"{where}: every \"engines\" entry needs a \"position_engine\": [x, y, z]");
+                    wm.slotType = 3;
+                    m.engines.Add(wm);
+                }
+            }
+            if (ModJson.Get(o, "engineColor") is JArray ec && ec.Count >= 3) m.engineColor = new[] { (float)ec[0], (float)ec[1], (float)ec[2] };
+            if (ModJson.Get(o, "engineFx") is JObject efx) m.engineFx = efx.ToObject<CustomEngineFx>();
+            if (ModJson.Has(o, "race"))
+            {
+                m.raceToken = RaceToken(ModJson.Get(o, "race"));
+                if (m.raceToken < 0) throw new ModJsonException($"{where}: \"race\" must be terran, vossk, nivelian, midorian or 0-3");
+            }
+            return m;
+        }
 
         static void Report(ModInfo mod, string message)
         {

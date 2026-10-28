@@ -187,6 +187,10 @@ namespace GoF2Remake.World
         public static ArenaMatchInfo Arena => ArenaProvider?.Invoke();
         public static bool InArena => InArenaMatch != null && InArenaMatch();
 
+        /// <summary>Remake mods: the player is docked inside the orbit (EVERSPACE 2's dock, Es2Dock): the station's menu runs
+        /// over the space level, whose flight controls wait (Navigation.InputHalted). Set by SpaceLevel.</summary>
+        public static bool DockedInOrbit { get; set; }
+
         // ---- event graphs (EventRules, EventCutscene, EventScreen, EventRunner, EventMissions, EventRespawn) -------------
 
         /// <summary>An event's Restrict Travel.</summary>

@@ -220,16 +220,201 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   `"traffic": { "races": [0, 1, 2, 3, 8, 9] }` (every race but the Specters). Verified in Play mode (es2_ships + gof3_ships,
   50 %): all six races roll ES2 ships (Void / pirates only those), 12 random Sentinel builds all different, four warm-ups
   taking its slot parts from ~7 to 15, a random-build Sentinel (Tormentor wings, body C) patrolling Dis, 2400 rolls in 57 ms.
+  Boss hulls (2026-10-24, `CustomTraffic.boss`, ships.json `"traffic": { "boss": true }`): never an ordinary fighter
+  (`Scan` keeps them to their own cache key); the pirate boss (`TrafficPlan.AddPirateEventShips`) flies one at the same
+  chance (`ModTraffic.PickBoss` over `BossShips`), up to 400 m (`MaxBossLength`); its hull, gun and escorts stay the
+  boss's, `npcTurrets` arm its turret mounts. The GoF3 Ships mod's five GoF3 bosses use it.
+- **Mod capital ships and freighters** (remake, 2026-10-24, the user's request for GoF3's capital ships;
+  `ModCapitalShips`, ships.json `"traffic": { "capital": "battleship" | "freighter" }`, `CustomTraffic.capital`): never
+  fighters (`ModTraffic` skips them). A battleship parks in the orbit's capital ship special (`TrafficPlan`: Terran /
+  Vossk systems in place of the game's battleship / Vossk battleship at the "Mod ships in traffic" chance,
+  `PickCapital(race, true)`; Nivelian / Midorian systems, which have none, in 30 % of the orbits with freighters;
+  `AddModCapital`: the Terran battleship's box, 4-8 km out, `ClearOfStation`); a freighter replaces one of the orbit's
+  freighters at that chance (`PickFreighter`); nothing is drawn while the mods have none for the race (`Has`), so the
+  game's own traffic rolls stay as they were. Both fly NpcShip's freighter path (`SpawnSpec.freighter`, `modCapital`; a
+  battleship `stationary`, the Terran battleship's hull `Hull(1, 14)`, its name on the lock plate) with the mod ship's
+  own model (`Traffic.Create`), its `npcTurrets` armed even parked (`NpcShip`: `!parked || modCapital`); collision boxes
+  measured on the built model (`CollisionVolume.ShipVolumes` hook in `ForFreighter`, filled by `SpaceHooksInstaller`:
+  `ModCapitalShips.HullVolumes`, the hull meshes cut into 8 slices along the longest axis, each slice's cross-section,
+  `Measure`), so `NetProxy`'s freighter boxes match; no wreck (no `WreckPrefab`, `leavesWreck` false, empty volumes once
+  dead), the explosion its `explosionScale` (`FreighterExplosionScale`, else 8 / 6). `ModShipBuilder` culls a mod ship
+  at max(4 km, 25 x its size). Not for the capital ship enhancements (escorts, resupply, fleet battles). Tests
+  `ModCapitalShipsTests`. Verified in Play mode: the GoF3 Nemesis (4.4 km) spawned at Dis with 8 boxes and 8 turrets. A
+  ship's own `engineFx` takes each mount's `outline` like an exhaust style (`EngineFx.CreateShaped`,
+  `ModExhausts.OutlineOf`: the cards reach the nozzle's shape, the trails along its long side, centred on it); the GoF3
+  capitals get GoF3's large engine on their nozzles, shaped to them (see Mobile stations).
+- **Capital ship subsystems** (remake, 2026-10-24, the user's request: EVERSPACE 2's warships and its Dreadnought
+  encounter; `World.CapitalSubsystems`, ships.json `"subsystems"` parsed by `ModContent.ApplySubsystems` into
+  `Database.ShipSubsystems`, `Data.CapitalSubsystem`): Traffic.Create attaches it to a `modCapital` spec with
+  subsystems; its first Update spawns each part through `Traffic.SpawnShip` (capitalPart / capitalHost = the ship, its
+  event tag, so a mission's `alive(name)` counts them) placed like a turret on a mount
+  (`transform.TransformPoint(WeaponSystem.MountToLocal)`, `TurretTurn`) and parented to the hull: "turret"
+  (turret_002_static with `turretItem`), "object" (a `fixedObject`: "gof2:<assembly>", a ship's assembly by ship
+  reference, else `v_station_battlestation_shield`) or "hangar" (an object, or `"model": "none"`: a launch point on the
+  hull, `Part.localPos`). Rules each frame: `shields` parts standing -> the hull's `Target.damageFactor` =
+  `shieldedDamage` (Target.Damage multiplies every hit; a player's hit then "Its shields hold", rate-limited) and the
+  renderers whose material name contains `shieldMaterial` shown; `stage` parts invulnerable while a lower stage stands;
+  a `weakspot` part's `Target.forwardTo` / `forwardFactor` pass its hits on to the hull, its death takes `bonus` of the
+  hull's maximum (through the shields); hangars launch `ships` (escorts looping round the hull,
+  `CapitalShips.LoopAround`) while it is hostile and the player within 7.5 km. Hostile pirate (8) / Void (9) capitals
+  (`ModCapitalShips.PickHostile` / `SpawnHostile`): with a pirate or Void raid at a third of the traffic chance, 3 km
+  beyond the raiders' point, and in the Void's orbit. `/spawn` of a mod capital (`DebugSpawner.SpawnShip`) uses
+  `ModCapitalShips.Spawn` (parked, subsystems) 1-2 hull lengths ahead. `hullFactor` scales a mod capital's hull;
+  `engineStyle: "es2"` runs `Es2EngineVfx` without flame materials (no glow discs), `es2Engine` { glow, trails }
+  (`CustomEs2Engine`, default on) switches its NPC glow / trails (and the player's veils) off as a blueprint's
+  SpawnEngineGlow / SpawnEngineTrails do (EngineVFXEnabled false = both; the ES2 importer writes it: every ES2 warship
+  and freighter but the Ancient Swarmer has them off, so their engines are their nozzles' glow); a parked mod
+  battleship's engines idle at `ModCapitalShips.ParkedDrive` 0.6 (`EngineDrive.Idle` from its "ship_NNN_mod" model, also
+  on the multiplayer copies; `EngineFlame`'s velocity thrust takes it as its floor): driven by their speed, a parked
+  one's showed nothing; CustomShipMaterial `tiling` scales URP Lit's `_BaseMap` (EVERSPACE 2's plating Tiling). Tests in
+  `ModCapitalShipsTests`. The ES2 Ships mod's importer (`tools/warships.py`, `weapons.py`, `encounter.py`, `es2mat.py`)
+  builds ES2's ten warships and seven freighters from their blueprints (turrets, missile launchers, drone / hangar
+  spawners, the frigate's weak spots), ES2's weapons as items on GoF2's DPS ladder with their own colours, sounds and
+  models, the capital turrets on ES2's turret meshes (split by bone, textures embedded), and the Dreadnought (its stage
+  pieces as one hull) with its encounter (the raids, below): fields / shield generator (stage 1, shields) with the
+  torpedo launchers, sniper and lightning turrets (stage 2), explosive weak points (stage 3), flak / missile batteries
+  and five hangars throughout.
+  **Retreat** (the user's request, as in ES2: BP_Encounter_Dreadnought_Base's OnHealthDepleted -> StartEnemyJumpOut,
+  BP_Dreadnought's SpawnJumpEffect; ships.json `"retreat": true`, `CustomShipData.retreat`, attached by Traffic.Create
+  to a `modCapital`): `World.CapitalRetreat` takes `Target.SaveFromDeath`: at an empty hull it keeps 1, invulnerable,
+  holds its fire, `CapitalSubsystems.Halt` (parts silent and unharmable, no launches, the hangars' fighters `JumpOut`),
+  "{0} is jumping away!" (Extra `capitalRetreats`) and sound 33; after 4 s `SystemJump.SpawnKhadorFx` a ship length
+  ahead of its centre, turned with its model's bow (as the player's jump), scaled by its length over 70 m
+  (`ModTraffic.HullLength`; by its widest extent the Dreadnought's flash filled the screen white from 2.5 km), sound 32,
+  the ship pushed forward into it (x1.1 a 30 fps frame), gone at 1700 ms (`LeaveWithHost` + `NpcShip.Vanish`,
+  `killedByNpc`: no wreck, crate or kill). The other players only see its copy go (no fx there yet). **Mod gameplay
+  settings** (gameoptions.json `"setting": true`, `ModGameOptions.Def.setting`): no new-game card (`Cards()`), an
+  Options > Gameplay toggle (`OptionsCatalog`, id "mod:<key>", only while the mod is on, `GameplaySettings()`) in
+  PlayerPrefs `modsetting_<key>` (`Setting` / `SetSetting`; reset by Default settings, `ResetSettings`), which
+  `option(...)` reads (`IsOn`). The importer's encounter is now the **Dreadnought raids** (the user's request; its
+  setting `es2_ships:dreadnought_raids`, on by default): at rank 5+, a 1 in 300 chance each second, a random station:
+  Brent Snocom calls (a dialog), the station is the objective's target (map and HUD), a checkpoint keeps it, the quest
+  waits until the player is in that orbit, then two ES2 freighters (the convoy, friendly, held 4-5 km short of it by a
+  `shipaction hold`: in its turrets' reach one died within a minute) and the Dreadnought spawn (a guard: no Dreadnought
+  30 s on = the run stops, nothing won); driven off it pays 150 000 and 10 legendary swarm missiles; it comes again 90
+  minutes of play later. Brent's lines follow his own in the story ("Keith, this is Brent!", "Dammit", "I transferred
+  ... to your account"). Played in the Editor: the call, the map marker, the spawns, the convoy holding, the retreat,
+  the reward and the cooldown. Fixed on the way: `NetGame.Db` (the event commands' look-ups) was loaded once, in single
+  player before the mods were on, so every mission / event command naming mod content (spawns, rewards) failed; it
+  reloads when `ModManager.Revision` changes. Conversation pages and radio lines are cut at `NetChat.MaxPageLength` 600
+  (were the chat's 160: a call broke off mid-word), a conversation at `MaxConversation` 4000. A queued conversation
+  waits for the star map to close (`EventScreen`, `SpaceHooks.StarMapOpen`); showing it over the map
+  (`DialogueView.HostIn`, 2026-10-24) was taken out again on 2026-10-25 at the user's request. ES2's Mobile Homebase is
+  no warship but a mobile station like the GoF3 mod's Manticore (`warships.build_homebase`: stations.json, route "any",
+  30 minutes an orbit, two hours a system), docked into its own hangar and casino (`homebase_hangar.py`: ES2's carrier
+  level POI_HomebaseCarrier_001 assembled into one interiors.json room x2.8, its six landing pads the pad and parked
+  slots, a side force field's opening the flights' gate, the casino behind the hall as the bar; the structure colours as
+  ES2's shader computes them, saturate(2 x C x vertex-colour tint), read from its compiled shader). Fixed on the way: a
+  station's stations.json `materials`, and an interiors.json room's, ignored their `material` filter
+  (`ModStations.Build` / `ModInteriors.Build` passed no glTF material name to `ModShipBuilder.MaterialFor`), so such a
+  station showed its model's own white materials.
+- **Turrets don't fire through their own ship** (remake, 2026-10-24, the user's request, for every turret):
+  `TurretCore.Host` (the ship it sits on: NpcShip's turret objects their capital host (`Spec.capitalHost`) or the ship
+  they ride on, `NpcMountedTurrets` / `PlayerTurret` their ship) and `TurretCore.Fire` checks, once the gun is ready, a
+  ray from the gun's pivot along the barrel against that ship's hull (`HullCollision.RayHits`: its own mesh colliders,
+  past the turret's own meshes; built in every collision mode but Original), else its collision volumes
+  (`Obstacle.RayInto`: entering another volume, or heading inward through the face of the one it starts in); blocked =
+  no shot, `TurretCore.Blocked`, and the owner drops that target like an unreachable one (`TurretTargeting.LimitHit`).
+  Shots pass their own side's hulls, so a turret on a capital ship's far side hit the player straight through it.
+  Checked in Play mode: 141 shots of a hostile Dreadnought's turrets with the player under it, none through the hull.
+  Test `ModCapitalShipsTests.ATurretDoesntFireIntoItsOwnHullsVolumes`.
+- **Mobile stations** (remake, 2026-10-24, the user's request: GoF3's Manticore as a moving station with its own hangar;
+  stations.json `"mobile": true | { "route", "stayMinutes", "systemMinutes", "exclude", "speed", "race", "engines",
+  "engineColor", "engineFx" }`, `ModWorld.MobileSpec` / `IsMobile` / `Mobiles`; `MobileStations` (Game layer, plain C#);
+  `World.MobileStation`): a new station with no planet (not added to its system's `stations`, so not on the map, not in
+  the 7, never a random target). Its route (any systems' stations, default every station of its own system; `"any"`:
+  every system, the user's request for the Manticore: `systemMinutes` in one, its orbits there in turn, then another,
+  every system once per round in an order drawn from the station and the round (`RoamSystemAt`, never the same twice in
+  a row), never `MobileStations.RoamSkip`'s story / Kaamo orbits; `exclude` systems) is walked by the UTC clock
+  (`MobileStations.Clock`, `ClockOverride` for tests; the same for every player, it moves on while the game is closed):
+  stay n = seconds / stay, the (n + station) % count-th stop; in that orbit a straight course crossed sideways
+  (`CourseAt`: a JavaRandom of station and n, the middle 6-8 km out within 50 deg of the station's front, heading square
+  to it, so the hull never sweeps the station). `SpaceLevel` spawns those in its orbit (`MobileStation.SpawnAll`, not in
+  an arena or the prologue): the model (its ModStations template, else looksLike), an `Obstacle` turning with it
+  (`rotates`; `ModCapitalShips.Measure` in its own frame), `HullCollision`, moving at its speed in game time; Navigation
+  gets a Station target with its transform (`AddMobileStation`, `Target.techLevel` for its marker, `GoingToMobile`;
+  `GoingToStation` now only the orbit's own); `CanDock` / `Dock` / the autopilot dock at the one in range (bounding
+  radius + 6000 units, after the player left it once: `MobileStation.LeftRange`; `DockAt`: `Session.StationIndex` = the
+  mobile station, the Station scene with its own hangar / bar). A level loaded with a mobile station's index (a launch
+  from it, a teleport) is its current host orbit (`SpaceLevel.Awake`, `launchFromMobile`) and the player comes out
+  beside it (`LaunchPose`: its right, along its course). Each `Database.Load` gives it the system of the orbit it is in
+  (`ModWorld.Apply`: `StationData.system` = the host's, so the docked header, prices and star map follow it; a scene
+  keeps the one it loaded), while its race stays `MobileSpec.race` ("race", else its interior's, else its home system's;
+  `OrbitLayout.Build`); its title is its name alone (`StationMenu`, `MobileStation.Label`). The star map marks it
+  (`StarMap.MobileMark`: amber, after the system's name and under its orbit's planet with the minutes until it leaves
+  the system, `MobileStations.LeavesSystemIn`); its `engines` (exhaust mounts from its centre) get a mod ship's glow
+  (`ModShipBuilder.BuildEngineGlow`), or with `"engineFx"` (ships.json's, `CustomEngineFx`) Galaxy on Fire 3's engine
+  effect instead (`EngineFx.CreateShaped`, each engine by its `fxScale` and its `outline`, run at
+  `MobileStation.CruiseDrive` 0.8 through an `EnginePreview`: its 0.15 u/ms measured as idle; the textures preloaded
+  with the station's, `ModStations.TexturesOf`). The GoF3 Ships mod gives it and the nine capital ships GoF3's capital
+  engine (`vfx/engines/large`, the importer's `capitals.large_engine_fx`: the glowing nozzle body as the cone, its taper
+  drawn into the cards' picture, the hot core as one straight trail, the flat flare as the glow's streak (1.6 x GoF3's
+  quad and brighter: our texture fades toward its ends), in the race's colours) on their engine helpers at the helpers'
+  scale, each shaped to its nozzle (the importer's `nozzle_outline`: slices across the nozzle, rays from the axis to its
+  walls, the aftmost closed slice's convex hull, of three readings the one nearest GoF3's own size; the mount's
+  `outline`); before, plain discs twice the nozzle's size floated off the nozzles (the user's report), and the Hades'
+  hull sat 86 GoF3 units above its own engine helpers (the importer's scene reader took each node's parent from the
+  record before: fixed in `ae4_scene`). Tests `ModCapitalShipsTests`. Verified in Play mode (the GoF3 Ships mod's
+  Manticore, 6.3 km, Magnetar): found in Dis's orbit cruising nose first, docked into its hangar, launched back beside
+  it.
+- **EVERSPACE 2 docking** (remake, 2026-10-25, the user's request: ES2's stations and the Mobile Homebase dock as ES2
+  does; `World.Es2Dock`, interiors.json hangar `"dock": "es2"`, `ModInteriors.Es2DockOf`): the hangar room is the
+  station's own model (same GLB, the room's `scale` = the station's), so its markers map into the orbit through the
+  station's `hull` (`W(m) = hull.TransformPoint(m / scale)`). From BP_DockableStation's decompiled blueprint and its
+  timeline curves (`Es2DockCurves`, UE cubic keys): the dock's marker is the station landmark (`DockPoint`, the Interact
+  box's centre); Dock works inside that box (`InZone`, TriggerBoxExtent 7000 x 7000 x 3000 cm, 35 m up) instead of
+  GoF2's range; docking cuts to the dock's CineCamera (spring arm 35 m, pitch -15 yaw 160, 23 deg up a 16:9 screen)
+  looking straight at the ship + its look offset while ShipDocking (5 s) moves it TLerp(start, DockingTransform,
+  TransformAlpha) (landed at 4 s; the ship's bounds centre on it), banking wobble BankingAlpha x 30 x
+  InitialDistanceFactor, the SteadyCam sway (1 deg at 5.19 / 5.88 / 6.95 rad/s x factor x GlobalAlpha); take-off (3 s):
+  climb TakeOffHeight turning to the take-off point (Align), then out to TakeOffTransform (Launch, accelerating),
+  banking x 10, the camera eased toward the ship, at 1 s the boost and a 3 s ease-in-out (exp 4) view blend to the chase
+  camera (Es2Dock restores the chase camera's own pose each Update so its state stays its own); `dockSound` /
+  `undockSound` (the mod's ES2 S_SC_Docking / Undocking). **Docked inside the orbit** (the user's choice: no separate
+  space): when the ship lands, `SpaceLevel.DockInOrbit` loads the Station scene additively; the orbit lives on (traffic,
+  sky), the ship held on the pad (`Es2Dock.Docked`, a mobile station carries it), its model hidden, the HUD hidden
+  (`FlightHud`), flight input halted (`SpaceHooks.DockedInOrbit` in `Navigation.InputHalted`), looping sounds paused,
+  invulnerable, the ship state stored (`PlayerHealth.StoreToSession`). StationLevel's orbit mode (`DockedInOrbit`): no
+  room, its camera / volumes / key light off, the space camera driven instead, `hangarRoot` parented under the station's
+  hull (scale 1 / room scale) so every hangar place is room metres (`SpawnShip` local); Launch =
+  `SpaceLevel.UndockFromOrbit` (unload, `SwapPlayerShip` + `ReloadFromSession` for what the station changed, the
+  take-off; a story launch still reloads). The Station scene loaded on its own for such a station (a save, a story move)
+  redirects to Space with `Session.Es2StartDocked` (docked on the pad, then additive); `Session.Es2NoRedirect` when no
+  dock could be found. Mobile stations: a dock each (`mobileDocks`, their landmark the dock point), `ActiveEs2` the one
+  in use. stations.json `"bar": "none"` (`ModWorld.NoBar`): no Space Lounge (`Story.LoungeUnlocked`, the button hidden):
+  ES2's stations, the Homebase, GoF3's Manticore. A roaming mobile station's `"systems"`: only those (the Homebase:
+  ES2's sectors). Tests `Es2DockTests`. Verified in Play mode: docking and take-off at Union Bridge and at the Mobile
+  Homebase (into its hall, out through its open end), the station menu over the live orbit, Launch without a reload, the
+  sounds. While docked so the Station scene is loaded beside the Space scene, whose root "EventSystem" is switched off
+  (`SpaceLevel.DockInOrbit`, back on in `UndockFromOrbit`; GoF2.Space can't name UGUI's type): two flooded the console
+  with "There are 2 event systems in the scene". **Lights and landing dust** (BP_DockableStation's SpotLight_Top / _Fill
+  and P_Vehicle_LandingDust, from its component defaults and the dust's Cascade emitter): from the docking's start until
+  the take-off ends, a white spot 30 ES2 m above the pad pointing down and a cyan (77D2FF) one on a pivot turned with
+  the camera (5 m ahead, 20 m right, 5 m below the pad, aimed back at it), cones 45 deg, reach 50 m; UE's legacy falloff
+  (1 - (d / R)^2)^2 isn't URP's inverse square, so each frame their URP intensity is set to give the ship UE's falloff
+  at its distance (`Es2Dock.Intensity`, x `LightScale` 0.005 per unitless UE unit: 100 top, 30 fill; matched by eye at
+  Union Bridge). The dust from the docking's start to 4 s: a trace 50 m down the ship's banked up (the hull colliders,
+  else the dock's plane), Amount 1 - distance / 50 m; 200 x Amount a second, 0.5-1 s, on a 5 m circle in the dock's
+  plane flying out at 3-4 x it a second + the ship's lean across the plane x -50 m/s, rising 10 m/s^2, 5-10 m sprites of
+  a random frame of T_Smoke_001_M's 6 x 6 flipbook blended to the next (its green = opacity), grey 0.2 lit without
+  direction, alpha 0 -> 0.1 -> 0 x Amount; drawn by `GoF2/ModEs2Trail` kind 11 (Landing dust); interiors.json `"dust"`
+  names the flipbook (the ES2 importer writes `textures/es2_landing_dust.png`). Seen at Okrot: a faint haze over the
+  pad, as ES2's own values give. Not done: multiplayer (other players' view of a docked ship, NetHangar).
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
   available, unlocked (known once available, `UnlockAvailable` at `Shop.EnterStation`), and three sources while available and
   not known (`Offerable`): "lounge" (`AgentGenerator.AddModBlueprintSellers`, a local visitor with offer SellBlueprint, the
-  openers 874 / 875 in `LoungeChat.StoryLine`), "derelict" (`TrafficPlan.Build`: one hackable freighter wreck per visit at
+  openers 874 / 875 in `LoungeChat.StoryLine`; "stations" pins it to those bars like the game's own sellers, chance 100,
+  `LoungeAllowedAt`), "derelict" (`TrafficPlan.Build`: one hackable freighter wreck per visit at
   most, `TrafficPlan.HackableWreck` + `SpawnSpec.modBlueprint`; `Traffic.OnHackWon` leaves a data crate; "stations" limits it
   to those orbits, `RollDerelict(station)` / `DerelictAllowedAt`, the chance then defaulting to 100, a list of unknown ones =
-  nowhere; "position" [x, y, z] game units in the orbit, else out in front) and "drops" per race (`NpcShip.OnDied`, a kill by
-  the player: `RollDrop`, a data crate). A data crate is a `Crate` (look 3, the junk container) holding the product item;
+  nowhere; "position" [x, y, z] game units in the orbit, else out in front) and "drops" per race or per ship type (`{
+  "ship", "chance" }`, `Def.shipDrops`, rolled first: a boss hull's own blueprint) (`NpcShip.OnDied`, a kill by the
+  player: `RollDrop`, a data crate). A blueprint is obtained once (2026-10-24, the user's rule): a seller standing in a
+  bar since before it was learnt has 858 (`LoungeChat.Start`), a derelict hacked after leaves no crate and no data crate
+  is made while one with it floats (`Crate.HoldsAny`, `NpcShip.OnDied`, `Traffic.OnHackWon`); production stays
+  repeatable. A data crate is a `Crate` (look 3, the junk container) holding the product item;
   `CombatRadar.Capture` learns a mod blueprint's product instead of loading it ("Blueprint found: X"). An item product gets the
   recipe on its `ItemData.blueprint`; a ship product is a hidden "blueprint item" ("<mod>:blueprint:<id>", numbered like a mod
   item in `ModContent.EnsureMapping`, made in `Apply` (`Deed`), its price the ship's after `ApplyShips`; `ModContent.ItemText`

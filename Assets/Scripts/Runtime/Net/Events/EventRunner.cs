@@ -186,7 +186,7 @@ namespace GoF2Remake.Events
 
 
         static readonly string[] Triggers = { "died", "docked", "launched", "joined", "left", "entered", "kill", "cleared", "pvpkill", "respawned", "near", "hacked" };
-        static readonly string[] MissionKeys = { "title", "offer", "client", "reward", "players", "stations", "kind", "starts", "chance", "takers" };
+        static readonly string[] MissionKeys = { "title", "offer", "client", "reward", "players", "stations", "kind", "starts", "chance", "takers", "repeat" };
 
         /// <summary>A bar mission's details: the Start node's Mission settings (the "mission &lt;key&gt; &lt;value&gt;" lines).</summary>
         public sealed class MissionInfo
@@ -203,6 +203,7 @@ namespace GoF2Remake.Events
             // is on it, StartMission refuses a second), one per station (taken out of that bar only), or any number of teams.
             public EventMissionTakers takers;
             public int kind = -1;   // "mission kind": 0 event, 1 bar mission, 2 quest (-1: not given, a bar mission when titled)
+            public float repeatMinutes;   // "mission repeat": a quest that comes again this many minutes of playing time after it was done (0: once)
             public bool builtIn;    // one of the game's own examples (Resources/GoF2Events): multiplayer only
             public bool IsMission => kind == 1 || (kind < 0 && title.Length > 0);
             public bool IsQuest => kind == 2;
@@ -630,7 +631,7 @@ namespace GoF2Remake.Events
                 static double GameState(string name, string arg)
                 {
                     if (name == "quest")
-                        return Session.GraphQuestsDone.Contains(arg) ? 2 : Session.GraphQuests.Exists(q => q.name == arg) ? 1 : 0;
+                        return Session.GraphQuestsDone.Contains(arg) || Session.GraphQuestRepeats.ContainsKey(arg) ? 2 : Session.GraphQuests.Exists(q => q.name == arg) ? 1 : 0;
                     // option(<mod id>:<option id>): a mod's new-game option is on in this game (Modding.ModGameOptions).
                     if (name == "option") return Modding.ModGameOptions.IsOn(arg) ? 1 : 0;
                     // won(main | valkyrie | supernova): that campaign's story is finished in this game (or the multiplayer
@@ -670,6 +671,7 @@ namespace GoF2Remake.Events
                         case "min" when a.Count == 2: return Math.Min(a[0], a[1]);
                         case "max" when a.Count == 2: return Math.Max(a[0], a[1]);
                         case "floor" when a.Count == 1: return Math.Floor(a[0]);
+                        case "randomstation" when a.Count == 0: return RandomStation();
                     }
                     throw new Exception(string.Format("no function {0} with {1} value(s).", name, a.Count));
                 }

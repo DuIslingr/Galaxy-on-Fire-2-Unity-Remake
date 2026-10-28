@@ -41,6 +41,8 @@ namespace GoF2Remake.Data
         public List<string> systemShown;
         public int jumpgatesUsed, kills, pirateKills;
         public int[] standing;
+        /// <summary>Session.FactionStanding: "mod_id:faction|value" (remake mods' factions; no save version of its own).</summary>
+        public List<string> factionStanding;
         // version 2: the story
         public bool freePlay;
         public StoryMission storyMission;
@@ -102,6 +104,8 @@ namespace GoF2Remake.Data
         // version 13: the event graph quests and bar missions under way, the quests finished (Session.GraphQuests)
         public List<GraphQuestState> graphQuests;
         public List<string> graphQuestsDone;
+        // (remake, no version of its own: older saves have none) the repeatable quests finished, "name|playing seconds"
+        public List<string> graphQuestRepeats;
         // version 14: a mod's campaign (Session.ModCampaign, Modding.ModCampaigns)
         public string modCampaign;
         // version 15: a hardcore (permadeath) game and the run it belongs to (Session.Hardcore / RunId)
@@ -323,6 +327,7 @@ namespace GoF2Remake.Data
                 storyAgentsAccepted = new List<int>(Session.StoryAgentsAccepted),
                 graphQuests = new List<GraphQuestState>(Session.GraphQuests),
                 graphQuestsDone = new List<string>(Session.GraphQuestsDone),
+                graphQuestRepeats = Session.GraphQuestRepeats.Select(kv => kv.Key + "|" + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList(),
                 modCampaign = Session.ModCampaign ?? "",
                 hardcore = Session.Hardcore,
                 runId = Session.RunId ?? "",
@@ -351,6 +356,7 @@ namespace GoF2Remake.Data
                 kills = Session.Kills,
                 pirateKills = Session.PirateKills,
                 standing = (int[])Session.Standing.Clone(),
+                factionStanding = Session.FactionStanding.Select(kv => kv.Key + "|" + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList(),
                 freePlay = Session.FreePlay,
                 storyMission = Session.StoryMission,
                 storyStepStart = Session.StoryStepStart,
@@ -536,6 +542,13 @@ namespace GoF2Remake.Data
             Session.Kills = s.kills;
             Session.PirateKills = s.pirateKills;
             if (s.standing != null && s.standing.Length == 2) Session.Standing = s.standing;
+            Session.FactionStanding = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var e in s.factionStanding ?? new List<string>())
+            {
+                int bar = e.LastIndexOf('|');
+                if (bar > 0 && int.TryParse(e.Substring(bar + 1), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int v))
+                    Session.FactionStanding[e.Substring(0, bar)] = Mathf.Clamp(v, -100, 100);
+            }
             if (s.version < 2)
             {
                 // Saved before the story existed: free play at index 20.
@@ -585,6 +598,13 @@ namespace GoF2Remake.Data
                 Session.StoryAgentsAccepted = new HashSet<int>(s.storyAgentsAccepted ?? new List<int>());
                 Session.GraphQuests = s.graphQuests ?? new List<GraphQuestState>();
                 Session.GraphQuestsDone = new HashSet<string>(s.graphQuestsDone ?? new List<string>());
+                Session.GraphQuestRepeats = new Dictionary<string, float>();
+                foreach (var r in s.graphQuestRepeats ?? new List<string>())
+                {
+                    int bar = r.LastIndexOf('|');
+                    if (bar > 0 && float.TryParse(r.Substring(bar + 1), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float at))
+                        Session.GraphQuestRepeats[r.Substring(0, bar)] = at;
+                }
                 GraphQuestState.RestorePending = Session.GraphQuests.Count > 0;   // they run again from their checkpoints
                 if (s.version < 11)   // older saves: a blueprint seller whose blueprint is owned was bought from
                     foreach (var sa in AgentData.StoryAgents)

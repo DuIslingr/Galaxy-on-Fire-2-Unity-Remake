@@ -199,6 +199,8 @@ namespace GoF2Remake.Events
                     if (startsWhen.Length > 0) Raw("mission starts " + startsWhen);
                     double questReward = Num(start, "MissionReward");
                     if (questReward > 0) Raw("mission reward " + Number(questReward));
+                    double repeat = start.values.ContainsKey("RepeatMinutes") ? Num(start, "RepeatMinutes") : 0;   // (graphs from before the option)
+                    if (repeat > 0) Raw("mission repeat " + Number(repeat));
                     Raw("");
                 }
                 else if (missionTitle.Length > 0)

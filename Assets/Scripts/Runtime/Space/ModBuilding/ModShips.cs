@@ -173,8 +173,8 @@ namespace GoF2Remake.Modding
             foreach (var e in exhausts)
             {
                 if (e.IsFlame) tasks.Add(LoadKit(rev, e.kit, new[] { e.model }));
-                else foreach (var f in new[] { e.fx.glow, e.fx.cone, e.fx.trail, e.fx.spiral })
-                    if (!string.IsNullOrEmpty(f)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, false, false, false));
+                else
+                    foreach (var f in EngineFxTextures(e.mod, e.fx)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, true, false, false));
             }
             await Task.WhenAll(tasks);
             if (rev != ModManager.Revision) return;   // the mods changed meanwhile: a newer load runs
@@ -183,7 +183,7 @@ namespace GoF2Remake.Modding
             {
                 try
                 {
-                    await Task.WhenAll(TexturesOf(c).Select(t => ModMaterials.PreloadTexture(mod, t.path, t.linear, t.readable, t.normal)));
+                    await Task.WhenAll(TexturesOf(c, mod).Select(t => ModMaterials.PreloadTexture(mod, t.path, t.linear, t.readable, t.normal)));
                     if (rev != ModManager.Revision || holder == null) return;
                     var icon = ModMaterials.Texture(mod, c.icon, false);
                     if (icon != null) icons[c.index] = icon;
@@ -200,7 +200,7 @@ namespace GoF2Remake.Modding
         }
 
         /// <summary>The PNGs a ship's entry uses, with how they are read (ModMaterials.FromSpec, the throttle glow masks).</summary>
-        static IEnumerable<(string path, bool linear, bool readable, bool normal)> TexturesOf(CustomShipData c)
+        static IEnumerable<(string path, bool linear, bool readable, bool normal)> TexturesOf(CustomShipData c, ModInfo mod)
         {
             if (!string.IsNullOrEmpty(c.icon) && !GameModels.Is(c.icon)) yield return (c.icon, false, false, false);
             if (c.materials != null)
@@ -221,11 +221,19 @@ namespace GoF2Remake.Modding
             if (c.throttleGlow != null && !string.IsNullOrEmpty(c.throttleGlow.mask)) yield return (c.throttleGlow.mask, false, true, false);
             if (c.extraGlows != null)
                 foreach (var g in c.extraGlows) if (g != null && !string.IsNullOrEmpty(g.mask)) yield return (g.mask, false, true, false);
-            if (c.engineFx != null)
-                foreach (var f in new[] { c.engineFx.glow, c.engineFx.cone, c.engineFx.trail, c.engineFx.spiral })
-                    if (!string.IsNullOrEmpty(f)) yield return (f, false, false, false);
+            foreach (var f in EngineFxTextures(mod, c.engineFx)) yield return (f, true, false, false);
             if (c.addParts != null)
                 foreach (var p in c.addParts) if (p != null && !string.IsNullOrEmpty(p.texture)) yield return (p.texture, false, false, false);
+        }
+
+        /// <summary>An engineFx's pictures (EngineFx): its engine meshes' and its particles', read raw as GoF3 reads them.</summary>
+        public static IEnumerable<string> EngineFxTextures(ModInfo mod, CustomEngineFx fx)
+        {
+            if (fx == null) yield break;
+            if (!string.IsNullOrEmpty(fx.meshes))
+                foreach (var f in EngineModels.Textures(mod, fx.meshes)) yield return f;
+            foreach (var em in new[] { fx.trailParticles, fx.contrailParticles, fx.boostParticles })
+                if (em?.Any == true) yield return em.texture;
         }
 
         /// <summary>A ship's add parts (ships.json "addParts": its lights and engine glows beside the hull) as glTF scenes
@@ -264,7 +272,7 @@ namespace GoF2Remake.Modding
             {
                 if (rev != ModManager.Revision) return;
                 var textures = new List<Task>();
-                foreach (var (path, linear, readable, normal) in TexturesOf(c)) textures.Add(ModMaterials.PreloadTexture(mod, path, linear, readable, normal));
+                foreach (var (path, linear, readable, normal) in TexturesOf(c, mod)) textures.Add(ModMaterials.PreloadTexture(mod, path, linear, readable, normal));
                 bool gameModel = GameModels.Is(c.model);
                 var file = string.IsNullOrEmpty(c.model) || gameModel ? Task.FromResult<byte[]>(null) : Task.Run(() => mod.Source.ReadBytes(c.model));
                 await Task.WhenAll(textures);
@@ -378,9 +386,18 @@ namespace GoF2Remake.Modding
         static IEnumerable<(ModInfo mod, string path, bool linear, bool normal)> SkinTextures(ModShipKits.Kit kit, ModShipKits.Build build)
         {
             var skin = kit?.FindSkin(build?.skin);
-            if (skin == null) return Enumerable.Empty<(ModInfo, string, bool, bool)>();
-            var mod = skin.mod ?? kit.mod;
-            return skin.Textures().Select(t => (mod, t.path, t.linear, t.normal));
+            var livery = kit?.LiveryOf(build);
+            var all = Enumerable.Empty<(ModInfo, string, bool, bool)>();
+            if (skin != null) { var mod = skin.mod ?? kit.mod; all = skin.Textures().Select(t => (mod, t.path, t.linear, t.normal)); }
+            if (livery != null) all = all.Append((livery.mod ?? kit.mod, livery.texture, true, false));   // a mask: linear
+            if (kit?.DecalOf(build) is ModShipKits.Decal decal)
+                foreach (var path in new[] { decal.insignia, decal.type })
+                    if (!string.IsNullOrEmpty(path)) all = all.Append((decal.mod ?? kit.mod, path, true, false));   // masks: linear
+            // the engine trails' textures (the player's ship only shows them, but they load with the build)
+            foreach (var trail in new[] { kit?.TrailOf(build, false), kit?.TrailOf(build, true) })
+                if (trail != null)
+                    foreach (var t in trail.Textures()) all = all.Append((trail.mod ?? kit.mod, t.path, t.linear, t.normal));
+            return all;
         }
 
         static bool SkinReady(ModShipKits.Kit kit, ModShipKits.Build build) =>
@@ -515,6 +532,8 @@ namespace GoF2Remake.Modding
             template.name = name;
             template.transform.SetParent(holder.transform, false);
             ApplySkin(template, kit, skin);
+            ApplyLivery(template, kit, build);   // (before the colours: a "livery" colour slot recolours it)
+            ApplyDecals(template, kit, build);   // (the decal colours too)
             ApplyColors(template, kit, build);
             DamageEmbers.Add(template, kit.materials.Where(m => m != null && (!string.IsNullOrEmpty(m.damageEmission) || !string.IsNullOrEmpty(m.damageDetail)) && !string.IsNullOrEmpty(m.material)).Select(m => m.material));
             EngineMaterialGlow.Add(template, kit.materials.Where(m => m != null && m.engine && !string.IsNullOrEmpty(m.material)).Select(m => m.material),
@@ -615,6 +634,26 @@ namespace GoF2Remake.Modding
                                 copy.SetColor("_EmissionColor", col.linear * (t.intensity * strength));
                                 copy.EnableKeyword("_EMISSION");
                             }
+                            else if (t.property == "decal1" || t.property == "decal2" || t.property == "decal3")
+                            {
+                                // A decal's colour 1, 2 or border (ApplyDecals: GoF2/Hull's _DecalColor1..3, linear).
+                                if (!copy.HasProperty("_DecalColor1")) continue;
+                                var dcol = col.linear * t.intensity; dcol.a = 1f;
+                                copy.SetColor("_DecalColor" + t.property.Substring(5), dcol);
+                            }
+                            else if (t.property == "livery")
+                            {
+                                // The livery's colour (ApplyLivery: GoF2/Hull's _LiveryColor rgb, metallic in a; its smoothness
+                                // and the mask's exponent, 1 + 1.2 luminance, in _LiveryParams2), only where a livery shows.
+                                if (!copy.HasProperty("_LiveryColor") || copy.GetVector("_LiveryParams").y <= 0f) continue;
+                                var lc = col * t.intensity;
+                                float lm = metal >= 0f ? metal : copy.GetColor("_LiveryColor").a;
+                                copy.SetColor("_LiveryColor", new Color(lc.r, lc.g, lc.b, lm));
+                                var p2 = copy.GetVector("_LiveryParams2");
+                                p2.z = 1f + 1.2f * Mathf.Clamp01(lc.r * 0.2126f + lc.g * 0.7152f + lc.b * 0.0722f);
+                                if (smooth >= 0f) p2.w = smooth;
+                                copy.SetVector("_LiveryParams2", p2);
+                            }
                             else if (t.property == "boost")
                             {
                                 // An engine flame's boost colour (GoF2/ModEngineFlame: the boost cards, the manoeuvring jets).
@@ -630,6 +669,103 @@ namespace GoF2Remake.Modding
                         }
                     }
                     if (copy == null) continue;
+                    copies[m] = copy;
+                    mats[i] = copy;
+                    changed = true;
+                }
+                if (changed) r.sharedMaterials = mats;
+            }
+        }
+
+        /// <summary>A build's livery (ModShipKits.Kit.LiveryOf) onto copies of the kit's "livery" materials: GoF2/Hull's
+        /// _Livery* properties (HullForwardPass.hlsl), the projection over the ship's largest half-extent in the parts' object
+        /// space (EVERSPACE 2's ShipExtent, the ship's bounding box; the parts share one origin).</summary>
+        static void ApplyLivery(GameObject root, ModShipKits.Kit kit, ModShipKits.Build build)
+        {
+            var livery = kit.LiveryOf(build);
+            var names = kit.materials.Where(m => m != null && m.livery && !string.IsNullOrEmpty(m.material)).Select(m => m.material.ToLowerInvariant()).ToList();
+            if (livery == null || names.Count == 0) return;
+            var tex = ModMaterials.Texture(livery.mod ?? kit.mod, livery.texture, true);
+            if (tex == null) return;
+            tex.wrapMode = TextureWrapMode.Repeat;
+            // The ship's extent in object space (the parts' meshes share it; LOD and glow layers left out).
+            var bounds = new Bounds();
+            bool any = false;
+            foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.sharedMesh == null || mf.name.Contains("_lod_gen") || mf.name.EndsWith("_add")) continue;
+                var b = mf.sharedMesh.bounds;
+                if (!any) { bounds = b; any = true; } else bounds.Encapsulate(b);
+            }
+            if (!any) return;
+            var ext = bounds.extents;   // BP_ShipBase: ShipExtent = the bounds' BoxExtent (half its size); the projection stays on the origin
+            float extent = Mathf.Max(ext.x, Mathf.Max(ext.y, ext.z));
+            if (extent <= 0f) return;
+            float lum = Mathf.Clamp01(livery.color.r * 0.2126f + livery.color.g * 0.7152f + livery.color.b * 0.0722f);
+            var copies = new Dictionary<Material, Material>();
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = r.sharedMaterials;
+                bool changed = false;
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    var m = mats[i];
+                    if (m == null || !m.HasProperty("_LiveryMap")) continue;
+                    if (copies.TryGetValue(m, out var done)) { mats[i] = done; changed = true; continue; }
+                    string n = m.name.ToLowerInvariant();
+                    if (!names.Exists(x => n.Contains(x))) continue;
+                    var copy = new Material(m) { name = m.name };
+                    copy.SetTexture("_LiveryMap", tex);
+                    copy.SetVector("_LiveryParams", new Vector4(0.5f / extent, livery.opacity, livery.mirrorX ? 1f : 0f, livery.mirrorY ? 1f : 0f));
+                    copy.SetVector("_LiveryTransform", new Vector4(livery.scale.x, livery.scale.y, livery.offset.x, livery.offset.y));
+                    copy.SetVector("_LiveryParams2", new Vector4(livery.tiling ? 1f : 0f, 1f - Mathf.Clamp01(livery.clipAngle / 90f), 1f + 1.2f * lum, livery.smoothness));
+                    copy.SetColor("_LiveryColor", new Color(livery.color.r, livery.color.g, livery.color.b, livery.metallic));
+                    copy.SetVector("_LiveryForward", kit.liveryForward);
+                    copy.SetVector("_LiveryRight", kit.liveryRight);
+                    copy.SetVector("_LiveryUp", kit.liveryUp);
+                    copies[m] = copy;
+                    mats[i] = copy;
+                    changed = true;
+                }
+                if (changed) r.sharedMaterials = mats;
+            }
+        }
+
+        /// <summary>A build's decal (ModShipKits.Kit.DecalOf) onto copies of the kit's "decal" materials: its insignia or
+        /// type mask as the base map in GoF2/Hull's decal mode (_DecalParams.x; the colours from the "decal1..3" colour slots,
+        /// ApplyColors). No decal: the decal faces stay empty (a clear map, cut away by the alpha clip).</summary>
+        static void ApplyDecals(GameObject root, ModShipKits.Kit kit, ModShipKits.Build build)
+        {
+            var specs = kit.materials.Where(m => m != null && !string.IsNullOrEmpty(m.decal) && !string.IsNullOrEmpty(m.material)).ToList();
+            if (specs.Count == 0) return;
+            var decal = kit.DecalOf(build);
+            Texture2D Mask(string kind)
+            {
+                string path = decal == null ? null : kind == "type" ? decal.type : decal.insignia;
+                return string.IsNullOrEmpty(path) ? null : ModMaterials.Texture(decal.mod ?? kit.mod, path, true);
+            }
+            var copies = new Dictionary<Material, Material>();
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = r.sharedMaterials;
+                bool changed = false;
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    var m = mats[i];
+                    if (m == null || !m.HasProperty("_DecalParams")) continue;
+                    if (copies.TryGetValue(m, out var done)) { mats[i] = done; changed = true; continue; }
+                    string n = m.name.ToLowerInvariant();
+                    var spec = specs.Find(x => n.Contains(x.material.ToLowerInvariant()));
+                    if (spec == null) continue;
+                    var copy = new Material(m) { name = m.name };
+                    var tex = Mask(spec.decal.ToLowerInvariant());
+                    if (tex != null)
+                    {
+                        copy.SetTexture("_BaseMap", tex);
+                        if (copy.HasProperty("_MainTex")) copy.SetTexture("_MainTex", tex);
+                        copy.SetVector("_DecalParams", new Vector4(1f, 0f, 0f, 0f));
+                    }
+                    else copy.SetVector("_DecalParams", new Vector4(1f, 1f, 0f, 0f));   // y: none, every pixel cut away
                     copies[m] = copy;
                     mats[i] = copy;
                     changed = true;
@@ -660,7 +796,7 @@ namespace GoF2Remake.Modding
         }
 
         /// <summary>The ship number in a "ship_NNN_mod" assembly name, -1 = not one.</summary>
-        static int ShipOf(string assembly) =>
+        public static int ShipOf(string assembly) =>
             assembly != null && assembly.StartsWith("ship_") && assembly.Length > 8 && int.TryParse(assembly.Substring(5, 3), out int n) ? n : -1;
 
         /// <summary>The template for a mod ship's assembly; while the model isn't built the game's own model of that ship (a

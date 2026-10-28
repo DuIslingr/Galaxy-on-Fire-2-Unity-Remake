@@ -5,7 +5,9 @@
 //   hangar: "pad" (the player's ship stands on it, required), "camera" (required) + "camera_target" (where it looks; default
 //           the pad), "parked_1", "parked_2"... (parked ships' pads), "gate" + "gate_out" (the forcefield's centre and a point
 //           outside it: the hangar flights fly through there; none = no flights), "light" (the key light shines from there
-//           toward the pad)
+//           toward the pad); with "dock": "es2" also "ship" + "ship_ahead" (where the docked ship's centre sits and a point
+//           ahead of its nose), "takeoff" + "takeoff_ahead" (where EVERSPACE 2's take-off ends and a point ahead of it) and
+//           "dock_zone" (the centre of the box the ship docks from, "dockZone" [half x, y, z] metres, the dock's own axes)
 //   bar:    "camera" + "camera_target" (the resting view, required), "camera_start" + "camera_start_target" (the first visit's
 //           glide from there; default the resting view), "visitor_1", "visitor_2"... (where visitors stand, at least one),
 //           "light" (default: the system's sun, like the originals)
@@ -13,6 +15,10 @@
 // ships.json's), "fov" (vertical degrees; default the originals': hangar 46, bar 69), "near" / "far" (metres), hangar:
 // "startYaw" (degrees the player's ship is turned to), "parkedMax" (default the parked pads' count), "flights" (default true),
 // "cruise" (metres above the floor the flights cross at), "gateSpan" [low, high] (heights the forcefield can be passed at),
+// "dock": "es2" (EVERSPACE 2's docking, World.Es2Dock: the room is the station's own model, docked from the station's orbit
+// and taken off from it; no hangar flights), "rise" (metres the take-off first climbs; default 14), "dockZone",
+// "dockSound" / "undockSound" (the mod's sounds by name, played as the docking / take-off starts), "dust" (a 6 x 6 flipbook
+// image, its red / grey the opacity: the docking's landing dust, World.Es2Dock; none without it),
 // both: "ambient" [r, g, b], "lightIntensity", "fog" [r, g, b, end metres], "markers": { "pad": [x, y, z], ... } (the
 // markers placed in the Mod Builder, room metres; they win over the model's nodes of the same name) } ]
 // "model" may be one of the game's rooms ("gof2:hangar_terran", "gof2:bar_vossk"): then the markers come from "markers".
@@ -38,7 +44,7 @@ namespace GoF2Remake.Modding
         static readonly HashSet<string> Fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "id", "type", "model", "scale", "materials", "fov", "near", "far", "startYaw", "parkedMax", "flights", "cruise", "gateSpan",
-            "ambient", "lightIntensity", "fog", "markers",
+            "ambient", "lightIntensity", "fog", "markers", "dock", "rise", "dockZone", "dockSound", "undockSound", "dust",
         };
 
         /// <summary>One interiors.json entry.</summary>
@@ -50,6 +56,17 @@ namespace GoF2Remake.Modding
             public float scale = 1f, fov = -1f, near = -1f, far = -1f, startYaw = float.NaN, lightIntensity = -1f, cruise = float.NaN;
             public int parkedMax = -1;
             public bool flights = true;
+            /// <summary>"dock": "es2": EVERSPACE 2's docking and take-off (World.Es2Dock).</summary>
+            public bool es2Dock;
+            /// <summary>"rise": metres the ES2 take-off climbs before it turns out (BP_DockableStation TakeOffHeight x the scale).</summary>
+            public float rise = 14f;
+            /// <summary>"dockZone": the half extents (metres, the dock's axes) of the box the ship docks from.</summary>
+            public Vector3 dockZone = new Vector3(196f, 84f, 196f);
+            /// <summary>"dockSound" / "undockSound": the mod's sounds (ModSounds.Named) the docking and the take-off play.</summary>
+            public string dockSound, undockSound;
+            /// <summary>"dust": the landing dust's flipbook (6 x 6 frames, its red / grey channel the opacity; P_Vehicle_LandingDust's
+            /// T_Smoke_001_M), or null for none.</summary>
+            public string dust;
             public Vector2? gateSpan;
             public Color? ambient, fogColor;
             public float fogEnd;
@@ -64,7 +81,10 @@ namespace GoF2Remake.Modding
             public Def def;
             public GameObject template;
             public Vector3 pad, camera, cameraTarget, cameraStart, cameraStartTarget, light, gate, gateOut;
-            public bool hasLight, hasGate, hasStart;
+            /// <summary>"dock": "es2": the docked ship's centre and a point ahead of it, the take-off's end and a point ahead,
+            /// the dock zone's centre.</summary>
+            public Vector3 ship, shipAhead, takeoff, takeoffAhead, dockZone;
+            public bool hasLight, hasGate, hasStart, es2Dock;
             public readonly List<Vector3> parked = new List<Vector3>(), visitors = new List<Vector3>();
             /// <summary>Every marker found (the model's nodes and "markers"), for the Mod Builder.</summary>
             public readonly Dictionary<string, Vector3> markers = new Dictionary<string, Vector3>(StringComparer.OrdinalIgnoreCase);
@@ -72,7 +92,8 @@ namespace GoF2Remake.Modding
 
         /// <summary>The markers' names: hangar pad, camera, camera_target, gate, gate_out, light, parked_N; bar camera,
         /// camera_target, camera_start, camera_start_target, light, visitor_N.</summary>
-        public static readonly string[] HangarMarkers = { "pad", "camera", "camera_target", "gate", "gate_out", "light" };
+        public static readonly string[] HangarMarkers = { "pad", "camera", "camera_target", "gate", "gate_out", "light",
+                                                          "ship", "ship_ahead", "takeoff", "takeoff_ahead", "dock_zone" };
         public static readonly string[] BarMarkers = { "camera", "camera_target", "camera_start", "camera_start_target", "light" };
 
         static bool MarkerName(string n) =>
@@ -129,7 +150,18 @@ namespace GoF2Remake.Modding
                     flights = ModJson.Bool(o, "flights", true, File),
                     cruise = ModJson.Has(o, "cruise") ? ModJson.Float(o, "cruise", 0f, File) : float.NaN,
                     lightIntensity = ModJson.Float(o, "lightIntensity", -1f, File),
+                    rise = ModJson.Float(o, "rise", 14f, File),
+                    dockSound = ModJson.Str(o, "dockSound"), undockSound = ModJson.Str(o, "undockSound"),
+                    dust = ModJson.Str(o, "dust"),
                 };
+                string dock = ModJson.Str(o, "dock", "");
+                if (!string.IsNullOrEmpty(dock))
+                {
+                    if (!string.Equals(dock, "es2", StringComparison.OrdinalIgnoreCase)) throw new ModJsonException($"{where}: \"dock\" must be \"es2\"");
+                    if (type != "hangar") throw new ModJsonException($"{where}: \"dock\" is a hangar's");
+                    d.es2Dock = true;
+                }
+                if (ModJson.Get(o, "dockZone") is JArray dz && dz.Count == 3) d.dockZone = new Vector3((float)dz[0], (float)dz[1], (float)dz[2]);
                 if (ModJson.Get(o, "gateSpan") is JArray gs && gs.Count == 2) d.gateSpan = new Vector2((float)gs[0], (float)gs[1]);
                 if (ModJson.Get(o, "ambient") is JArray am && am.Count == 3) d.ambient = new Color((float)am[0], (float)am[1], (float)am[2]);
                 if (ModJson.Get(o, "fog") is JArray fg && fg.Count == 4) { d.fogColor = new Color((float)fg[0], (float)fg[1], (float)fg[2]); d.fogEnd = (float)fg[3]; }
@@ -157,6 +189,8 @@ namespace GoF2Remake.Modding
         /// <summary>The built room of a station's custom hangar / bar (null: none, or not built: the race's room).</summary>
         public static Room HangarOf(int station) => RoomFor(ModWorld.HangarKey(station), true);
         public static Room BarOf(int station) => RoomFor(ModWorld.BarKey(station), false);
+        /// <summary>The station's built hangar when it docks EVERSPACE 2's way ("dock": "es2"), else null.</summary>
+        public static Room Es2DockOf(int station) => HangarOf(station) is Room r && r.es2Dock ? r : null;
 
         static Room RoomFor(string key, bool hangar)
         {
@@ -193,7 +227,7 @@ namespace GoF2Remake.Modding
                     var assigned = r.sharedMaterials;
                     int count = Mathf.Max(1, mesh != null ? mesh.subMeshCount : assigned.Length);
                     if (assigned.Length != count) Array.Resize(ref assigned, count);
-                    for (int s = 0; s < count; s++) { var m = ModShipBuilder.MaterialFor(d.materials, mats, r.name, s); if (m != null) assigned[s] = m; }
+                    for (int s = 0; s < count; s++) { var m = ModShipBuilder.MaterialFor(d.materials, mats, r.name, s, assigned[s] != null ? assigned[s].name : null); if (m != null) assigned[s] = m; }
                     r.sharedMaterials = assigned;
                 }
             }
@@ -237,6 +271,13 @@ namespace GoF2Remake.Modding
                 room.cameraTarget = Has("camera_target", out var ct) ? ct : room.pad;
                 room.hasGate = Has("gate", out room.gate) && Has("gate_out", out room.gateOut);
                 foreach (var p in numbered.Where(x => x.name == "parked").OrderBy(x => x.n)) room.parked.Add(p.pos);
+                if (d.es2Dock)
+                {
+                    room.es2Dock = Has("ship", out room.ship) && Has("ship_ahead", out room.shipAhead)
+                                   && Has("takeoff", out room.takeoff) && Has("takeoff_ahead", out room.takeoffAhead);
+                    if (!room.es2Dock) Warn(d.mod, $"{File}: \"{d.id}\": \"dock\": \"es2\" needs \"ship\", \"ship_ahead\", \"takeoff\" and \"takeoff_ahead\" markers (docked the GoF2 way meanwhile)");
+                    room.dockZone = Has("dock_zone", out var dzc) ? dzc : room.pad;
+                }
             }
             else
             {

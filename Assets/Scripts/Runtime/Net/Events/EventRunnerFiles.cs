@@ -226,6 +226,9 @@ namespace GoF2Remake.Events
                         info.kind = v.Equals("quest", StringComparison.OrdinalIgnoreCase) ? 2 : v.Equals("mission", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
                         break;
                     case "starts": info.starts = v; break;
+                    case "repeat":
+                        if (double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out double rm)) info.repeatMinutes = Mathf.Max(0f, (float)rm);
+                        break;
                     case "takers":
                         info.takers = v.Equals("station", StringComparison.OrdinalIgnoreCase) ? EventMissionTakers.OnePerStation
                                     : v.Equals("any", StringComparison.OrdinalIgnoreCase) ? EventMissionTakers.Anyone : EventMissionTakers.OneInUniverse;

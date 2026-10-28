@@ -74,6 +74,10 @@ namespace GoF2Remake.Modding
             public Dictionary<string, string> name, description;
             public bool hasLounge, hasDealer;
             public object sounds;   // "sounds" (ModShipSounds.ShipSounds, GameHooks.ParseShipSounds), null = none
+            /// <summary>Remake mods: "race" naming a faction (ModFactions), and "traffic": { "races" } entries that are
+            /// factions or race words, resolved in ShipData (the factions are numbered once every mod is read).</summary>
+            public string raceRef;
+            public List<string> trafficRaceRefs;
         }
 
         /// <summary>The parsed content of one mod (read when the mods are scanned, so a broken file shows in the browser).</summary>
@@ -83,6 +87,7 @@ namespace GoF2Remake.Modding
             public readonly List<ShipDef> ships = new List<ShipDef>();
             public readonly List<ModBlueprints.Def> blueprints = new List<ModBlueprints.Def>();
             public readonly List<ModWorld.Def> systems = new List<ModWorld.Def>(), stations = new List<ModWorld.Def>();
+            public readonly List<ModFactions.Def> factions = new List<ModFactions.Def>();
             public readonly Dictionary<string, Dictionary<string, string>> text =
                 new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);   // language -> key -> text
         }
@@ -129,6 +134,7 @@ namespace GoF2Remake.Modding
                 ParseItems(mod, p);
                 ParseShips(mod, p);
                 ModBlueprints.Parse(mod, p.blueprints);
+                ModFactions.Parse(mod, p.factions);
                 ModWorld.Parse(mod, p.systems, p.stations);
                 foreach (var f in mod.Source.FilesIn("text", ".json"))
                 {
@@ -202,6 +208,8 @@ namespace GoF2Remake.Modding
             "addParts",   // the original's additive layers beside the hull: lights, engine glows (ModShipBuilder)
             "sounds",     // the ship's own engine and boost sounds (ModShipSounds)
             "integrated", // a built-in Khador Drive / cloak (ApplyIntegrated)
+            "camera", "cockpit", "smoke", "explosionScale",   // how the ship is seen (ModShipView)
+            "subsystems", "shieldMaterial", "shieldedDamage", "engineStyle", "es2Engine", "hullFactor", "retreat",   // a capital ship's subsystems (World.CapitalSubsystems)
         };
 
         static void ParseShips(ModInfo mod, Parsed p)
@@ -226,11 +234,16 @@ namespace GoF2Remake.Modding
                     throw new ModJsonException($"{where}: \"integrated\" must be an object {{ \"khadorDrive\": true, \"cloak\": 95 }}");
                 if (ModJson.Get(o, "npcTurrets") is JToken nt && !(nt is JArray))
                     throw new ModJsonException($"{where}: \"npcTurrets\" must be a list of turret items [ 48, \"mod:id\" ]");
+                if (ModJson.Get(o, "subsystems") is JToken ss && !(ss is JArray))
+                    throw new ModJsonException($"{where}: \"subsystems\" must be a list [ {{ \"kind\": \"turret\", \"position_engine\": [x, y, z], \"item\": 48 }} ]");
                 CheckAddParts(o, where, mod);
                 foreach (var prop in o.Properties())
                     if (!ShipFields.Contains(prop.Name)) mod.Warnings.Add($"{ModJson.Where(prop, ShipsFile)}: unknown field \"{prop.Name}\" (ignored)");
-                foreach (var f in new[] { "race", "armor", "cargo", "price", "priceDefault", "handling", "hangarHeight" }) ModJson.Int(o, f, 0, ShipsFile);
+                if (ModJson.Get(o, "race") is JToken rt && rt.Type == JTokenType.String) d.raceRef = (string)rt;   // a faction (ModFactions)
+                foreach (var f in new[] { "race", "armor", "cargo", "price", "priceDefault", "handling", "hangarHeight" })
+                    if (f != "race" || d.raceRef == null) ModJson.Int(o, f, 0, ShipsFile);
                 ModFlight.CheckShip(o, where, mod, ShipsFile);   // "flightStyle", "flight": per flight style
+                ModShipView.CheckShip(o, where, mod, ShipsFile);   // "camera", "cockpit", "smoke", "explosionScale"
                 d.sounds = GameHooks.ParseShipSounds?.Invoke(o, mod, ShipsFile);
                 if (d.localId != null)
                 {
@@ -255,7 +268,14 @@ namespace GoF2Remake.Modding
                 }
                 // The rest as CustomShipData (JsonUtility reads it; the texts and ids are the mod's own; npcTurrets: ApplyShips).
                 var data = (JObject)o.DeepClone();
-                foreach (var k in new[] { "id", "override", "name", "description", "npcTurrets", "build", "sounds", "integrated" }) data.Remove(k);
+                foreach (var k in new[] { "id", "override", "name", "description", "npcTurrets", "build", "sounds", "integrated", "subsystems" }) data.Remove(k);
+                if (d.raceRef != null) data["race"] = -1;
+                if (data["traffic"] is JObject traffic && traffic["races"] is JArray races && races.Any(r => r.Type == JTokenType.String))
+                {
+                    // faction keys and race words: kept aside (ShipData resolves them), the numbers stay
+                    d.trafficRaceRefs = races.Select(r => r.Type == JTokenType.String ? (string)r : ((int)r).ToString()).ToList();
+                    traffic.Remove("races");
+                }
                 try { JsonUtility.FromJson<CustomShipData>(data.ToString()); }
                 catch (Exception e) { throw new ModJsonException($"{where}: {e.Message}"); }
                 d.data = data.ToString();
@@ -427,6 +447,10 @@ namespace GoF2Remake.Modding
         {
             var c = JsonUtility.FromJson<CustomShipData>(d.data);
             c.index = index;
+            // remake mods: a faction as the ship's race or among its traffic's races (ModFactions)
+            if (d.raceRef != null) c.race = ModFactions.TryResolve(d.raceRef, d.mod, out int fr) ? fr : -1;
+            if (d.trafficRaceRefs != null && c.traffic != null)
+                c.traffic.races = d.trafficRaceRefs.Select(r => ModFactions.TryResolve(r, d.mod, out int tr) ? tr : -1).Where(r => r >= 0).ToArray();
             c.assembly = $"ship_{index:000}_mod";
             if (GameModels.Is(c.model, out string gameModel))
             {
@@ -745,6 +769,7 @@ namespace GoF2Remake.Modding
         static void ApplyShips(Database db, bool dflt)
         {
             db.NpcTurrets.Clear();
+            db.ShipSubsystems.Clear();
             db.ShipModels.Clear();
             db.ShipOwnTextures.Clear();
             db.IntegratedDrives = new HashSet<int>(Database.DefaultIntegratedDrives);
@@ -772,9 +797,10 @@ namespace GoF2Remake.Modding
                                     turret = ModJson.Int(sl, "turret", s.slots?.turret ?? 0, ShipsFile), equipment = ModJson.Int(sl, "equipment", s.slots?.equipment ?? 0, ShipsFile),
                                 };
                             ModFlight.ApplyShip(s, o, d.where);
+                            ModShipView.ApplyShip(s, o);
                             if (s is CustomShipData cs)
                             {
-                                cs.race = ModJson.Int(o, "race", cs.race, ShipsFile);
+                                cs.race = d.raceRef != null ? (ModFactions.TryResolve(d.raceRef, d.mod, out int ofr) ? ofr : cs.race) : ModJson.Int(o, "race", cs.race, ShipsFile);
                                 cs.hangarHeight = ModJson.Int(o, "hangarHeight", cs.hangarHeight, ShipsFile);
                             }
                             if (ShipText(t, false, out var n)) s.name = n;
@@ -808,6 +834,7 @@ namespace GoF2Remake.Modding
                                 }
                             }
                             ApplyNpcTurrets(db, mod, d, t);
+                            ApplySubsystems(db, mod, d, t);
                             ApplyIntegrated(db, mod, d, t);
                             continue;
                         }
@@ -815,6 +842,7 @@ namespace GoF2Remake.Modding
                         var c = ShipData(index, d);
                         if (dflt && c.priceDefault > 0) c.price = c.priceDefault;
                         ModFlight.ApplyShip(c, d.json, d.where);
+                        ModShipView.ApplyShip(c, d.json);
                         db.Ships.Add(c);
                         if (GameModels.Is(c.model, out string shipModel))
                         {
@@ -831,6 +859,7 @@ namespace GoF2Remake.Modding
                             db.WeaponMounts.Add(new WeaponMountSet { ship = index, shipName = c.name, mounts = c.mounts });
                         else if (GameModels.Is(c.model, out string mountsModel)) CopyModelMounts(db, d, index, c.name, mountsModel);
                         ApplyNpcTurrets(db, mod, d, index);
+                        ApplySubsystems(db, mod, d, index);
                         ApplyIntegrated(db, mod, d, index);
                     }
                     catch (ModJsonException e) { Report(mod, e.Message); }
@@ -861,6 +890,51 @@ namespace GoF2Remake.Modding
             if (db.MountsOf(ship, 2).Count < items.Count)
                 Report(mod, $"{d.where}: \"npcTurrets\" lists {items.Count} turrets, the ship has {db.MountsOf(ship, 2).Count} turret mounts (the rest is left off)");
             db.NpcTurrets[ship] = items;
+        }
+
+        /// <summary>Remake mods: ships.json "subsystems", a capital ship's parts on its hull (World.CapitalSubsystems): each
+        /// { "kind": "turret" | "object" | "hangar", "name", "position_engine": [x, y, z], "turretUp" / "upsideDown", "item"
+        /// (a turret's turret item), "model" ("gof2:<assembly>" or a ship), "hull", "scale", "radius", "shields", "weakspot",
+        /// "bonus", "stage", and for a hangar "ships", "every" (seconds), "perWave", "maxAlive", "total" }. A turret without a
+        /// turret item, an unknown kind or a wrong shape is reported and left out.</summary>
+        static void ApplySubsystems(Database db, ModInfo mod, ShipDef d, int ship)
+        {
+            if (!(ModJson.Get(d.json, "subsystems") is JArray list)) return;
+            var parts = new List<CapitalSubsystem>();
+            foreach (var e in list)
+            {
+                string at = ModJson.Where(e, ShipsFile);
+                if (!(e is JObject o)) { Report(mod, $"{at}: each subsystem must be an object {{ \"kind\", \"position_engine\" }}"); continue; }
+                var p = new CapitalSubsystem { kind = (ModJson.Str(o, "kind") ?? "object").ToLowerInvariant(), name = ModJson.Str(o, "name"), model = ModJson.Str(o, "model") };
+                if (p.kind != "turret" && p.kind != "object" && p.kind != "hangar") { Report(mod, $"{at}: \"kind\" must be \"turret\", \"object\" or \"hangar\""); continue; }
+                if (!(ModJson.Get(o, "position_engine") is JArray pos) || pos.Count < 3) { Report(mod, $"{at}: a subsystem needs \"position_engine\": [x, y, z]"); continue; }
+                p.position = new Vector3((float)pos[0], (float)pos[1], (float)pos[2]);
+                if (ModJson.Get(o, "turretUp") is JArray up && up.Count >= 3) p.up = new Vector3((float)up[0], (float)up[1], (float)up[2]);
+                else if (ModJson.Get(o, "upsideDown") is JValue ud && ud.Type == JTokenType.Boolean && (bool)ud) p.up = Vector3.down;
+                if (p.up.sqrMagnitude < 1e-6f) p.up = Vector3.up;
+                if (ModJson.Get(o, "item") is JToken it)
+                {
+                    string reference = it.Type == JTokenType.Integer ? ((int)it).ToString() : it.Type == JTokenType.String ? (string)it : null;
+                    if (reference == null || !TryResolveItem(reference, out int i) || db.Item(i) == null) { Report(mod, $"{at}: \"item\": {it} is no item"); continue; }
+                    if (db.Item(i).categoryId != 8 && db.Item(i).categoryId != 35) { Report(mod, $"{at}: \"item\": {db.Item(i).name} ({i}) is no turret"); continue; }
+                    p.item = i;
+                }
+                if (p.kind == "turret" && p.item < 0) { Report(mod, $"{at}: a turret subsystem needs \"item\", its turret item"); continue; }
+                p.hull = ModJson.Int(o, "hull", -1, ShipsFile);
+                p.stage = ModJson.Int(o, "stage", 0, ShipsFile);
+                p.shields = ModJson.Get(o, "shields") is JValue sh && sh.Type == JTokenType.Boolean && (bool)sh;
+                float F(string k, float def) => ModJson.Get(o, k) is JValue v && (v.Type == JTokenType.Float || v.Type == JTokenType.Integer) ? (float)v : def;
+                p.weakspot = F("weakspot", 0f); p.bonus = F("bonus", 0f); p.scale = F("scale", 1f); p.radius = F("radius", -1f);
+                p.everyMs = Mathf.Max(3f, F("every", 25f)) * 1000f;
+                p.perWave = Mathf.Max(1, ModJson.Int(o, "perWave", 2, ShipsFile));
+                p.maxAlive = Mathf.Max(1, ModJson.Int(o, "maxAlive", 6, ShipsFile));
+                p.total = ModJson.Int(o, "total", -1, ShipsFile);
+                if (ModJson.Get(o, "ships") is JArray ships)
+                    foreach (var sh2 in ships) if (sh2.Type == JTokenType.Integer || sh2.Type == JTokenType.String) p.ships.Add(sh2.ToString());
+                if (p.kind == "hangar" && p.ships.Count == 0) { Report(mod, $"{at}: a hangar subsystem needs \"ships\", the ships it launches"); continue; }
+                parts.Add(p);
+            }
+            db.ShipSubsystems[ship] = parts;
         }
 
         /// <summary>Remake (a modder's request): ships.json "integrated", what a ship has built in like the Kothar ships' Khador

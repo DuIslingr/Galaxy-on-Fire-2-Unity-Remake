@@ -1,8 +1,10 @@
 // GoF2/Hull: URP Lit (com.unity.render-pipelines.universal 17.7's Shaders/Lit.shader, copied unchanged) with one change: the
 // ForwardLit pass's fragment is HullPassFragment (HullForwardPass.hlsl), URP's own fragment plus the original's
 // BumpRimCubeShader reflection and rim terms. The ship / station / object materials with a specular map use it
-// (AssetImport, ModAssetsBuilder: the mods' templates too). When URP is updated, copy its Lit.shader again and repeat the
-// two marked lines.
+// (AssetImport, ModAssetsBuilder: the mods' templates too). Every pass includes HullInput.hlsl (URP's LitInput.hlsl with the
+// livery and decal values in UnityPerMaterial) and the _Livery* / _Decal* properties are declared: a kit's liveries and
+// decals (ModShips.ApplyLivery / ApplyDecals). When
+// URP is updated, copy its Lit.shader again and repeat the marked lines (and HullInput.hlsl).
 Shader "GoF2/Hull"
 {
     Properties
@@ -72,6 +74,20 @@ Shader "GoF2/Hull"
         _QueueOffset("Queue offset", Float) = 0.0
 
         // ObsoleteProperties
+        // GoF2: a kit's livery (ModShips.ApplyLivery, HullForwardPass.hlsl; HullInput.hlsl's UnityPerMaterial)
+        [HideInInspector][NoScaleOffset] _LiveryMap("Livery", 2D) = "black" {}
+        [HideInInspector] _LiveryParams("Livery params", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _LiveryTransform("Livery transform", Vector) = (1, 1, 0, 0)
+        [HideInInspector] _LiveryParams2("Livery params 2", Vector) = (0, 0, 1, 0.4)
+        [HideInInspector] _LiveryColor("Livery colour", Color) = (1, 1, 1, 0)
+        [HideInInspector] _LiveryForward("Livery forward", Vector) = (-1, 0, 0, 0)
+        [HideInInspector] _LiveryRight("Livery right", Vector) = (0, 0, 1, 0)
+        [HideInInspector] _LiveryUp("Livery up", Vector) = (0, 1, 0, 0)
+        [HideInInspector] _DecalParams("Decal params", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _DecalColor1("Decal colour 1", Color) = (1, 1, 1, 1)
+        [HideInInspector] _DecalColor2("Decal colour 2", Color) = (1, 1, 1, 1)
+        [HideInInspector] _DecalColor3("Decal border colour", Color) = (0, 0, 0, 1)
+
         [HideInInspector] _MainTex("BaseMap", 2D) = "white" {}
         [HideInInspector] _Color("Base Color", Color) = (1, 1, 1, 1)
         [HideInInspector] _GlossMapScale("Smoothness", Float) = 0.0
@@ -198,7 +214,7 @@ Shader "GoF2/Hull"
             #pragma instancing_options renderinglayer
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl"
             #include "HullForwardPass.hlsl"   // GoF2
             ENDHLSL
@@ -249,7 +265,7 @@ Shader "GoF2/Hull"
 
             // -------------------------------------
             // Includes
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
@@ -340,7 +356,7 @@ Shader "GoF2/Hull"
 
             // -------------------------------------
             // Includes
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitGBufferPass.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GBufferOutputFormat.hlsl"
             ENDHLSL
@@ -385,7 +401,7 @@ Shader "GoF2/Hull"
 
             // -------------------------------------
             // Includes
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
             ENDHLSL
         }
@@ -439,7 +455,7 @@ Shader "GoF2/Hull"
 
             // -------------------------------------
             // Includes
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitDepthNormalsPass.hlsl"
             ENDHLSL
         }
@@ -481,7 +497,7 @@ Shader "GoF2/Hull"
 
             // -------------------------------------
             // Includes
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitMetaPass.hlsl"
 
             ENDHLSL
@@ -518,7 +534,7 @@ Shader "GoF2/Hull"
 
             // -------------------------------------
             // Includes
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/Utils/Universal2D.hlsl"
             ENDHLSL
         }
@@ -534,7 +550,7 @@ Shader "GoF2/Hull"
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma shader_feature_local_vertex _ADD_PRECOMPUTED_VELOCITY
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/Shaders/Utils/ObjectMotionVectors.hlsl"
             ENDHLSL
         }
@@ -561,7 +577,7 @@ Shader "GoF2/Hull"
             #pragma shader_feature_local_vertex _ADD_PRECOMPUTED_VELOCITY
             #define APPLICATION_SPACE_WARP_MOTION 1
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/Shaders/Utils/ObjectMotionVectors.hlsl"
             ENDHLSL
         }

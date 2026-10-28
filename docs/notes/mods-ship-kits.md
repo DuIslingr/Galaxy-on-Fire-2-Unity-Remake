@@ -122,7 +122,38 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   turntable (7.5 m into the floor before). **Engine flames** (`CustomShipMaterial.flame` / `flameLength` / `flameIdle` /
   `boostColor` / `flameNoise`; `GoF2/ModEngineFlame` from `ModAssets.engineFlame` (the Mod Assets builder resets the
   template to the shader's defaults), `ModMaterials.Flame`; `EngineFlame` on the template, `EngineDrive` the throttle reader
-  it shares with `ThrottleGlow` and `EngineMaterialGlow`): EVERSPACE 2 draws its flames from small `M_Vehicle_EngineExhaust`
+  it shares with `ThrottleGlow` and `EngineMaterialGlow`). **Since 2026-10-24 drawn by EVERSPACE 2's own formula**
+  (`_Es2`, set by `ModMaterials.Flame`; the user's request to decompile ES2): its `M_Vehicle_EngineExhaust`'s compiled
+  shaders were read out of the game's IoStore (CUE4Parse with shader maps on: the material's maps are cooked inline, SM5
+  / SM6, Oodle; DXBC disassembled with Wine's d3dcompiler_47; the ES2 importer's `tools/shaders` and
+  `research/engine_exhaust.md`): each vertex moved u x Length (500 cm, the importer's `flameLength` 5) backward whatever
+  the thrust; opacity = pow(sat(thrust x (R + G sat(boost))), OpacityExponent 6) x pow((1 - u) / (1 + 18 u), 4) x
+  noise(red at (time x 2, v))^2, colour R x EngineColor + G x BoostColor x 2, x 1000 alpha-blended (here added x
+  `ModMaterials.Es2FlameGain` 300, matched by eye to the user's ES2 screenshots of the Wraith: a short white-hot core);
+  no view-angle term. Its inputs (the same day, decompiled: `BP_ShipBase`'s Kismet bytecode through CUE4Parse, and
+  `AESPawn::UpdatePrimativeDataParamsNative` in the shipping exe, Ghidra with the shipped PDB's symbols; `EngineFlame`
+  computes them, `Input` / `Thrust` / `Boost` / `Boosting` / `Velocity` / `Pilot` for the effects below): the player's
+  ship (`EngineFlame.Pilot`, a ShipController's model) the movement input (free flight's `ThrustInput`, the original
+  flight's throttle and strafe) eased like `EaseEngineVFX` (VInterpTo at 16 / s rising, 8 / s falling with
+  BP_Ship_Player's fixed 0.05 s step: 80 % / 40 % of the way per 60 fps frame) and the boost (a boost, the cruise mode,
+  a jump) the same; any other ship its velocity in its own frame over the top speed and its boost when faster, at once
+  (BP_ShipBase's 0.3 s step: the target at once); the flames take the thrust's forward part; and the player's flames
+  bend against the velocity (SteeringOffset: + u^2 x -0.008 x min(|v|, 10000 cm/s) in world space, x sat(thrust.x /
+  |thrust|): at most 80 cm of a 5 m flame, here `_SteerBend`, 0.16 of the flame's length at 100 m/s). **EVERSPACE 2's
+  other engine effects** (`Es2EngineVfx`, `GoF2/ModEs2Particle` in Resources/GoF2Mods, its kinds each a decompiled
+  material; the Niagara systems' VM scripts disassembled by the importer's `tools/shaders/niagara.py`) at every engine
+  socket (exhaust mount, slotType 3) and booster socket (slotType 5, ES2's `SKT_Booster`, which the importer now keeps),
+  each sized by the socket's scale (`WeaponMount.socketScale`) in ES2's metres x the kit's scale, the engine colour (a
+  booster's the boost colour), its opacity the thrust (a booster's boost x thrust): the player's ship a veil trail per
+  socket (`NS_Vehicle_EngineTrail_Player_Default`: 50 particles / s in the ship's frame, born 1 m inside the nozzle
+  moving back at 25 m/s and easing toward world-still by 1 - 0.5^(0.4 dt), 0.44 s, 50 cm wide, colour x 5, alpha 0.05 x
+  a cosine over the life x the opacity; the alpha-blended veil material) and an engine light per socket
+  (`CreateEngineLight`: radius 3 m x the socket's scale, intensity 20 x the thrust, a booster's x the boost; URP point
+  lights x `Es2EngineVfx.LightGain`); any other ship a camera-facing glow per socket (100 m x the scale, (r / (1 + 98 (1
+  - r)))^2: a tight core) and a world-space trail (a point every 10 m flown, 2 s, 5 m wide, alpha x pow(velocity .
+  forward, 32): only flying nose first; its first 5 m 20 x as bright); none docked. Not used: `P_Vehicle_EngineGlow`
+  (its haze, trail and lens-flare streak; no blueprint spawns it). The rest of this bullet is the earlier guess, still
+  `_Es2` 0: EVERSPACE 2 draws its flames from small `M_Vehicle_EngineExhaust`
   sections of the rear / wing parts, flat cards with UV u from the nozzle to the tip that its material stretches with the
   thrust (its graph can't be exported: rebuilt from its parameters and matched against EVERSPACE 2 running, the player's
   Sentinel (Body_014, Rear_009, Nemesis tier 4) behind, beside and chased at full thrust, boosting, strafing in all four
@@ -142,25 +173,31 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   softened toward its long edges (UV1.x) and, for main cards, faded as it turns edge-on (|N.V|^2, ES2's OpacityExponent:
   from behind only thin rays remain, as in ES2; the remake had widened the cards toward the camera, `_Widen`, now 0, which
   turned Rear_009's boost cards into fans above and below the ring). A ship with flames keeps an empty `engine_glow` part
-  (no discs) and has no exhaust particles (`ShipExhaust.Setup`). The nozzle glow (`M_Vehicles_Floaters_Emissive`, split by
-  vertex colour by `glow_split`: green NozzleCore, black NozzleOff, the rest NozzleGlow) takes the engine colour slot through
-  the brighter of its mask's red and green channels (T_Vehicles_Floaters_Emissive_M: the rings and grilles, and the dotted
-  band Rear_009's ring samples), `engine`: `EngineMaterialGlow` lights it with the thrust, dark at idle (it kept 18 % at idle
-  before; ES2's nozzles at rest are dark), dark parked. Intensities: flames 4, nozzles 1.6 (brighter clips to pale yellow under
+  (no discs) and has no exhaust particles (`ShipExhaust.Setup`). The nozzle glow (`M_Vehicles_Floaters_Emissive`'s
+  engine quadrant, NozzleGlow, see the ES2 lights below) takes the engine colour slot, `engine`: `EngineMaterialGlow`
+  lights it with the thrust, dark at idle (it kept 18 % at idle before; ES2's nozzles at rest are dark), dark parked.
+  Intensities: flames 4, nozzles 1.6 (brighter clips to pale yellow under
   the remake's tone mapping; ES2 adds a bloom halo the remake's bloom can't without washing it out). **Manoeuvring jets**
   (`LateralThrusters`, mounts of slotType 4 with `WeaponMount.direction`; the converter reads every part's
   `SKT_LateralThruster` sockets, `thruster_mounts`: the Unreal rotator's forward axis): ES2 fires `P_Vehicle_LateralThruster`
-  at them, each jet blowing along its socket whenever the ship moves against it (strafe right fires the left body and
-  under-wing jets, down the upward ones on the wing tops, reverse the forward-facing wing tips; turning fires none). Each jet
-  is two crossed boost cards drawn by the flame shader (5 m at full strength) plus a glow disc facing along it, in the
-  ship's flames' boost colour; under the engine glow part (hidden with the engines, left out of the hangar heights and
-  shadows). Input: the player's free-flight keys (`FlightModel.ThrustInput`, set by `StepFree`), in the original flight the
-  strafe and the brake, other ships their measured acceleration; none in the station, except a small glow on every jet
-  (0.35) while the Customize screen runs the engines (`Visuals.EnginePreview`), as ES2's customization screen shows them. `LateralThrusters.TestInput` overrides
+  at them; since 2026-10-24 as ES2 draws and drives them (decompiled: the Cascade system, `M_Vehicle_LateralThruster`'s
+  shader, BP_Ship_Player's tick): a 300 x 80 cm card along the jet turned toward the camera (only its half beyond the
+  socket shows) and a 100 x 100 cm disc facing along it (`GoF2/ModEs2Particle` kinds 0 / 1; the disc whole, ES2's own
+  half mask needs the socket's roll), shape s / (1 + 18 (1 - s)) ^ (2 + sqrt(noise)), colour x 20, alpha Opacity x (1 +
+  3 Boost) with Opacity = sat(f . -input + sat(f . v^) x (no input)) (the jets pushing where the pilot asks; with no
+  input those blowing along the velocity, the dampers) and Boost = f . -input x boosting, at once (no easing); only on
+  the player's ship (EngineFlame.Pilot); not its 2 m point lights. Under the engine glow part (hidden with the engines,
+  left out of the hangar heights and shadows); none in the station, except every jet at 0.35 while the Customize screen
+  runs the engines (`Visuals.EnginePreview`), as ES2's customization screen shows them. `LateralThrusters.TestInput`
+  overrides
   it for Editor tests. Colours like EVERSPACE 2's (TrailColorEngine / Boost / Lateral): a kit colour slot's target "property": "boost" sets a
   flame material's `_BoostColor` (`ModShips.ApplyColors`); the ES2 kits' slots Main thrusters (the flames and nozzles), Booster
   (the boost cards) and Side thrusters (the "lateral thruster" material: the jets and, through `LateralThrusters.Setup`, their
-  discs; without a slot on it they take the ship's flames' boost colour). Strength slots (`ColorSlot.steps` / `scales`, no palette; the Customize
+  discs; without a slot on it they take the ship's flames' boost colour; only the hue: normalised to its brightest
+  channel 1, as ES2 scales a plain colour x 20, so a slot's x 8 intensity doesn't blind them; `GoF2/ModEs2Particle`
+  declares `_BoostColor` for it, `ApplyColors` sets only what a shader has). The effect meshes (`lateral_thrusters_add`,
+  Es2EngineVfx's parts) end in `_add`: every corner at the socket, PhysX failed to "clean" them as hull meshes
+  (`HullCollision.IsHullMesh` skips `_add`). Strength slots (`ColorSlot.steps` / `scales`, no palette; the Customize
   panel's percentage rows; `ModShipKits.StrengthOf`) scale another slot's emission: the ES2 kits' Cybernetic glow (Emissive 3)
   and its intensity. Materials marked `"boost"` glow only while boosting (`EngineMaterialGlow.boostMaterials`, EngineDrive
   above 1); `"hologram"` materials are copies of `GoF2/ModHologram` (`ModAssets.hologram`, `ModMaterials.Hologram`): additive
@@ -171,7 +208,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   M_Vehicles_Floaters_Emissive's ScrollSpeed 0.3, driven by `EngineMaterialGlow` like the glow (which keeps 60 % then).
   `"damageEmission"` (a mask PNG, the emission of a
   material that has none): battle damage embers, `DamageEmbers` lighting them ember-orange with the ship's `Target.HullFraction`
-  (a third lost to full at 90 %, a slow flicker; EVERSPACE 2's DamageAmount / Ember* parameters); the ES2 converter builds
+  (a third lost to full at 90 %, a slow flicker; EVERSPACE 2's DamageAmount / Ember* parameters), only on materials
+  tagged `ModMaterials.DamageEmbersTag` (their emission is the mask: until 2026-10-25 it took any material with an
+  emission map and a damage layer and zeroed it, so the ES2 cyber strips and floater vents never glowed); the ES2
+  converter builds
   the mask from T_Vehicles_Damage_C_R_M_H (the blurred height's burn blobs, cracks from its colour) for the hull and details.
   `"damageDetail"` / `"damageNormal"`: charring through URP Lit's detail layer (detail colour with the burn mask in its alpha as
   `_DetailMask`, the damage normals), `DamageEmbers` raising `_DetailAlbedoMapScale` / `_DetailNormalMapScale` from a fifth
@@ -180,20 +220,22 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   ES2 export's skeletal animations (AnimSequence JSON) carry no keyframes and none targets the ship modules. Kit parts'
   `anchors` / `anchor` (`ModShipKits.Part`): a part sits on a named point another part of the build offers
   (`ModShips.Assemble` offsets its models; the ES2 bodies offer their SKT_Cockpit socket to the canopy and interior). The ES2
-  lights (converter, matched against EVERSPACE 2's customization screen with Emissive 1 / 2 / 3 apart): TechDetails lights
-  by `T_ShipModules_TechDetails_00N_E`'s sector IDs into Lamp<N>_S4..S7 (S4 Emissive 1, S5-S7 Emissive 2);
-  M_Vehicles_Floaters_Emissive by vertex colour and glow atlas region (`glow_split`: Emissive 1 / 2 rings, the exhaust
-  grilles and nozzles in the engine colour, the boost vents "BoostVent", the hot discs); the cybernetic glow lights the floater
-  strips (T_ShipModules_Floaters_001's strip graphic, "CyberStrip", `floater_split`); the rest of the floaters are alpha-cut
-  detail cards that never glow. The Wraith (Okkar hull, `okkar_split`): its glow faces are all white, so `glow_split`'s rules took its small lights for engine
-  glow; only the faces within 1.5 m of its engine socket keep the engine colour, the rest (blade and wing-tip lights, the
-  nose's bars) are Emissive 1, the spine's ribs Emissive 2; its plates don't glow (MI_Vehicles_Okkar_TechDetail_PlayerShip's
-  EmissiveColor is #100801; they were in Emissive 1). Checked against the user's ES2 photo-mode shots with Emissive 1 blue
-  and 2 red. The glow atlas (T_Vehicles_Floaters_Emissive_M) row 0.40..0.50 by the user's shots of a Nemesis-B9-1 I and a Raptor
-  D1-1 I+ (Emissive 1 / 2 in different colours): its V-shaped triangles (u 0.34..0.50) Emissive 1 (engine glow before: body
-  B's forward keel lamps, the small lamps beside body D's nose frame), the rest from u 0.5 Emissive 2 as before (the nose
-  frame, the round dots of body B's rear keel lamps); cyan glow faces Emissive 2 (the missile pod's bay frame); the fin
-  edges' dotted bars (u < 0.5) keep the engine colour. Verified in Play mode: thrust (chase, behind, side), a forced boost (the cyan slots in ES2's places),
+  lights (converter): TechDetails lights by `T_ShipModules_TechDetails_00N_E`'s sector IDs into Lamp<N>_S4..S7 (S4
+  Emissive 1, S5-S7 Emissive 2; matched against EVERSPACE 2's customization screen with Emissive 1 / 2 / 3 apart). Since
+  2026-10-24 the floater glows follow their compiled shaders (the importer's `research/floater_emissive.md`; the user's
+  request, the eyeballed rules before them took black and green faces for lights). `M_Vehicles_Floaters_Emissive`
+  (`glow_split`): the UV quadrant picks the slot (u < 0.5, v < 0.5 Emissive 1 "Ring1"; u >= 0.5, v < 0.5 Emissive 2
+  "Ring2", both always on; u < 0.5, v >= 0.5 the engine colour x the thrust "NozzleGlow"; u >= 0.5, v >= 0.5 the boost
+  colour x the boost "BoostVent"), the mask is T_Vehicles_Floaters_Emissive_M's red x green at twice the UV
+  (`floater_e.png` tiles it 2 x 2; the lights wherever it is above 0, the engine / boost reveal baked at 3/4 thrust),
+  and the vertex colour's red multiplies it (red 0, the black / green / cyan faces, "NozzleOff", dark; 1/3 and 2/3 the
+  "_R33" / "_R67" materials through dimmer masks). `M_ShipModules_Floaters_Parent` (`floater_split`): the faces showing
+  a lit texel of R_MT_E's alpha are "CyberStrip" (the cybernetic glow, `cyberstrip_e.png` = that alpha), and the detail
+  cards glow always through C_A x R_MT_E's blue x 30 (`floaters1_glow_e.png`: a few vents and grilles). The Wraith's
+  blade and wing-tip lights, taken for Emissive 1 in its customization captures, are in the boost quadrant (ES2's Engine
+  Colors page boosts, and the boost and Emissive 1 defaults are both light blue); its plates don't glow
+  (MI_Vehicles_Okkar_TechDetail_PlayerShip's EmissiveColor is #100801). Verified in Play mode: thrust (chase, behind,
+  side), a forced boost (the cyan slots in ES2's places),
   the jets in all four strafe directions and in reverse, parked in the hangar (flames, nozzles and jets off). The ES2
   converter reads the meshes' sockets (SKT_PWSlot / SWSlot / Turret / Engine,
   Unreal cm -> the export's glTF metres (X, Z, Y); at most 4 exhausts per part). Stats and slots per part (`Part.armor` / `cargo` /
@@ -206,3 +248,28 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   size, rears speed / acceleration by nozzles, wings turning / armour by span and gun / missile slots +-1 around the type's
   base by their sockets, turret slots by their turret sockets. Not yet: other players' builds in multiplayer (they see the
   default build), decals.
+- **Liveries, decals and engine trails** (remake, 2026-10-25, the user's request: "include everything the Supporter Pack
+  adds", then "reproduce them accurately"; kit fields `liveries` / `liveryAxes` / `decals` / `trails`, skins' `colors` /
+  `livery` / `decal`, Build `livery` / `decal` / `trail` / `boostTrail`; the guide's "Customizable ships").
+  **Liveries**: EVERSPACE 2's projection decals (M_ShipModules_Hull_Parent's compiled pixel shader): a mask over the
+  ship's (forward, right) at 1 / (2 x the bounds' largest half extent), mirrored per axis at 0.5, offset and scaled,
+  mask^(1 + 1.2 lum(colour)), none on faces steeper than the clip angle, lerping the base colour (x the map), metallic
+  and smoothness; on materials marked `"livery": true` (`CustomShipMaterial.livery`), `ModShips.ApplyLivery` sets
+  `_Livery*` on copies (`GoF2/Hull`: its own `HullInput.hlsl`, a copy of URP's LitInput with the livery / decal values
+  in UnityPerMaterial, and `GoF2LiveryMask` in `HullForwardPass.hlsl`). **Decals**: M_ShipModules_Decals_Parent: the
+  mask's R x colour 1 + G x colour 2 + B x the border, A coverage, on materials marked `"decal": "insignia" | "type"`
+  (`_DecalParams`, `_DecalColor1..3`; colour slot properties `decal1..3`, `livery`). **Engine trails**
+  (`Modding.Es2Trails` + `GoF2/ModEs2Trail`, driven by `Es2EngineVfx`): EVERSPACE 2's 13 customization trails
+  (DT_ShipExhaustParticles; BP_Ship_Player.UpdateEngineTrails: ThrustParticlesID at the engine sockets, BoostParticlesID
+  at the booster sockets) decompiled from their Niagara VM scripts, curves and renderers and their materials' compiled
+  pixel shaders (the ES2 importer's research/engine_trails.md): sprites (Stardust, Raw Combustion lit by the main light
+  and SH, Coolant Leak with UE's texture-based simplex noise, Firestarter velocity-aligned), ribbons (Void Reverb,
+  Thermal Blaze, Residuum, Voltaic Tendrils with UE's texture-based gradient noise and its arc sprites, Ion Veils), mesh
+  particles (Rings of Nerea, Tetragons, Delta Surge), each in the socket's local space in ES2 cm, the particles easing
+  to rest in the world. UE's View.PerlinNoiseGradientTexture / PerlinNoise3DTexture are rebuilt the way FSystemTextures
+  makes them (FRandomStream; `Es2Trails.GradientTexture` / `Noise3D`; the bytes may differ, the noise is the same kind).
+  Every ES2 emissive's x (1 + MPC_GlobalParameters.EmissiveExposureCompensation, 10) is in `_Gain` (Es2FlameGain /
+  1000). Only the player's ship shows them, and the Customize screen's turntable while its engines run (EVERSPACE 2's
+  HangarMode: no inherited velocity, colours x 4, alphas squared; the booster trail row shows a boost). The
+  soft-particle fades read the camera depth texture where the URP asset has it (`_SoftParticles`). Not checked yet
+  against EVERSPACE 2 side by side.

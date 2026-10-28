@@ -594,6 +594,7 @@ namespace GoF2Remake.Data
             var all = new List<string>();
             foreach (var group in new[] { SoundKeys, GraphicsKeys, ControlsKeys, GameplayKeys, AccessibilityKeys, LanguageKeys }) all.AddRange(group);
             Reset(all);
+            Modding.ModGameOptions.ResetSettings();   // the mods' gameplay settings (gameoptions.json "setting")
         }
 
         // PlayerPrefs reads go through a cache: game code reads some options every frame.

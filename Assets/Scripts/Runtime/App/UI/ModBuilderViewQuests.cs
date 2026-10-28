@@ -428,7 +428,11 @@ namespace GoF2Remake.UI
             string[] kinds = { "quest", "mission", "event" };
             Segments(questPage, T("mbKind", "Kind"), new[] { T("mbQuest", "Story mission"), T("mbBarMission", "Bar mission"), T("mbEvent", "Event") }, Array.IndexOf(kinds, q.Kind),
                      n => { q.Kind = kinds[n]; QuestEdited(true); RebuildQuests(); });
-            if (q.Kind == "quest") BuildStartsWhen(q);
+            if (q.Kind == "quest")
+            {
+                BuildStartsWhen(q);
+                Int(questPage, T("mbRepeatMinutes", "Comes again after (minutes of play, 0 = once)"), q.Repeat, 0, 100000, v => { q.Repeat = v; QuestEdited(); });
+            }
             else if (q.Kind == "mission") BuildMissionOffer(q);
             else Note(questPage, T("mbEventKindNote", "An event runs for everyone when an admin starts it (/event <name>) or a Next event step does."));
             if (q.Kind != "event") Int(questPage, T("mbRewardCredits", "Reward (credits)"), q.Reward, 0, 999999999, v => { q.Reward = v; QuestEdited(); });

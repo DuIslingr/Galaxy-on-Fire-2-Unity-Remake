@@ -386,3 +386,29 @@
     margin-left: var(--space-m);
     min-width: 160px;
 }
+
+/* ---- remake mods: the selected planet's lore (stations.json "description"), under the system block ----------------- */
+
+.planet-lore {
+    position: absolute;
+    left: 48px;
+    top: 290px;
+    width: 560px;
+    padding: var(--space-m) var(--space-l);
+    background-color: rgba(4, 12, 20, 0.78);
+    border-left-width: 3px;
+    border-left-color: rgb(0, 190, 255);
+}
+
+.planet-lore-title {
+    font-size: var(--text-subhead);
+    color: rgb(255, 128, 0);
+    margin-bottom: var(--space-s);
+    white-space: normal;
+}
+
+.planet-lore-text {
+    font-size: var(--text-body);
+    color: #FFFFFF;
+    white-space: normal;
+}

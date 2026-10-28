@@ -27,6 +27,16 @@ namespace GoF2Remake.Data
         /// flies with (-1 = the player's), and its bonuses for both styles / the original / free flight (null = none).</summary>
         [System.NonSerialized] public int flightStyle = -1;
         [System.NonSerialized] public FlightBonus flightBoth, flightOriginal, flightFree;
+
+        /// <summary>Remake mods (Modding.ModShipView, ships.json "camera" / "cockpit" / "smoke" / "explosionScale"; null /
+        /// 1 = the original's for every ship): the chase camera in game units (distance behind the pivot, height, the look
+        /// point's height and how far ahead of the pivot it is: the original's 1338 / 600 / 600 / -650), the cockpit view's
+        /// seat and the damage smoke's points (game units in position_engine's axes, like the mounts) and the explosion's
+        /// size when the ship dies (x the fighters' 1).</summary>
+        [System.NonSerialized] public float[] chaseCamera;
+        [System.NonSerialized] public Vector3? cockpit;
+        [System.NonSerialized] public List<Vector3> smokePoints;
+        [System.NonSerialized] public float explosionScale = 1f;
     }
 
     [System.Serializable] public class StatEntry { public string key; public int value; }
@@ -98,7 +108,8 @@ namespace GoF2Remake.Data
     }
 
     /// <summary>Weapon mounts of one ship (weapons_hd.json). slotType 0 = primary, 1 = secondary, 2 = turret,
-    /// 3 = engine exhaust points (not a turret, see weapons.md). position_engine is game space, ship-relative.</summary>
+    /// 3 = engine exhaust points (not a turret, see weapons.md); remake mods: 4 = a manoeuvring jet, 5 = a booster point
+    /// (EVERSPACE 2's). position_engine is game space, ship-relative.</summary>
     /// <remarks>upsideDown (remake, turret mounts only): the turret hangs under the hull, turned 180 deg about the ship's
     /// length (PlayerTurret); none of the original's mounts set it. turretUp (remake, turret mounts): the direction the
     /// turret's base faces, game space like position_engine (x toward the pilot's left, y up, z forward; any length), so a
@@ -169,6 +180,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods, an exhaust mount (slotType 3) of a ship with "engineFx": that effect's size here (GoF3's engine
         /// helper scale; 0 = 1).</summary>
         public float fxScale;
+        /// <summary>Remake mods, an exhaust mount (slotType 3) or a booster point (slotType 5, EVERSPACE 2's SKT_Booster sockets):
+        /// the socket's scale in EVERSPACE 2 (its largest axis; 0 = 1), which sizes the engine light, trail and glow there
+        /// (Modding.Es2EngineVfx).</summary>
+        public float socketScale;
     }
     [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
 
@@ -203,6 +218,49 @@ namespace GoF2Remake.Data
         public CustomTraffic traffic;      // remake mods: how NPC fighters fly it (Modding.ModTraffic); null = its race's, weight 1
         public string kit, kitType;        // remake mods: a customizable ship (Modding.ModShipKits): its kit ("mod_id:kit_id") and type
         [System.NonSerialized] public string defaultBuild;   // its "build" as build text (ModShipKits.Build)
+        // Remake mods: a capital ship's subsystems (ships.json "subsystems", World.CapitalSubsystems; resolved into
+        // Database.ShipSubsystems): while any part with "shields" stands the hull takes 'shieldedDamage' of every hit (0 =
+        // none) and its renderers with a material named like 'shieldMaterial' show (its energy fields), hidden once they fall.
+        public string shieldMaterial;
+        public float shieldedDamage;
+        public float hullFactor = 1f;     // remake mods: a mod capital ship's hull x this (Modding.ModCapitalShips.Spawn)
+        /// <summary>"es2": EVERSPACE 2's engine effects (Modding.Es2EngineVfx: the glow, trails and lights at the exhaust and
+        /// booster mounts) without flame materials of its own and without the glow discs (a capital ship's sockets).</summary>
+        public string engineStyle;
+        /// <summary>Which of EVERSPACE 2's engine effects an "es2" ship (or one with flames) shows (ships.json "es2Engine";
+        /// null = all; Modding.Es2EngineVfx).</summary>
+        public CustomEs2Engine es2Engine;
+        /// <summary>A mod capital ship that jumps away when its hull is depleted instead of being destroyed (World.CapitalRetreat:
+        /// EVERSPACE 2's Dreadnought), so an encounter with it can come again.</summary>
+        public bool retreat;
+    }
+
+    /// <summary>Remake mods: EVERSPACE 2's per-ship switches of its engine effects (a ship blueprint's SpawnEngineGlow /
+    /// SpawnEngineTrails; EVERSPACE 2's warships and freighters have them off, and EngineVFXEnabled false turns both off):
+    /// 'glow' the camera-facing glow at each socket (an NPC's), 'trails' its trail (an NPC's) and the player's veils.</summary>
+    [System.Serializable] public class CustomEs2Engine
+    {
+        public bool glow = true;
+        public bool trails = true;
+    }
+
+    /// <summary>Remake mods: one subsystem of a capital ship (ships.json "subsystems"; World.CapitalSubsystems): a target of
+    /// its own on the hull that dies with it. 'kind' "turret" (a turret object of turret item 'item'), "object" (a fixed object
+    /// of 'model': "gof2:<assembly>" or a ship, a number or a mod's "mod:id", whose model it shows) or "hangar" (an object
+    /// that launches 'ships' (numbers or "mod:id", resolved when they launch) while its capital ship fights the player). 'position' game units in the ship's frame like a mount's
+    /// position_engine, 'up' the way it faces (turretUp's axes). 'shields': the hull is shielded while it stands; 'weakspot'
+    /// &gt; 0: hits on it also go to the hull x that, and its death takes 'bonus' of the hull's maximum; 'stage' &gt; 0: it can't
+    /// be harmed while a part of a lower stage stands. 'hull' its hit points (-1: by kind).</summary>
+    public class CapitalSubsystem
+    {
+        public string kind = "object", name, model;
+        public Vector3 position, up = Vector3.up;
+        public int item = -1, hull = -1, stage;
+        public bool shields;
+        public float weakspot, bonus, scale = 1f, radius = -1f;
+        public List<string> ships = new List<string>();
+        public float everyMs = 25000f;
+        public int perWave = 2, maxAlive = 6, total = -1;
     }
 
     /// <summary>Remake mods: one of the original's additive layers a ship model brings beside its hull (ships.json "addParts";
@@ -233,6 +291,13 @@ namespace GoF2Remake.Data
         /// <summary>A customizable (kit) ship: each NPC flies a random build of it (parts, tier, colours, skin); false = the
         /// ship's default build.</summary>
         public bool randomBuild = true;
+        /// <summary>A boss hull: the pirate bosses (TrafficPlan's pirate events) fly it now and then (ModTraffic.PickBoss), and
+        /// it never flies as an ordinary fighter. Up to ModTraffic.MaxBossLength long.</summary>
+        public bool boss;
+        /// <summary>A capital ship (Modding.ModCapitalShips): "battleship" = a parked warship in the orbits' capital ship special
+        /// (instead of the Terran battleship / the Vossk battleship, and in Nivelian / Midorian systems, which have none),
+        /// "freighter" = it cruises among the orbits' freighters. Either way it never flies as a fighter. Empty = a fighter.</summary>
+        public string capital;
     }
 
     /// <summary>Remake mods: a mod ship in the ordinary ship dealers' lists (Shop.GenerateShips): each time a station's dealer
@@ -270,6 +335,7 @@ namespace GoF2Remake.Data
         public float[] color, emissionColor;
         public float smoothness = 1f, metallic = -1f, emissionIntensity = 1f, alphaClip, normalScale = 1f;
         public float detailTiling = 1f, detailNormalScale = 1f;
+        public float tiling = 1f;  // remake mods: the main textures repeat this many times over the UVs (EVERSPACE 2's plating 'Tiling')
         public float opacity;   // 0 / 1 = opaque; below 1 a see-through surface (glass: premultiplied, so reflections stay bright)
         public bool doubleSided;   // both faces drawn (models with one-sided panels the camera can see from behind)
         public bool engine;        // its emission shows only while the engines run (dark on a ship parked in a hangar)
@@ -277,6 +343,8 @@ namespace GoF2Remake.Data
         // whenever the engines run (dark on a parked ship, full through the take-off and all flight).
         public float engineIdle;
         public bool boost;         // its emission shows only while boosting (a boost vent; dark otherwise)
+        public bool livery;        // a kit's liveries are projected onto it (EVERSPACE 2's hull and tech details; ModShips.ApplyLivery)
+        public string decal;       // "insignia" / "type": a kit decal's mask goes on it (the parts' decal faces; ModShips.ApplyDecals)
         // A hologram projector (GoF2/ModHologram): additive rings whose emission pattern turns and which bob; UV1 x a ring's
         // spin (-1..1), y its share of the hover; emissionColor x emissionIntensity and emission (the pattern) as usual.
         public bool hologram;
@@ -323,47 +391,45 @@ namespace GoF2Remake.Data
     /// place of the glow disc and the exhaust particles. Up to three parts, each a PNG in the mod (additive: black shows
     /// nothing), in the mount's glowColor (else the ship's engineGlowColor, else 'color'); sizes in game units. Each follows the
     /// engines like the other engine effects (EngineDrive: off while the engine part is, longer with the throttle and boost).</summary>
+    /// <summary>Remake mods: Galaxy on Fire 3's engine effect at every exhaust (ships.json / an exhaust style's / a mobile
+    /// station's "engineFx", Modding.EngineFx), as GoF3 draws it: its engine scene's parts and its Fork particles.</summary>
     [System.Serializable] public class CustomEngineFx
     {
-        public string glow;                  // a flare facing the camera at the nozzle, brightest seen from behind: a square of
-                                             // the whole texture plus a long thin streak at half brightness (the texture turned
-                                             // a quarter: its vertical middle stretched sideways), as GoF3's glow_mesh
-        public float[] glowSize;             // half sizes: the square, the streak's width, the streak's height (default 240,
-                                             // 720, 72: GoF3's 4.5 / 13.5 / 1.35 units)
-        public float glowIntensity = 1f;
-        public string cone;                  // four crossed cards from the nozzle backward, the texture's horizontal middle
-                                             // band along them (GoF3's exhaust: u 0.39 at the nozzle to 0.69 at the end)
-        public float coneLength = 650f;      // at full throttle (GoF3's 12.1 units)
-        public float coneWidth = 87f;        // half width (GoF3's 1.62 units)
-        public float coneIntensity = 1f;
-        public float nozzle;                 // the nozzle radius the effect is drawn for (game units; 0 = coneWidth): exhaust
-                                             // styles are sized against it, on this ship and as a style (Modding.ModExhausts)
-        public float[] coneProfile;          // the cards' rings: [share of the length, brightness, u] per ring, nozzle first
-                                             // (GoF3's own exhaust mesh; default the Nivelian one: 0 / 0.143 / 0.571 / 1)
-        public float[] coneFade;             // [from, to]: the cards fade out as they turn edge-on, |N.V| from 'to' down to
-                                             // 'from' (GoF3's AngleBlend: from straight behind only the flares show)
-        public string trail;                 // the stream: one soft streak (taller than wide), repeated along each trail
-        public int trailCount = 2;           // trails per exhaust
-        public float trailLength = 2800f;    // how far behind the nozzle it reaches at full throttle
-        public float trailWidth = 28f;       // half width at the nozzle (thinner toward its end)
-        public float trailWander = 650f;     // how hard it sways sideways (the wavering; it bends in smooth waves)
-        public float trailTime = 0.75f;      // seconds a point of it lives (also how long it keeps a turn's bend)
-        public float trailIntensity = 1f;
-        public string spiral;                // the helix: strands winding round the exhaust, this texture (a thin bolt, taller than
-                                             // wide) running along each strand (GoF3's spiral: its lightning crackles in them)
-        public int spiralCount = 2;          // strands per exhaust
-        public float spiralLength = 560f;    // at full throttle (GoF3's 10.5 units)
-        public float[] spiralRadius;         // at the nozzle and at the end (default 27, 5: GoF3's 0.5 / 0.1 units)
-        public float spiralWidth = 22f;      // each strand's half width (the texture across it: a wide one shows the bolt's branches)
-        public float spiralTurns = 2f;       // turns along its length
-        public float spiralSpin = 1.2f;      // turns a second (the helix seems to run backward)
-        public float spiralScroll = 3f;      // texture lengths a second along the strands
-        public float spiralRepeat = 3f;      // texture lengths along a strand
-        public float spiralIntensity = 1f;
-        public float[] color;                // RGB 0..1, for mounts without glowColor and ships without engineGlowColor
-        public float[] flareColor, coneColor, trailColor, spiralColor;   // RGB 0..1, each part's own (default: the engine's colour)
-        public bool Any => !string.IsNullOrEmpty(glow) || !string.IsNullOrEmpty(cone) || !string.IsNullOrEmpty(trail) || !string.IsNullOrEmpty(spiral);
-        public float NozzleRadius => nozzle > 0f ? nozzle : coneWidth;
+        /// <summary>The nozzle radius an engine is drawn for when its "nozzle" isn't given (game units: GoF3's Nivelian
+        /// exhaust, 1.62 GoF3 units x 53.5).</summary>
+        public const float DefaultNozzle = 87f;
+        public string meshes;                // GoF3's engine scene (Modding.EngineModel: its parts' meshes, textures and shader
+                                             // options, from the GoF3 importer)
+        public float meshScale = 1f;         // game units per unit of the meshes (GoF3's: 53.5)
+        public float meshGlow = 1f;          // x the meshes' brightness (GoF3 draws them into an 8-bit frame: 1 = never past
+                                             // white, more blooms)
+        public float nozzle;                 // the nozzle radius the effect is drawn for (game units; 0 = DefaultNozzle):
+                                             // exhaust styles are sized against it, on this ship and as a style (Modding.ModExhausts)
+        public CustomForkEmitter trailParticles;     // GoF3's engine trail as its Fork particles, at each exhaust
+        public CustomForkEmitter contrailParticles;  // GoF3's contrails, at the "contrails" points
+        public CustomForkEmitter boostParticles;     // GoF3's booster flash at each exhaust, emitted only while boosting
+        public float[] contrails;            // [x, y, z, ...] game units from the ship's centre (position_engine's axes)
+        public bool Any => !string.IsNullOrEmpty(meshes) || trailParticles?.Any == true || contrailParticles?.Any == true || boostParticles?.Any == true;
+        public float NozzleRadius => nozzle > 0f ? nozzle : DefaultNozzle;
+    }
+
+    /// <summary>Remake mods: one Fork Particle Studio emitter of Galaxy on Fire 3 (its .psb's EData, the GoF3 importer's
+    /// tools/fork_psb.py), as GoF3's Fork runtime runs it (Modding.EngineFx): particles born at the emitter at 'rate' a second,
+    /// spread along the path it moved, still where they were born (speed 0: a wake), each living 'life' seconds, sized
+    /// start -> mid (at 'sizeMidTime' of its life) -> end, coloured through four keys at 'colorTimes', drawn additively
+    /// with 'texture' stretched along the wake. Sizes in the units of the engineFx's "meshScale".</summary>
+    [System.Serializable] public class CustomForkEmitter
+    {
+        public string texture;               // a PNG in the mod
+        public float[] life;                 // [min, max] seconds
+        public float[] sizeStart, sizeMid, sizeEnd;   // [min, max]
+        public float sizeMidTime = 0.5f;
+        public float[] colors;               // 4 x rgba (0..1, gamma as GoF3 draws them)
+        public float[] colorTimes;           // 4 shares of the life (0, a, b, 1)
+        public float rate = 30f;             // particles a second
+        public int max = 100;                // the most alive per emitter
+        public bool local;                   // the particles ride with the emitter (else they stay where they were born)
+        public bool Any => !string.IsNullOrEmpty(texture) && life != null && life.Length >= 1 && life[0] > 0f;
     }
 
     [System.Serializable] public class AssemblyData
@@ -437,6 +503,9 @@ namespace GoF2Remake.Data
         /// on its turret mounts (World.NpcMountedTurrets, the hangar's parked ships), by ship index. The original's NPC ships
         /// carry none.</summary>
         [System.NonSerialized] public Dictionary<int, List<int>> NpcTurrets = new Dictionary<int, List<int>>();
+        /// <summary>Remake mods (ships.json "subsystems", Modding.ModContent): a capital ship's subsystems by ship index
+        /// (World.CapitalSubsystems builds them on the hull).</summary>
+        [System.NonSerialized] public Dictionary<int, List<CapitalSubsystem>> ShipSubsystems = new Dictionary<int, List<CapitalSubsystem>>();
 
         /// <summary>Remake (Modding.GameModels): ships that fly one of the game's own models, by ship index (a mod's new ship
         /// or an override with "model": "gof2:<model>"); ShipAssembly hands it out before anything else.</summary>
@@ -519,6 +588,10 @@ namespace GoF2Remake.Data
         static Database shared;
         static Economy sharedEconomy;
         static int sharedRevision = -1;
+        /// <summary>The database a Load is applying the mods to: what Shared answers meanwhile. Code the mods' entries run
+        /// (a kit ship's mounts, read through Shared) would otherwise load Shared, which applies the mods again, and so on: a
+        /// stack overflow that took the Editor down (a kit ship with "npcTurrets", 2026-10-24).</summary>
+        [System.ThreadStatic] static Database applying;
 
         /// <summary>One loaded game database for read-only lookups (names, stations, systems), made again only when the
         /// economy or the mods change. Load() parses every table again (several MB of garbage, a hitch): callers that only
@@ -528,18 +601,21 @@ namespace GoF2Remake.Data
         {
             get
             {
+                if (applying != null) return applying;
                 if (shared == null || sharedEconomy != Session.Economy || sharedRevision != Modding.ModManager.Revision)
                 {
                     sharedEconomy = Session.Economy;
                     sharedRevision = Modding.ModManager.Revision;
                     shared = Load();
+                    // (the load may have made the first scan of the Mods folders, which bumps the revision: it is this one's)
+                    sharedRevision = Modding.ModManager.Revision;
                 }
                 return shared;
             }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetShared() { shared = null; sharedRevision = -1; }
+        static void ResetShared() { shared = null; sharedRevision = -1; applying = null; }
 
         /// <summary>The Cronus' price in the finished world (multiplayer): see Load.</summary>
         public const int CronusSessionPrice = 1_150_000;
@@ -575,7 +651,13 @@ namespace GoF2Remake.Data
                 if (cronus != null && cronus.price <= 0) cronus.price = CronusSessionPrice;
             }
             // The active mods' new and changed entries (Modding.ModContent), after the economy so their prices stand.
-            if (resourceFolder == "GoF2Data") Modding.ModContent.Apply(db);
+            if (resourceFolder == "GoF2Data")
+            {
+                var outer = applying;
+                applying = db;
+                try { Modding.ModContent.Apply(db); }
+                finally { applying = outer; }
+            }
             return db;
         }
 

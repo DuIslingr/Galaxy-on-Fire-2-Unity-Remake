@@ -20,6 +20,10 @@ namespace GoF2Remake.Multiplayer
     public static class NetChat
     {
         public const int MaxLength = 160, Keep = 60;
+        /// <summary>A conversation's page or a radio line (/dialog, /radio, the missions' dialog / radio steps): a story page
+        /// runs longer than a chat line (cut at MaxLength, a mission's call broke off mid-word). A whole conversation stays
+        /// under MaxConversation (one message to each player's game).</summary>
+        public const int MaxPageLength = 600, MaxConversation = 4000;
         /// <summary>A typed command may be longer (a /dialog conversation; the server's cap NetGuard.MaxCommandArgs).</summary>
         public const int MaxCommandLength = 500;
 
@@ -135,10 +139,13 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>Trimmed, at most MaxLength characters, no rich-text tags (the log is rich text).</summary>
-        public static string Clean(string text)
+        public static string Clean(string text) => Clean(text, MaxLength);
+
+        /// <summary>Trimmed, at most 'max' characters, no rich-text tags.</summary>
+        public static string Clean(string text, int max)
         {
             text = (text ?? "").Replace("<", "").Replace(">", "").Replace('\n', ' ').Trim();
-            return text.Length > MaxLength ? text.Substring(0, MaxLength) : text;
+            return text.Length > max ? text.Substring(0, max) : text;
         }
 
         static string CleanCommand(string text)

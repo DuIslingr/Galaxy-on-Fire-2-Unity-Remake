@@ -369,7 +369,8 @@ namespace GoF2Remake.Flight
 
         void StartMinigame()
         {
-            Game = new MiningGame(Target.quality, Target.oreItem, drill.Attr(32), drill.Attr(33), Session.CampaignMission <= 4);
+            Game = new MiningGame(Target.quality, Target.oreItem, drill.Attr(32), drill.Attr(33), Session.CampaignMission <= 4,
+                                  db.Item(Target.oreItem)?.Attr(132, 100) ?? 100);   // the ore's mining time (items.json "miningTime")
             LostGame = false;
             mouseOffset = Vector2.zero;   // MGame::OnUpdate zeroes the mouse deltas while docking: the drill starts centred
             Game.InsideChanged += inside =>
@@ -497,7 +498,7 @@ namespace GoF2Remake.Flight
                 if (free < 1) Say(Localization.Get(322));
                 else
                 {
-                    if (Game.GotCore)
+                    if (Game.GotCore && core >= 0)
                     {
                         Shop.AddToCargo(core, 1);
                         Session.CoresMined++;
@@ -612,7 +613,7 @@ namespace GoF2Remake.Flight
 
         /// <summary>Tons the beam may still cut into the hold from 't': a class-A rock keeps one free for its core (the minigame
         /// pays the core first; the beam pays it last).</summary>
-        int BeamRoom(Target t) => Shop.FreeCargo(db) - (t.quality >= 7 ? 1 : 0);
+        int BeamRoom(Target t) => Shop.FreeCargo(db) - (t.quality >= 7 && t.CoreItem >= 0 ? 1 : 0);
 
         readonly List<Target> deadExtractions = new List<Target>();
 
@@ -684,7 +685,8 @@ namespace GoF2Remake.Flight
             beamFx.Aim(contact + fwd * surface * 0.2f, contact, normal, true);
 
             if (!extractions.TryGetValue(target, out var ex))
-                extractions[target] = ex = new MiningBeamExtraction(target.quality, beamYield, beamLayerMs, Session.IsExtreme);
+                extractions[target] = ex = new MiningBeamExtraction(target.quality, beamYield,
+                    beamLayerMs * Mathf.Clamp(db.Item(target.oreItem)?.Attr(132, 100) ?? 100, 10, 1000) / 100f, Session.IsExtreme);   // x the ore's mining time
             int layer = ex.Layer;
             int tons = Mathf.Min(ex.Update(dtMs), room);
             for (int i = 0; i < tons; i++) Launch(target, contact, normal, target.oreItem, false);
@@ -696,7 +698,7 @@ namespace GoF2Remake.Flight
             if (!ex.Depleted) return;
 
             // Every layer cut: a class-A asteroid's core comes last (if the hold has room), then the rock goes.
-            if (ex.GotCore && Shop.FreeCargo(db) >= 1)   // the slot BeamRoom kept free
+            if (ex.GotCore && target.CoreItem >= 0 && Shop.FreeCargo(db) >= 1)   // the slot BeamRoom kept free
             {
                 Launch(target, contact, normal, target.CoreItem, true);
                 Session.CoreTypesMined.Add(target.CoreItem);

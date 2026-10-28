@@ -225,6 +225,15 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   a save at its checkpoint restored without repeating the dialogue, docking at the target completing it (+5000, done); a mod
   bar mission offered, accepted, saved, restored and discarded; a mod's replacement station theme and a new track by
   /music; hosting and /event waves after the refactor.
+  **Repeatable** story missions: `.gof2mission` `"repeat"` minutes (`mission repeat`, `MissionInfo.repeatMinutes`; the
+  Start node's RepeatMinutes, the builder's `ProjectQuest.Repeat`): `EventRunner.QuestDone` puts it in
+  `Session.GraphQuestRepeats` (name -> `PlaySeconds` it may start again; saved as `graphQuestRepeats` "name|seconds", no
+  version bump) instead of `GraphQuestsDone`; `CheckQuestStarts` starts it again once that time has passed and its
+  condition holds; `quest(name)` reads 2 meanwhile and StartQuest refuses it. Mission tools for roaming encounters:
+  `randomstation()` (`EventRunner. RandomStation`: a station of a visible system, not the player's, 10 / 100-104 / 108,
+  systems 25 / 27 / 32 / 33, a pirate base system, an empty orbit, `PirateEventRules.InStoryline`, a mobile or missing
+  mod station; -1 none) and the text fills `{stationname(x)}` / `{systemname(x)}` (`Fill`, `PlaceName`;
+  `QuestFile.StateWords` keeps them).
 - **Event graph bar missions** (`EventMissions`): an event graph whose Start node has a Mission title (its Mission
   settings: offer text, client (a story character or "race name" like /dialog's speakers; empty: someone of the station's
   race), reward, offered at (stations; empty: every one), min / max pilots, offer chance % (`mission chance`, default 35,

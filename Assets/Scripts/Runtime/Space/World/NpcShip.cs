@@ -190,6 +190,7 @@ namespace GoF2Remake.World
         }
 
         Traffic traffic;
+        bool turretHostLooked;   // UpdateTurret: its host for LineOfFire looked up
         Database db;
         CombatAssets assets;
         Transform model;
@@ -322,6 +323,16 @@ namespace GoF2Remake.World
         /// <summary>Game rotation identity: facing game +Z = Unity -Z.</summary>
         static readonly Quaternion GameForward = Quaternion.Euler(0f, 180f, 0f);
 
+        /// <summary>A fighter's explosion size: 1 (Explosion::setScaling's default), or a mod ship's "explosionScale"
+        /// (ModShipView).</summary>
+        public float FighterExplosionScale => db?.Ship(Spec.ship)?.explosionScale ?? 1f;
+
+        /// <summary>A freighter's: PlayerFixedObject::update's setScaling(6), 8 for the Terran battleship; a mod's capital ship
+        /// or freighter its own "explosionScale" when it has one (else the battleship's / a freighter's).</summary>
+        public float FreighterExplosionScale => Spec.ship == 14 ? 8f
+            : Spec.modCapital && db?.Ship(Spec.ship)?.explosionScale is float own && own != 1f ? own
+            : Spec.modCapital && Spec.stationary ? 8f : 6f;
+
         public void Setup(Traffic owner, Database database, SpawnSpec spec, GameObject prefab, Transform fxRoot)
         {
             traffic = owner;
@@ -398,7 +409,7 @@ namespace GoF2Remake.World
             Target.Damaged += OnDamaged;
             Target.Died += OnDied;
             lastHull = Hp.hull;
-            if (!spec.freighter && spec.fixedObject == null && spec.turretAssembly == null) smoke = new ShipSmoke(transform);
+            if (!spec.freighter && spec.fixedObject == null && spec.turretAssembly == null) smoke = new ShipSmoke(transform, db?.Ship(spec.ship)?.smokePoints);
 
             if (spec.turretAssembly != null) SetupTurret();
             else if (!spec.freighter && spec.fixedObject == null && spec.ship != 51)
@@ -545,7 +556,7 @@ namespace GoF2Remake.World
                 empRig.UpdateVisuals(dtMs, Camera.main, transform.forward);
             }
             // Remake: turret items on its turret mounts (NpcMountedTurrets) aim and fire while it flies, awake and armed.
-            mounted?.Update(dtMs, enemies, HitTargets, Current == State.Fly && !Asleep && !inactive && !Hidden && !parked && !frozen
+            mounted?.Update(dtMs, enemies, HitTargets, Current == State.Fly && !Asleep && !inactive && !Hidden && (!parked || Spec.modCapital) && !frozen
                                                      && shootingEnabled && !Hp.empDisabled && Target.Alive);
             if (Current == State.Dead) { UpdateDead(dtMs); return; }
             if (Current == State.Dying) { UpdateSmoke(); UpdateDying(dtMs); return; }

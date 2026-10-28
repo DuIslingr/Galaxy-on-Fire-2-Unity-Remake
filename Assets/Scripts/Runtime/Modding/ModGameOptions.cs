@@ -9,6 +9,9 @@
 // mod's "available" fields, quests' "Starts when", event graphs; EventRunner.Condition). The last choice per option is
 // remembered for the next new game (PlayerPrefs newgame_modopt_<key>). A multiplayer session plays with every option at its
 // default (its mods arrive from the host after the game is made).
+// "setting": true makes it a gameplay setting instead (no card): a toggle in Options > Gameplay (OptionsCatalog) while its mod
+// is on, the player's own choice for every game (PlayerPrefs modsetting_<key>, else "default"); option(...) reads it the same
+// way. For what a player may switch on and off at any time (the ES2 Ships mod's Dreadnought raids).
 
 using System;
 using System.Collections.Generic;
@@ -23,7 +26,7 @@ namespace GoF2Remake.Modding
     {
         public const string File = "gameoptions.json";
 
-        static readonly HashSet<string> Fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "id", "name", "description", "image", "imageHover", "showTitle", "default", "flightStyle" };
+        static readonly HashSet<string> Fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "id", "name", "description", "image", "imageHover", "showTitle", "default", "flightStyle", "setting" };
 
         public sealed class Def
         {
@@ -33,6 +36,7 @@ namespace GoF2Remake.Modding
             public Dictionary<string, string> name, description;
             public bool defaultOn;
             public int flightStyle = -1;   // "flightStyle": while the option is on the game flies so (ModFlight), -1 = no say
+            public bool setting;           // "setting": a gameplay setting (Options > Gameplay), not a new game's card
             public string Key => mod.Id + ":" + localId;
             public string Name => ModManifest.Pick(name) ?? localId;
             public string Description => ModManifest.Pick(description) ?? "";
@@ -75,6 +79,7 @@ namespace GoF2Remake.Modding
                     showTitle = ModJson.Bool(o, "showTitle", true, File),
                     name = ModJson.Text(o, "name"), description = ModJson.Text(o, "description"),
                     defaultOn = ModJson.Bool(o, "default", false, File),
+                    setting = ModJson.Bool(o, "setting", false, File),
                 };
                 if (string.IsNullOrEmpty(d.localId) || !ModManifest.ValidId(d.localId))
                     throw new ModJsonException($"{where}: \"id\" is missing or uses more than a-z, 0-9, _ and -");
@@ -90,6 +95,30 @@ namespace GoF2Remake.Modding
             if (!mod.Warnings.Contains(message)) mod.Warnings.Add(message);
             Debug.LogWarning($"Mods: {mod.Id}: {message}");
         }
+
+        /// <summary>The new game's cards (not the gameplay settings).</summary>
+        public static List<Def> Cards() => All().FindAll(d => !d.setting);
+
+        /// <summary>The gameplay settings of the mods that are on (Options > Gameplay).</summary>
+        public static List<Def> GameplaySettings() => All().FindAll(d => d.setting);
+
+        /// <summary>A gameplay setting's value (the player's choice, else its default).</summary>
+        public static bool Setting(Def d) => PlayerPrefs.GetInt(SettingKey(d), d.defaultOn ? 1 : 0) == 1;
+
+        public static void SetSetting(Def d, bool on)
+        {
+            PlayerPrefs.SetInt(SettingKey(d), on ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>Options' "Default settings" for the Gameplay tab: every mod setting back to its default.</summary>
+        public static void ResetSettings()
+        {
+            foreach (var d in GameplaySettings()) PlayerPrefs.DeleteKey(SettingKey(d));
+            PlayerPrefs.Save();
+        }
+
+        static string SettingKey(Def d) => "modsetting_" + d.Key;
 
         /// <summary>An option by "mod_id:option_id", or by its option id alone when only one mod has it.</summary>
         public static Def Find(string key)
@@ -111,7 +140,8 @@ namespace GoF2Remake.Modding
         {
             var d = Find(key);
             if (d == null) return false;
-            return Data.NetSession.SessionGame ? d.defaultOn : Session.ModGameOptions.Contains(d.Key);
+            if (Data.NetSession.SessionGame) return d.defaultOn;
+            return d.setting ? Setting(d) : Session.ModGameOptions.Contains(d.Key);
         }
 
         /// <summary>The new game panel's choice (the last one made for this option, else its default).</summary>
@@ -129,7 +159,7 @@ namespace GoF2Remake.Modding
         public static void ApplyChoices()
         {
             Session.ModGameOptions.Clear();
-            foreach (var d in All()) if (Chosen(d)) Session.ModGameOptions.Add(d.Key);
+            foreach (var d in Cards()) if (Chosen(d)) Session.ModGameOptions.Add(d.Key);
         }
 
         /// <summary>The card's banner (the mod's PNG; null: none).</summary>

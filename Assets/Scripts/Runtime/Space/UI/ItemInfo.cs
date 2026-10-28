@@ -54,6 +54,7 @@ namespace GoF2Remake.UI
         }
         public static string Category(ItemData it) => it == null ? "" : Modding.ModBlueprints.ShipOf(it.index) >= 0
             ? Localization.Extra("bpShipBlueprint", "Ship blueprint")   // a mod's ship blueprint (its hidden item)
+            : it.Attr(Flight.PointDefense.Attribute) > 0 ? Localization.Extra("catMissileDefense", "Missile defense")   // (a mod's, on a seatless cabin)
             : Localization.Get(221 + it.categoryId);
 
         /// <summary>Attributes the details never list (index, type, price systems, occurrence, prices, Vossk flag, home station).</summary>
@@ -114,7 +115,7 @@ namespace GoF2Remake.UI
                     case 32: if (it.Attr(100) != 1) rows.Add((T(164), $"{v} %")); break;   // a mining beam has no drill handling
                     case 101: if (it.Attr(100) == 1) rows.Add((T(151), $"{v / 20} m")); break;   // remake: the mining beam's reach
                     case 33: rows.Add((T(144), $"{v} %")); break;
-                    case 34: rows.Add((T(145), v.ToString())); break;
+                    case 34: if (v > 0 || it.Attr(Flight.PointDefense.Attribute) <= 0) rows.Add((T(145), v.ToString())); break;   // (not a missile defense's seatless cabin)
                     case 48: rows.Add((T(145), $"{v} t")); break;
                     case 35: case 41: case 42: rows.Add((T(157), $"{v} ms")); break;
                     case 38: rows.Add((T(150), v.ToString())); break;
@@ -132,6 +133,9 @@ namespace GoF2Remake.UI
             float shieldFactor = Flight.Gun.ShieldFactor(it);
             if ((it.TypeId == 0 || it.TypeId == 2) && Mathf.Abs(shieldFactor - 1f) > 0.001f)
                 rows.Add((Localization.Extra("statShieldDamage", "Damage to shields"), $"{Mathf.RoundToInt(shieldFactor * 100f)} %"));
+            int defense = it.Attr(Flight.PointDefense.Attribute);
+            if (defense > 0)
+                rows.Add((Localization.Extra("statMissileDefense", "Shoots down missiles within"), $"{Mathf.RoundToInt(defense * Flight.Gun.MetersPerUnit)} m"));
             return rows;
         }
 

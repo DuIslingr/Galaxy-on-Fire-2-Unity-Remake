@@ -49,6 +49,12 @@ namespace GoF2Remake.Modding
             // echoPercent of the damage, EMP and size; echoRadius is that blast's reach in game units (0 = blastRadius, 14);
             // echoExplosion is the explosion type it shows (0 ship, 8-10 scatter, 11 shock blast, 13 fireworks; -1 none).
             ["echoDelayMs"] = 127, ["echoPercent"] = 128, ["echoRadius"] = 129, ["echoExplosion"] = 130,
+            // Equipment with missileDefense (a reach in game units) lets the ship's auto turrets shoot down the homing
+            // missiles flying at it within that reach (Flight.PointDefense; EVERSPACE 2's Missile Defense System).
+            ["missileDefense"] = 131,
+            // An ore's mining time in percent of the game's (Flight.MiningGame / MiningBeamExtraction; default 100): 200 takes
+            // each layer twice as long for the same ore (EVERSPACE 2's DT_Mining_Yield: its crystals 10 s against the ores' 5 s).
+            ["miningTime"] = 132,
             // items.json's statList names
             ["steerable"] = 15, ["handling"] = 17,
             ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,

@@ -39,10 +39,12 @@ logic (plain C#); `MiningView` draws the lock ring, ore plate, HUD messages and 
 - **Shot asteroids** (`PlayerAsteroid::update` 0xf7060, `Target.DropAsteroidCrate`): an asteroid destroyed by a hit
   (guns, rockets, blasts, NPC shots, ramming; not mining, whose `Target.Explode` clears the loot, nor another game's
   destruction in multiplayer) leaves a crate for the tractor beam: class A 4 % with 1 core (Void Crystals' Void Essence,
-  Novanium's 218), the others 20 % with 1-3 t of the ore, so ore comes without a drill too. The model is
-  `createCrate(1)`'s rock container 0x421e `asteroid_01_junk`, Void Crystals (2) 0x421f `asteroid_void_junk`
-  (`Crate.look`, `CombatAssets.CrateModel`, synced by `NetCrate`; the junk's 0x4218 is look 3); race -1 (no standing or
-  Alien Hunter rules). The remake had left the drop out until 2026-10.
+  Novanium's 218), the others 20 % with 1-3 t of the ore, so ore comes without a drill too. Only the game's ores
+  (154-164, 217) have cores (`Target.CoreItem`, -1 for any other): a mod's ore in an orbit's field (stations.json
+  `orbit.asteroids.ores`) gives none from mining, the beam or a class-A crate (ore + 11 handed out whatever item came 11
+  numbers after it until 2026-10-25). The model is `createCrate(1)`'s rock container 0x421e `asteroid_01_junk`, Void
+  Crystals (2) 0x421f `asteroid_void_junk` (`Crate.look`, `CombatAssets.CrateModel`, synced by `NetCrate`; the junk's
+  0x4218 is look 3); race -1 (no standing or Alien Hunter rules). The remake had left the drop out until 2026-10.
 - **The fire button** (`MGame::OnTouchBegin` 0x1a838c: the original's fire button is the mining button too): during the
   approach, the landing and the settle it turns the autopilot off (571 + 39, sound 29, no ore) and that press fires
   nothing (`Hud::releaseAllKeys`, `WeaponSystem.SwallowPrimaryPress`); in the minigame it stops mining with the ore so
@@ -79,6 +81,11 @@ logic (plain C#); `MiningView` draws the lock ring, ore plate, HUD messages and 
   beam's hum and the drill's `DrillSound` by layer; haptics as the drill on target. Not counted: Ore Athlete (38: it
   rewards the minigame's perfect runs, which the beam has none of), the multiplayer ore split (each player keeps what their
   own beam cuts).
+- **Mining time** (remake, for mods, 2026-10-25: EVERSPACE 2's DT_Mining_Yield durations; items.json stat `miningTime`,
+  attr 132, % of `MiningGame.LayerMs`, 10..1000, default 100): an ore's layers last that much longer
+  (`MiningGame.LayerDurationMs`) at a rate scaled down to match, so a whole asteroid's ore stays the same; the beam's
+  layer time the same (`Mining`). The ES2 importer gives its crystals 200 (ES2's 10 s against 5 s). Test
+  `MiningGameTests.AnOresMiningTimeStretchesTheLayersForTheSameOre`.
 - **Remake-only:** Var Hastra (78) always stocks a drill (IMT Extract 1.3) while there is no campaign; releasing the
   stick stops the drill's player movement (the original keeps the last input). The mining plant at 103 is a docking
   target (see "Supernova add-on"). The drill sound (`DrillSound`, event 1's layers by drill_speed = (LAYER_SPEEDS[layer]

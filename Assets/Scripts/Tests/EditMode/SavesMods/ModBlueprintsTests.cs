@@ -224,6 +224,48 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0f, ModBlueprints.Of(2).derelictChance);
         }
 
+        [Test]
+        public void ALoungeSellerCanStandAtFixedStations()
+        {
+            WriteMod("d", "t_seller", "1.0", "", ("blueprints.json",
+                "[ { 'id': 'a', 'item': 2, 'ingredients': [ { 'item': 155 } ], 'lounge': { 'stations': [ 78, 'nobody:here' ], 'price': 49999 } }," +
+                "  { 'id': 'b', 'item': 3, 'ingredients': [ { 'item': 155 } ], 'lounge': { 'systemRace': 1 } }," +
+                "  { 'id': 'c', 'item': 4, 'ingredients': [ { 'item': 155 } ], 'lounge': { 'stations': [ 'nobody:here' ] } } ]"));
+            ScanAndEnable("t_seller");
+            Database.Load();
+            var m = Installed("t_seller");
+            Assert.IsTrue(m.Warnings.Exists(w => w.Contains("nobody:here is no station")), AllMessages(m));
+            var a = ModBlueprints.Of(2);
+            Assert.AreEqual(100f, a.loungeChance, "at named stations always there, like the game's own sellers");
+            CollectionAssert.AreEqual(new[] { 78 }, a.loungeStations);
+            Assert.IsTrue(ModBlueprints.LoungeAllowedAt(a, 78, 3));
+            Assert.IsFalse(ModBlueprints.LoungeAllowedAt(a, 79, 3), "not at another station");
+            var b = ModBlueprints.Of(3);
+            Assert.AreEqual(10f, b.loungeChance, "anywhere: 10 % per bar");
+            Assert.IsTrue(ModBlueprints.LoungeAllowedAt(b, 5, 1));
+            Assert.IsFalse(ModBlueprints.LoungeAllowedAt(b, 5, 0), "its systemRace only");
+            Assert.AreEqual(0f, ModBlueprints.Of(4).loungeChance, "every station unknown: nowhere");
+        }
+
+        [Test]
+        public void AShipTypeDropsItsOwnBlueprint()
+        {
+            WriteMod("d", "t_boss", "1.0", "", ("blueprints.json",
+                "[ { 'id': 'a', 'item': 2, 'ingredients': [ { 'item': 155 } ], 'drops': [ { 'ship': 28, 'chance': 100 }, { 'ship': 'nobody:here' } ] } ]"));
+            ScanAndEnable("t_boss");
+            Database.Load();
+            var m = Installed("t_boss");
+            Assert.IsFalse(m.Broken, AllMessages(m));
+            Assert.IsTrue(m.Warnings.Exists(w => w.Contains("nobody:here is no ship")), AllMessages(m));
+            var a = ModBlueprints.Of(2);
+            CollectionAssert.AreEqual(new[] { (28, 100f) }, a.shipDrops);
+            Assert.AreEqual(0, a.drops.Count, "a ship drop isn't a race drop");
+            Assert.AreEqual(2, ModBlueprints.RollDrop(0, 28), "the Veteran always drops it");
+            for (int i = 0; i < 50; i++) Assert.AreEqual(-1, ModBlueprints.RollDrop(0, 27), "another ship of its race never does");
+            Blueprints.Unlock(2);
+            Assert.AreEqual(-1, ModBlueprints.RollDrop(0, 28), "known: no more drops");
+        }
+
         [Test] public void ADerelictPositionIsThreeNumbers() => StringAssert.Contains("\"position\" is [ x, y, z ]", ParseError("[ { 'id': 'a', 'item': 2, 'ingredients': [ { 'item': 155 } ], 'derelict': { 'position': [ 1, 2 ] } } ]"));
 
         [Test]

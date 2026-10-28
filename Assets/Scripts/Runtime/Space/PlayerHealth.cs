@@ -66,6 +66,7 @@ namespace GoF2Remake.Flight
         // emergency system
         bool hasEmergency;
         float emergencyMs, emergencyLength = 10000f, bubbleScale;
+        int emergencyItem = 185;   // the mounted emergency system (used up when it fires)
         GameObject bubble;
         Material bubbleMaterial;
         // shield injector
@@ -113,7 +114,7 @@ namespace GoF2Remake.Flight
             if (weapons != null) weapons.Owner = Target;
 
             var emergency = Shop.FirstMounted(db, 27);
-            if (emergency != null) { hasEmergency = true; emergencyLength = emergency.Attr(41, 10000); }
+            if (emergency != null) { hasEmergency = true; emergencyItem = emergency.index; emergencyLength = emergency.Attr(41, 10000); }
             Target.SaveFromDeath = TryEmergency;
             EmergencyActive = false;
             var injector = Shop.FirstMounted(db, 43);
@@ -151,7 +152,7 @@ namespace GoF2Remake.Flight
             lastCombined = Hp.Combined;
             var emergency = Shop.FirstMounted(db, 27);
             hasEmergency = emergency != null;
-            if (emergency != null) emergencyLength = emergency.Attr(41, 10000);
+            if (emergency != null) { emergencyItem = emergency.index; emergencyLength = emergency.Attr(41, 10000); }
             var injector = Shop.FirstMounted(db, 43);
             hasInjector = injector != null;
             if (injector != null) injectorCost = injector.Attr(59, 30);
@@ -167,7 +168,10 @@ namespace GoF2Remake.Flight
             Target.hp = 1;
             emergencyMs = emergencyLength;
             EmergencyActive = true;
-            Session.Equipment.RemoveAll(e => e.item == 185);   // used up for good
+            // used up for good (the one mounted: a mod's emergency system based on 185 too, which a check of 185 kept for ever)
+            int used = emergencyItem;
+            int at = Session.Equipment.FindIndex(e => e.item == used);
+            if (at >= 0) Session.Equipment.RemoveAt(at);
             // 1115 Invincibile is a loop: PlayerEgo::update stops it when the shield ends.
             if (assets != null && assets.invincibility != null)
             {
@@ -358,6 +362,27 @@ namespace GoF2Remake.Flight
             if (Gamma < 1f) { Hp.hull = 0; Target.hp = 0; }   // PlayerEgo::update: the gamma pool empty = death
         }
 
+        /// <summary>Remake mods (docked inside the orbit, World.Es2Dock): the ship state to Status, as docking does.</summary>
+        public void StoreToSession()
+        {
+            if (Target == null || Hp == null || Dead) return;
+            Session.PlayerHull = Hp.hull;
+            Session.PlayerArmor = Hp.armor;
+            Session.PlayerShield = Hp.shield;
+        }
+
+        /// <summary>Remake mods: back from the station docked inside the orbit: the loadout and Status' pools (repaired, a new
+        /// hull or shield), as a launch's new level reads them (Setup).</summary>
+        public void ReloadFromSession(Database db)
+        {
+            RefreshLoadout(db);
+            if (Session.PlayerHull >= 0) Hp.hull = Mathf.Clamp(Session.PlayerHull, 1, Hp.maxHull);
+            if (Session.PlayerArmor >= 0) Hp.armor = Mathf.Clamp(Session.PlayerArmor, 0, Hp.maxArmor);
+            if (Session.PlayerShield >= 0f) Hp.shield = Mathf.Clamp(Session.PlayerShield, 0f, Hp.maxShield);
+            Target.hp = Hp.hull;
+            lastCombined = Hp.Combined;
+        }
+
         void OnDestroy()
         {
             OpaqueTexture.Request(this, false);
@@ -467,7 +492,7 @@ namespace GoF2Remake.Flight
             if (!exploded && deathMs >= 3000f)
             {
                 exploded = true;
-                Explosion.Spawn(transform.position);
+                Explosion.Spawn(transform.position, Database.Shared.Ship(Session.ShipIndex)?.explosionScale ?? 1f);   // a mod ship's own size
                 Haptics.Play(Haptics.Death);   // remake (the frozen camera takes no explosion rumble)
                 // At 3000 ms: the burn stops and record 11 bursts once at the ship.
                 if (burn != null) { burn.SetBurning(false); burn.Burst(); }

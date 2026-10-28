@@ -302,7 +302,11 @@ namespace GoF2Remake.World
         public static GameObject SpawnJumpgate(Database db, OrbitLayout layout, Transform parent = null)
         {
             if (!layout.hasJumpgate) return null;
-            var go = Spawn(db, layout.JumpgateAssembly, layout.jumpgate, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), "Jumpgate", parent);
+            // A mod system's own gate (systems.json "jumpgate") once ModStations has built it; else the race's.
+            GameObject go = null;
+            if (layout.ModJumpgateAssembly is string modGate)
+                go = Spawn(db, modGate, layout.jumpgate, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), "Jumpgate", parent);
+            if (go == null) go = Spawn(db, layout.JumpgateAssembly, layout.jumpgate, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), "Jumpgate", parent);
             // Remake: the idle light layer's blink (`extra` keys) on every gate: jumpgate_nivelian_anim_add parts 0 / 2, the
             // Midorian ring's 1-9, the Terran lamps (the jump flash, _jump_anim_add, gets its fades in SystemJump.PlayGateJump).
             if (go != null)

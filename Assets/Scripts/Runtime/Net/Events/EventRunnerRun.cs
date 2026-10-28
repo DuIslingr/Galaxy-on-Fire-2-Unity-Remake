@@ -224,7 +224,7 @@ namespace GoF2Remake.Events
                 if (record != null)
                 {
                     Session.GraphQuests.Remove(record);
-                    if (record.kind == GraphQuestState.KindQuest) Session.GraphQuestsDone.Add(running);
+                    if (record.kind == GraphQuestState.KindQuest) QuestDone(running, info);
                     record = null;
                 }
                 End();

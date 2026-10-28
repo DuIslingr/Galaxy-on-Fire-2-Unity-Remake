@@ -5,6 +5,7 @@
 //   2. then 2 random items (100 tries): always-items (param2 >= 161, param1 <= campaign), 50 % each, for the race, not
 //      picked yet; item 13 (the lounge drink) not in systems past 21; 'flag' items at most once per 10 minutes of play
 //   joined with "    +++    "; scrolls left at 50 px/s (the station repeats it to keep the strip full).
+//   Remake mods: in a system whose stations have a stations.json "description", up to 3 of those take the random items' place.
 // Tokens: #PLANET_NAME / #SYSTEM_NAME (a random station), #DRINK_NAME (1406 + system; its #SYSTEM_NAME = that system),
 // #CHILD_NAME (a first name), #SHIP_NAME (913 + a random fighter), #PLATFORM_NUMBER (A-F + 0-9), #CATASTROPHE (3237 +
 // rnd 5), #VICTIMS, #BERGER_LASER (1279 + rnd 4), #VOSSK_SHIP_OR_ITEM / #VOSSK_REVENUE (3242), #PROFESSION (3243 + rnd 4),
@@ -61,7 +62,20 @@ namespace GoF2Remake.Data
             var picked = new List<TickerItem>();
             foreach (var it in Items)
                 if (it.param1 > 0 && it.param1 <= campaign && campaign <= it.param2 && Allowed(it, race)) picked.Add(it);
-            int random = 0;
+            // Remake mods: a system whose stations have stations.json "description"s runs their lore instead of the game's 2
+            // random items (those name the game's own places): up to 3, "Name (subtitle): description".
+            var lore = Modding.ModWorld.StationsWithLore(db, system);
+            var loreText = new StringBuilder();
+            for (int n = 0; n < 3 && lore.Count > 0; n++)
+            {
+                int k = Random.Range(0, lore.Count), st = lore[k];
+                lore.RemoveAt(k);
+                string name = db.Stations.Find(x => x.index == st)?.name ?? "";
+                string sub = Modding.ModWorld.Subtitle(st);
+                loreText.Append(string.IsNullOrEmpty(sub) ? name : $"{name} ({sub})").Append(": ")
+                        .Append(Modding.ModWorld.Description(st)).Append(Separator);
+            }
+            int random = loreText.Length > 0 ? 2 : 0;
             for (int tries = 0; tries < 100 && random < 2 && Items.Count > 0; tries++)
             {
                 var it = Items[Random.Range(0, Items.Count)];
@@ -77,6 +91,7 @@ namespace GoF2Remake.Data
             }
             var sb = new StringBuilder();
             foreach (var it in picked) sb.Append(ReplaceTokens(db, Localization.Get(3262 + it.index), system)).Append(Separator);
+            sb.Append(loreText);
             return sb.ToString();
         }
 

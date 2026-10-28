@@ -6,14 +6,15 @@
 // Units: the original works in milliseconds and "GoF units". This class keeps those units
 // internally so every constant matches the original; the MonoBehaviour converts to Unity.
 //
-// Remake: a second flight style, free flight (Settings.FlightStyle, StepFree), after EVERSPACE 2 (not from its code): its
-// numbers are measured from recordings of the game and read from its asset values (Reference/research/
-// es2_flight_measurements.md). Thrust, strafe and up / down held instead of a throttle, the turn rates ramped toward the
-// stick or the mouse's virtual joystick, a manual roll and no auto-level, a held boost on an energy pool, and inertial
-// dampeners (on: each axis flies the speed asked for, and what isn't asked for brakes away; off: the ship keeps its
-// momentum and the thrust only adds to it, the speed easing back to a soft cap). The top speed is the original's
-// 2 units/ms (100 m/s, also EVERSPACE 2's); the turn rate scales with the ship's handling, the boost recharge is its
-// booster's.
+// Remake: a second flight style, free flight (Settings.FlightStyle, StepFree), after EVERSPACE 2: its numbers measured from
+// recordings of the game and read from its asset values, its velocity step rebuilt from the game's decompiled
+// UShipMovementComponent::ApplyControlInputToVelocity and BP_Ship_Player's tick (Reference/research/
+// es2_flight_measurements.md, "The decompiled movement"). Thrust, strafe and up / down held instead of a throttle, the
+// turn rates ramped toward the stick or the mouse's virtual joystick, a manual roll and no auto-level, a held boost on an
+// energy pool, and inertial dampeners (on: the velocity is pulled toward the thrust's direction, eased out as it nears
+// the top speed that way, and braked down to the speed asked for; off: the ship keeps its momentum and the thrust only
+// adds to it up to the top speed, steering it beyond). The top speed is the original's 2 units/ms (100 m/s, also
+// EVERSPACE 2's); the turn rate scales with the ship's handling, the boost recharge is its booster's.
 
 using System;
 using UnityEngine;
@@ -252,22 +253,34 @@ namespace GoF2Remake.Flight
         /// (EngineDrive.Off: flames, nozzle glow, throttle glow; ShipExhaust). Always false in the original flight.</summary>
         public bool EnginesOff { get; private set; }
 
-        // EVERSPACE 2's player ship (es2_flight_measurements.md; the cockpit's speed gauge, km/h): top speed 100 m/s forward
-        // (measured 343 km/h = 95.3), backward, strafe and up / down half of it (all 172 km/h); every axis eases out cubically
-        // to its top speed in a fixed time (v = V (1 - (1 - t/T)^3), the assets' EaseAccelerationExponent 3: forward
-        // T ~1.75 s, the others ~1.27 s); ~33 m/s^2 of braking with nothing held, linear, on every axis (the asset's 60
-        // is probably scaled by the player's dampener strength); a boost to ~x3.2 the top speed (the gauge: 1110 km/h),
-        // eased out cubically over ~3.1 s from the top speed, lasting as long as the equipment allows (measured: 4.5 s
-        // held, all of it boosting; the blueprint's 3.5 s is overridden; on the measured ship a long boost kept gaining
-        // speed past that, its equipment, not modelled); every axis turns at ~125 deg/s, reached in ~0.4 s (the cockpit
-        // view), at any speed; ~0.85 of it boosting (measured).
+        // EVERSPACE 2's player ship (es2_flight_measurements.md): top speed 100 m/s forward (the cockpit gauge read 343 km/h =
+        // 95.3), backward, strafe and up / down half of it (172 km/h; the game sets them from the forward one,
+        // SetStrafeHoverBackwardFromForwardSpeed, so they grow with it while boosting); its velocity step is
+        // UShipMovementComponent::ApplyControlInputToVelocity (decompiled, see StepFree): an acceleration along the thrust's
+        // direction of A (1 - p^3) (p the share of the top speed reached that way, EaseAccelerationExponent 3), forward
+        // A = 132 m/s^2 (fitted to the gauge and the distance readout, rms 1 m/s), the others 90 m/s^2 over their half top
+        // speed; braking at a quarter of the forward acceleration (BP_Ship_Player's DefaultDeceleration = AccelerationForward
+        // x 0.25: the measured 33 m/s^2); a boost to x3.2 the top speed (the gauge: 1110 km/h) at x1.63 the acceleration
+        // (fitted: 215 m/s^2), lasting as long as the equipment allows (measured: 4.5 s held; the blueprint's 3.5 s is
+        // overridden); every axis turns at ~125 deg/s, reached in ~0.4 s (the cockpit view), at any speed; ~0.85 of it
+        // boosting (measured).
         const float FreeReverseShare = 0.5f;     // backward top speed, of the forward one (measured)
         const float FreeStrafeShare = 0.5f;      // sideways (measured)
         const float FreeHoverShare = 0.5f;       // up / down (measured)
-        const float FreeEaseFwdMs = 1750f;       // forward: standstill to top speed, eased out cubically (handling 100,
-                                                 // sqrt-scaled by the handling)
-        const float FreeEaseSideMs = 1270f;      // backward, strafe, up / down: the same
-        const float FreeDecelMs = 3000f;         // braking from top speed to a stop (33 m/s^2), dampeners on, nothing held
+        const float FreeAccelFwd = 132f / 95.3f / 1000f;   // forward acceleration, per ms x the forward top speed (handling 100,
+                                                           // sqrt-scaled by the handling; 132 m/s^2 for 95.3 m/s)
+        const float FreeAccelSide = 90f / 47.65f / 1000f;  // backward, strafe, up / down: the same over their own top speed
+        const float FreeEaseFwdMs = 1750f;       // the cubic ease the acceleration was measured as (the gauge's fit): a heavy
+        const float FreeEaseSideMs = 1270f;      // hull's AccelMs lengthens it, so the acceleration shrinks by their ratio
+        const float FreeEaseExponent = 3f;       // BP_Ship_Player's EaseAccelerationExponent
+        const float FreeBrakeShare = 0.25f;      // DefaultDeceleration = AccelerationForward x 0.25 (BP_Ship_Player's tick)
+        const float FreeBrakeAboveTopExp = 1.67f;   // DecelerationMaxSpeedExponent: above the top speed the braking grows
+                                                    // with (speed / top)^1.67 (a boost's speed runs down fast)
+        const float FreeInheritInertia = 0.9f;   // InputInheritInertia: thrusting the way the ship moves brakes up to 90 %
+                                                 // less (x 1 - 0.9 cos^2, the thrust's direction against the velocity's)
+        const float FreeTurningBoostCm = 6000f;  // DefaultTurningBoost = AccelerationForward (cm/s^2) / 6000, per second
+        const float FreeBoostAccel = 1.63f;      // the boost's forward acceleration (BoostFactorAccelerationForward, fitted)
+        const float UnitsToCm = 5f;              // 0.05 m per game unit
         const float FreeTurnRate = 125f * Mathf.Deg2Rad / 1000f;   // rad per ms at full input, handling 20 (H of handling 100)
         const float FreeTurnRampMs = 400f;       // standstill to the top turn rate (and back), linear (measured in the cockpit
                                                  // view, which follows the ship rigidly: 10-85 % in 0.31 s)
@@ -279,7 +292,6 @@ namespace GoF2Remake.Flight
         const float FreeTurnAboveShare = 0.1f;   // past EVERSPACE 2's 125 deg/s only a tenth of the rest counts (an Inflict 127
                                                  // instead of 148, a tuned Dace 146 instead of 335: players' feedback, the
                                                  // nimble ships whipped round too sharply)
-        const float FreeBoostEaseMs = 3100f;     // the boost's cubic ease-out over the gap from the top speed (the gauge)
         const float FreeBoostDurationMs = 3500f; // a full energy pool without a booster duration (the blueprint's value); with
                                                  // one, the booster's duration (attribute 27), refilled in its recharge time
         const float FreeBoostTurnShare = 0.85f;  // boosting turns slower (measured 0.82-0.9: the boost's wider view makes it read low)
@@ -317,19 +329,6 @@ namespace GoF2Remake.Flight
             }
         }
 
-        /// <summary>One velocity component toward 'want' while there is input that asks for more speed (or the other way):
-        /// along EVERSPACE 2's cubic ease-out, v = top (1 - (1 - t/T)^3), written as a rate of the speed still missing
-        /// (dv/dt = 3 top / T x (missing / top)^(2/3), so it continues from any speed and arrives in finite time);
-        /// else braked at 'decel' (no input, or faster than asked: after a boost).</summary>
-        static float FreeAxis(float v, float want, bool input, float top, float easeMs, float decel, float dtMs)
-        {
-            bool drive = input && (Mathf.Abs(v) <= Mathf.Abs(want) || Mathf.Sign(v) != Mathf.Sign(want));
-            if (!drive) return Mathf.MoveTowards(v, want, decel * dtMs);
-            float missing = Mathf.Abs(want - v), share = Mathf.Min(1f, missing / Mathf.Max(1e-4f, top));
-            float rate = 3f * top / easeMs * Mathf.Pow(share, 2f / 3f);
-            return Mathf.MoveTowards(v, want, rate * dtMs);
-        }
-
         /// <summary>Free flight: one frame. The rotation to apply (degrees, local, as Step), the world move in units
         /// (FrameResult.move) and the collision push.</summary>
         public FrameResult StepFree(FreeInput input, float dtMs, Quaternion rotation, Vector3 shipUp, Vector3 shipRight)
@@ -355,47 +354,73 @@ namespace GoF2Remake.Flight
             YawRate = freeYaw / RateToRadiansPerMs;
             PitchRate = freePitch / RateToRadiansPerMs;
 
-            // ---- moving
-            float top = TopSpeed, boostTop = top * FreeBoostFactor;
-            float handlingScale = Mathf.Sqrt(20f / Mathf.Max(5f, he)) / Style.accelScale;   // a mod's acceleration bonus shortens the eases
-            float strafeTop = top * Style.strafeScale;
-            float easeFwd = FreeEaseFwdMs * handlingScale + AccelMs;
-            float easeBoost = FreeBoostEaseMs * handlingScale + AccelMs;
-            float easeSide = FreeEaseSideMs * handlingScale + AccelMs;
-            float decel = top / (FreeDecelMs + AccelMs);
+            // ---- moving: UShipMovementComponent::ApplyControlInputToVelocity (decompiled), in the ship's frame (x strafe,
+            // y up / down, z thrust; units / ms)
+            float top = TopSpeed;
+            float fwdTop = IsBoosting ? top * FreeBoostFactor : top;   // the boost's speed modifier on MaxSpeedForward
+            float otherTop = fwdTop * Style.strafeScale;               // strafe and up / down follow the forward top speed
+            float handlingScale = Mathf.Sqrt(20f / Mathf.Max(5f, he)) / Style.accelScale;   // a mod's acceleration bonus
+            float fwdShare = FreeEaseFwdMs / (FreeEaseFwdMs * handlingScale + AccelMs);     // a heavy hull accelerates slower
+            float sideShare = FreeEaseSideMs / (FreeEaseSideMs * handlingScale + AccelMs);
+            float accelFwd = FreeAccelFwd * top * fwdShare;   // unboosted: the braking and turning boost derive from it
             float thrust = Mathf.Clamp(input.thrust, -1f, 1f), strafe = Mathf.Clamp(input.strafe, -1f, 1f), hover = Mathf.Clamp(input.hover, -1f, 1f);
             ThrustInput = new Vector3(strafe, hover, thrust);
             if (IsBoosting) thrust = 1f;   // the boost drives forward whatever is held
             var fwd = rotation * Vector3.forward;
-            var v = Quaternion.Inverse(rotation) * FreeVelocity;   // ship space: x right, y up, z forward
-            if (input.dampeners)
+            var v = Quaternion.Inverse(rotation) * FreeVelocity;
+            var inp = new Vector3(strafe, hover, thrust);
+            if (inp.sqrMagnitude > 1f) inp.Normalize();   // the input vector is clamped to length 1
+            float inpMag = inp.magnitude;
+            var tops = new Vector3(otherTop * FreeStrafeShare, otherTop * FreeHoverShare, thrust < 0f ? fwdTop * FreeReverseShare : fwdTop);
+            var target = Vector3.Scale(inp, tops);   // GetTargetVelocityFromInput
+            float targetSpeed = target.magnitude;
+            var targetDir = targetSpeed > 1e-9f ? target / targetSpeed : Vector3.zero;
+            var inpDir = inpMag > 1e-6f ? inp / inpMag : Vector3.zero;
+            bool damp = input.dampeners;
+            // Turning boost (dampeners on; TurningBoost = DefaultTurningBoost, else 0): the velocity is turned toward the
+            // thrust's direction at its own speed, by ((1 + cos) / 2)^TurningBoostExp (1) x dt x TurningBoost x |input|.
+            float speed = v.magnitude;
+            if (damp && inpMag > 0f && speed > 0f && targetSpeed > 1e-4f * top)
             {
-                // Each axis flies the speed asked for; what isn't asked for brakes away at 60 m/s^2 (so a boost's speed
-                // eases off instead of stopping dead, EVERSPACE 2's momentum after a boost).
-                v.x = FreeAxis(v.x, strafe * strafeTop * FreeStrafeShare, strafe != 0f, strafeTop * FreeStrafeShare, easeSide, decel, dtMs);
-                v.y = FreeAxis(v.y, hover * strafeTop * FreeHoverShare, hover != 0f, strafeTop * FreeHoverShare, easeSide, decel, dtMs);
-                float wantZ = thrust >= 0f ? thrust * (IsBoosting ? boostTop : top) : thrust * top * FreeReverseShare;
-                // The ease's span: the axis's top speed, or while boosting the gap from the top speed to the boost's.
-                float spanZ = thrust < 0f ? top * FreeReverseShare : IsBoosting ? boostTop - top : top;
-                float easeZ = thrust < 0f ? easeSide : IsBoosting && v.z >= top * 0.999f ? easeBoost : easeFwd;
-                v.z = FreeAxis(v.z, wantZ, thrust != 0f, IsBoosting && v.z < top * 0.999f ? top : spanZ, easeZ, decel, dtMs);
-                FreeVelocity = rotation * v;
+                float turningBoost = accelFwd * UnitsToCm * 1e6f / FreeTurningBoostCm / 1000f;   // per ms
+                float pull = Mathf.Clamp01((Vector3.Dot(v / speed, targetDir) + 1f) * 0.5f * dtMs * turningBoost * inpMag);
+                v += (targetDir * speed - v) * pull;
             }
-            else
+            // Braking (Deceleration: 0 with the dampeners off): while faster than asked, the speed drops linearly (faster above
+            // the top speed) but not below what is asked; thrusting the way the ship moves brakes less (InputInheritInertia).
+            bool exceeding = v.sqrMagnitude > targetSpeed * targetSpeed * 1.01f;   // UMovementComponent::IsExceedingMaxSpeed
+            if (damp && exceeding)
             {
-                // Pseudo-Newtonian: the thrust adds to the momentum; above the soft cap (the top speed, the boost's while
-                // boosting) the speed eases back at the braking rate.
-                // The ease-out's initial rate (3 top / T) as the thrust's acceleration.
-                var push = new Vector3(strafe * 3f * strafeTop * FreeStrafeShare / easeSide, hover * 3f * strafeTop * FreeHoverShare / easeSide,
-                                       thrust * 3f * (thrust < 0f ? top * FreeReverseShare / easeSide
-                                                      : IsBoosting ? (boostTop - top) / easeBoost : top / easeFwd));
-                // The thrust never pushes past the cap (it only steers the momentum there: the speed it had, or the cap);
-                // the braking rate is weaker than the thrust, so easing back alone let a held key climb on for good.
-                float before = FreeVelocity.magnitude;
-                FreeVelocity += rotation * push * dtMs;
-                float cap = IsBoosting ? boostTop : top, speed = FreeVelocity.magnitude;
-                if (speed > cap) FreeVelocity *= Mathf.MoveTowards(Mathf.Min(speed, Mathf.Max(cap, before)), cap, decel * dtMs) / speed;
+                speed = v.magnitude;
+                float decel = accelFwd * FreeBrakeShare;
+                if (inpMag > 0f) { float c = Mathf.Clamp01(Vector3.Dot(inpDir, v / speed)); decel *= 1f - FreeInheritInertia * c * c; }
+                if (speed > fwdTop) decel *= Mathf.Pow(speed / fwdTop, FreeBrakeAboveTopExp);
+                v *= Mathf.Max(targetSpeed, speed - decel * dtMs) / speed;
+                exceeding = v.sqrMagnitude > targetSpeed * targetSpeed * 1.01f;
             }
+            // Thrust: along the asked direction, each axis's acceleration weighted by it; with the dampeners on eased out by
+            // 1 - p^3 as the speed that way nears the top speed that way. The speed then stays within what is asked, or
+            // within what it was when already faster (the thrust only steers it there).
+            if (inpMag > 0f && targetSpeed > 0f)
+            {
+                // (the accelerations are attributes of their own: the boost raises only the forward one)
+                float sideTop = top * Style.strafeScale;
+                var accels = new Vector3(FreeAccelSide * sideTop * FreeStrafeShare * sideShare, FreeAccelSide * sideTop * FreeHoverShare * sideShare,
+                                         thrust < 0f ? FreeAccelSide * top * FreeReverseShare * sideShare
+                                                     : accelFwd * (IsBoosting ? FreeBoostAccel : 1f));
+                float accel = inpMag * Vector3.Scale(accels, targetDir).magnitude;
+                float ease = 1f;
+                if (damp)
+                {
+                    float topThatWay = Vector3.Scale(inpDir, tops).magnitude;
+                    float p = Mathf.Clamp01(Vector3.Dot(v, targetDir) / Mathf.Max(1e-6f, topThatWay));
+                    ease = 1f - Mathf.Pow(p, FreeEaseExponent);
+                }
+                float cap = exceeding ? v.magnitude : targetSpeed;
+                v += targetDir * (accel * ease * dtMs);
+                if (v.sqrMagnitude > cap * cap) v = v.normalized * cap;
+            }
+            FreeVelocity = rotation * v;
 
             // What the rest of the game reads: the forward thrust held as the throttle (the gauge, the engine effects; 0 with
             // no key held, whatever the ship's momentum), the forward speed as MoveSpeed.

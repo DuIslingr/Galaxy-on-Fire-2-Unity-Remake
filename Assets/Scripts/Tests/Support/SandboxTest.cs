@@ -42,14 +42,15 @@ namespace GoF2Remake.Tests
             try { if (Directory.Exists(Sandbox)) Directory.Delete(Sandbox, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
 
-        /// <summary>ModRegistry's table read again from the data folder on next use, and the mods' Revision bumped (ModContent's
-        /// numbering and Database.Shared follow it).</summary>
+        /// <summary>ModRegistry's table read again from the data folder on next use, and the installed mods too (ModManager's
+        /// lists dropped and its Revision bumped: ModContent's numbering and Database.Shared follow it). Without the second, a
+        /// scan of the player's own Mods folder made before the tests (the Editor's Play mode, an eval) stayed cached and the
+        /// player's mods leaked into every test (the item tables 302 long instead of 233).</summary>
         static void ForgetModRegistry()
         {
             const BindingFlags F = BindingFlags.NonPublic | BindingFlags.Static;
             typeof(Modding.ModRegistry).GetMethod("ResetStatics", F)?.Invoke(null, null);
-            var rev = typeof(Modding.ModManager).GetProperty("Revision", BindingFlags.Public | BindingFlags.Static)?.GetSetMethod(true);
-            rev?.Invoke(null, new object[] { Modding.ModManager.Revision + 1 });
+            typeof(Modding.ModManager).GetMethod("ResetStatics", F)?.Invoke(null, null);
         }
     }
 

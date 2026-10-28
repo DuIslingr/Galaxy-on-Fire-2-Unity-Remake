@@ -9,7 +9,7 @@
 //     mount's glowSize makes it an ellipse with its own flame length, a glowColor / the ship's engineGlowColor tints it
 //     (engineGlowTint: the sprite in white, the colour in the vertex colours);
 //     with "flame" materials (EngineFlame, the model's own flame geometry) the glow part stays, empty; with "engineFx"
-//     (Galaxy on Fire 3's flare, cone and trails, EngineFx) it stays without discs and carries those;
+//     (Galaxy on Fire 3's engine and its particles, EngineFx) it stays without discs and carries those;
 //   - the manoeuvring jets at the slotType-4 mounts (LateralThrusters), under the engine glow part;
 //   - each "addParts" model (the original's additive layers, e.g. an original-game mod's *_lights_add / *_engine_glow_add /
 //     *_engine_add, OriginalModImport) in the hull's frame with the game's material for its role: the lights always on, an
@@ -57,7 +57,10 @@ namespace GoF2Remake.Modding
             var renderers = model.GetComponentsInChildren<Renderer>(true);
             var specs = c.materials ?? new List<CustomShipMaterial>();
             var mats = new Material[specs.Count];
-            for (int i = 0; i < specs.Count; i++) mats[i] = ModMaterials.FromSpec(mod, specs[i], $"{c.assembly} {specs[i].mesh}{specs[i].submesh}");
+            // (named by the entry's "material" filter like a kit's: the engine / damage / shield lookups find a material by its
+            // name, and every filter entry was "ship_NNN_mod -1" alike)
+            for (int i = 0; i < specs.Count; i++)
+                mats[i] = ModMaterials.FromSpec(mod, specs[i], !string.IsNullOrEmpty(specs[i].material) ? $"{c.assembly} {specs[i].material}" : $"{c.assembly} {specs[i].mesh}{specs[i].submesh}");
             if (specs.Count > 0)
                 foreach (var r in renderers)
                 {
@@ -81,7 +84,8 @@ namespace GoF2Remake.Modding
                 specs.Select((sp, i) => sp != null && sp.boost && mats[i] != null ? mats[i].name : null).Where(n => n != null),
                 specs.Select((sp, i) => (sp, i)).Where(x => x.sp != null && x.sp.engine && x.sp.engineIdle > 0f && mats[x.i] != null)
                      .GroupBy(x => mats[x.i].name).ToDictionary(g => g.Key, g => g.First().sp.engineIdle));
-            bool flames = specs.Any(sp => sp != null && sp.flame) || hasFlames;
+            // (a capital ship with "engineStyle": "es2": EVERSPACE 2's engine effects at its sockets, without flame cards)
+            bool flames = specs.Any(sp => sp != null && sp.flame) || hasFlames || string.Equals(c.engineStyle, "es2", System.StringComparison.OrdinalIgnoreCase);
             if (flames) EngineFlame.Add(root);
             if (kitScale > 0f) model.transform.localScale = Vector3.one * kitScale;
             else
@@ -131,8 +135,12 @@ namespace GoF2Remake.Modding
                 tg.GetComponent<ThrottleGlow>().engineState = engineState;
             }
             foreach (var p in parts) p.transform.SetParent(root.transform, false);
-            // Manoeuvring jets (slotType 4: EVERSPACE 2's lateral thrusters), under the engine glow part so they go with it.
-            LateralThrusters.Add(root, glow != null ? glow.transform : null, c.mounts);
+            // Manoeuvring jets (slotType 4: EVERSPACE 2's lateral thrusters), under the engine glow part so they go with it,
+            // and EVERSPACE 2's engine lights, trails and glow at the engine and booster sockets of a ship with its flames,
+            // sized in its metres (the kit's scale).
+            float es2Scale = model.transform.localScale.x;
+            LateralThrusters.Add(root, glow != null ? glow.transform : null, c.mounts, es2Scale);
+            if (flames) Es2EngineVfx.Add(root, c.mounts, es2Scale, c.es2Engine);
             asm.playerVariantParts = parts.ToArray();
             asm.npcVariantParts = npcParts.ToArray();
             asm.conditionalParts = new GameObject[0];
@@ -142,7 +150,11 @@ namespace GoF2Remake.Modding
             group.SetLODs(new[] { new LOD(0.5f, root.GetComponentsInChildren<Renderer>(true)) });
             group.RecalculateBounds();
             float tanHalf = Mathf.Tan(ReferenceFov * 0.5f * Mathf.Deg2Rad);
-            float h = Mathf.Clamp01(group.size / (2f * CullDistance * M * tanHalf));
+            // A capital ship (a mod's 4 km hull) stays in sight as far as its size allows: 25 times its size, the generic ships'
+            // CullDistance at least (a fighter's 4 km).
+            float cull = Mathf.Max(CullDistance, group.size / M * 25f);
+            asm.lastVisibleDistanceGameUnits = cull;
+            float h = Mathf.Clamp01(group.size / (2f * cull * M * tanHalf));
             group.SetLODs(new[] { new LOD(h, root.GetComponentsInChildren<Renderer>(true)) });
             return root;
         }
@@ -305,7 +317,7 @@ namespace GoF2Remake.Modding
         /// glowSize (half width, half height, flame length in game units) makes it an ellipse with its own length, its
         /// glowColor (else the ship's engineGlowColor) tints it: then the whole glow uses engineGlowTint (the white sprite)
         /// with vertex colours, white-hot at the centre, the colour at the rim and the ring; uncoloured mounts stay white.</summary>
-        static GameObject BuildEngineGlow(CustomShipData c, bool discs = true)
+        internal static GameObject BuildEngineGlow(CustomShipData c, bool discs = true)
         {
             var exhausts = c.mounts?.Where(m => m.slotType == 3).ToList();
             var assets = ModAssets.Get();

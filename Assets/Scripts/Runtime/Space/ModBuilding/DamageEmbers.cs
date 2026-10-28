@@ -56,7 +56,8 @@ namespace GoF2Remake.Modding
                 for (int i = 0; i < own.Length; i++)
                 {
                     if (own[i] == null || i >= shared.Length || shared[i] == null || !Matches(shared[i].name, wanted)) continue;
-                    if (own[i].GetTexture("_EmissionMap") != null && own[i].HasProperty(EmissionId)) glowing.Add(own[i]);
+                    // (only a material whose emission is the damage mask: the cyber strips' and lights' own emission stays theirs)
+                    if (own[i].GetTag(ModMaterials.DamageEmbersTag, false) == "1" && own[i].HasProperty(EmissionId)) glowing.Add(own[i]);
                     if (own[i].HasProperty("_DetailMask") && own[i].GetTexture("_DetailMask") != null) charring.Add(own[i]);
                 }
             }

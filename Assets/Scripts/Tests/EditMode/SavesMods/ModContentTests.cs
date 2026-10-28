@@ -531,6 +531,61 @@ namespace GoF2Remake.Tests
 
         [Test] public void IntegratedMustBeAnObject() => StringAssert.Contains("\"integrated\" must be an object", ParseError("[ { 'override': 22, 'integrated': true } ]", "ships.json"));
 
+        // ---- camera / cockpit / smoke / explosionScale (ModShipView: how a ship is seen, from GoF3's ship files) ---------
+
+        [Test]
+        public void ShipsSeenTheOriginalsWayWithoutMods()
+        {
+            var s = Database.Load().Ship(22);
+            Assert.IsNull(s.chaseCamera);
+            Assert.IsNull(s.cockpit);
+            Assert.IsNull(s.smokePoints);
+            Assert.AreEqual(1f, s.explosionScale);
+            ModShipView.CameraOffsets(s, 0.05f, out var offset, out var look);
+            Assert.AreEqual(new UnityEngine.Vector3(0f, 600f, -1338f) * 0.05f, offset, "TargetFollowCamera's offsets");
+            Assert.AreEqual(new UnityEngine.Vector3(0f, 600f, -650f) * 0.05f, look);
+        }
+
+        [Test]
+        public void AShipHasItsOwnCameraCockpitSmokeAndExplosion()
+        {
+            WriteMod("view", "t_view", "1.0", "", ("ships.json",
+                "[ { 'override': 22, 'camera': { 'distance': 2400, 'height': 900 }, 'cockpit': [ 10, 80, 500 ]," +
+                "    'smoke': [ [ 40, 60, -100 ], [ -40, 60, -100 ] ], 'explosionScale': 1.6 } ]"));
+            ScanAndEnable("t_view");
+            Assert.IsFalse(Installed("t_view").Broken, AllMessages(Installed("t_view")));
+            var s = Database.Load().Ship(22);
+            CollectionAssert.AreEqual(new[] { 2400f, 900f, 600f, -650f }, s.chaseCamera, "the fields left out keep the original's");
+            Assert.AreEqual(new UnityEngine.Vector3(10, 80, 500), s.cockpit.Value);
+            Assert.AreEqual(2, s.smokePoints.Count);
+            Assert.AreEqual(1.6f, s.explosionScale, 1e-4f);
+            ModShipView.CameraOffsets(s, 0.05f, out var offset, out _);
+            Assert.AreEqual(new UnityEngine.Vector3(0f, 900f, -2400f) * 0.05f, offset);
+            Assert.AreEqual(new UnityEngine.Vector3(-0.5f, 4f, 25f), ModShipView.ToLocal(s.cockpit.Value, 0.05f), "like a mount: x mirrored");
+            Assert.IsNull(Database.Load().Ship(28).chaseCamera, "other ships keep the original's");
+        }
+
+        [Test]
+        public void AShipsViewWarnsAndClamps()
+        {
+            WriteMod("view", "t_view2", "1.0", "", ("ships.json",
+                "[ { 'override': 22, 'camera': { 'distance': 2000, 'zoom': 2 }, 'explosionScale': 50," +
+                "    'smoke': [ [0,0,0], [0,0,1], [0,0,2], [0,0,3], [0,0,4] ] } ]"));
+            ScanAndEnable("t_view2");
+            var s = Database.Load().Ship(22);
+            Assert.AreEqual(ModShipView.MaxExplosion, s.explosionScale);
+            Assert.AreEqual(ModShipView.MaxSmokePoints, s.smokePoints.Count);
+            string all = AllMessages(Installed("t_view2"));
+            StringAssert.Contains("unknown camera field \"zoom\"", all);
+            StringAssert.Contains("(clamped)", all);
+            StringAssert.Contains("only the first 4", all);
+        }
+
+        [Test] public void ACockpitIsAPoint() => StringAssert.Contains("\"cockpit\" must be a point", ParseError("[ { 'override': 22, 'cockpit': [ 1, 2 ] } ]", "ships.json"));
+        [Test] public void SmokeIsAListOfPoints() => StringAssert.Contains("each smoke point must be", ParseError("[ { 'override': 22, 'smoke': [ 1, 2, 3 ] } ]", "ships.json"));
+        [Test] public void ACameraIsAnObject() => StringAssert.Contains("\"camera\" must be an object", ParseError("[ { 'override': 22, 'camera': 2000 } ]", "ships.json"));
+        [Test] public void ACamerasDistanceIsAboveZero() => StringAssert.Contains("\"distance\" must be above 0", ParseError("[ { 'override': 22, 'camera': { 'distance': 0 } } ]", "ships.json"));
+
         // ---- a steady engine glow (a modder's request: dark parked, lit through the take-off and all flight) -------------
 
         [Test]

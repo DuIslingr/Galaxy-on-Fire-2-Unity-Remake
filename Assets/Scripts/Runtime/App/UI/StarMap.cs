@@ -40,6 +40,7 @@
 using System;
 using System.Collections.Generic;
 using GoF2Remake.Data;
+using GoF2Remake.Modding;
 using GoF2Remake.Visuals;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -221,7 +222,7 @@ namespace GoF2Remake.UI
         // UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
-        VisualElement root, touch, labels, systemHeader, keyBox, hints, dialog, mapSafe, sideButtons;
+        VisualElement root, touch, labels, systemHeader, keyBox, hints, dialog, mapSafe, sideButtons, planetLore;
         /// <summary>The screen size and safe area the map's corners were last kept clear for (SafeArea).</summary>
         Rect lastSafeArea;
         int lastLayout = -1;
@@ -336,6 +337,20 @@ namespace GoF2Remake.UI
             mapSafe = root.Q("mapSafe");
             lastSafeScreen = default;   // insets applied again on the next frame
             systemHeader = root.Q("systemHeader");
+            // Remake mods: the selected planet's lore (stations.json "description"), under the system block.
+            planetLore = mapSafe.Q(className: "planet-lore");
+            if (planetLore == null)
+            {
+                planetLore = new VisualElement { pickingMode = PickingMode.Ignore };
+                planetLore.AddToClassList("planet-lore");
+                var head = new Label { pickingMode = PickingMode.Ignore };
+                head.AddToClassList("planet-lore-title"); head.AddToClassList("gof-semibold");
+                var body = new Label { pickingMode = PickingMode.Ignore };
+                body.AddToClassList("planet-lore-text");
+                planetLore.Add(head); planetLore.Add(body);
+                mapSafe.Add(planetLore);
+            }
+            planetLore.style.display = DisplayStyle.None;
             keyBox = root.Q("keyBox");
             hints = root.Q("hints");
 
@@ -1080,9 +1095,11 @@ namespace GoF2Remake.UI
                 string faction = GoF2Remake.Multiplayer.NetFactionsClient.SystemTag(db, s.index);
                 if (faction != null) it.name.text += $" [{faction}]";
                 it.name.text += SquadMark(s.index, -1);   // multiplayer: squadmates here
-                bool owned = GalaxyMap.HasOwner(s.index) && s.raceId >= 0 && s.raceId <= 3;
-                // Remake: the owner's emblem in the player's standing colours (allied / neutral / enemy), the old radar icon as fallback.
-                if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(StatusWindow.StandingIcon(s.raceId) ?? Tex($"race_{s.raceId}"));
+                it.name.text += MobileMark(s.index, -1);  // remake mods: a mobile station in this system now
+                bool owned = GalaxyMap.HasOwner(s.index) && (s.raceId >= 0 && s.raceId <= 3 || Modding.ModFactions.Icon(s.raceId) != null);
+                // Remake: the owner's emblem in the player's standing colours (allied / neutral / enemy), the old radar icon as fallback;
+                // remake mods: a faction's own emblem.
+                if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(Modding.ModFactions.Icon(s.raceId) ?? StatusWindow.StandingIcon(s.raceId) ?? Tex($"race_{s.raceId}"));
                 it.raceIcon.style.display = owned ? DisplayStyle.Flex : DisplayStyle.None;
                 if (s.index == KaamoClub.SystemIndex && KaamoClub.Owned)
                 {
@@ -1116,6 +1133,7 @@ namespace GoF2Remake.UI
                 it.name.text = StationName(p.station, false);
                 if (GoF2Remake.Multiplayer.NetFactionsClient.Owner(p.station, out string faction, out _)) it.name.text = $"[{faction}] {it.name.text}";
                 it.name.text += SquadMark(-1, p.station);   // multiplayer: squadmates at this station
+                it.name.text += MobileMark(-1, p.station);  // remake mods: a mobile station in this orbit now
                 it.visited.style.display = Session.VisitedStations.Contains(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.gate.style.display = p.gate ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = p.station == currentStation ? DisplayStyle.Flex : DisplayStyle.None;
@@ -1200,9 +1218,9 @@ namespace GoF2Remake.UI
                 if (it.raceIcon != null) it.raceIcon.style.opacity = other ? 64f / 255f : 1f;
                 it.pulse.style.opacity = pulse;
                 var sys = db.Systems.Find(s => s.index == i);
-                bool owned = GalaxyMap.HasOwner(i) && sys.raceId >= 0 && sys.raceId <= 3;
+                bool owned = GalaxyMap.HasOwner(i) && (sys.raceId >= 0 && sys.raceId <= 3 || Modding.ModFactions.Is(sys.raceId));
                 float y = 68.5f + 30f;
-                if (sel && owned) { it.line1.text = T(406 + sys.raceId); it.line1.style.top = y; y += 30f; }
+                if (sel && owned) { it.line1.text = GoF2Remake.Flight.Standing.RaceName(sys.raceId); it.line1.style.top = y; y += 30f; }
                 it.line1.style.display = sel && owned ? DisplayStyle.Flex : DisplayStyle.None;
                 it.line2.style.display = sel ? DisplayStyle.Flex : DisplayStyle.None;
                 if (sel) SetSecurity(it.line2, GalaxyMap.SecurityOf(sys), y);
@@ -1228,12 +1246,16 @@ namespace GoF2Remake.UI
                 int tech = db.Stations.Find(s => s.index == planets[k].station)?.techLevel ?? 0;
                 it.line1.style.display = sel && tech > 0 ? DisplayStyle.Flex : DisplayStyle.None;
                 if (sel && tech > 0) { it.line1.text = $"{T(133)}: {tech}"; it.line1.style.top = 68.5f + 30f; }
-                it.line2.style.display = DisplayStyle.None;
+                // Remake mods: what the place is (stations.json "subtitle") under the tech level.
+                string sub = sel ? Modding.ModWorld.Subtitle(planets[k].station) : null;
+                it.line2.style.display = sub != null ? DisplayStyle.Flex : DisplayStyle.None;
+                if (sub != null) { it.line2.text = sub; it.line2.style.color = Color.white; it.line2.style.top = 68.5f + (tech > 0 ? 60f : 30f); }
                 if (sel) it.root.BringToFront();
             }
 
             // System block (system view) and the energy line (with a drive, another system selected).
             bool inSystem = systemView || zoomDir != 0;
+            UpdatePlanetLore(inSystem, systemAlpha);
             systemHeader.style.display = inSystem && zoomSystem >= 0 ? DisplayStyle.Flex : DisplayStyle.None;
             systemHeader.style.opacity = systemAlpha;
             int energySystem = inSystem ? zoomSystem : selected;
@@ -1245,6 +1267,25 @@ namespace GoF2Remake.UI
                 energyLine.EnableInClassList("energy-line--short", cellsInCargo < cells);
             }
             touch.MarkDirtyRepaint();
+        }
+
+        int loreStation = int.MinValue;
+
+        /// <summary>The selected planet's lore panel (stations.json "description"), in the system view only.</summary>
+        void UpdatePlanetLore(bool inSystem, float alpha)
+        {
+            if (planetLore == null) return;
+            int st = inSystem && selectedPlanet >= 0 && selectedPlanet < planets.Count ? planets[selectedPlanet].station : -1;
+            string lore = st >= 0 ? Modding.ModWorld.Description(st) : null;
+            planetLore.style.display = lore != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (lore == null) { loreStation = int.MinValue; return; }
+            planetLore.style.opacity = alpha;
+            if (st == loreStation) return;
+            loreStation = st;
+            string name = db.Stations.Find(x => x.index == st)?.name ?? "";
+            string sub = Modding.ModWorld.Subtitle(st);
+            planetLore.Q<Label>(className: "planet-lore-title").text = string.IsNullOrEmpty(sub) ? name : $"{name} · {sub}";
+            planetLore.Q<Label>(className: "planet-lore-text").text = lore;
         }
 
         static void SetSecurity(Label l, int level, float top)
@@ -1259,14 +1300,19 @@ namespace GoF2Remake.UI
         {
             var sys = db.Systems.Find(s => s.index == system);
             if (sys == null) return;
-            bool owned = GalaxyMap.HasOwner(system) && sys.raceId >= 0 && sys.raceId <= 3;
+            bool owned = GalaxyMap.HasOwner(system) && (sys.raceId >= 0 && sys.raceId <= 3 || Modding.ModFactions.Is(sys.raceId));
             var logo = root.Q("systemLogo");
-            var tex = owned ? Tex($"logo_{sys.raceId}") : null;
+            var tex = !owned ? null : Modding.ModFactions.Is(sys.raceId) ? Modding.ModFactions.Icon(sys.raceId) : Tex($"logo_{sys.raceId}");   // (a faction: its emblem)
             logo.style.display = tex != null ? DisplayStyle.Flex : DisplayStyle.None;
-            if (tex != null) { logo.style.backgroundImage = new StyleBackground(tex); logo.style.width = tex.width; logo.style.height = tex.height; }
+            if (tex != null)
+            {
+                bool faction = Modding.ModFactions.Is(sys.raceId);   // (a faction's emblem at a logo's size, whatever its PNG's)
+                logo.style.backgroundImage = new StyleBackground(tex);
+                logo.style.width = faction ? 120f : tex.width; logo.style.height = faction ? 120f : tex.height;
+            }
             root.Q<Label>("systemName").text = sys.name;
             var race = root.Q<Label>("systemRace");
-            race.text = owned ? T(406 + sys.raceId) : "";
+            race.text = owned ? GoF2Remake.Flight.Standing.RaceName(sys.raceId) : "";
             race.style.display = owned ? DisplayStyle.Flex : DisplayStyle.None;
             SetSecurity(root.Q<Label>("systemSecurity"), GalaxyMap.SecurityOf(sys), 0f);
             root.Q<Label>("systemSecurity").style.top = StyleKeyword.Auto;
@@ -1369,6 +1415,26 @@ namespace GoF2Remake.UI
             if (count == 0) return "";
             string colour = distress ? "#ff6655" : "#78e68c";
             return station >= 0 ? $"\n<color={colour}>● {names}</color>" : $" <color={colour}>{(distress ? "⚠" : "●")}{count}</color>";
+        }
+
+        /// <summary>Remake mods: the mobile stations (Modding.MobileStations) in 'system' (their names) or in the orbit of
+        /// 'station' (their names and how long until they leave its system), amber. "" = none. Read when the map opens.</summary>
+        string MobileMark(int system, int station)
+        {
+            var mobiles = ModWorld.Mobiles();
+            if (mobiles.Count == 0) return "";
+            double now = MobileStations.Clock;
+            var sb = new System.Text.StringBuilder();
+            foreach (int mobile in mobiles)
+            {
+                int host = MobileStations.HostAt(mobile, now);
+                if (host < 0 || (station >= 0 ? host != station : SystemOf(host) != system)) continue;
+                string name = db.Stations.Find(x => x.index == mobile)?.name ?? "?";
+                if (station < 0) { sb.Append($" <color=#ffb347>● {name}</color>"); continue; }
+                int minutes = Mathf.Max(1, Mathf.CeilToInt((float)MobileStations.LeavesSystemIn(mobile, now) / 60f));
+                sb.Append($"\n<color=#ffb347>● {name} · {Localization.Extra("mapMobileLeaves", "leaves in {0} min").Replace("{0}", minutes.ToString())}</color>");
+            }
+            return sb.ToString();
         }
 
         // ---- selection rules -------------------------------------------------------------------------------

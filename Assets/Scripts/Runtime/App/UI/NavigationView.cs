@@ -182,7 +182,11 @@ namespace GoF2Remake.UI
                 m.name = Text(layer, null);
                 m.name.text = t.name;
                 // Radar::draw: the Void station and the gate get the distance only, the wormhole its name only.
-                if (t.kind == Navigation.Kind.Station && t.station != Session.VoidOrbit) { m.tech = Text(layer, "nav-label--dim"); m.tech.text = techLine; }
+                if (t.kind == Navigation.Kind.Station && t.station != Session.VoidOrbit)
+                {
+                    m.tech = Text(layer, "nav-label--dim");
+                    m.tech.text = t.techLevel >= 0 ? $"{Localization.Get(133)}: {t.techLevel}" : techLine;   // a mobile station: its own
+                }
                 if (t.kind != Navigation.Kind.Planet && !wormhole) m.distance = Text(layer, "nav-label--dim");
                 // Hidden until Update places them: a label never placed sat at the layer's top left.
                 m.name.style.display = DisplayStyle.None;
@@ -344,6 +348,8 @@ namespace GoF2Remake.UI
 
         Texture2D RaceIcon(int race)
         {
+            if (Modding.ModFactions.Icon(race) is Texture2D fi) return fi;   // remake mods: a faction's emblem
+            race = GoF2Remake.Flight.Standing.Look(race);
             int frame = race >= 0 && race <= 3 ? race : race == 8 ? 8 : 9;
             if (!raceIcons.TryGetValue(frame, out var t)) raceIcons[frame] = t = Tex($"race_{frame}");
             return t;

@@ -9,7 +9,10 @@
 // Both play their 4x4 sprite sheet once over the lifetime, randomly mirrored per particle, in world space
 // (ParticleSystemSprite::updateSingle 0x1b3cf0, IParticleSystem::emit 0x1b2790). Sizes are the sprite's full edge.
 // The ship-aligned emission boxes stand in for the original's axis line plus world-axis jitter.
+// Remake mods (ships.json "smoke", ModShipView): a ship with its own damage points smokes and burns at each of them instead
+// (the fire on the point, not toward the nose), the rate shared between them so the whole ship trails as much.
 
+using System.Collections.Generic;
 using GoF2Remake.Data;
 using UnityEngine;
 
@@ -19,32 +22,43 @@ namespace GoF2Remake.Flight
     {
         const float M = 0.05f;
 
-        readonly ParticleSystem smoke, fire;
+        readonly List<ParticleSystem> smoke = new List<ParticleSystem>(), fire = new List<ParticleSystem>();
         public bool Emitting { get; private set; }
 
-        /// <summary>Adds the two systems (emission off) under 'ship', whose +Z is the nose.</summary>
-        public ShipSmoke(Transform ship)
+        /// <summary>Adds the two systems (emission off) under 'ship', whose +Z is the nose; with 'points' (game units in the
+        /// mounts' axes, ModShipView) a pair at each of them.</summary>
+        public ShipSmoke(Transform ship, IList<Vector3> points = null)
         {
             var assets = CombatAssets.Load();
-            // record 15: along dir -250..+250, jitter +-200 -> box 400 x 400 x 500 units at the origin
-            smoke = Create(ship, "Smoke", assets != null ? assets.smokeMaterial : null, 1.5f, 666f, 887f, 30, -2f,
-                           new Vector3(400f, 400f, 500f), 0f, 2222f, 0);
-            // record 42: along dir +200..+400, jitter +-100 -> box 200 x 200 x 200 units, 300 toward the nose
-            fire = Create(ship, "Fire", assets != null ? assets.fireMaterial : null, 0.6f, 400f, 599f, 12, -1f,
-                          new Vector3(200f, 200f, 200f), 300f, 222f, 1);
-            // Colour: smoke fades in over 200 ms (0.133 of the life) to the linear 255 -> 0 fade; the fire stays white
-            // (ONE/ONE ignores alpha, only its atlas darkens).
-            var col = smoke.colorOverLifetime;
-            col.enabled = true;
-            var g = new Gradient();
-            g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
-                      new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.467f, 0.0667f),
-                              new GradientAlphaKey(0.867f, 0.1333f), new GradientAlphaKey(0f, 1f) });
-            col.color = g;
+            int n = points != null && points.Count > 0 ? points.Count : 0;
+            for (int i = 0; i < Mathf.Max(1, n); i++)
+            {
+                var at = n > 0 ? GoF2Remake.Modding.ModShipView.ToLocal(points[i], M) : Vector3.zero;
+                float share = 1f / Mathf.Max(1, n);
+                // record 15: along dir -250..+250, jitter +-200 -> box 400 x 400 x 500 units at the origin
+                var sm = Create(ship, "Smoke", assets != null ? assets.smokeMaterial : null, 1.5f, 666f, 887f, Mathf.CeilToInt(30 * share), -2f,
+                                new Vector3(400f, 400f, 500f), 0f, 2222f, 0, at, 20f * share);
+                // record 42: along dir +200..+400, jitter +-100 -> box 200 x 200 x 200 units, 300 toward the nose (a mod's
+                // point: on it)
+                var fi = Create(ship, "Fire", assets != null ? assets.fireMaterial : null, 0.6f, 400f, 599f, Mathf.CeilToInt(12 * share), -1f,
+                                new Vector3(200f, 200f, 200f), n > 0 ? 0f : 300f, 222f, 1, at, 20f * share);
+                // Colour: smoke fades in over 200 ms (0.133 of the life) to the linear 255 -> 0 fade; the fire stays white
+                // (ONE/ONE ignores alpha, only its atlas darkens).
+                var col = sm.colorOverLifetime;
+                col.enabled = true;
+                var g = new Gradient();
+                g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                          new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.467f, 0.0667f),
+                                  new GradientAlphaKey(0.867f, 0.1333f), new GradientAlphaKey(0f, 1f) });
+                col.color = g;
+                smoke.Add(sm);
+                fire.Add(fi);
+            }
         }
 
         internal static ParticleSystem Create(Transform ship, string name, Material material, float lifeS, float minSize, float maxSize,
-                                     int pool, float inherit, Vector3 boxUnits, float noseUnits, float growthPerS, int order)
+                                     int pool, float inherit, Vector3 boxUnits, float noseUnits, float growthPerS, int order,
+                                     Vector3 at = default, float rate = 20f)
         {
             var go = new GameObject(name);
             go.transform.SetParent(ship, false);
@@ -67,13 +81,13 @@ namespace GoF2Remake.Flight
             main.cullingMode = ParticleSystemCullingMode.AlwaysSimulate;   // the trail keeps going off screen
 
             var em = ps.emission;
-            em.rateOverTime = 20f;
+            em.rateOverTime = rate;
 
             var sh = ps.shape;
             sh.enabled = true;
             sh.shapeType = ParticleSystemShapeType.Box;
             sh.scale = boxUnits * M;
-            sh.position = new Vector3(0f, 0f, noseUnits * M);
+            sh.position = at + new Vector3(0f, 0f, noseUnits * M);
 
             // v = k x emitter velocity, fixed at spawn
             var iv = ps.inheritVelocity;
@@ -113,19 +127,21 @@ namespace GoF2Remake.Flight
             on &= Settings.FireSmoke;   // the original's Quality Low / Medium: "Smoke off" (510 / 511)
             if (on == Emitting) return;
             Emitting = on;
-            foreach (var ps in new[] { smoke, fire })
-            {
-                if (ps == null) continue;
-                if (on) ps.Play(true); else ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-            }
+            foreach (var list in new[] { smoke, fire })
+                foreach (var ps in list)
+                {
+                    if (ps == null) continue;
+                    if (on) ps.Play(true); else ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                }
         }
 
         /// <summary>Emission off and every particle gone (the ship vanished or was reset).</summary>
         public void Clear()
         {
             Emitting = false;
-            if (smoke != null) smoke.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            if (fire != null) fire.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            foreach (var list in new[] { smoke, fire })
+                foreach (var ps in list)
+                    if (ps != null) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
     }
 }

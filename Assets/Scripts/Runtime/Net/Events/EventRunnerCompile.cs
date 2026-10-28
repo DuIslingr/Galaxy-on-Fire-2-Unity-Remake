@@ -307,10 +307,24 @@ namespace GoF2Remake.Events
                     int close = line.IndexOf('}', open + 1);
                     if (close < 0) throw new Exception(X("mpEventBrace", "a { without its }."));
                     sb.Append(line, i, open - i);
-                    sb.Append(Format(Eval(line.Substring(open + 1, close - open - 1))));
+                    string inner = line.Substring(open + 1, close - open - 1).Trim();
+                    // {stationname(<expression>)} / {systemname(<expression>)}: a station's name / its system's (a station picked
+                    // by randomstation() in a variable), not a number
+                    var named = System.Text.RegularExpressions.Regex.Match(inner, @"^(stationname|systemname)\s*\((.*)\)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (named.Success) sb.Append(PlaceName((int)Math.Round(Eval(named.Groups[2].Value)), named.Groups[1].Value.ToLowerInvariant() == "systemname"));
+                    else sb.Append(Format(Eval(inner)));
                     i = close + 1;
                 }
                 return sb.ToString();
+            }
+
+            /// <summary>A station's name or its system's ("" for none).</summary>
+            static string PlaceName(int station, bool system)
+            {
+                var db = NetGame.Db;
+                var st = db.Stations.Find(x => x.index == station);
+                if (st == null) return "";
+                return system ? db.Systems.Find(x => x.index == st.system)?.name ?? st.systemName ?? "" : st.name ?? "";
             }
 
             static string Format(double v) =>

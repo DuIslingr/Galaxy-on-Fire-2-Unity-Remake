@@ -368,8 +368,9 @@ namespace GoF2Remake.Multiplayer
                     else if (current == null) return string.Format(X("mpAdmNoSpeaker", "No speaker \"{0}\": a story character's name (Keith as Bob renames), a mod's character, a race and a name (vossk K'ekki), or player."), page.Substring(0, colon).Trim());
                 }
                 if (current == null) return Usage("dialog");
-                page = NetChat.Clean(page).Replace("\u001f", " ");
-                if (page.Length > 0 && lines.Count < 20) lines.Add(current + "\u001f" + page);
+                page = NetChat.Clean(page, NetChat.MaxPageLength).Replace("\u001f", " ");
+                if (page.Length > 0 && lines.Count < 20 && System.Linq.Enumerable.Sum(lines, l => l.Length + 1) + current.Length + page.Length < NetChat.MaxConversation)
+                    lines.Add(current + "\u001f" + page);
             }
             if (lines.Count == 0) return Usage("dialog");
             Send(t, Order.Dialog, 0, 0, 0, by, $"dialog, {lines.Count} page(s)", string.Join("\n", lines));
@@ -634,7 +635,7 @@ namespace GoF2Remake.Multiplayer
             if (first <= 0) return Usage("radio");
             int colon = SplitSpeaker(rest, new Dictionary<string, string>(), out string spec);
             if (colon < 0) return string.Format(X("mpAdmNoSpeaker", "No speaker \"{0}\": a story character's name (Keith as Bob renames), a mod's character, a race and a name (vossk K'ekki), or player."), rest.Substring(0, first).Trim());
-            string line = NetChat.Clean(rest.Substring(colon + 1)).Replace("\u001f", " ");
+            string line = NetChat.Clean(rest.Substring(colon + 1), NetChat.MaxPageLength).Replace("\u001f", " ");
             if (line.Length == 0) return Usage("radio");
             Send(t, Order.Radio, 0, 0, 0, by, "radio", spec + "\u001f" + line);
             return "";
