@@ -4,6 +4,17 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## UI and platforms
 
+- **Mouse drags and focus** (2026-10-26): `UiPointerButtons` combines UI move button flags with the Input System's held
+  mouse buttons. A zero UI button mask alone must not cancel a held mouse drag; preserve event flags too, since the
+  EventSystem delivers movement before release on the release frame (discarding it loses deliberate flings). Include
+  `wasReleasedThisFrame` too when that last move has an empty mask. Only mouse pointer 0 reads `Mouse.current`;
+  touch/pen use their own event state. Shared by the map, station ship/ticker, lists, scrollbars and builder viewports.
+  Primary drags cannot be kept alive by right/middle buttons. Clear IDs before releasing capture; cancel map/turntable
+  drags on capture loss, detach, disable or focus loss. `DragScroll` leaves sliders/text selection their own gestures.
+  `UiHover` preserves edits/captured drags; stationary-pointer events cannot take keyboard navigation back. Tests:
+  `MouseGestureTests` and `MouseDragInputTests` (real Input System/EventSystem/UI Toolkit path, with empty move button
+  masks injected and normal release/fling checks). The build-only physical-mouse trigger was not automatically
+  reproduced; verify it in the affected rebuilt game.
 - **UI Toolkit only** (runtime): shared theme `UI/GoF2Theme.tss`; per-screen UXML/USS; controllers in
   `Scripts/Runtime/App/UI` (`GoF2Remake.UI`). The theme doesn't include Unity's default runtime theme, so built-in
   controls are styled in `GoF2Common.uss` and the document root is stretched in code.

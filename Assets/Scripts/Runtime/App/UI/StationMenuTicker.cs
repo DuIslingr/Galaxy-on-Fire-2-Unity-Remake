@@ -57,7 +57,7 @@ namespace GoF2Remake.UI
             strip.RegisterCallback<PointerMoveEvent>(e =>
             {
                 if (e.pointerId != tickerPointer) return;
-                if (e.pressedButtons == 0) { EndTickerDrag(strip); return; }
+                if (!UiPointerButtons.PrimaryHeld(e)) { EndTickerDrag(strip); return; }
                 tickerX += e.position.x - tickerLastX;
                 tickerLastX = e.position.x;
                 WrapTicker();

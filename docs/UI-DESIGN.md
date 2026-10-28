@@ -224,6 +224,10 @@ up to the scale. The scale itself never changes per platform: the panel scale ab
 - The focused element is always visible: amber text and outline or left edge, plus the faint cyan fill.
 - **Hover is for the mouse only.** Hover rules go under `.can-hover`, set only while the mouse is the last input.
   Otherwise a resting cursor lights a second row next to the controller's.
+- Hover never starts or interrupts a text/number edit, or takes focus during a captured drag (`UiHover`). Drag-to-scroll
+  leaves sliders and text selection their gestures. Check `UiPointerButtons` before treating an empty UI move button mask
+  as a lost release: the Input System can still have the mouse button held. A different held mouse button cannot keep a
+  primary drag alive. Capture loss, panel detach and leaving the application also cancel map/turntable drags.
 - A menu or window gives the focus to its first useful element when it opens. Text fields come last, except in a form.
   A touch press doesn't take the focus, except in a text field, which needs it for the keyboard.
 - **Closing something gives the focus back** to what opened it: the star map to Map, the system menu to the button that

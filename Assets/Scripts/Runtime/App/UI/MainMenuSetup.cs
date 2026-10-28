@@ -180,7 +180,7 @@ namespace GoF2Remake.UI
                 Back();
             }, TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationMoveEvent>(OnNavigate, TrickleDown.TrickleDown);
-            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse) pointerDriven = true; }, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse && InputMode.MousePointing) pointerDriven = true; }, TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationSubmitEvent>(e =>
             {
                 // Space typed into a field is a space, not a press of the menu's button.
@@ -199,7 +199,12 @@ namespace GoF2Remake.UI
                 }
             }, TrickleDown.TrickleDown);
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
-            root.RegisterCallback<PointerMoveEvent>(e => { DragScroll.NotePointer(); if (e.pointerType == PointerType.mouse) SetTouchMode(false); }, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerMoveEvent>(e =>
+            {
+                if (e.pointerType == PointerType.mouse && !InputMode.MousePointing) return;
+                DragScroll.NotePointer();
+                if (e.pointerType == PointerType.mouse) SetTouchMode(false);
+            }, TrickleDown.TrickleDown);
             root.RegisterCallback<WheelEvent>(_ => DragScroll.NotePointer(), TrickleDown.TrickleDown);
             // Keys / controller: the focused row scrolls into view (not for the pointer's own focus: DragScroll.PointerActive).
             root.RegisterCallback<FocusInEvent>(e => { if (e.target is VisualElement v && !DragScroll.PointerActive) EnsureVisible(v); });

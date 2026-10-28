@@ -115,10 +115,16 @@ namespace GoF2Remake.UI
 
         void OnDisable()
         {
+            EndDrag(dragPointer, false);
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             InputMode.Changed -= ApplyInputMode;
             Localization.Changed -= RefreshTexts;
             if (level != null) level.ViewChanged -= OnViewChanged;
+        }
+
+        void OnApplicationFocus(bool focused)
+        {
+            if (!focused) EndDrag(dragPointer, false);
         }
 
         void OnUIReload(PanelRenderer renderer, VisualElement rootElement, int version)
@@ -251,14 +257,14 @@ namespace GoF2Remake.UI
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
             // Modified: the main menu's click sound on every button and toggle clicked (those without one had none).
             root.RegisterCallback<ClickEvent>(e => { if (UiHover.ClickSounds(e.target)) Play(buttonRelease); });
-            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse) { SetTouchMode(false); pointerDriven = true; pointerPos = e.position; } }, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse && InputMode.MousePointing) { SetTouchMode(false); pointerDriven = true; pointerPos = e.position; } }, TrickleDown.TrickleDown);
             // The mouse takes the selection along to the button it is over (like MainMenu.HookFocusSound): a menu opened with
             // the mouse focused its first entry, and that highlight stayed beside the hovered one.
             root.RegisterCallback<PointerOverEvent>(e =>
             {
                 if (e.pointerType != PointerType.mouse || !InputMode.MouseMovedRecently || !(e.target is VisualElement t)) return;   // not a list scrolling under it
                 var b = t as Button ?? t.GetFirstAncestorOfType<Button>();
-                if (b != null && b.ClassListContains("station-button") && Navigable(b) && b.focusController?.focusedElement != b) b.Focus();
+                if (b != null && UiHover.CanChangeFocus(b, e.pressedButtons) && b.ClassListContains("station-button") && Navigable(b) && b.focusController?.focusedElement != b) b.Focus();
                 // Modified: the hover sound when the mouse comes onto a tab or a side menu button (the main view's); anything
                 // else is silent under the mouse (UiHover.MenuTarget). The keys still sound on every move (FocusIn below).
                 var h = UiHover.MenuTarget(t);
