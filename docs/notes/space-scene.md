@@ -62,7 +62,9 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   Lit (`ModMaterials.PlainLit`). Tests `ModHullLightingTests`. Measured: no frame-time
   difference (a 4K frame filled with hull, on, off and plain Lit within ±0.1 ms). When URP is updated, copy its Lit.shader
   again and redo the two marked lines. Anything that picks hull renderers by shader name accepts "GoF2/Hull" (the cloaks,
-  the star map).
+  the star map). Its materials keep the MotionVectors pass on (2026-10-28): URP's LitShader editor, which the shader
+  borrows, doesn't know "GoF2/Hull" and turns the pass on whenever the Editor loads one; `AssetImport` turned it off, so
+  every Play mode session, batch run and build rewrote ~170 .mat files.
 - **Sun/planets:** quads 1000 m from the camera, drawn at the far plane (`GoF2/Backdrop`; with the sky layers drawn by
   `BackdropPass` right after the skybox, LightMode `GoF2Backdrop`, so they are in the opaque texture the cloak and the shield
   bubble refract: in URP's transparent pass the cloak showed black over a planet); the sun at the texture's own
