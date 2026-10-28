@@ -235,7 +235,19 @@ namespace GoF2Remake.EditorTools
         }
 
         [MenuItem("GoF2/Build/Materials And Prefabs", priority = 240)]
-        public static void BuildAll()
+        public static void BuildAll() => Build(false);
+
+        /// <summary>Modified: the per-mesh prefabs of resources.json's meshes that have none yet (a model added to the
+        /// project, e.g. the Terran hangar's bot e), and their materials if missing, leaving every existing prefab alone.
+        /// Then AssemblyBuilder.BuildMissing for the assemblies without a prefab.</summary>
+        [MenuItem("GoF2/Build/Missing Prefabs Only", priority = 242)]
+        public static void BuildMissing()
+        {
+            Build(true);
+            AssemblyBuilder.BuildMissing();
+        }
+
+        static void Build(bool onlyMissing)
         {
             var json = AssetDatabase.LoadAssetAtPath<TextAsset>(R("Resources/GoF2Data/resources.json"));
             if (json == null) { Debug.LogError("GoF2: resources.json not found"); return; }
@@ -263,6 +275,8 @@ namespace GoF2Remake.EditorTools
             foreach (var mesh in table.meshes)
             {
                 if (n++ % 10 == 0 && EditorUtility.DisplayCancelableProgressBar("GoF2", "Prefabs: " + mesh.model, (float)n / table.meshes.Length)) break;
+                var outPath = R("Prefabs/" + Path.ChangeExtension(mesh.model.Substring("Models/".Length), ".prefab"));
+                if (onlyMissing && AssetDatabase.LoadAssetAtPath<GameObject>(outPath) != null) continue;
                 var src = AssetDatabase.LoadAssetAtPath<GameObject>(R(mesh.model));
                 if (src == null) { missing++; continue; }
                 var inst = (GameObject)PrefabUtility.InstantiatePrefab(src);
@@ -287,7 +301,6 @@ namespace GoF2Remake.EditorTools
                 var info = inst.AddComponent<GoF2Remake.Visuals.ResourceInfo>();
                 info.meshId = mesh.id; info.materialId = mesh.materialId; info.originalPath = mesh.source;
 
-                var outPath = R("Prefabs/" + Path.ChangeExtension(mesh.model.Substring("Models/".Length), ".prefab"));
                 Directory.CreateDirectory(Path.GetDirectoryName(outPath));
                 PrefabUtility.SaveAsPrefabAsset(inst, outPath);
                 Object.DestroyImmediate(inst);
@@ -295,7 +308,7 @@ namespace GoF2Remake.EditorTools
             }
             EditorUtility.ClearProgressBar();
             AssetDatabase.SaveAssets();
-            PostProcessing.ApplyGlow();
+            if (!onlyMissing) PostProcessing.ApplyGlow();
             Debug.Log($"GoF2: {mats.Count} materials, {made} prefabs created ({missing} meshes referenced by the game were not shipped in the OBB). Pipeline: {(urp ? "URP" : "Built-in")}");
         }
 

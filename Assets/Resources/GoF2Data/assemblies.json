@@ -21256,6 +21256,49 @@
    "scale": [],
    "spawnRotation": [],
    "explosionModel": ""
+  },
+  {
+   "name": "hangar_terran_bot_e",
+   "pack": "main",
+   "category": "hangars",
+   "origin": "remake: the Terran hangar's fifth service bot (remake mesh ids 99004 / 99005); spawned on the room's transform",
+   "notes": "",
+   "root": 99004,
+   "parts": [
+    {
+     "key": "hull",
+     "parent": "",
+     "mesh": 99004,
+     "model": "Models/main/hangars/hangar_terran_bot_e_anim.fbx",
+     "material": 0,
+     "role": "hull",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    },
+    {
+     "key": "anim_add_99005",
+     "parent": "",
+     "mesh": 99005,
+     "model": "Models/main/hangars/hangar_terran_bot_e_anim_add.fbx",
+     "material": 0,
+     "role": "anim_add",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    }
+   ],
+   "lodDistances": [],
+   "lastVisibleDistance": 0.0,
+   "scale": [],
+   "spawnRotation": [],
+   "explosionModel": ""
   }
  ]
 }
