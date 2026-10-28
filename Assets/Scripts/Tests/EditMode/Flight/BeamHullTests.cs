@@ -17,12 +17,19 @@ namespace GoF2Remake.Tests
     {
         readonly List<GameObject> made = new List<GameObject>();
 
+        System.IDisposable collision;
+
         [SetUp]
-        public void ExactHulls() => Settings.ShipCollision = SessionRules.CollisionExact;
+        public void ExactHulls()
+        {
+            collision = new SettingsScope<int>(() => Settings.ShipCollision, v => Settings.ShipCollision = v);   // the player's own back after
+            Settings.ShipCollision = SessionRules.CollisionExact;
+        }
 
         [TearDown]
         public void CleanUp()
         {
+            collision?.Dispose();
             foreach (var go in made) if (go != null) Object.DestroyImmediate(go);
             made.Clear();
         }
