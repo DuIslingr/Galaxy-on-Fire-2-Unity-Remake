@@ -114,7 +114,7 @@ platforms get the same one.
 
 Windows builds use IL2CPP, which needs Visual Studio 2022 (or newer) with the **Desktop development with C++** workload
 and a Windows 10 / 11 SDK. Android and Linux builds don't need it. The UWP build also needs Visual Studio's
-**C++ Universal Windows Platform tools** (see `CLAUDE.md`, UWP), and the Linux dedicated server the Hub module
+**C++ Universal Windows Platform tools** (see `docs/notes/platforms.md`, UWP), and the Linux dedicated server the Hub module
 **Linux Dedicated Server Build Support** (GoF2 > Build > Linux Dedicated Server).
 
 #### Scene lighting (environment reflections)
@@ -230,7 +230,7 @@ Assets/UI/                UI Toolkit screens (UXML / USS)
 Reference/                decompiled original code, research notes and conversion tools
 ```
 
-`CLAUDE.md` is the full technical documentation. It covers every system, the original functions it is based on and
+`CLAUDE.md` and the notes in `docs/notes/` (indexed in `CLAUDE.md`) are the full technical documentation. They cover every system, the original functions it is based on and
 the choices the remake made.
 
 ## Credits

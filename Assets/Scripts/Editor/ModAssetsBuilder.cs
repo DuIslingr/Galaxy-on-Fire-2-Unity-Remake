@@ -193,7 +193,8 @@ namespace GoF2Remake.EditorTools
             m.SetTexture("_BumpMap", Tex("ModFlatNormal"));
             m.SetTexture("_MetallicGlossMap", Tex("ModWhite"));
             m.SetTexture("_EmissionMap", Tex("ModWhite"));
-            m.SetShaderPassEnabled("MotionVectors", false);   // as URP Lit's material setup (no precomputed velocity)
+            // As URP's LitShader editor leaves the material (see AssetImport): on for GoF2/Hull, off for URP Lit itself.
+            m.SetShaderPassEnabled("MotionVectors", m.shader.name == "GoF2/Hull");
             m.EnableKeyword("_NORMALMAP");
             m.EnableKeyword("_METALLICSPECGLOSSMAP");
             m.EnableKeyword("_EMISSION");

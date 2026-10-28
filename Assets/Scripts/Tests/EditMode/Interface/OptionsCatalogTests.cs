@@ -75,6 +75,16 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void EveryOptionHasADescription()
+        {
+            // The "?" by every row (OptionInfo) and the line under it with a controller; the key binding rows are named
+            // controls, explained by the Reset key bindings row above them.
+            var missing = OptionsCatalog.All().Where(o => o.kind != OptionKind.Binding)
+                .Where(o => o.description == null || string.IsNullOrWhiteSpace(o.description())).Select(o => o.id).ToList();
+            Assert.IsEmpty(missing, string.Join(", ", missing));
+        }
+
+        [Test]
         public void EveryRowIsComplete()
         {
             foreach (var o in OptionsCatalog.All())
