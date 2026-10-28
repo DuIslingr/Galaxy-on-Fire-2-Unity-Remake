@@ -21,6 +21,24 @@
 
 half _GoF2HullReflection;
 half3 _GoF2HullRimColor;
+// Modified: the original lights in gamma space (StarSystem::initLight: LIGHT0 diffuse 2.0, fixed-function), so a face
+// toward the sun is the texture x 2 clamped: nearly white. The level of the original's LIGHT0 per unit of the main light's
+// colour (2 / SpaceLevel.sunIntensityAt2; 0 = URP's linear diffuse as it is). OrbitBuilder.SetSunGamma.
+half _GoF2SunGamma;
+// Modified: the sunlit side's glow: the part of texture x LIGHT0 above _GoF2SunGlowFrom (gamma) goes on x _GoF2SunGlow as
+// HDR light, so the bloom picks it up like the original's bright pass (about half brightness) did; 0 = none.
+// OrbitBuilder.SetSunGamma.
+half _GoF2SunGlow;
+half _GoF2SunGlowFrom;
+// Modified: the original's scene ambient (LightSetGlobalSceneColorAmbient: 0.15 x the sun colour, 0.7 x in the supernova
+// system), added to LIGHT0's term in gamma space: the supernova's orange tint over the whole hull. OrbitBuilder.SetupLights.
+half3 _GoF2SunAmbient;
+// Modified: LIGHT1, the orbit planet's light (1.5 x its colour table, initLight), in gamma space like LIGHT0: xyz toward
+// the planet (world), _GoF2PlanetColor its gamma colour, _GoF2PlanetLinear what URP's own planet light adds (its linear
+// colour x intensity), taken out again. Linearised, the dimmer planets' light (0.1-0.3) all but vanished.
+float4 _GoF2PlanetLight;
+half3 _GoF2PlanetColor;
+half3 _GoF2PlanetLinear;
 // _GOF2_PBR: how much of the indirect light (ambient and environment reflection) a mod material loses, through URP's
 // occlusion (0 = all of it kept; SkyReflection: 0 in space and the lounge, more in a GoF2 hangar).
 half _GoF2PbrIndirectDim;
@@ -153,6 +171,23 @@ void HullPassFragment(
         half3 env = SAMPLE_TEXTURECUBE(_GoF2ReflectionCube, sampler_GoF2ReflectionCube, r).rgb;   // an LDR cubemap: nothing to decode
         half k = _GoF2HullReflection * (1.0h - surfaceData.metallic);
         color.rgb += (env * reflectivity + rim * reflectTex * _GoF2HullRimColor) * k * surfaceData.occlusion;
+    }
+#endif
+
+#if !defined(_GOF2_PBR)
+    if (_GoF2SunGamma > 0.0)
+    {
+        // Modified: the main light's diffuse as the original's gamma-space sum: texture x (LIGHT0 . N), clamped, in place
+        // of URP's linear one, which left the lit side at the texture x 1.24 (1.6 ^ (1 / 2.2)) instead of x 2.
+        BRDFData brdf = InitializeBRDFData(surfaceData, IsSpecularSetup(), UseAlphaPremultiply());
+        Light key = GetMainLight();
+        half3 radiance = key.color * (key.distanceAttenuation * key.shadowAttenuation * saturate(dot(inputData.normalWS, key.direction)));
+        half3 texG = LinearToSRGB(brdf.diffuse);
+        half3 lit = texG * radiance * _GoF2SunGamma;
+        half ndp = saturate(dot(inputData.normalWS, (half3)_GoF2PlanetLight.xyz));
+        half3 planet = texG * _GoF2PlanetColor * ndp;
+        half3 gammaLit = SRGBToLinear(saturate(lit + planet + texG * _GoF2SunAmbient)) + max(lit - _GoF2SunGlowFrom, 0.0h) * _GoF2SunGlow;
+        color.rgb += max(gammaLit - brdf.diffuse * (radiance + _GoF2PlanetLinear * ndp), 0.0h);
     }
 #endif
 
