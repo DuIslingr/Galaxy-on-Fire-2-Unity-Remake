@@ -246,7 +246,7 @@ namespace GoF2Remake.UI
                 systemView = true;
                 zoomDir = 0;
                 fade = 0f;
-                if (suns[currentSystem] != null) suns[currentSystem].localScale = Vector3.one * sunScale / 3f;
+                if (suns[currentSystem] != null) suns[currentSystem].localScale = Vector3.one * SystemSunScale;
                 UpdateCamera();
                 BuildHints(InputMode.Current);
                 ApplyInputMode();

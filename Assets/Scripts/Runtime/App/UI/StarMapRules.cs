@@ -60,6 +60,7 @@ namespace GoF2Remake.UI
             Play(assets.zoomIn);
             zoomSystem = selected;
             BuildSystem(selected);
+            if (suns[selected] != null) suns[selected].localScale = Vector3.one * SystemSunScale;   // Modified: see Update's zoom
             FillSystemHeader(selected);
             vel = Vector2.zero;
             autoCentre = false;

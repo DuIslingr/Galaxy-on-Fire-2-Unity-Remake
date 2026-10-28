@@ -172,8 +172,49 @@ namespace GoF2Remake.UI
             return containedSun;
         }
 
+        /// <summary>Modified: the suns' glow with its dim tail faded out like the original's (Hidden/GoF2/SunGamma, the texture's
+        /// colour ^ SunGlowPower): added in linear space with _Glow 2.5 the last few percent of the image showed out to its
+        /// edge, a ring round every sun. Copies of the map's sun materials, made once per material for this map.</summary>
+        const float SunGlowPower = 1.2f;
+        readonly Dictionary<Material, Material> gammaSuns = new Dictionary<Material, Material>();
+        readonly List<UnityEngine.Object> gammaMade = new List<UnityEngine.Object>();
+        Material sunGammaBlit;
+
+        Material GammaSun(Material from)
+        {
+            if (from == null) return null;
+            if (gammaSuns.TryGetValue(from, out var made)) return made;
+            var tex = from.mainTexture;
+            if (sunGammaBlit == null)
+            {
+                var shader = Resources.Load<Shader>("GoF2StarMap/SunGamma");
+                if (shader == null) { Debug.LogWarning("StarMap: the Hidden/GoF2/SunGamma shader is missing"); return gammaSuns[from] = from; }
+                sunGammaBlit = new Material(shader);
+                gammaMade.Add(sunGammaBlit);
+            }
+            if (tex == null) return gammaSuns[from] = from;
+            var rt = new RenderTexture(tex.width, tex.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+            {
+                name = tex.name + " (map glow)", useMipMap = true, autoGenerateMips = true,
+                wrapMode = tex.wrapMode, filterMode = tex.filterMode, anisoLevel = tex.anisoLevel,
+            };
+            sunGammaBlit.SetFloat("_Power", SunGlowPower);
+            Graphics.Blit(tex, rt, sunGammaBlit);
+            var copy = new Material(from) { name = from.name + " (map glow)" };
+            copy.mainTexture = rt;
+            gammaMade.Add(rt);
+            gammaMade.Add(copy);
+            return gammaSuns[from] = copy;
+        }
+
         Transform[] suns = new Transform[64];   // by system number (more with mods' systems: BuildGalaxy grows it)
         float sunScale = 0.012f;
+        /// <summary>Modified: the suns' size against their prefab's, one size for every sun in every view: the old system-view
+        /// sun (the prefab's third) x 2.3, matched by eye to the original (Shima from Eanya's system view).</summary>
+        const float SunSize = 2.3f / 3f;
+        /// <summary>Modified: the zoomed system's sun in the system view and all along the zoom: the same size as in the galaxy
+        /// view (the original swaps it for the system's own, smaller sun; the remake keeps one size).</summary>
+        float SystemSunScale => sunScale;
         /// <summary>StarMap::StarMap: the early-warning wormhole at the system the Void attack (index > 0x1f).</summary>
         Transform wormhole;
         Vector3 wormholeScale = Vector3.one;
@@ -273,6 +314,7 @@ namespace GoF2Remake.UI
             RestoreScene();
             if (world != null) Destroy(world);
             if (runtimePanel != null) Destroy(runtimePanel);
+            foreach (var o in gammaMade) if (o != null) Destroy(o);   // Modified: the map glow copies (GammaSun)
             if (Current == this) Current = null;
         }
 
@@ -348,7 +390,8 @@ namespace GoF2Remake.UI
                 zoomMs += zoomDir * dtMs;
                 float e = ZoomEase;
                 fade = 255f * (1f - e);
-                if (suns[zoomSystem] != null) suns[zoomSystem].localScale = Vector3.one * Mathf.Lerp(sunScale, sunScale / 3f, e);
+                // Modified: no shrink along the zoom: the system's sun keeps one size (SystemSunScale).
+                if (suns[zoomSystem] != null) suns[zoomSystem].localScale = Vector3.one * SystemSunScale;
                 if (zoomDir > 0 && zoomMs >= ZoomMs) { zoomDir = 0; systemView = true; fade = 0f; BuildHints(InputMode.Current); }
                 else if (zoomDir < 0 && zoomMs <= 0f)
                 {

@@ -48,7 +48,10 @@ namespace GoF2Remake.EditorTools
             // Remake: Ginoya (texture index 15, the supernova system) shows the supernova glow the add-on made for the map and
             // never used: sn_map_sun_011's corner of sn_galaxymap_planets (UV 0.0039..0.248) through its additive material
             // 27307 (its tiling / offset set to that corner), instead of sun_005's plane.
-            var supernova = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_27307_sn_galaxymap_planets.mat");
+            // Modified: its own sun image instead, sn_sun_012 (Textures/supernova/suns) on a copy of that material without the
+            // corner tiling (Materials/sn_galaxymap_sun_012.mat).
+            var supernova = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/sn_galaxymap_sun_012.mat")
+                         ?? AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_27307_sn_galaxymap_planets.mat");
             if (supernova != null && a.sunMaterials.Length > 15) a.sunMaterials[15] = supernova;
             a.khadorJump = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/fx/khador_jump.prefab");
 
