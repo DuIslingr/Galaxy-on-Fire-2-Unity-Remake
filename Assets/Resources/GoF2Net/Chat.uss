@@ -111,6 +111,11 @@
     border-color: rgba(143, 226, 143, 0.5);
 }
 
+.chat-channel--squad {
+    color: rgb(255, 158, 203);
+    border-color: rgba(255, 158, 203, 0.5);
+}
+
 .chat-field {
     flex-grow: 1;
     margin: 0 0 0 8px;

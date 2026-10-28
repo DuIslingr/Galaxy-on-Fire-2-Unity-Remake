@@ -1470,7 +1470,8 @@ namespace GoF2Remake.UI
             var c = NetChat.SendingNow;
             chatChannel.text = NetChat.ChannelName(c).ToUpperInvariant();
             chatChannel.style.color = c == NetChat.Channel.Global ? new Color(0.94f, 0.7f, 0.35f)
-                                    : c == NetChat.Channel.Faction ? new Color(0.56f, 0.89f, 0.56f) : Accent;
+                                    : c == NetChat.Channel.Faction ? new Color(0.56f, 0.89f, 0.56f)
+                                    : c == NetChat.Channel.Squad ? new Color(1f, 0.62f, 0.8f) : Accent;
         }
 
         /// <summary>The Admin tab of a session without profiles (hosted fresh from the menu): kick, mute and session admins
