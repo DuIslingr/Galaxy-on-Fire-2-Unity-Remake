@@ -309,6 +309,14 @@ namespace GoF2Remake.World
                     EnterCutscene(true);
                     if (wreck != null) Player.rotation = Quaternion.LookRotation((Player.position - wreck.transform.position).normalized, Vector3.up);
                     cam.LookAt(PlayerGame + PlayerDirGame * 10000f + GameRight(Player) * 700f, Player);
+                    // Modified: the break-up (the wreck's *_wrecked_anim pieces drifting apart) plays as it dies if the 180 s
+                    // rule above hasn't started it yet (PlayerFixedObject's dying state plays its wreck animation; a player's
+                    // report: only the explosion showed, the pieces never separated).
+                    if (!wreckBroken)
+                    {
+                        wreckBroken = true;
+                        foreach (var a in wreckAnims) if (a != null) { a.loop = false; a.Restart(); }
+                    }
                     if (wreck != null) wreck.Target.Damage(9999999, true, Vector3.zero);
                     Step = 6;
                     break;

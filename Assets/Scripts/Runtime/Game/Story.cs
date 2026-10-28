@@ -899,7 +899,11 @@ namespace GoF2Remake.Data
             if (Session.FreePlay || Mission == null || station != Mission.station) return -1;
             switch (Index)
             {
-                case 91: case 94: return Freelance.MaxPassengers(db) < 1 ? 3214 : -1;          // passenger cabins
+                // Modified: 91 seats all ten survivors (MGame::OnTouchBegin / StarMap::OnTouchEnd for 0x5b: getMaxPassengers
+                // <= 9 refuses; a player's report: a Medium Cabin's 5 seats let the step start and it could never finish), 94
+                // any cabin (0x5e: getMaxPassengers == 0).
+                case 91: return Freelance.MaxPassengers(db) < 10 ? 3214 : -1;                   // passenger cabins for 10
+                case 94: return Freelance.MaxPassengers(db) < 1 ? 3214 : -1;                    // passenger cabins
                 case 105: return Session.Equipment.Exists(e => e.item == 206) ? -1 : 3217;      // Gamma Shield II
                 case 135: return Shop.FirstMounted(db, 19) != null ? -1 : 3213;                 // a mining drill
                 case 139:   // Vol Noor (42) or a Vossk ship, with the Vossk Signature (190)

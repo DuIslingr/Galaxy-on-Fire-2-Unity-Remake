@@ -278,6 +278,12 @@ namespace GoF2Remake.UI
                 bool station = t.kind == Navigation.Kind.Station && t.station != Session.VoidOrbit;
                 float lx = station ? 50f : 10f;
                 if (t.kind == Navigation.Kind.DockingTarget && m.name.text != t.name) m.name.text = t.name;   // renamed by the level
+                // Modified: a friendly docking object (the story's freighters and platforms are always-friend static objects)
+                // in the friend's green, as the original's radar draws them among the ships (a player's report: grey at 91 / 92).
+                bool friendly = t.kind == Navigation.Kind.DockingTarget && t.dockingShip != null && t.dockingShip.Target.friendToPlayer
+                                && !t.dockingShip.Target.hostileToPlayer;
+                m.name.EnableInClassList("combat-label--friend", friendly);
+                m.bracket?.EnableInClassList("nav-bracket--friend", friendly);
                 m.name.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
                 if (m.distance != null) m.distance.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
                 if (m.tech != null) m.tech.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
