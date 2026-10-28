@@ -650,6 +650,22 @@
     -unity-text-align: middle-center;
 }
 
+.trade-price-column {
+    /* Modified: the price with the mounted count under it (it sat under the ship's amount on the right) */
+    flex-grow: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.trade-price-column .trade-price {
+    flex-grow: 0;
+}
+
+.trade-mounted-note {
+    -unity-text-align: middle-center;
+}
+
 .trade-price--expensive {
     color: #FF6B5E;
 }
