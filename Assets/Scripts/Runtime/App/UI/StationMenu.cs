@@ -122,6 +122,11 @@ namespace GoF2Remake.UI
             if (level != null) level.ViewChanged -= OnViewChanged;
         }
 
+        void OnApplicationFocus(bool focused)
+        {
+            if (!focused) EndDrag(dragPointer, false);
+        }
+
         void OnUIReload(PanelRenderer renderer, VisualElement rootElement, int version)
         {
             // The first load can come before StationLevel.Awake has built the station: try again next frame.

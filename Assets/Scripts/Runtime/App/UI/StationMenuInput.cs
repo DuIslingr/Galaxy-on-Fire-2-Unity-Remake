@@ -47,11 +47,6 @@ namespace GoF2Remake.UI
             dragZone.RegisterCallback<DetachFromPanelEvent>(_ => EndDrag(dragPointer, false));
         }
 
-        void OnApplicationFocus(bool focused)
-        {
-            if (!focused) EndDrag(dragPointer, false);
-        }
-
         void EndDrag(int pointerId, bool fling)
         {
             if (pointerId != dragPointer || pointerId < 0) return;
