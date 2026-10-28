@@ -1037,7 +1037,11 @@ namespace GoF2Remake.UI
                     tradeCargo.text = $"{cargo} t";
                     // Remake: the hold's amount leaves out what is mounted (a launcher's remaining missiles): shown under it.
                     int mounted = hangar.MountedOf(item);
-                    if (tradeMounted != null) tradeMounted.text = mounted > 0 ? MountedNote(mounted) : "";
+                    if (tradeMounted != null)
+                    {
+                        tradeMounted.text = mounted > 0 ? MountedNote(mounted) : "";
+                        tradeMounted.style.display = mounted > 0 ? DisplayStyle.Flex : DisplayStyle.None;   // Modified: under the price, only when there is one
+                    }
                     tradePrice.text = store ? "" : ItemInfo.Credits(price);
                     tradePrice.EnableInClassList("trade-price--expensive", !store && price > Session.Credits);
                     sellButton.EnableInClassList("trade-arrow--disabled", cargo <= 0);
@@ -1148,6 +1152,7 @@ namespace GoF2Remake.UI
                     tradeStock.text = $"{cargo} t";
                     tradeCargo.text = $"{invested} / {total} t";
                     tradePrice.text = "";
+                    if (tradeMounted != null) tradeMounted.style.display = DisplayStyle.None;   // Modified: no mounted count here
                     sellButton.EnableInClassList("trade-arrow--disabled", true);   // invested goods can't be taken back
                     buyButton.EnableInClassList("trade-arrow--disabled", cargo <= 0 || invested >= total);
                     break;
