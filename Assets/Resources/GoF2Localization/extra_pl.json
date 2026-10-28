@@ -2963,7 +2963,7 @@
  "mbJsonModRaceNote": "Każde pole races.json: id, name, description, look, icon, color, standing, hostile, diplomats, relations, gun.",
  "mbModRaceKey": "Systemy, statki i inne mody nazywają ją {0}.",
  "mbModRaceLook": "Wygląda jak",
- "mbModRaceLookNote": "Rasa z gry, której hangary, bary, gości Space Lounge, muzykę, broń NPC i bramę skokową pożycza.",
+ "mbModRaceLookNote": "Rasa z gry, której hangary, bary, gości Loży Kosmicznej, muzykę, broń NPC i bramę skokową pożycza.",
  "mbModRaceEmblem": "Godło i kolor",
  "mbModRaceIcon": "Godło",
  "mbModRaceIconNote": "Kwadratowy PNG, wokół przezroczysty, jak godła ras w grze. Brak: godło rasy jej wyglądu.",
