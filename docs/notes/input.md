@@ -63,6 +63,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 - **Mouse cursor and controller** (remake, a player's request): on desktop the cursor hides while a controller is in use and
   comes back with the mouse (`InputMode.CursorShown`, applied in `InputMode.OnEvent`; `FlightHud.UpdateMouseSteering` keeps
   to it).
+- **Input device log** (remake, `InputDeviceLog`; #194, a Steam Deck's controller "not working in Game Mode", no more
+  details): a player's log names each controller the Input System sees, as a gamepad or as a joystick the `<Gamepad>`
+  bindings ignore (an SDL device on Linux can come up as one), as it comes and goes; the window's focus changes (the
+  Input System drops controller input while unfocused) and the Deck / gamescope environment variables. Players only.
 - **Controllers on macOS** (remake, `UI.MacGameControllers` + `MacGameControllerRunner`, GoF2.Game; a player's report
   2026-10-22): the Input System reads Mac controllers at the HID level and knows only Xbox pads, DualShock 4 / DualSense,
   the Switch Pro Controller and the Nimbus+; others (8BitDo, Joy-Cons, MFi pads) came through as joysticks the `<Gamepad>`
