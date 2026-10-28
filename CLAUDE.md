@@ -152,7 +152,9 @@ The full list with what each item makes and writes: [docs/notes/editor-tools.md]
 - **One MonoBehaviour/ScriptableObject per file, and the file name must equal the class name.** Otherwise prefabs save it as a missing script.
 - Big classes are partial, split by feature into `<Class><Area>.cs` beside the main file (ModBuilderView, StationMenu,
   MainMenu, EventRunner, NpcShip, SupernovaLevels): the fields and Unity messages stay in the main file (initializer
-  order across parts is undefined); find a member with a grep. Split a class again before it passes ~60 KB a file.
+  order across parts is undefined); find a member with a grep. Split a class again before it passes ~60 KB a file:
+  `python -I Reference/tools/split_partial.py sections <File.cs>` lists its `// ----` sections, `split <File.cs> <plan.json>`
+  moves their methods and properties into `<Class><Area>.cs` (a dry run with sizes; `--write` writes, then compile).
 - Gameplay logic is a clean C# reimplementation of the behaviour in the decompiled code, not a line-by-line transliteration. Comment the original function names and constants you based it on.
 - Keep game-logic classes plain C# where possible (like `FlightModel`) so they can be unit-tested. MonoBehaviours adapt them to Unity.
 - A type with static fields, auto-properties or events carries `[Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]`

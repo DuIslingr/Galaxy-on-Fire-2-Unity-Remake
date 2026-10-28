@@ -337,5 +337,121 @@ namespace GoF2Remake.UI
             GoF2Remake.Multiplayer.NetGame.Shutdown();   // leaving a multiplayer session
             if (Application.CanStreamedLevelBeLoaded(menuScene)) SceneManager.LoadScene(menuScene);
         }
+
+        /// <summary>Modified: every text this document owns, read from the table loaded now. Called while building and again
+        /// on Localization.Changed, so the in-game Options' language row applies without leaving the station
+        /// (OptionsCatalog.SetLanguage). The windows built with this one re-label themselves the same way; the ones made
+        /// when they open (the star map, the Options page, the dialogs) already read the table as they are built.</summary>
+        public void RefreshTexts()
+        {
+            if (root == null) return;
+            var st = level != null ? level.Station : null;
+            string T(int id) => Localization.Get(id);
+            root.Q<Label>("stationTitle").text = st == null ? "" :
+                (st.index == 101 || Modding.ModWorld.IsMobile(st.index) ? st.name : $"{st.name} {T(136)}").ToUpperInvariant();   // no suffix for station 101 or a mobile station (a ship)
+            root.Q<Label>("systemName").text = st == null ? "" : $"{st.systemName} {T(137)}";
+            // Multiplayer: the faction holding this station (NetFactions).
+            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetFactionsClient.OwnerText(st.index);
+            if (holder.Length > 0) root.Q<Label>("systemName").text += $"  ·  {holder}";
+            root.Q<Label>("techLevel").text = st == null ? "" : $"{T(133)}: {st.techLevel}";
+            int race = level != null ? level.Layout.raceId : -1;
+            var raceLabel = root.Q<Label>("raceName");
+            raceLabel.text = race >= 0 && race < 4 || Modding.ModRaces.Is(race) ? GoF2Remake.Flight.Standing.RaceName(race) : "";   // (a mod race's name)
+            raceLabel.style.display = raceLabel.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            ShowRaceIcon(raceLabel.parent, race, st != null ? st.index : -1);
+            shownCredits = shownLoad = shownMaxLoad = int.MinValue;   // the funds plates again in this language (UpdateFunds)
+            hangarButton.text = T(167).ToUpperInvariant();
+            loungeButton.text = T(398).ToUpperInvariant();
+            mapButton.text = T(177).ToUpperInvariant();
+            missionsButton.text = T(129).ToUpperInvariant();
+            statusButton.text = T(169).ToUpperInvariant();
+            inspectButton.text = Localization.Extra("stationInspect", "INSPECT SHIP");
+            customizeButton.text = Localization.Extra("stationCustomize", "CUSTOMIZE SHIP");
+            // Remake: its key on the button, L with keys and mouse, X with a controller (the root's input-* class picks one).
+            // The glyphs are children of the button, which then holds its text in a Label of its own, so it is built again
+            // rather than relabelled: setting .text on a button with children leaves the old Label in place.
+            launchButton.Clear();
+            launchButton.text = Localization.Extra("stationLaunch", "LAUNCH");
+            var launchKey = InputGlyph.Key("L");
+            launchKey.AddToClassList("launch-glyph--key");
+            var launchPad = InputGlyph.Pad(PadButton.X);
+            launchPad.AddToClassList("launch-glyph--pad");
+            InputGlyph.WithGlyphs(launchButton, launchKey, launchPad);
+            InputGlyph.SetText(root.Q<Button>("loungeBack"), Localization.Extra("hudBack", "BACK"));
+            InputGlyph.SetText(dialogNo, T(135).ToUpperInvariant());
+            root.Q<Button>("menuButton").text = Localization.Extra("hudMenu", "MENU");
+            root.Q<Label>("systemMenuTitle").text = T(172).ToUpperInvariant();       // Menu
+            saveGameButton.text = T(30).ToUpperInvariant();                          // Save game
+            mainMenuButton.text = Modding.ModBuilder.PlayTesting ? Localization.Extra("mbBackToBuilder", "Back to Mod Builder").ToUpperInvariant()
+                                : T(522).ToUpperInvariant();                       // Back to Main Menu
+            InputGlyph.SetText(systemClose, Localization.Extra("hudBack", "BACK"));
+            InputGlyph.SetText(saveBack, Localization.Extra("hudBack", "BACK"));
+            // The system menu's own entries (BuildSystemExtras names them as it builds them).
+            if (newGameButton != null) newGameButton.text = T(28).ToUpperInvariant();
+            if (loadGameButton != null) loadGameButton.text = T(29).ToUpperInvariant();
+            if (optionsButton != null) optionsButton.text = T(31).ToUpperInvariant();
+            if (aboutButton != null) aboutButton.text = T(43).ToUpperInvariant();
+            RefreshViewTitle();
+            hangarWindow?.RefreshTexts();
+            missions?.RefreshTexts();
+            status?.RefreshTexts();
+            lounge?.RefreshTexts();
+            BuildHints(InputMode.Current);
+        }
+        void OnViewChanged()
+        {
+            if (root == null || level == null) return;
+            bool inLounge = level.View == StationView.Lounge;
+            hangarButton.EnableInClassList("station-button--current", HangarOpen);
+            loungeButton.EnableInClassList("station-button--current", inLounge);
+            RefreshViewTitle();
+            // Inspect ship: the hangar's view only (not in the lounge, nor in VR, which stands in the room already).
+            inspectButton.style.display = inLounge || Vr.VrMode.Enabled ? DisplayStyle.None : StyleKeyword.Null;
+            RefreshCustomizeButton();
+            dragVelocity = 0f;
+            lounge?.OnViewChanged();
+            ApplyStoryLocks();
+            BuildHints(InputMode.Current);
+            // Rework (the controller walk, docs/UI-DESIGN.md "Focus"): the keys and a controller start on the lounge's first
+            // visitor, and back in the hangar view on Space Lounge (nothing had the focus either way). A frame later: the
+            // visitor rows are built then.
+            if (inLounge != viewWasLounge && InputMode.Current != InputKind.Touch && !InputMode.MousePointing)
+            {
+                // Tried every 0.1 s for up to 5 s: the first visit's intro camera keeps the rows away until it ends.
+                float until = Time.unscaledTime + 5f;
+                bool done = false;
+                root.schedule.Execute(() =>
+                {
+                    if (level == null || touchMode || Time.unscaledTime > until) { done = true; return; }
+                    var f = root.focusController?.focusedElement as VisualElement;
+                    if (level.View == StationView.Lounge)
+                    {
+                        if (lounge == null || lounge.ChatOpen || f != null && f.ClassListContains("lounge-row")) { done = true; return; }
+                        if (!level.IntroPlaying) { lounge.FocusFirst(); done = root.focusController?.focusedElement != null; }
+                    }
+                    else
+                    {
+                        if (!HangarOpen && !SystemMenuOpen && !DialogOpen && (f == null || !f.ClassListContains("station-button") || f == hangarButton))
+                            Select(loungeButton);
+                        done = true;
+                    }
+                }).Every(100).Until(() => done);
+            }
+            viewWasLounge = inLounge;
+        }
+        /// <summary>ModStation::OnInitialize: Hangar from index 5, Map from 9, Space Lounge from 13 (half transparent before; the
+        /// original draws it opaque from 12, but OnKeyPress refuses it before 13: after reporting to Norris; a player's report).</summary>
+        void ApplyStoryLocks()
+        {
+            int station = level != null && level.Station != null ? level.Station.index : -1;
+            hangarButton.SetEnabled(Story.HangarUnlocked);
+            mapButton.SetEnabled(Story.MapUnlocked);
+            missionsButton.SetEnabled(Story.MapUnlocked);   // Missions: locked before campaign 9 like the Map
+            loungeButton.SetEnabled(Story.LoungeUnlocked(station));
+            // Remake mods: a station without a Space Lounge ("bar": "none") has no button for it
+            loungeButton.style.display = Modding.ModWorld.NoBar(station) ? DisplayStyle.None : DisplayStyle.Flex;
+            if (hints != null) BuildHints(InputMode.Current);   // the key hints follow the enabled buttons
+        }
+        bool HangarOpen => hangarWindow != null && hangarWindow.IsOpen;
     }
 }
