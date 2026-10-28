@@ -150,6 +150,9 @@ The full list with what each item makes and writes: [docs/notes/editor-tools.md]
   from the folder.
 - Namespaces: `GoF2Remake.Flight`, `GoF2Remake.Data`, `GoF2Remake.Visuals`, `GoF2Remake.World` (flight level), `GoF2Remake.UI`, `GoF2Remake.Events` (the event graphs), `GoF2Remake.Multiplayer`, `GoF2Remake.Modding`, `GoF2Remake.EditorTools`. Never a namespace segment that shadows a Unity type (`GoF2Remake.Space` broke `Space.Self`).
 - **One MonoBehaviour/ScriptableObject per file, and the file name must equal the class name.** Otherwise prefabs save it as a missing script.
+- Big classes are partial, split by feature into `<Class><Area>.cs` beside the main file (ModBuilderView, StationMenu,
+  MainMenu, EventRunner, NpcShip, SupernovaLevels): the fields and Unity messages stay in the main file (initializer
+  order across parts is undefined); find a member with a grep. Split a class again before it passes ~60 KB a file.
 - Gameplay logic is a clean C# reimplementation of the behaviour in the decompiled code, not a line-by-line transliteration. Comment the original function names and constants you based it on.
 - Keep game-logic classes plain C# where possible (like `FlightModel`) so they can be unit-tested. MonoBehaviours adapt them to Unity.
 - A type with static fields, auto-properties or events carries `[Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]`
@@ -158,7 +161,8 @@ The full list with what each item makes and writes: [docs/notes/editor-tools.md]
   obsolete `FindObjectsSortMode` overloads.
 - Game time is in **milliseconds**. Convert with `Time.deltaTime * 1000f`.
 - **Tests** (`Scripts/Tests/README.md`): ~3000 edit-mode tests of the rules and data (`EditMode/<area>/`, ~30 s) and play-mode
-  smoke tests of the scenes, story levels and a hosted session (`PlayMode/`). Run the edit-mode suite after a change; add a
+  smoke tests of the scenes, story levels and a hosted session (`PlayMode/`). Run the edit-mode suite after a change
+  (`python -I Reference/tools/tests/run_tests.py [--filter X] [--reload]`: the totals and each failure only); add a
   test with a new feature. Tests touching state derive from `SandboxTest` / `PlayModeTest` (`GamePaths.Override`: a
   temporary data folder, never the player's saves or mods); code reaching persistentDataPath goes through `GamePaths.Data`.
 

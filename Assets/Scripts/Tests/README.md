@@ -58,3 +58,8 @@ unity command test_status
 ```
 
 Play mode runs are asynchronous: poll `test_status` until it says completed.
+
+`python -I Reference/tools/tests/run_tests.py` does the same in one call and prints only the totals and each failed test
+(its message and the stack lines from `Assets/`), for both modes (`--mode PlayMode` polls for you); `--filter` takes a
+test, fixture or namespace, `--reload` recompiles first (right after Play mode, whose leftover statics fail tests), and
+the full result is kept in `Temp/test_results.json`.
