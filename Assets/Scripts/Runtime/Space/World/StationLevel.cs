@@ -145,7 +145,14 @@ namespace GoF2Remake.World
         CycleSound mainViewAtmo, loungeAtmo, hangarAtmo;
         bool hangarWindowOpen;
 
-        class Visitor { public Transform body, glow; public Vector3 feet; public Agent agent; public float height; }
+        class Visitor
+        {
+            public Transform body, glow, shadow;
+            public Vector3 feet; public Agent agent; public float height;
+            // Modified: the figure's and the glow's drawn centres in their own space (the quads aren't centred on the pivot),
+            // so the glow can sit right behind the figure and the shadow right under it (UpdateBillboards).
+            public Vector3 bodyCentre, glowCentre;
+        }
 
         /// <summary>The bar's agents with their visitor billboards (in Stock.agents order).</summary>
         public int VisitorAgentCount => visitors.Count;
@@ -775,15 +782,33 @@ namespace GoF2Remake.World
                 var bounds = new Bounds(feet, Vector3.zero);
                 foreach (var r in v.body.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(r.bounds);
                 v.height = Mathf.Max((bounds.max.y - feet.y) * 0.55f, 60f * M);   // the billboard quad is about twice the figure
+                // The drawn centre from the renderers alone (the bounds above also hold the feet point).
+                bool drawn = false;
+                var bb = new Bounds(feet, Vector3.zero);
+                foreach (var r in v.body.GetComponentsInChildren<Renderer>())
+                {
+                    if (!drawn) { bb = r.bounds; drawn = true; } else bb.Encapsulate(r.bounds);
+                }
+                v.bodyCentre = v.body.InverseTransformPoint(bb.center);
                 if (visitorGlow != null)
                 {
                     v.glow = Instantiate(visitorGlow, feet, Quaternion.identity, barRoot).transform;
                     v.glow.name = $"Visitor {i} glow";
                     var mat = glowMaterials != null && BarRace < glowMaterials.Length ? glowMaterials[BarRace] : null;
                     if (mat != null) foreach (var r in v.glow.GetComponentsInChildren<Renderer>()) r.sharedMaterial = mat;
+                    bool any = false;
+                    var gb = new Bounds(feet, Vector3.zero);
+                    foreach (var r in v.glow.GetComponentsInChildren<Renderer>())
+                    {
+                        if (!any) { gb = r.bounds; any = true; } else gb.Encapsulate(r.bounds);
+                    }
+                    v.glowCentre = any ? v.glow.InverseTransformPoint(gb.center) : Vector3.zero;
                 }
                 if (visitorShadow != null)
-                    Instantiate(visitorShadow, feet + new Vector3(0f, 20f * M, 0f), OrbitLayout.RotationToUnity(Vector3.zero), barRoot).name = $"Visitor {i} shadow";
+                {
+                    v.shadow = Instantiate(visitorShadow, feet + new Vector3(0f, 20f * M, 0f), OrbitLayout.RotationToUnity(Vector3.zero), barRoot).transform;
+                    v.shadow.name = $"Visitor {i} shadow";
+                }
                 visitors.Add(v);
             }
             return true;
@@ -1796,15 +1821,25 @@ namespace GoF2Remake.World
             var cam = eye != null ? eye.transform : mainCamera.transform;
             foreach (var v in visitors)
             {
+                // Modified: upright, turned only about the vertical axis toward the camera (the original's MatrixGetLookAt with
+                // the camera's up tipped them back and forth with the camera's pitch and sway).
                 var toCam = cam.position - v.feet;
+                toCam.y = 0f;
                 if (toCam.sqrMagnitude < 1e-6f) continue;
-                var look = Quaternion.LookRotation(toCam.normalized, eye != null ? Vector3.up : cam.up);
+                var look = Quaternion.LookRotation(toCam.normalized, Vector3.up);
                 if (v.body != null) v.body.rotation = BarRace == 0 ? look * Quaternion.Euler(0f, 180f, 0f) : look;
+                // The figure's drawn centre (the quad isn't centred on its pivot, and Terran bars turn it round).
+                var centre = v.body != null ? v.body.TransformPoint(v.bodyCentre) : v.feet;
                 if (v.glow != null)
                 {
+                    // Modified: the glow 100 units behind the figure with its centre on the figure's (the same across and up).
                     var z = look * Vector3.forward;
-                    v.glow.SetPositionAndRotation(v.feet - new Vector3(z.x, 0f, z.z) * (100f * M), look);
+                    v.glow.rotation = look;
+                    var target = centre - z * (100f * M);
+                    v.glow.position += target - v.glow.TransformPoint(v.glowCentre);
                 }
+                // Modified: the shadow on the floor right under the figure's centre.
+                if (v.shadow != null) v.shadow.position = new Vector3(centre.x, v.feet.y + 20f * M, centre.z);
             }
         }
 
