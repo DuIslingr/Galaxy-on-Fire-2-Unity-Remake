@@ -40,5 +40,8 @@ Research: `Reference/research/kaamo_club.md` (states, the siege, docking convers
 - **Lounge**: agents 21-26 once campaign > 16 (mechanics = ship mods, 25 special items, 26 a ship of [55..60] the player
   neither flies nor stores, bare hull into the storage, greeting only until owned). Medal 37 counts the stored hulls;
   the map shows Shima as "Secure" after the siege and the orange house when owned.
-- **Expansion at the start** (remake, GitHub #8): the original's Kaamo Club in-app purchase (texts 78 / 88 / 93; `Status::resetGame` sets state 3 while it is bought) is the new game's toggle in the Game options panel after the economy (with Hardcore and Start game) (`MainMenu.KaamoFromStart`, PlayerPrefs `newgame_kaamo`): the club owned from the start, no siege, no purchase.
+- **Expansion at the start** (remake, GitHub #8): the original's Kaamo Club in-app purchase (texts 78 / 88 / 93;
+  `Status::resetGame` sets state 3 while it is bought) is the new game's toggle in the Game options panel after the
+  economy (with Hardcore and Start game) (`MainMenu.KaamoFromStart`, PlayerPrefs `newgame_kaamo`): the club owned from
+  the start, no siege, no purchase.
 - Not wired in the original and left out: advert 189, the 478 hint (no shop to jump to), radio 3162 / 3163 (voiced, never sent).

@@ -9,7 +9,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `/ffa [voids]` (a queue per option, docked; starts 30 s after the 2nd pilot or at once with 8; first to 15 kills or
   10 min), `/leave`, `/arena`,
   `/top` (the profiles' leaderboard: wins, kills / deaths, `NetProfiles.AddArenaStats`). A match is a private copy of
-  the Void's home orbit (`NetArena.Template` = `Session.VoidOrbit`: its sky, fog, music, Void crystal asteroids): its own orbit id `NetArena.OrbitBase` (100000) + the match, which
+  the Void's home orbit (`NetArena.Template` = `Session.VoidOrbit`: its sky, fog, music, Void crystal asteroids): its
+  own orbit id `NetArena.OrbitBase` (100000) + the match, which
   `SpaceLevel.NetOrbitId` gives NetPlayer / NetOrbit, so the same-orbit checks keep it to its players (asteroids seeded
   by that id). SpaceLevel's arena mode: no station or gate (no docking, no jumps: `JumpsBlocked`), no traffic (passive)
   unless the match has the Void fighters (`voids`: the orbit's own traffic, run by the first player in the match's
@@ -85,7 +86,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   so do the junk, the mining plant and a loose container; with none left they count as done (inherited), with no orbit
   ever seen it is built anew; the score and the clock go on; the runner's own copies go (`NetProxy.TakenOverRpc`). Two
   runners at once: the higher client id stands down (`Demote`). A follower's Ore Mining unloads at a hidden local
-  stand-in of the runner's plant (`NpcShip.LocalOnly`), the ore counted for the squad. Loot from mission ships and junk (`Crate.missionLoot`, the Hijacker's container too) is
+  stand-in of the runner's plant (`NpcShip.LocalOnly`), the ore counted for the squad. Loot from mission ships and junk
+  (`Crate.missionLoot`, the Hijacker's container too) is
   out of reach for players outside the mission's team (`NetCrate`: claimed by another for them). They spawn out of the
   other players' view (`NetOrbit.OutOfSight`: a point in a player's 65 deg cone within 60 km, or within 1.5 km, mirrored
   to behind them). Only the mission's team gets anything from the mission: players outside it never get the mission

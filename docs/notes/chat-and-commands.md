@@ -4,7 +4,20 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## Multiplayer (remake-only)
 
-- **Chat** (`NetChat`, `ChatView` in the flight HUD and the station menu; styles `Resources/GoF2Net/Chat.uss`; placed in percentages; on a small high-density screen (`UiScale.Large`: body text under 2.8 mm from the panel scaling and dpi, e.g. the Retroid Pocket G2) the chat, the squad window / invitation and the multiplayer window use their large variants (`.chat--large`, `.squad--large`, `.mpw--large`: about 1.5x, finger-sized buttons, the window 96 x 94 %); the on-screen keyboard shows its own input box (`hideInput` false: hidden, holding Backspace stopped after a letter); nothing writes to the keyboard while it is up (`PhoneKeyboard`, also every text field of the multiplayer window, which had UI Toolkit's own soft keyboard: on GameActivity each write to a TouchScreenKeyboard (text, character limit, a new Open) restarts the IME's input connection in Unity's `UGASoftKeyboard::UpdateTextInputState` (the Editor's AndroidPlayer/Source/GameActivity), which ends a held key's repeat; a player's report 2026-10-18, held Backspace deleted one letter; the chat rows' Local / Global and Send buttons keep the keyboard up and hand the focus back to the line; not yet tried on a phone); the lines never select all on focus (after a send the next line showed highlighted); the multiplayer window: LB / RB or Q / E switch tabs, a controller starts on the tab row, the list scrolls to the focus and a rebuild restores it, a phone typing raises the window to the top half, the Chat tab's line takes the focus only with keys and mouse): global
+- **Chat** (`NetChat`, `ChatView` in the flight HUD and the station menu; styles `Resources/GoF2Net/Chat.uss`; placed in
+  percentages; on a small high-density screen (`UiScale.Large`: body text under 2.8 mm from the panel scaling and dpi,
+  e.g. the Retroid Pocket G2) the chat, the squad window / invitation and the multiplayer window use their large
+  variants (`.chat--large`, `.squad--large`, `.mpw--large`: about 1.5x, finger-sized buttons, the window 96 x 94 %); the
+  on-screen keyboard shows its own input box (`hideInput` false: hidden, holding Backspace stopped after a letter);
+  nothing writes to the keyboard while it is up (`PhoneKeyboard`, also every text field of the multiplayer window, which
+  had UI Toolkit's own soft keyboard: on GameActivity each write to a TouchScreenKeyboard (text, character limit, a new
+  Open) restarts the IME's input connection in Unity's `UGASoftKeyboard::UpdateTextInputState` (the Editor's
+  AndroidPlayer/Source/GameActivity), which ends a held key's repeat; a player's report 2026-10-18, held Backspace
+  deleted one letter; the chat rows' Local / Global and Send buttons keep the keyboard up and hand the focus back to the
+  line; not yet tried on a phone); the lines never select all on focus (after a send the next line showed highlighted);
+  the multiplayer window: LB / RB or Q / E switch tabs, a controller starts on the tab row, the list scrolls to the
+  focus and a rebuild restores it, a phone typing raises the window to the top half, the Chat tab's line takes the focus
+  only with keys and mouse): global
   (everyone) and local (the same orbit, or docked at the same station); the host stamps each line with the sender's name
   and location. The chat key (B), Enter in flight (remake rework 2026-10-22, players' request; in a session Enter is no
   longer the action prompt's second key there, `FlightHud.ActionByEnter`; the station keeps Enter for its menus), the
@@ -19,7 +32,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   member wherever they are -> `NetChat.ReceiveSquad`, a pink "[Squad]" tag; Faction lines as `/f`, `NetFactions.Talk` ->
   `NetState.TellFactionLine` -> `NetChat.ReceiveFaction`, a green "[Faction]" tag; back on Local when the player leaves the
   squad / faction), Esc closes only the chat (`NetChat.Keys` stays null on the frame the typing
-  ended and the next, `NetChat.JustStopped`: the pause / system menu's Esc read the same press). Sending keeps the chat open for the next line (`ChatView.SendLine`: the field keeps
+  ended and the next, `NetChat.JustStopped`: the pause / system menu's Esc read the same press). Sending keeps the chat
+  open for the next line (`ChatView.SendLine`: the field keeps
   the focus, a phone's keyboard comes straight back up), so a conversation needs no reopening; Enter / Done on an empty
   line, Esc / B, the row's × or the Chat tab close it. Phones: the field's own keyboard is off (`hideSoftKeyboard`) and `ChatView` opens
   the on-screen keyboard itself (`TouchScreenKeyboard`, its input box hidden, the text copied into the field each frame):
@@ -44,13 +58,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   read from the device and could miss the UI event's frame: the TextField then took Enter as its submit, lost the focus,
   and the line was only hidden by `Suspend`); a Send button after the line (touch, mouse). Another player's line plays the original's
   incoming-message sound (FMOD 125 Message_Inc, volume 0.241 × `Sfx.EventGain` × the FX volume, one at a time; a copy
-  of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving (full width on a solid background: drawn over the flight HUD's key hints, it covers them); join / leave notices; every line
+  of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving (full width on a solid background:
+  drawn over the flight HUD's key hints, it covers them); join / leave notices; every line
   is also in the player log (`[Chat ...]`). **Chat commands** (`NetCommands`): a line starting with "/" is a command, never
   sent as chat. Every command that acts on the session runs on the server: the chat sends its name and arguments
   (`NetState.ServerCommandRpc`), the server checks the sender's rights (`allowed`) and runs it, the answer is a notice for
   the sender; the dedicated server's console runs the very same table (`NetCommands.RunOnServer` with no issuer: every
   right, named "Server"; `list` = players, `say` = g). Only what changes or reads this game stays local: `/help` (the
-  commands this player can run, `available`), `/netstats`, `/pos` (the orbit and the game coordinates /tp takes), `/sos` and `/assist` (`NetDistress`). The arena (`/duel` ..., `/leave` leaves a queue or match before the squad), profile (`/link` ...), faction (`/faction`, `/c`) and moderation commands are rows of the same table calling their own handlers; the station window's buttons send them as chat lines, which `SendChatRpc` runs through `NetCommands.RunOnServer`. Server
+  commands this player can run, `available`), `/netstats`, `/pos` (the orbit and the game coordinates /tp takes), `/sos`
+  and `/assist` (`NetDistress`). The arena (`/duel` ..., `/leave` leaves a queue or match before the squad), profile
+  (`/link` ...), faction (`/faction`, `/c`) and moderation commands are rows of the same table calling their own
+  handlers; the station window's buttons send them as chat lines, which `SendChatRpc` runs through
+  `NetCommands.RunOnServer`. Server
   commands: `/players` (where, ship, squad, admin; admins and the console see the client ids), `/g` / `/l <text>` (one line
   to Global / Local), `/w <player> <text>` (a private message to that player only, "[From X]" / "[To X]" in violet, not
   logged), `/invite <player>` (docked at the same station) and `/leave`; admins `/kick <player> [reason]` (never the host's
@@ -88,7 +107,12 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   without one keeps the last): a story speaker by name (`StoryTable.SpeakerName`; "Keith as Bob" renames it), a race and a
   name ("vossk K'ekki", "terran female Jane": one `AgentGenerator.CreatePortrait` face made on the server, the same for
   everyone and every page), or "player" (the reader: speaker 0's face with their pilot name); %player% in a text or name is
-  the reader's name; a page `reward [title]: <rewards>` pays when the dialogue closes (like a single-player mission's success page). `/reward [players] <credits | item [amount]> [+ ...] [| title]`: credits and / or up to 8 items into the hold, shown in the reward box (`EventScreen.ShowReward`, `Layout::showMissionRewardMessage` / `drawMissionRewardMessage` 0xe7684: the title, default 216 "Mission accomplished!", over "+ credits" and each item with its shop icon, centred, fades in 2 s, holds until 5 s, fades out until 7 s, sound 36). Typed commands may be 500 characters (`NetChat.MaxCommandLength`; chat lines stay 160).
+  the reader's name; a page `reward [title]: <rewards>` pays when the dialogue closes (like a single-player mission's
+  success page). `/reward [players] <credits | item [amount]> [+ ...] [| title]`: credits and / or up to 8 items into
+  the hold, shown in the reward box (`EventScreen.ShowReward`, `Layout::showMissionRewardMessage` /
+  `drawMissionRewardMessage` 0xe7684: the title, default 216 "Mission accomplished!", over "+ credits" and each item
+  with its shop icon, centred, fades in 2 s, holds until 5 s, fades out until 7 s, sound 36). Typed commands may be 500
+  characters (`NetChat.MaxCommandLength`; chat lines stay 160).
 - **Chat typing** ends when the field loses the focus (a click elsewhere, the keyboard closed; the draft stays); actions a
   component enables meanwhile go off too (`NetChat.KeepGameKeysOff`), a scene change drops the list (`DropTyping`); the
   windows' own key reads (dialogue, hacking, star map, item info, photo mode) go through `NetChat.Keys`; no mouse

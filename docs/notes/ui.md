@@ -4,13 +4,16 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## UI and platforms
 
-- **UI Toolkit only** (runtime): shared theme `UI/GoF2Theme.tss`; per-screen UXML/USS; controllers in `Scripts/Runtime/App/UI` (`GoF2Remake.UI`). The theme doesn't include Unity's default runtime theme, so built-in controls are styled in `GoF2Common.uss` and the document root is stretched in code.
+- **UI Toolkit only** (runtime): shared theme `UI/GoF2Theme.tss`; per-screen UXML/USS; controllers in
+  `Scripts/Runtime/App/UI` (`GoF2Remake.UI`). The theme doesn't include Unity's default runtime theme, so built-in
+  controls are styled in `GoF2Common.uss` and the document root is stretched in code.
 - **UI design document: `docs/UI-DESIGN.md`** (2026-10-22 rework after the published game UI guidelines: XAG, Steam Deck,
   Material / Apple): the tokens, the type scale (every font-size a `var(--text-*)`, 16..64, nothing under the caption;
   code uses `UiLayout.Type`), the scaling model, layout, contrast, focus, navigation and button prompts, and how to check
   a screen at ten sizes (`UiShots`, GoF2 > Tools > UI Screenshots). Follow it for any UI change.
 - **Scaling** (`UiLayout`, Space/UI): every panel is laid out in units of the 1920 x 1080 design and scaled by S = the
-  device class (desktop 1, handheld 1.25 (Steam Deck), TV 1.3 (Xbox, `UwpDisplay` sets `TvDetected`), phone 1.2 (1.5 until 2026-10-23: too big on a 20:9 phone, the
+  device class (desktop 1, handheld 1.25 (Steam Deck), TV 1.3 (Xbox, `UwpDisplay` sets `TvDetected`), phone 1.2 (1.5
+  until 2026-10-23: too big on a 20:9 phone, the
   main menu's rows ran off it; on phones its rows are centred between the logo and the version line and touch,
   `.layout-phone .main-buttons`)), at least
   enough for the 16-unit caption to take 11 real pixels, x Options > Graphics "Interface size" (80-150 %); the panel shows
@@ -26,7 +29,22 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 - **Accessibility** (Options' own tab, `OptionPage.Accessibility`, `Settings.AccessibilityKeys`): Interface size, Text
   size 100-200 % (root classes `ui-text-N` redefine the `--text-*` / `--glyph-*` tokens; `ui-root` re-applies the body size
   under them), High contrast (`ui-high-contrast`), Reduce motion (`ui-reduce-motion`, the station's / Mod Builder's
-  menu animations), Colour-blind markers (friends blue, `CombatView.MarkerTex`). **Interface font** (2026-10-24, the user's request; `UiFont`, Space/UI; `Settings.UiFont`: "" Klavika, "file:<name>" a file imported into persistentDataPath/Fonts, "system:<family> - <style>" an installed font, `FontEngine.GetSystemFontNames`, each family's Regular listed): the row, "Import font file…" (`ModImport.Pick`, checked with `FontEngine.LoadFontFace`, copied in and chosen) and "Remove this font file" (a file the font engine holds open is deleted at the next start, `Fonts/remove-at-start.txt`); `UiLayout.Configure` puts it inline on every panel's root and top element (`UiFont.Apply`, `UiFont.Revision` in `UiLayout.Revision`), so the theme names a font only on `:root` and `.gof-semibold` is just `-unity-font-style: bold` (a font set in USS would beat the choice). An imported file needs a Font object (`new Font(path)` loads the file): `FontAsset.CreateFontAsset(path, ...)` makes an asset the text generator refuses ("FontAsset is invalid", every text blank), and DynamicOS looks the family up among the installed fonts. Bold / italic: the family's other imported files (the same family, or one named after it plus the style, "LDFComicSansBold") or its installed styles, through the asset's weight table, else faux bold; Klavika is the fallback (found by name among the loaded assets). Checked in Play mode with Arial and an imported LDF Comic Sans (regular + bold); not yet on Android / iOS (their pickers, their system fonts). Symbols neither Klavika nor Inter has show as boxes where the system has no fallback (phones): ▾ ✕ ✖ ➔ were replaced by ▼ × × → (2026-10-24, the host card's "More options" on a phone); check a new symbol against both fonts. **Controller keyboard** (`PadKeyboard`,
+  menu animations), Colour-blind markers (friends blue, `CombatView.MarkerTex`). **Interface font** (2026-10-24, the
+  user's request; `UiFont`, Space/UI; `Settings.UiFont`: "" Klavika, "file:<name>" a file imported into
+  persistentDataPath/Fonts, "system:<family> - <style>" an installed font, `FontEngine.GetSystemFontNames`, each
+  family's Regular listed): the row, "Import font file…" (`ModImport.Pick`, checked with `FontEngine.LoadFontFace`,
+  copied in and chosen) and "Remove this font file" (a file the font engine holds open is deleted at the next start,
+  `Fonts/remove-at-start.txt`); `UiLayout.Configure` puts it inline on every panel's root and top element
+  (`UiFont.Apply`, `UiFont.Revision` in `UiLayout.Revision`), so the theme names a font only on `:root` and
+  `.gof-semibold` is just `-unity-font-style: bold` (a font set in USS would beat the choice). An imported file needs a
+  Font object (`new Font(path)` loads the file): `FontAsset.CreateFontAsset(path, ...)` makes an asset the text
+  generator refuses ("FontAsset is invalid", every text blank), and DynamicOS looks the family up among the installed
+  fonts. Bold / italic: the family's other imported files (the same family, or one named after it plus the style,
+  "LDFComicSansBold") or its installed styles, through the asset's weight table, else faux bold; Klavika is the fallback
+  (found by name among the loaded assets). Checked in Play mode with Arial and an imported LDF Comic Sans (regular +
+  bold); not yet on Android / iOS (their pickers, their system fonts). Symbols neither Klavika nor Inter has show as
+  boxes where the system has no fallback (phones): ▾ ✕ ✖ ➔ were replaced by ▼ × × → (2026-10-24, the host card's "More
+  options" on a phone); check a new symbol against both fonts. **Controller keyboard** (`PadKeyboard`,
   `Attach(root)` per screen): A on a text field with a controller where there's no system keyboard opens a key grid;
   `GameControls.TextEntryOpen` pauses the menus' keys meanwhile. **Controller walk** (`UiWalk`, Editor): presses on a
   virtual gamepad (McpInput's, which ignores the window's focus while it holds a button) and the focused element after
@@ -38,5 +56,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `HudOpacityPercent`, `FlightHud.ApplyHudLook`). Shared pieces in Space/UI: `UiSounds` (focus move / click / back for
   panels without their own), `UiBusy` (the waiting arc), `UiFocus.SkipScrollBars`; `.gof-toast` for notices. Empty lists
   say what to do (no "-BLANK-").
-- **Landscape only** (portrait disallowed in Player Settings). Supported from 1:1 to 32:9 and phones (see Scaling above), device safe-area insets are applied (`UI.SafeArea`: the notch / Dynamic Island, the home indicator, cutouts; see **iOS**). The phone test reads `UnityEngine.Device.Application.isMobilePlatform` (PR #108),
-  so the Device Simulator shows the phone layout (`UnityEngine.Application` stays the Editor there); the same in a build. Cameras use `Aspect.VerticalFov` (Hor+ on wide screens, never narrower than 16:9); the bars `Aspect.VerticalFovKeepWidth` (wider screens keep the 16:9 width and lose a little top and bottom: the bars are only modelled as far as the original's camera sees); the hangars are back on Hor+ (`StationLevel.SetLens(..., keepWidth: false)`): a new hangar model is being made, so their cut-off edges on 21:9 / 32:9 are left for it.
+- **Landscape only** (portrait disallowed in Player Settings). Supported from 1:1 to 32:9 and phones (see Scaling
+  above), device safe-area insets are applied (`UI.SafeArea`: the notch / Dynamic Island, the home indicator, cutouts;
+  see **iOS**). The phone test reads `UnityEngine.Device.Application.isMobilePlatform` (PR #108),
+  so the Device Simulator shows the phone layout (`UnityEngine.Application` stays the Editor there); the same in a
+  build. Cameras use `Aspect.VerticalFov` (Hor+ on wide screens, never narrower than 16:9); the bars
+  `Aspect.VerticalFovKeepWidth` (wider screens keep the 16:9 width and lose a little top and bottom: the bars are only
+  modelled as far as the original's camera sees); the hangars are back on Hor+ (`StationLevel.SetLens(..., keepWidth: false)`):
+  a new hangar model is being made, so their cut-off edges on 21:9 / 32:9 are left for it.

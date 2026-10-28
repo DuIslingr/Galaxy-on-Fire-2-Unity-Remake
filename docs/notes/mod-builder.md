@@ -8,10 +8,17 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (`MainMenu.BuildModsHub`, `modsHubPanel`: Mod Browser / Mod Builder; Back from either returns to it). The projects page
   (`ModBuilderProjects`, `modBuilderPanel`, styles `.mb-*` in MainMenu.uss): `persistentDataPath/ModProjects/<id>`
   (`Modding.ModProject`: a mod folder in the normal format, mod.json / ships.json / models / textures, plus builder.json
-  (never exported): each ship's test loadout, the test cheats, the last ship), the field above the list both searches it (every word in the name, id, author or description) and names a new project (Create / Enter), each row with what it holds ("1 ship · 1 skin",
-  else Empty) and a picture (the first ship's icon, its own or the original's, else a skinned ship's, else an item's), New / name / author / version / description,
+  (never exported): each ship's test loadout, the test cheats, the last ship), the field above the list both searches it
+  (every word in the name, id, author or description) and names a new project (Create / Enter), each row with what it
+  holds ("1 ship · 1 skin",
+  else Empty) and a picture (the first ship's icon, its own or the original's, else a skinned ship's, else an item's),
+  New / name / author / version / description,
   the content kinds (Ships, Items, Characters, Skins open the builder on that kind, `ModBuilder.OpenKind`; the others greyed
-  "Coming soon"), Open in hangar, Export as mod (zips it into the Mods folder as "<project name>.zip"; the mod id follows the name like a GitHub repository's: shown in grey under the Name field ("Mod id: x (was y)"), taken when the name is saved or left (`ModProject.Slug` / `IdFromName` / `ChangeId`: mod.json, the project's own "id:" keys, its folder, the old id kept in builder.json "previousIds" so the next export replaces the mod installed under it and keeps it on); zip mods are opened shared for delete, `ZipSource`, so the Editor no longer locks the old zip,
+  "Coming soon"), Open in hangar, Export as mod (zips it into the Mods folder as "<project name>.zip"; the mod id
+  follows the name like a GitHub repository's: shown in grey under the Name field ("Mod id: x (was y)"), taken when the
+  name is saved or left (`ModProject.Slug` / `IdFromName` / `ChangeId`: mod.json, the project's own "id:" keys, its
+  folder, the old id kept in builder.json "previousIds" so the next export replaces the mod installed under it and keeps
+  it on); zip mods are opened shared for delete, `ZipSource`, so the Editor no longer locks the old zip,
   replacing an installed mod of that id after asking, `ModImport.Delete`), Open folder, Delete. Opening one
   (`Modding.ModBuilder.Begin`): a throwaway free-play game (completed world) docked at the project's station (Dis, 70, until
   the top bar's Hangar button picks one station per hangar type: Terran Dis, Vossk, Nivelian, Midorian Var Hastra, deep
@@ -37,12 +44,19 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   hull by `Hidden/GoF2/BuilderGizmo`, Unity-style move arrows along the ship's axes (X = game +x = the pilot's left), a drag on
   a ball slides it over the hull (MeshColliders on layer 22), a flat arrow on the floor toward the nose); the camera is
   Inspect ship's orbit (`StationLevel.BeginInspect(minRadii)`; a middle-mouse drag pans its point, `HangarInspect.Pan`, at
-  most 2 x the ship's radius off its centre, kept through rebuilds; a middle click centres it again). The view panel over the 3D view's top left (rework 2026-10-22, the user's request): a VIEW header bar that folds it
+  most 2 x the ship's radius off its centre, kept through rebuilds; a middle click centres it again). The view panel
+  over the 3D view's top left (rework 2026-10-22, the user's request): a VIEW header bar that folds it
   to one bar and opens it again (PlayerPrefs `mb_view_panel`), then ENGINES and CAMERA sections; the camera buttons a
   3-column grid in the compact secondary-button look. Its Engines slider (off at the left, throttle up to 90 %,
   then the boost) lights the glow and a standing exhaust plume (`ShipExhaust.stationary` / `stationaryBoost`: a rate over
   time, the plume normally comes per distance flown). Below 1.58:1 / 1.4:1 the root takes `mbv-narrow` / `mbv-compact`
-  (narrower panels, smaller text); the kinds strip scrolls sideways so Save / Exit stay on screen (rework 2026-10-22: the kinds are the game's tabs, dim with an amber underline, and so are the panels' own Ship / Hardpoints / Loadout tabs; the strip is sized to its tabs, the open one scrolled into view, and while it overflows a More button lists every kind in the options' drop-down, `ModBuilderScreen.OpenKindList`; each kind's Remove is greyed out while nothing in its list is picked, `UpdateRemoveButtons`; over the star map the panels are opaque, `.mbv-on-map`; a field label's long bracketed help goes on a dim line under it, `FieldLabel`). The panels fly out as the ship takes off and back in once it
+  (narrower panels, smaller text); the kinds strip scrolls sideways so Save / Exit stay on screen (rework 2026-10-22:
+  the kinds are the game's tabs, dim with an amber underline, and so are the panels' own Ship / Hardpoints / Loadout
+  tabs; the strip is sized to its tabs, the open one scrolled into view, and while it overflows a More button lists
+  every kind in the options' drop-down, `ModBuilderScreen.OpenKindList`; each kind's Remove is greyed out while nothing
+  in its list is picked, `UpdateRemoveButtons`; over the star map the panels are opaque, `.mbv-on-map`; a field label's
+  long bracketed help goes on a dim line under it, `FieldLabel`). The panels fly out as the ship takes off and back in
+  once it
   has landed, like the station menu (`ModBuilderView.UpdateUiAnimation`: 450 ms, ease-out cubic, each panel to its own
   edge and fading, one after another; no input meanwhile). Edits save at once; model-shaping ones (model, size, turn,
   engine points, hangar height, textures) re-read the project (`ModBuilder.Reload`) and rebuild the turntable ship when its
@@ -56,7 +70,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   wide-winged fighters such as the Betty, 39 x 28 m, nose away from the camera; that rule stays for the Editor's capital
   hulls; `IconKey`'s leading version 2 redraws the icons drawn before). The Ship tab's **Shop icon** row: the icon,
   Recreate icon (`MaybeMakeIcon(force)`, also over the modder's own; undoable) and -90 / +90 deg (`ModProject.IconTurn`,
-  builder.json "iconTurns", in the key) for a model whose nose comes out elsewhere. Test fly: the project read again, the loadout mounted, the cheats granted (`Cheats.Grant`, honoured while
+  builder.json "iconTurns", in the key) for a model whose nose comes out elsewhere. Test fly: the project read again,
+  the loadout mounted, the cheats granted (`Cheats.Grant`, honoured while
   `ModBuilder.Active`), the normal take-off (`StationLevel.Depart` now waits for the orbit camera's blend back first: the
   flight's view-edge shrink is computed from the camera as it starts) into the builder station's orbit: `SpaceLevel` passive (no traffic,
   wingmen), jumps / gate refused, no tutorial popups, `World.ModBuilderRange` keeps 3 hostile pirates coming (6 s after a
@@ -90,17 +105,26 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   of the speakers' own portraits, `Portrait.ShowSpeaker(..., original: true)`); without one it is the mod's own character
   for its quests and events. **Skins** (`ModBuilderViewSkins`): the game ships the project re-skins
   (`ModProject.SkinShips`: builder.json "skins" + any `textures/(v_|sn_)ship_NNN_*` file), the ship on the turntable and
-  in Test fly (`ModBuilder.SkinShip`, its own default loadout), its textures off the model's materials (the lights and engine glow layers too, marked Shared when other ships use them; a freighter's / the battleship's burnt wreck set, `CombatAssets.wreckDamaged`, which `ApplyWreckDamage` now gives the mod's textures through `ModTextures.OriginalOf` / `Replace`),
+  in Test fly (`ModBuilder.SkinShip`, its own default loadout), its textures off the model's materials (the lights and
+  engine glow layers too, marked Shared when other ships use them; a freighter's / the battleship's burnt wreck set,
+  `CombatAssets.wreckDamaged`, which `ApplyWreckDamage` now gives the mod's textures through `ModTextures.OriginalOf` /
+  `Replace`),
   each replaced by a PNG under the texture's exact name (`textures/<name>.png`, ModTextures; the project is
   read again) or saved as a template (`templates/`, never exported: blitted off the GPU, a normal map decoded from its
   BC5 / DXT5nm-style X Y to an RGB normal map). Overrides missing stats or slots get the game ship's when a project opens
   (`ProjectShip.FillFromGame`: a hand-written one had no slots). `ModProject.AddFile` never hands out a name twice in a
   run (ModMaterials keeps textures by path until the project is read again). Verified in Play mode: projects, open, a .glb ship (auto hardpoints,
   textures), a Phantom override, placing / dragging points, the loadout, test flight, dock back, exit, export. Not yet: a
-  real file-picker run, controller use of the gizmo. Touch (2026-10-18): with touch input the gizmo's balls and arrows are 1.25x larger (1.5x until 2026-10-21) and picked within a fingertip (`ModBuilderGizmo.Reach`: 0.17 / 0.12 inch at `Screen.dpi`; 16 / 12 px at 1080 p were about a millimetre on a phone), the arrows from 45 % of their length so a tap on the ball moves the ball; the number fields (IntegerField / FloatField) take a tap's focus like text fields (`TextFieldKeys.InTextField`: the menus' touch handling had taken it away, so they couldn't be typed into on Android). Two fingers (2026-10-21, `UI.TwoFingerTouch`) pinch to zoom and move the
+  real file-picker run, controller use of the gizmo. Touch (2026-10-18): with touch input the gizmo's balls and arrows
+  are 1.25x larger (1.5x until 2026-10-21) and picked within a fingertip (`ModBuilderGizmo.Reach`: 0.17 / 0.12 inch at
+  `Screen.dpi`; 16 / 12 px at 1080 p were about a millimetre on a phone), the arrows from 45 % of their length so a tap
+  on the ball moves the ball; the number fields (IntegerField / FloatField) take a tap's focus like text fields
+  (`TextFieldKeys.InTextField`: the menus' touch handling had taken it away, so they couldn't be typed into on Android).
+  Two fingers (2026-10-21, `UI.TwoFingerTouch`) pinch to zoom and move the
   camera in the hangar, space and room views, the middle button's pan (a phone could only turn them); under the Engines
   slider View buttons Front / Back / Left / Right / Top turn the hangar orbit to the ship's own sides (`ModBuilderView.ShowAngle`,
-  `ModelViewer.Angles`, the pan centred, the distance kept; Top at the orbit's ~83 deg limit from a little behind, the nose up on screen, no view from below the pad) and
+  `ModelViewer.Angles`, the pan centred, the distance kept; Top at the orbit's ~83 deg limit from a little behind, the
+  nose up on screen, no view from below the pad) and
   Orbit puts the orbit back around the ship's centre after a pan (`CentreOrbit`, the middle click's `ResetPan`).
   **Its other kinds** (2026-10-15): the kinds are `ModBuilder.Kind` (12) and each is edited where it lives in the game
   (`ModBuilder.PlaceOf`: Ships / Items / Skins / Blueprints / Campaign in the hangar, Characters / Quests / Audio in the Space
@@ -120,7 +144,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `ModBuilder.PlayTesting`): a play test, the game with the project on (the station menu, traffic, quests:
   `LocalEvents` runs no quests in the builder otherwise), from the builder's station, the campaign's start or a quest under
   way (a bar mission instead: `EventMissions.PlayTestOffer`, offered in every bar while the play test runs, whatever its
-  chance, stations and pilot count, taken in the lounge like a player; `EventRunner.IsBarMission`; the MCP's play_test too); the pause / station menu's Back to Mod Builder, a death or a failed quest end it (`EndPlayTest`: the builder's game
+  chance, stations and pilot count, taken in the lounge like a player; `EventRunner.IsBarMission`; the MCP's play_test
+  too); the pause / station menu's Back to Mod Builder, a death or a failed quest end it (`EndPlayTest`: the builder's
+  game
   as it opened). Blueprints: product, ingredients, skin ship, autocomplete, condition, lounge / derelict / drops. Campaign:
   the card, start, equipment, cargo, standing, story quest, mod-only galaxy / items / ships, traffic ships; new-game options.
   Missions (called quests until 2026-10-23, the user's request: "Mission" everywhere a player or modder reads it; the
@@ -183,7 +209,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   only, always sold at, available, attributes by number, Default Economy prices; available, dealer, lounge, npcTurrets,
   priceDefault, engine flame), a system's stars brightness / fixed sky turn, Menu > **Mod details** (website, credits,
   preview.png) and **Translations** (`ModProject.TranslatableTexts` / `Texts` / `SetText`, text/<lang>.json), Skins >
-  **Other textures…** (any game texture, the GoF2Backdrop list, `backdrop.json`). Tests: `QuestGraphTests`. Verified in Play mode: every kind's page, a quest compiled and played (its
+  **Other textures…** (any game texture, the GoF2Backdrop list, `backdrop.json`). Tests: `QuestGraphTests`. Verified in
+  Play mode: every kind's page, a quest compiled and played (its
   conversation in the station, back to the builder), a system on the map with its route, a game hangar as the project's
   room with its markers, a project station in its own orbit, a laser recoloured and a project missile hitting the target
   ship. Not yet: a system dragged by hand, a marker clicked by hand, the campaign play test.
@@ -232,7 +259,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   primitive without morph targets, its unused vertices dropped when it owns its attributes (`ReducePrimitive`, POSITION
   min / max recomputed, other min / max removed, 16- or 32-bit indices), a view another accessor reads left for a new one,
   views nothing reads shrunk to 4 bytes; not for Draco / meshopt / quantized models. The GLB written again with every
-  bufferView packed in order (ModGlbImages' layout rules); a result that isn't smaller leaves the file alone. Vertices alike in every attribute are joined first, at any
+  bufferView packed in order (ModGlbImages' layout rules); a result that isn't smaller leaves the file alone. Vertices
+  alike in every attribute are joined first, at any
   triangle setting (`ModOptimizer.Weld`; the simplifier counts only the vertices a triangle uses as a seam): a model
   with three vertices per triangle (an .aem import, which `AemImport.Model.Welded` now joins itself too) was all seams
   and lost nothing; the Narn now 79 865 -> 19 965 triangles at 25 %, 8.6 -> 0.7 MB. The window shows the whole mod's

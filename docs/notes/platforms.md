@@ -5,7 +5,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 ## UI and platforms
 
 - Main menu research (flow, text IDs, image rects, camera, sounds): `Reference/research/mainmenu_notes.md`.
-- **Discord Rich Presence** (remake, desktop; Windows so far): `DiscordPresence` + `DiscordIpc` (the desktop app's local pipe, no SDK) for the Discord application "Galaxy on Fire 2 Unity Remake" (1555054317155647571); details / state from the scene (docked, flying, mining, combat, cutscene; the freelance mission or the story step's title, multiplayer squad), the campaign art large and the system's race emblem small (assets from `Reference/tools/discord/make_assets.py`), the timer from the game's start; in the Mod Builder the project instead of the throwaway game it runs in ("Making a mod - <kind>" / "Test flight" / "Play-testing a mod", the project's name, large text "Mod Builder"); Options > Gameplay "Show what I'm doing in Discord".
+- **Discord Rich Presence** (remake, desktop; Windows so far): `DiscordPresence` + `DiscordIpc` (the desktop app's local
+  pipe, no SDK) for the Discord application "Galaxy on Fire 2 Unity Remake" (1555054317155647571); details / state from
+  the scene (docked, flying, mining, combat, cutscene; the freelance mission or the story step's title, multiplayer
+  squad), the campaign art large and the system's race emblem small (assets from
+  `Reference/tools/discord/make_assets.py`), the timer from the game's start; in the Mod Builder the project instead of
+  the throwaway game it runs in ("Making a mod - <kind>" / "Test flight" / "Play-testing a mod", the project's name,
+  large text "Mod Builder"); Options > Gameplay "Show what I'm doing in Discord".
 - **App icon** (`MainMenuBuilder.BuildAppIcons`, run by Main Menu Scene; the art `UI/AppIcon/icon_source.png`, 2000 x 2000
   with rounded corners): `icon.png` the default icon (Windows / Linux / iOS, Android legacy and round), Android's adaptive
   icon = `icon_foreground.png` (the art at 62 % inside the 66.7 % visible area, so a circle mask keeps the title) over
@@ -14,13 +20,17 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   squares = the art, wide / splash = the art on its blur; an image over 200 KB is left out at 200 %, the UWP packager refuses
   bigger logos (APPX3207), so the 310 x 310 and wide tiles and the splash come at 100 % only). Without the art the old icon
   (the GoF2 logo on skybox_003).
-- **Android name**: package `com.joppietoppie.gof2remake`, launcher label "GoF2 Remake" (`AndroidAppLabel` rewrites the Gradle project's app_name); the product name stays "Galaxy on Fire 2" so the desktop save folder and PlayerPrefs don't move.
+- **Android name**: package `com.joppietoppie.gof2remake`, launcher label "GoF2 Remake" (`AndroidAppLabel` rewrites the
+  Gradle project's app_name); the product name stays "Galaxy on Fire 2" so the desktop save folder and PlayerPrefs don't
+  move.
   **Beta builds** (fork, `AndroidBetaPackage`): with GoF2 > Build > Android Beta Package ticked (per machine) or
   `GOF2_ANDROID_BETA=1`, an Android build gets the package `com.joppietoppie.gof2remake.beta` and the label "GoF2 Beta", so it
   installs beside the published game (the same package signed with another key has to replace it); put back after the build
   like `BuildVersionStamp`. The beta has its own data folder (saves, mods, Transfer). The Java class
   `com.joppietoppie.gof2remake.ModImportActivity` keeps its name: a class's Java package is not the app's package.
-- **iOS** (remake, 2026-10-17; checked in the iPhone 18 Pro simulator: main menu, flight HUD, cutscene pause button, station, hangar, lounge, star map, Missions, Status, Inspect ship, Action Freeze, pause and autopilot menus; not yet run on an iPhone): **Safe area**: `UI.SafeArea` (App/UI) turns `Screen.safeArea`
+- **iOS** (remake, 2026-10-17; checked in the iPhone 18 Pro simulator: main menu, flight HUD, cutscene pause button,
+  station, hangar, lounge, star map, Missions, Status, Inspect ship, Action Freeze, pause and autopilot menus; not yet
+  run on an iPhone): **Safe area**: `UI.SafeArea` (App/UI) turns `Screen.safeArea`
   into a panel's insets, clamped to the screen (a safe area under half the screen ignored); iPhones in landscape report the
   Dynamic Island / notch inset on both the left and the right and the home indicator's at the bottom. The main menu
   (margins: its children are absolutely placed, which a parent's padding never moves, so its old padding inset nothing),
@@ -29,7 +39,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `SafeArea.KeepClear(overlay)`, margins on every descendant with the class `safe-edge` (`SafeArea.EdgeClass`): Action
   Freeze's and Inspect ship's title, hints, footer, photo settings panel and saved notice, the Customize panel, the Mod
   Builder's top bar, side panels and status line (the overlay itself stays full screen: the photo frame bars must match the
-  screenshot); the story-step label moves in by the right inset only (the bottom one lifted it onto the station's ticker). A new screen with controls at the edges uses
+  screenshot); the story-step label moves in by the right inset only (the bottom one lifted it onto the station's
+  ticker). A new screen with controls at the edges uses
   these. **Player settings and Info.plist** (`IosPlayerSetup`, Editor, on Editor load and before an iOS build, each only
   while at Unity's default): bundle id `com.joppietoppie.gof2remake`, the home indicator auto-hidden, system gestures
   deferred on the top and bottom edges; after the build Info.plist gets `CFBundleDisplayName` "GoF2 Remake" (never through
@@ -89,7 +100,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `%LOCALAPPDATA%\Packages\JoppieToppie.GoF2Remake_*\TempState\UnityPlayer.log`. `BuildVersionStamp` also stamps the package version
   (yyyy.M.d.HHmm). Switching to UWP adds default WindowsStoreApps entries to every texture .meta: revert them.
 - **UWP sky** (#20): the space-sky strips (`Resources/GoF2Sky`) have a WindowsStoreApps override to uncompressed RGBA32 with 1365 px faces
-  (`SkyboxBaker.ApplyUwpOverride`; the asteroid belt sky layer's `skybox_asteroid_belt_diffuse` too, RGBA32 at 2048, set by `AssetImport` since 2026-10-11: compressed it showed as a checkerboard of squares on the Xbox; the Xbox runs UWP apps at D3D feature level 10, which has no BC7: the default CompressedHQ
+  (`SkyboxBaker.ApplyUwpOverride`; the asteroid belt sky layer's `skybox_asteroid_belt_diffuse` too, RGBA32 at 2048, set
+  by `AssetImport` since 2026-10-11: compressed it showed as a checkerboard of squares on the Xbox; the Xbox runs UWP
+  apps at D3D feature level 10, which has no BC7: the default CompressedHQ
   drew bands of shifted tiles, BC1 bands and a criss-cross; if RGBA32 still breaks it is the cubemap layout, and the next step
   is the shader's 2D strip path; unverified on the device). Menus: a text field is one
   focus stop (`MainMenu.InsideTextField`; its inner input was listed too and handed the focus back, trapping the D-pad in the
@@ -97,7 +110,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   was open is kept when it closes with B (`KeepKeyboardText`; closing counts as Cancel and put the old text back).
 - **Version** (`BuildVersion`): the menu's credit line and the About page show "Galaxy on Fire 2 Unity Remake created with
   <heart sprite> by JoppieToppie · <version>" (`BuildVersion.Text`; also `/version` in the chat, the multiplayer window's
-  foot and the dedicated server's first log line; no git branch / commit any more: joining compares the fingerprint); the version is the date and time of the git commit the build comes from (`yyyy.MM.dd.HHmm`, UTC; fork change, upstream
+  foot and the dedicated server's first log line; no git branch / commit any more: joining compares the fingerprint);
+  the version is the date and time of the git commit the build comes from (`yyyy.MM.dd.HHmm`, UTC; fork change, upstream
   uses the build's own time, still the fallback without git), so Windows, Linux and Android builds of one commit match; stamped into
   `PlayerSettings.bundleVersion` for each build by `BuildVersionStamp` (Editor) and put back afterwards, so
   `Application.version` and Android's versionName carry it; "editor" in the Editor.
@@ -107,5 +121,12 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   than the build counts. Then "Update available · <tag>" shows at the bottom centre (`.update-row`, only while no panel is
   open; Down from the last menu row reaches it) and opens the release page (`Application.OpenURL`). A failed request is tried
   again on the next menu entry. The Editor ("editor") checks only with `MainMenu.editorTestVersion` set (e.g. 2026.09.29.2200).
-- **Hitch logger** (`HitchLogger`, development builds only; in the Editor with PlayerPrefs `debug_hitchlog` = 1): frames over 33 ms on the real clock to `persistentDataPath/hitches.log` (scene, seconds since its load, campaign step / station, tags load / GC / focus, a summary per scene) and `GraphicsSettings.logWhenShaderIsCompiled` on, so logcat shows every "Uploaded shader variant to the GPU driver" with its time. Measured on the S24 Ultra (Vulkan, Adreno 750, Vulkan pipeline cache deleted, 2026-09-28): 28 variants / ~360 ms at startup before the menu shows, then only at scene loads (GoF2/Unlit 49 ms at the first station, SpaceDust 26 ms), nothing during play (the menu backdrop's live orbit already uses the flight shaders), no frame over 50 ms: no shader warm-up (`GraphicsStateCollection`) needed so far.
-- **FMOD event IDs -> .ogg**: `Reference/research/fmod_event_ids.txt` (every system id, from the FEV's LGCY data; see "Known open items"). Menu theme = 145 `Space_NoCombat_Void`, new game = 143 `IntroAtmo`, buttons 124/123, dialog 126.
+- **Hitch logger** (`HitchLogger`, development builds only; in the Editor with PlayerPrefs `debug_hitchlog` = 1): frames
+  over 33 ms on the real clock to `persistentDataPath/hitches.log` (scene, seconds since its load, campaign step /
+  station, tags load / GC / focus, a summary per scene) and `GraphicsSettings.logWhenShaderIsCompiled` on, so logcat
+  shows every "Uploaded shader variant to the GPU driver" with its time. Measured on the S24 Ultra (Vulkan, Adreno 750,
+  Vulkan pipeline cache deleted, 2026-09-28): 28 variants / ~360 ms at startup before the menu shows, then only at scene
+  loads (GoF2/Unlit 49 ms at the first station, SpaceDust 26 ms), nothing during play (the menu backdrop's live orbit
+  already uses the flight shaders), no frame over 50 ms: no shader warm-up (`GraphicsStateCollection`) needed so far.
+- **FMOD event IDs -> .ogg**: `Reference/research/fmod_event_ids.txt` (every system id, from the FEV's LGCY data; see
+  "Known open items"). Menu theme = 145 `Space_NoCombat_Void`, new game = 143 `IntroAtmo`, buttons 124/123, dialog 126.

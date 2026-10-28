@@ -68,7 +68,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   after one in its list moved down when it lands on them (`MakeRoomAfter`); answered like put_entry after the reload
   (`AnswerAfterReload`: the mod's errors, the quest's own problems). Verified in Play mode: a laid-out quest's line changed,
   a radio step and a title inserted into its `if` block (the hand-moved node kept, the new ones placed, the one below moved
-  down), a misnamed field caught by the answer and renamed by `move`, undo / redo, a ship's armor, an id change refused. The tab: on / off, the permissions, the state, the port, the token (hidden; Show, Copy, New token), the
+  down), a misnamed field caught by the answer and renamed by `move`, undo / redo, a ship's armor, an id change refused.
+  The tab: on / off, the permissions, the state, the port, the token (hidden; Show, Copy, New token), the
   Claude Code / Claude Desktop (`npx mcp-remote`) / any-client setup with Copy (the token masked on screen), what the AI did
   (the button's green border while it runs). Docs: `Modding/ai/README.md`, SKILL.md. Verified with curl in Play mode: auth,
   the Host check, initialize, tools/list, put / compile / validate, a removal refused and confirmed, undo, a screenshot, a

@@ -23,16 +23,30 @@ against the FEV's LGCY data, see "Sound").
   hidden pick-up target on set 10's pads named like the station, whose own landmark it replaces (`Navigation.StationReplaced`;
   `PlayerCollision` lets the approach through the station's volumes); the cutscenes and the carrier's jump end a docking first
   (`ObjectDocking.Abort`); a shuttle finding every pad taken waits 5000 units out from the nearest one (it used to "dock" at the
-  object's centre, inside the hull). 144 / 145 (a player's report): the reload into the 145 attack is a stream-out arrival (the hidden gate) only after 143 was won in space at Var Lupra (`Session.StreamOutAfterCutscene`, `Level::initStreamOutPositionAfterCutscene`), else the undock point; Harval's shot stays the camera's target, hidden, through the array's explosion (destroyed, the camera turned to the station). 154: Hans' freighter flies his route onto Valkyrie's pad (docking set 7, 10 s, then back out; the shuttles' docking with a route that runs once), not into the hull's centre. Remake pick: in 105's opening shot the player and the
+  object's centre, inside the hull). 144 / 145 (a player's report): the reload into the 145 attack is a stream-out
+  arrival (the hidden gate) only after 143 was won in space at Var Lupra (`Session.StreamOutAfterCutscene`,
+  `Level::initStreamOutPositionAfterCutscene`), else the undock point; Harval's shot stays the camera's target, hidden,
+  through the array's explosion (destroyed, the camera turned to the station). 154: Hans' freighter flies his route onto
+  Valkyrie's pad (docking set 7, 10 s, then back out; the shuttles' docking with a route that runs once), not into the
+  hull's centre. Remake pick: in 105's opening shot the player and the
   escorts fly 2.5 u/ms, just ahead of the camera's dolly (at the launch speed they slid back at it tail first).
-- **89, Luur's supernova** (`StarSystem::switchSunForSupernovaIntro` and LevelScript states 1-4): the look-at helper starts 100 000 units sunward of Luur and 200 000 to its own right, drifting back so the view reaches the sun as it explodes; the sun is sn_sun_011 before the blast (system 27's sun is 0.99182, 1.37329 from 0x6a, its streak sn_sun_011); the container shoots from behind the camera toward the sun with a 500 000-long trail at half speed; no fog at 89; rumble p · (rnd(2A) − A) (`CutsceneCamera.RumbleAmplitude`: 100 · falloff / 30, then 1 / 100); the explosion = the ring mesh 0x2df1 (texture 0x2df3, from 0.68665, +4e-5 per ms) and the core mesh 0x2df2 (0x2df4) at the sun (`Backdrop.StartSupernovaExplosion`; the converted meshes are ~4 m, scaled to the plane quad's 3250 m): the ring in the sun's place (no roll), the core as the glow and the streak at 0.3 × the ring. 105's `switchSunForSupernovaExpansion` only sets the sun back to 1.37329.
+- **89, Luur's supernova** (`StarSystem::switchSunForSupernovaIntro` and LevelScript states 1-4): the look-at helper
+  starts 100 000 units sunward of Luur and 200 000 to its own right, drifting back so the view reaches the sun as it
+  explodes; the sun is sn_sun_011 before the blast (system 27's sun is 0.99182, 1.37329 from 0x6a, its streak
+  sn_sun_011); the container shoots from behind the camera toward the sun with a 500 000-long trail at half speed; no
+  fog at 89; rumble p · (rnd(2A) − A) (`CutsceneCamera.RumbleAmplitude`: 100 · falloff / 30, then 1 / 100); the
+  explosion = the ring mesh 0x2df1 (texture 0x2df3, from 0.68665, +4e-5 per ms) and the core mesh 0x2df2 (0x2df4) at the
+  sun (`Backdrop.StartSupernovaExplosion`; the converted meshes are ~4 m, scaled to the plane quad's 3250 m): the ring
+  in the sun's place (no roll), the core as the glow and the streak at 0.3 × the ring. 105's
+  `switchSunForSupernovaExpansion` only sets the sun back to 1.37329.
 - **Level details from the decompiled scripts**: 157's finale (states 5-12: the Liberator killed, Alice to the Valkyrie, the
   Valkyrie backing away with 0x8cb accelerating to 10 u/ms until z 100 000, Harval chasing at 4 then 2 u/ms firing
   (`NpcShip.scriptedFire`), the explosions 0x8c4 at +(-2000, 1000, -8000) then every 8 s, burning stage 1 after 300 ms, stage 2,
   the big blast 0x8c3, the beam 0x8c7, the supernova 0x8c8); 158's opening (Harval rides a helper from 50 000 toward the sun to
   (9000, 0, -13000) at 2.5 u/ms, shown from 25 s, exhaust off 20-34 s, state 2 at 34 s coasting to 300 units per frame, the
   player rolls dt / 2000 (axis lost, remake pick), then faces Harval); 145 (Harval's Shesha x2, the Specters fire from state 2,
-  record 23 at the array); 144 (camera drift (0, 0.05, 0.28) u/ms, `translate` at 0x162efa, which Ghidra garbles; instant cloaks); 135 (every 75 s only the dead pirates come back, no
+  record 23 at the array); 144 (camera drift (0, 0.05, 0.28) u/ms, `translate` at 0x162efa, which Ghidra garbles;
+  instant cloaks); 135 (every 75 s only the dead pirates come back, no
   cargo; 2 -> 3 on that tick); 102 (a Specter whose target died takes the first living dropship, else the player; instant cloaks);
   91 (the wreck's 0x8e9 LOOP, and with 8 aboard after 180 s 0x8ea and its `_wrecked_anim` played once, unverified); 154 (the
   fighters creep 0.5 u/ms in state 1; turret view / free look / Liberator off, the auto turret off until control returns); 89 /
@@ -53,7 +67,13 @@ against the FEV's LGCY data, see "Sound").
   `MGame::OnUpdate` switchCamera(3); `setDockingState(2)` suppresses it; `ObjectDocking.Docked`,
   `FreeLookCamera.EnterDockedLook` / `DockedView`; #132: the remake had no free look docked); the undock's end goes back to
   the standard view; `PlayerTurret.GunsBlocked` ignores the docked ship's
-  blocked guns; the chase camera is on for the view; the stick still reads under `externalControl`; the mouse aims it with mouse steering (`FlightHud.UpdateMouseSteering` leaves it on in a docked turret view) and the fire button fires it (`WeaponSystem`: the docked ship's blocked guns don't halt the turret view; the press used to be latched, a player's report at step 135)). Fast-forward works on the approach while it is 20 000+ units out (`MGame::OnTouchBegin` key 0x100 takes `PlayerEgo::isDockingToDockingPoint` like the autopilot; `ObjectDocking.ApproachDistanceUnits`), and the quick menu opens approaching and docked (key 4 refuses only mining; not easing in / out or hacking, and without the Khador Drive entry while docked).
+  blocked guns; the chase camera is on for the view; the stick still reads under `externalControl`; the mouse aims it
+  with mouse steering (`FlightHud.UpdateMouseSteering` leaves it on in a docked turret view) and the fire button fires
+  it (`WeaponSystem`: the docked ship's blocked guns don't halt the turret view; the press used to be latched, a
+  player's report at step 135)). Fast-forward works on the approach while it is 20 000+ units out (`MGame::OnTouchBegin`
+  key 0x100 takes `PlayerEgo::isDockingToDockingPoint` like the autopilot; `ObjectDocking.ApproachDistanceUnits`), and
+  the quick menu opens approaching and docked (key 4 refuses only mining; not easing in / out or hacking, and without
+  the Khador Drive entry while docked).
 - **Hacking** (`HackingGame` plain C#, `HackingView`): the 2x3 tile board, the left / right 2x2 blocks turn clockwise, scrambled
   2 x kind rounds and never solvable in `kind` moves (kind 1 at 91, else 4); won 1500 ms after solving. Keys A / D (Q / E, arrows),
   pad LB / RB, taps on the halves. Hidden-blueprint wrecks (`TrafficPlan` table: stations 123 / 129 / 132-134) unlock their
@@ -61,15 +81,30 @@ against the FEV's LGCY data, see "Sound").
   createShip(DAT_00253754[k], ship 13 / 15), `PlayerFixedObject::setDeadButSelectable`): the race's freighter wreck held at its
   end pose (`SpawnSpec.deadButSelectable`, `NpcShip.ShowWreckAtEnd`, invulnerable, `ModelPath` "wreck:N" for the proxies),
   docking points sets 14 / 11 / 12 / 13 / 12 (DAT_002537a4: Vossk 132, Midorian 133, Nivelian 134 / 123, Terran 129).
-- **Gas clouds** (`GasCloudField`; needs a spectral filter, sort 33, not in the Void; #77, `Radar::draw` 0x1570ec: with the filter's attr 57 (ST-X, Omega) every live cloud has the white diamond 0x4f1 and is a lock target (`CombatRadar.LockedCloud`: in the crosshair box with no ship or crate there, the ring from 500 ms, locked at the scanner's lock time - 200 ms with sound 0x1a, held only while in the box; the plate 3236 "Gas cloud", the distance under its marker; a display aid only, `Radar::getLockedGasCloud` has no caller), with attr 58 (Omega) also 0x1f62 (`GoF2Hud/cloud_off`) on the radar ellipse off screen; the SA-1 has neither): clouds by `Galaxy::getPlasmaProbabilities`
+- **Gas clouds** (`GasCloudField`; needs a spectral filter, sort 33, not in the Void; #77, `Radar::draw` 0x1570ec: with
+  the filter's attr 57 (ST-X, Omega) every live cloud has the white diamond 0x4f1 and is a lock target
+  (`CombatRadar.LockedCloud`: in the crosshair box with no ship or crate there, the ring from 500 ms, locked at the
+  scanner's lock time - 200 ms with sound 0x1a, held only while in the box; the plate 3236 "Gas cloud", the distance
+  under its marker; a display aid only, `Radar::getLockedGasCloud` has no caller), with attr 58 (Omega) also 0x1f62
+  (`GoF2Hud/cloud_off`) on the radar ellipse off screen; the SA-1 has neither): clouds by
+  `Galaxy::getPlasmaProbabilities`
   (items 201-204); an ionizing blast (`Gun.Detonated`) bursts clouds in reach into sparks; the plasma collector turret (sort 35,
-  `PlayerTurret` collector mode, meshes 198-200) pulls sparks in the turret view (the turret view shows the gun's `sn_plasma_stream_anim_add` cone, its texture scrolling inward, `PlayerTurret.stream`: until 2026-10-11 the lookup hid the stream and both its mesh parts and switched only the last part back on, under its hidden parent, so no vacuum swirl showed; attr 49 speed, 51 range; a spark in its sight takes "toward the turret" as its own direction and keeps it after, #79; the crosshair blue 0x1f5e, red 0x1f5d only while a live spark is in range, #78) and collects within 800
+  `PlayerTurret` collector mode, meshes 198-200) pulls sparks in the turret view (the turret view shows the gun's
+  `sn_plasma_stream_anim_add` cone, its texture scrolling inward, `PlayerTurret.stream`: until 2026-10-11 the lookup hid
+  the stream and both its mesh parts and switched only the last part back on, under its hidden parent, so no vacuum
+  swirl showed; attr 49 speed, 51 range; a spark in its sight takes "toward the turret" as its own direction and keeps
+  it after, #79; the crosshair blue 0x1f5e, red 0x1f5d only while a live spark is in range, #78) and collects within 800
   (one sound at a time, messages summed over 600 ms).
 - **Most Wanted** (`WantedBoard` plain C#, `Session.Wanted`, the Missions window's Most Wanted tab; save v7): criminals activate
   and move between stations (`WantedBoard.Move` on arrivals); in their orbit the criminal and escorts (`TrafficPlan.AddWanted`:
   hull 15 x min(rank, 20) + hp + 180, speed 4.5, its own gun x4) hide until locked; the storyline criminals surrender below 1/3
   hull at 128 / 130; a kill pays the bounty (3206). Music `wantedMusic`.
-- **Specters** (race 10): `NpcCloak` (the player cloak's look, 2000 ms fades, off radar from 25 % and, remake, cloaked for everyone's targeting from there (`Target.cloaked`, the player's rule: turrets, auto turrets and sentry guns don't aim at it, fighters and wingmen chase it but hold fire, missiles lose their lock; the original only took it off the radar), still firing (`PlayerFighter::update` checks only the target's cloak; the remake held their fire until 2026-10); no loot (ships 44 / 49 lose their cargo list in `Level::createShip`, race 10 gets none, `NpcShip.RollLoot`); random cloaking 50 %
+- **Specters** (race 10): `NpcCloak` (the player cloak's look, 2000 ms fades, off radar from 25 % and, remake, cloaked
+  for everyone's targeting from there (`Target.cloaked`, the player's rule: turrets, auto turrets and sentry guns don't
+  aim at it, fighters and wingmen chase it but hold fire, missiles lose their lock; the original only took it off the
+  radar), still firing (`PlayerFighter::update` checks only the target's cloak; the remake held their fire until
+  2026-10); no loot (ships 44 / 49 lose their cargo list in `Level::createShip`, race 10 gets none, `NpcShip.RollLoot`);
+  random cloaking 50 %
   when panicking, else 30 % every 8 s, 9-14 s), raids at 100 < campaign < 0x91, music 149 / 150; the calm supernova system has no
   traffic before 0x9e and plays `gammaRayMusic`. Static story objects: the mining plant (103), the plasma array (112, stage by
   campaign), Luur's burning / wrecked station (111).

@@ -5,7 +5,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 ## UI and platforms
 
 - **Free flight** (remake, Options > Controls toggle "Free flight (EVERSPACE 2 style)", `Settings.FlightStyle`,
-  `FlightStyles`; off by default, and off is the original flight and key layout unchanged; single player and sessions, it only changes how the player's own ship flies): built
+  `FlightStyles`; off by default, and off is the original flight and key layout unchanged; single player and sessions,
+  it only changes how the player's own ship flies): built
   after EVERSPACE 2 (not from its code): its numbers come from recordings of the game measured by
   `Reference/tools/es2flight/es2measure.py` and from its asset values (`Reference/research/es2_flight_measurements.md`).
   `FlightModel.StepFree` (plain C#): thrust / strafe / up-down held instead of a throttle, per axis in the ship's frame
@@ -18,8 +19,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   there, only a tenth of the rest counting, `FreeTurnAboveShare`: an Inflict 127 instead of 148, a Dace with the Pulsed
   Plasma Thrust 146 instead of 335, players' feedback 2026-10-16: the nimble ships whipped round; the steering
   sensitivity option x0.6..1.6, 1 at its default, read from `Settings.Sensitivity`: `FlightModel.Sensitivity` is the
-  original's ramp setting, a fixed 2.7 under mouse steering, which turned free flight x1.6 too fast; x0.85 boosting, measured), reached by a linear 400 ms ramp (`FreeTurnRampMs`, measured in
-  EVERSPACE 2's cockpit view, which follows the ship rigidly); speed doesn't change it. No auto-level (Level out still works). Inertial dampeners (`ShipController.Dampeners`, toggled by
+  original's ramp setting, a fixed 2.7 under mouse steering, which turned free flight x1.6 too fast; x0.85 boosting,
+  measured), reached by a linear 400 ms ramp (`FreeTurnRampMs`, measured in
+  EVERSPACE 2's cockpit view, which follows the ship rigidly); speed doesn't change it. No auto-level (Level out still
+  works). Inertial dampeners (`ShipController.Dampeners`, toggled by
   `GameControls.Dampeners`, on at start): each axis flies the speed asked for and what isn't asked for brakes away at
   33 m/s^2 (the gauge, linear on every axis; `FreeDecelMs` 3000: a stop from top speed; the asset says 60, probably
   scaled by the player's dampener strength setting), which also eases a boost's speed off afterwards; off: the thrust
@@ -27,7 +30,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   held boost on an energy pool: to the booster's original boost speed x 3.2 / 3 (`FreeBoostFactor`: the Me'al's x3 is
   EVERSPACE 2's measured x3.2, the gauge's 1110 of 343 km/h; Linear / Cyclotron x1.6, Synchrotron x2.67, Polytron x4.27;
   a booster without a boost speed x3.2), eased out cubically over 3.1 s from the
-  top speed (`FreeBoostEaseMs`, over the gap), a full pool lasts the booster's duration (attribute 27; 3.5 s without one: EVERSPACE 2's boost lasted 4.5 s held, so its equipment sets it)
+  top speed (`FreeBoostEaseMs`, over the gap), a full pool lasts the booster's duration (attribute 27; 3.5 s without
+  one: EVERSPACE 2's boost lasted 4.5 s held, so its equipment sets it)
   and refills in its recharge time, restarts from 20 % and only on a fresh press after running empty (`BoostHeld`,
   `BoostRechargePercent` = the pool). The forward
   thrust held is `Throttle` (0 with no key, whatever the momentum) and the forward speed `MoveSpeed`; with no forward
@@ -40,12 +44,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   move goes to `StrafeSlide`, so the chase camera stays square behind a sliding ship. `ShipController.FreeFlightActive`: the
   option with keyboard / mouse or a controller (touch, tilt and VR keep the original); the autopilot, the launch / arrival
   camera, the turret view, the dodge and computer control (mining, object docking) run the original path and hand back
-  the velocity (`SyncFree`). Mods can tune each style or set the style (see "Mods", Flight styles). The mouse: EVERSPACE 2's virtual joystick (`ReadVirtualStick`: the mouse moves a reticle
+  the velocity (`SyncFree`). Mods can tune each style or set the style (see "Mods", Flight styles). The mouse: EVERSPACE
+  2's virtual joystick (`ReadVirtualStick`: the mouse moves a reticle
   inside a circle of 0.5 x the screen height, `StickRadius`, EVERSPACE 2's measured ~0.52: the rate grows linearly with the
   reticle's offset; it stays where the mouse leaves it; beyond the mouse steering dead zone (a hard one, not rescaled, like
   the game's ~8 % of the screen height) the deflection is the whole offset over the radius (measured to 478 px: 0.229 deg/s
   per px, linear); still during free look, centred while the autopilot steers; the HUD
-  draws the circle, `.mouse-stick`, faded in as the aim dot nears it (from 60 % of the radius, full at 90 %, 150 ms in, 400 ms out; always shown it read as a second radar ellipse, shown for any steering it came up for every small correction; `FlightHud.UpdateStickRing`). The chase camera follows free flight faster by `FlightModel.FreeTurnSpeedup` (the free top turn rate over the original's full-stick rate, ~2.4 for an Inflict) and keeps the turn slide at the original's size (`ChaseCamera`): tuned for the original's rates it fell behind and the ship swung to the edge of the picture. Free look while held
+  draws the circle, `.mouse-stick`, faded in as the aim dot nears it (from 60 % of the radius, full at 90 %, 150 ms in,
+  400 ms out; always shown it read as a second radar ellipse, shown for any steering it came up for every small
+  correction; `FlightHud.UpdateStickRing`). The chase camera follows free flight faster by `FlightModel.FreeTurnSpeedup`
+  (the free top turn rate over the original's full-stick rate, ~2.4 for an Inflict) and keeps the turn slide at the
+  original's size (`ChaseCamera`): tuned for the original's rates it fell behind and the ship swung to the edge of the
+  picture. Free look while held
   (`GameControls.FreeLookHold`, `FreeLookCamera`; both styles; in free flight the aim is ignored meanwhile). Its own key
   layout (`GameControls.FreeFlightDefaults`, overrides under `controls_bindings_free`, `ApplyStyle` on the option's
   change): W / S thrust, A / D strafe, Space / L-Ctrl up / down, Q / E roll, L-Shift boost, Z dampeners, L-Alt free
@@ -57,7 +67,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   default key). Verified in Play mode before the measured numbers (keyboard events and a virtual controller): thrust, the
   dampened stop, the drift with the dampeners off, strafe and up / down, the roll, the right stick's turn, the boost's
   pool, the hints and the circle; the measured numbers checked on `FlightModel` alone (125 deg/s in 0.23 s, forward / strafe
-  against the gauge within 0.04 of the top speed at every sampled time, the 3.0 s stop, reverse half the forward speed). Played in Play mode with the measured numbers (2026-10-10, the Phantom, handling 150; keys held by
+  against the gauge within 0.04 of the top speed at every sampled time, the 3.0 s stop, reverse half the forward speed).
+  Played in Play mode with the measured numbers (2026-10-10, the Phantom, handling 150; keys held by
   re-queueing the keyboard state before every Input System update, the Input System set to ignore focus for the test): 100
   m/s forward reached as the cubic ease predicts (90 % 0.77 s, 99 % 1.12 s), stopped in 2.96 s; strafe and up 50 m/s,
   stopped in 1.48 s; the boost 209 / 306 / 320 m/s at +1 / +2 / +3 s, braking 33 m/s^2 after it; the heading turning

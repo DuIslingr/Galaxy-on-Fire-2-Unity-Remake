@@ -11,12 +11,19 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   renames one with `AssetDatabase.MoveAsset` (its GUID kept) and rewrites its enum option types `GoF2Remake.Multiplayer.Event*`
   -> `GoF2Remake.Events.Event*`, which Graph Toolkit stores by name; the game's reader ignores them); the built-ins and the
   event audio in `Resources/GoF2Events`. The chat command layer they run (`NetCommands`, `NetAdmin`, `NetTeleport`) stays in
-  Multiplayer. The enum type names carry their assembly too: graphs saved before the layered assemblies named Assembly-CSharp (the enums are in GoF2.Net), so Graph Toolkit couldn't resolve them and the import failed ("Type provided must be an Enum", hidden by cached imports until an iOS platform switch reimported them, 2026-10-17; the built-in graphs were then missing from Resources); `EventGraphUpgrade.FixAssemblies` writes the right assembly into every imported graph, and `EventGraphImporter` turns a Graph Toolkit failure into a warning (the game's own reader doesn't use those names). Verified: every graph re-imported without a reader / Graph Toolkit mismatch, a template opened and compiled by
+  Multiplayer. The enum type names carry their assembly too: graphs saved before the layered assemblies named
+  Assembly-CSharp (the enums are in GoF2.Net), so Graph Toolkit couldn't resolve them and the import failed ("Type
+  provided must be an Enum", hidden by cached imports until an iOS platform switch reimported them, 2026-10-17; the
+  built-in graphs were then missing from Resources); `EventGraphUpgrade.FixAssemblies` writes the right assembly into
+  every imported graph, and `EventGraphImporter` turns a Graph Toolkit failure into a warning (the game's own reader
+  doesn't use those names). Verified: every graph re-imported without a reader / Graph Toolkit mismatch, a template
+  opened and compiled by
   Graph Toolkit, an old-format graph converted on import, a mod's old .gof2netevent and the built-ins loaded at runtime.
 - **Events** (`EventRunner`, `/event <name [setting=value ...] | stop | list>`, admins and the console only): node graphs run
   on the server: `<name>.gof2event` (see Event graphs below) in an Events folder (`persistentDataPath/Events`,
   or next to the game / dedicated server's executable), else a mod's (`events/`, the mods that are on), else a built-in one
-  (`Resources/GoF2Events`: waves, survival, the bar mission pirate_hideout); one global event at a time (/event: everyone) and any number of bar missions beside it
+  (`Resources/GoF2Events`: waves, survival, the bar mission pirate_hideout); one global event at a time (/event:
+  everyone) and any number of bar missions beside it
   (each run its own `EventRunner.EventRun`: threads, handlers, questions, batches, points, scoreboard, what it turned on);
   `/event list` shows each one's settings. There are no script files: the graph compiles to an internal line form, which is
   what runs. Its lines: any server command without the "/" (run as the server, "{expression}" parts filled in), `wait <s>`,
@@ -38,7 +45,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   numbers, variables, arithmetic, comparisons, and / or / not, random(a, b), min, max, floor, count(<players>) (a selector's
   players), and the state: `enemies` / `ships` (the event's living spawned ships: each spawn order gets a batch tag,
   `SpawnSpec.eventTag`, written on its NetProxy with the enemy bit, `NetProxy.EventTag`; a just-sent batch counts until its
-  ships show, 6 s at most), `players`, `inspace`, `docked`, `dead`, `time`, `toppoints`, `missionstation` (where a bar mission was taken, -1 in an /event). Results: an event ship's killer
+  ships show, 6 s at most), `players`, `inspace`, `docked`, `dead`, `time`, `toppoints`, `missionstation` (where a bar
+  mission was taken, -1 in an /event). Results: an event ship's killer
   (`NetProxy.Killer`: its own game's player, or the shooter of a remote hit) counts once per ship (by owner and traffic index:
   proxies are remade and Netcode reuses ids); time alive in space from the first spawn until a player's first death; points.
   Once it has spawned ships, an event ends by itself when no player has been alive in space in its ships' orbits for 3 s
@@ -64,7 +72,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `Route` through `Navigation.SetEventWaypoint` (lockable "Waypoint", on a bar mission graph its title, the autopilot menu's
   entry), a slot of its own beside the campaign / freelance route (`SetRoute`), so both show and clearing one keeps the
   other (a Discord report: the Pirate Hideout's waypoint replaced a lounge mission's and its Clear Waypoint removed both;
-  `NavigationWaypointTests`), applied whenever the player is in that orbit, cleared on reaching it and at the event's end; the On node's Player Arrives (`on near <station> <x y z> <metres>`) fires
+  `NavigationWaypointTests`), applied whenever the player is in that orbit, cleared on reaching it and at the event's
+  end; the On node's Player Arrives (`on near <station> <x y z> <metres>`) fires
   when a player alive in space comes that close (server-side, NetPlayer positions). Spawned objects get collision
   (`DebugSpawner.SpawnObject`: `station_pirates` the original's volumes 1002 unrotated, others a box around the model) and
   exist only in the games they were sent to: spawn scenery for `@a[orbit=...]` at fixed coordinates.
@@ -142,7 +151,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   Event (Score, Winner, Add Points, Scoreboard, Mission Complete, Mission Failed, Start Event (with a picker of the project's
   events), Free For All, Set / Clear
   Respawn Point, Restrict Travel, Make Hostile, Set / Clear Waypoint), Commands (one per event command, Radio, Play Sound /
-  Music, Stop Music, Command for any other line), Ships (Fly To, Fly Route, Follow, Attack, Ship Action), Cutscene (Start / End Cutscene, Camera Shot, Chase Camera, Fade, Letterbox),
+  Music, Stop Music, Command for any other line), Ships (Fly To, Fly Route, Follow, Attack, Ship Action), Cutscene
+  (Start / End Cutscene, Camera Shot, Chase Camera, Fade, Letterbox),
   Players (Get Orbit: a station by number, name, void or a wired number -> Get Players (who, optionally in that orbit) -> any
   command's Players, written as `@alive[orbit=Var Hastra]`; Count Players), values (Game State, Math, Random, Floor, Compare,
   Logic, Not, Expression), the blackboard's Number variables (set to their defaults at the start; Input ones are the event's
@@ -157,7 +167,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `EventGraphFile` (a small reader of Graph Toolkit's serialized model, Unity YAML: nodes with their port / option values,
   wires, variables (m_Modifiers 0 local / 1 input / 2 output), local sub-graphs; node ids as Graph Toolkit's Hash128) and
   `EventGraphScript` (the one compiler, graph -> the line form above; the Editor's checks and Run In Play Mode feed it the
-  live graph through `EventGraphCompiler`). The importer depends on the GoF2Data JSON files `Database.Load` reads (`ctx.DependsOnArtifact`: in a fresh Library the
+  live graph through `EventGraphCompiler`). The importer depends on the GoF2Data JSON files `Database.Load` reads
+  (`ctx.DependsOnArtifact`: in a fresh Library the
   graphs were checked against empty tables) and keeps the file's text as its TextAsset (so `Resources/GoF2Events`
   graphs are the built-ins) and reads every graph both ways, warning if the game's reader disagrees with Graph Toolkit (a
   Unity update changing the format), and about a name with spaces (/event takes one word). Node kinds, port and option names
@@ -168,8 +179,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   dedicated server's console made admins (`NetPlayer.IsAdmin`, server-written, for the session only: names aren't
   verified). Players are named whole, any case (the longest name the arguments start with), by a client id as the first
   word, or by a Minecraft-style selector (`NetCommands.FindTargets`): @a everyone, @s yourself, @p the nearest other player
-  (same orbit by distance, else the same station), @r a random other player, and by state @alive (in space, not destroyed), @space, @docked, @dead, @survivors (an event's players never destroyed since its fight began, `EventRunner.Survived`: "reward @survivors {wave * 1000}"), each narrowed to one orbit by `[orbit=<station>]` (in its space or docked at its station: `@alive[orbit=78]`, `@r[orbit=Var Hastra]`); a command on several players runs for each
-  ("/tp @a Player1", "/kick @r"); a destination is one player. Tab offers the selectors too. Typing "/" lists the matching commands over the line, after a command that
+  (same orbit by distance, else the same station), @r a random other player, and by state @alive (in space, not
+  destroyed), @space, @docked, @dead, @survivors (an event's players never destroyed since its fight began,
+  `EventRunner.Survived`: "reward @survivors {wave * 1000}"), each narrowed to one orbit by `[orbit=<station>]` (in its
+  space or docked at its station: `@alive[orbit=78]`, `@r[orbit=Var Hastra]`); a command on several players runs for
+  each
+  ("/tp @a Player1", "/kick @r"); a destination is one player. Tab offers the selectors too. Typing "/" lists the
+  matching commands over the line, after a command that
   takes a player the matching players; Tab completes the first and cycles through them (Shift+Tab back, "/" alone cycles
   all; before the channel key, Tab by default; `ChatView.Complete`, `NetCommands.Completions`);
   `/netstats` shows / hides the network stats (`NetStats`, PlayerPrefs `mp_netstats`, top left in the flight HUD, the

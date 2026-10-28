@@ -7,7 +7,8 @@ A remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs / Deep Silver) in 
 This file holds only what every task needs. Everything about one area of the game lives in `docs/notes/`, moved there unchanged from this file (2026-10-28):
 
 - **Before working on an area, read its notes file** (several for a cross-cutting change). When unsure which, grep `docs/notes` for the class, option or command name.
-- **New notes go into the area's file**, under its headings and in its style; add a new file (and a row here) only for a new area. Keep this file to project-wide rules.
+- **New notes go into the area's file**, under its headings and in its style; add a new file (and a row here) only for a new area. Keep this file to project-wide rules. Wrap note lines at about 120 characters: a grep hit prints the whole line.
+- The Grep tool skips what `.ignore` lists (the embedded Netcode package, four one-line data tables); search those with `grep -r` in a shell or read them directly.
 - Code comments cite `CLAUDE.md "<section>"` (a heading or a bullet's bold title): the names are unchanged, so look them up with `grep -rn "<section>" docs/notes`.
 
 | File | What it covers |

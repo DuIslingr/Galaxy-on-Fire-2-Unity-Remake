@@ -12,14 +12,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   next listing, `DedicatedServer.ListName`; a higher player limit online after a restart) and saved to
   `server_settings.json` beside the profiles. A start applies the defaults, then the file, then the command line (an
   option given there wins: `FromCommandLine`, the window says "set by the launcher"). The password is never sent.
-- **Moderation** (`NetModeration`, a dedicated server with profiles; its commands are `NetCommands` rows, so they show in /help and Tab completion; a profile's role is on `NetPlayer.StaffRole`, and admins / masters also get `NetCommands`' admin commands; on such a server `/kick` and `/admin` / `/unadmin` are this system's, elsewhere the session-only ones): roles on the profile (`Account.role`: 0 player, 1 op,
+- **Moderation** (`NetModeration`, a dedicated server with profiles; its commands are `NetCommands` rows, so they show
+  in /help and Tab completion; a profile's role is on `NetPlayer.StaffRole`, and admins / masters also get
+  `NetCommands`' admin commands; on such a server `/kick` and `/admin` / `/unadmin` are this system's, elsewhere the
+  session-only ones): roles on the profile (`Account.role`: 0 player, 1 op,
   2 admin, 3 master). The **master admin** (the owner) is claimed in the game: `/claimadmin <token>` (or the station
   window's Profile tab, "Claim this server"), the token from `-admintoken` / `GOF2_ADMIN_TOKEN`, else
   `admin_token.txt` beside the profiles (made at the first start; logged at every start; console `token`; a wrong try is
   logged, one check per 5 s), so a server needs no console. Masters make admins (`/admin`, `/unadmin`) and delete
   profiles (`/deleteprofile <id>`, not while online); admins make ops (`/op`, `/deop`), announce (`/say`, as
   "[admin] Name") and end factions (`/disband <TAG>`); the console can do everything and makes masters (`master` /
-  `unmaster`). Nobody acts on a pilot of their own role or higher, or gives a role as high as their own. Ops: `/kick <pilot> [minutes] [reason]` (dropped; can't rejoin for the minutes, default 5, a
+  `unmaster`). Nobody acts on a pilot of their own role or higher, or gives a role as high as their own. Ops: `/kick <pilot> [minutes] [reason]`
+  (dropped; can't rejoin for the minutes, default 5, a
   temporary ban), `/tempban <pilot> <minutes> [reason]` (ops at most 24 h), `/unban <name|profile>`, `/bans`; admins
   also `/ban <pilot> [reason]` (for good). `/staff` for everyone. Nobody acts on their own rank or higher (the console
   on anyone). A pilot: a name online, `#<client id>` (the window's buttons) or a profile's id / last name offline. A ban
@@ -86,11 +90,14 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   and closing the window too). In its own console window (Windows) or on a terminal (Linux) the input line is edited by
   `ConsoleInput` (keys one at a time: `WinConsole.RawInput` / `ReadKey`, `Console.ReadKey`; a "> " prompt, log lines above
   it): Tab completes and cycles the command names (Shift+Tab back, nothing typed: all), Up / Down the history, Esc clears;
-  piped input stays line by line. Verified on Windows; the Linux terminal path is untested. Linux quits hard (`DedicatedServer.ExitNow` on `Application.quitting`: the
+  piped input stays line by line. Verified on Windows; the Linux terminal path is untested. Linux quits hard
+  (`DedicatedServer.ExitNow` on `Application.quitting`: the
   web admin and Netcode down, the log flushed, the terminal's settings from the start put back with `tcsetattr`, then libc
   `_exit`): the key reader blocked in `Console.ReadKey` kept Unity's teardown from ever ending after "CodeReloadManager
-  destroyed"; the exit code is `DedicatedServer.Quit`'s (1 = failed). Windows the same (`ExitProcess` after the flush, 2026-10-12): the key reader in `ReadConsoleInputW` held IL2CPP's
-  `Runtime::Shutdown` (AbortAllThreads -> Thread::Join), and a player's "Stopping the server..." was reported as a native crash. Verified: the Windows build headless with the Editor as the client (join, chat, say,
+  destroyed"; the exit code is `DedicatedServer.Quit`'s (1 = failed). Windows the same (`ExitProcess` after the flush,
+  2026-10-12): the key reader in `ReadConsoleInputW` held IL2CPP's
+  `Runtime::Shutdown` (AbortAllThreads -> Thread::Join), and a player's "Stopping the server..." was reported as a
+  native crash. Verified: the Windows build headless with the Editor as the client (join, chat, say,
   kick, stop; over Relay, listed, with a password; the console window, no menu).
 - **Persistent hosted world** (the Host card's World Fresh / Persistent segments, `mp_persistent`,
   `NetGame.HostWantsPersistent` -> `PersistentHost`): `StartHost` configures `NetProfiles` on
@@ -102,7 +109,15 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   leaving its game is saved straight into the profile (`NetProfileClient.SaveHostNow` from `NetGame.Shutdown`). Fresh =
   unchanged (nothing kept, no profiles, so no factions or Admin tab). Online errors now list the inner exceptions
   (`NetGame.Describe`: Unity Services' "Some services couldn't be initialized" said nothing on its own). Not tested yet.
-- **Message of the day** (`NetMotd`, `SERVER.md`): `motd.txt` beside the server's settings (`NetProfiles.Folder`, else `persistentDataPath`), read at the session's start and by `/motd reload`; `/motd set <text>` (`\n` new lines) / `clear` (admins, the console); every space kept, tabs 4 spaces, at most 60 lines / 4000 bytes (one RPC); `%player%`, `%players%`, `%server%` filled per player. A game entering the world asks (`NetGame.EnterWorld` -> `NetState.MotdRequestRpc`), the server answers that player (`MotdRpc`); shown in `EventScreen`'s MOTD window (the server's name, the text in JetBrains Mono (OFL, `Resources/GoF2Fonts`, a dynamic font asset made at runtime) so ASCII art lines up, no rich text, 14..22 by the longest line, scrolling both ways; OK / tap / Enter / Space / Esc / A / B / Menu close it; the other input rests, `EventScreen.QuestionOpen`) unless this server's same text was seen (PlayerPrefs `mp_motd_<server name>`, set on close); `/motd` always shows it.
+- **Message of the day** (`NetMotd`, `SERVER.md`): `motd.txt` beside the server's settings (`NetProfiles.Folder`, else
+  `persistentDataPath`), read at the session's start and by `/motd reload`; `/motd set <text>` (`\n` new lines) /
+  `clear` (admins, the console); every space kept, tabs 4 spaces, at most 60 lines / 4000 bytes (one RPC); `%player%`,
+  `%players%`, `%server%` filled per player. A game entering the world asks (`NetGame.EnterWorld` ->
+  `NetState.MotdRequestRpc`), the server answers that player (`MotdRpc`); shown in `EventScreen`'s MOTD window (the
+  server's name, the text in JetBrains Mono (OFL, `Resources/GoF2Fonts`, a dynamic font asset made at runtime) so ASCII
+  art lines up, no rich text, 14..22 by the longest line, scrolling both ways; OK / tap / Enter / Space / Esc / A / B /
+  Menu close it; the other input rests, `EventScreen.QuestionOpen`) unless this server's same text was seen (PlayerPrefs
+  `mp_motd_<server name>`, set on close); `/motd` always shows it.
 - **Sector news** (`NetNews`): the station ticker's multiplayer items, before the game's own (`StationMenu.SetupTicker`;
   rebuilt when the strip wraps, `tickerNewsDirty`, and every minute for the ages). The server posts them and sends each to
   everyone (`NetState.NewsRpc`), a joining player gets the last 15 (`SendAll` from `NetPlayer.OnNetworkSpawn`); the last 40
@@ -137,13 +152,17 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   profile; no limit on their number (the old `-maxprofiles`, default 50, turned new players into guests): a profile
   nobody signed in to for 30 days (`NetProfiles.PruneDays`, by lastSeen) is pruned at the start and hourly
   (`NetProfiles.Prune` from `Tick`; never online or staff), its file and its accounts.json entry moved to `Pruned/` (the
-  newest 50 kept), leaving its faction; the console's `profile restore <id>` brings it back (`ConsoleRestore`). Console (and the web admin's `/api/command`, for control panels): `profile info | delete [force] | block [reason] |
+  newest 50 kept), leaving its faction; the console's `profile restore <id>` brings it back (`ConsoleRestore`). Console
+  (and the web admin's `/api/command`, for control panels): `profile info | delete [force] | block [reason] |
   unblock <id|name>`, `profile blocked` (`ConsoleInfo`, `ConsoleDelete`: force signs the devices out and drops them first;
   block / unblock = `ban` / `unban`). Uploads (gzipped chunks, `UploadChunkRpc`): on every
   docking (`SaveGame.AutoSave`), every 60 s, when leaving (`NetGame.Shutdown`); each is checked like an imported save
   (`SaveGame.TryParse`), and without `-allowdebug` also turned away when the profile's worth (credits + ship prices +
   items at `minPrice`, `NetProfiles.Worth`) grew more than 2 000 000 + `-maxearn` per minute online since the last
-  accepted one, or for hulls 13 / 14 / 15 (the player gets "The server didn't save your progress: ..."). The money log (`NetAudit`, `Server: audit` lines, SERVER.md "The money log"): uploads whose worth grew 100 000+ (per part, the item gains; a warning from 150 000 / min or a refusal), each player's shop runs per item and station (a unit price outside the item's range a warning), faction deposits / withdrawals / tolls. Not a server
+  accepted one, or for hulls 13 / 14 / 15 (the player gets "The server didn't save your progress: ..."). The money log
+  (`NetAudit`, `Server: audit` lines, SERVER.md "The money log"): uploads whose worth grew 100 000+ (per part, the item
+  gains; a warning from 150 000 / min or a refusal), each player's shop runs per item and station (a unit price outside
+  the item's range a warning), faction deposits / withdrawals / tolls. Not a server
   authority: the client still runs the economy (the plan's phase 2: server-priced trades, claimed rewards). Kaamo upgrades
   past `Session.MaxModLevel` per mod and hull (builds of 2026-10-08 stacked them uncapped; a player had ten of each) are cut
   back at sign-in (`SendProfile` rewrites the file) and on every upload (`NetProfiles.ClampMods`). A refused upload is logged

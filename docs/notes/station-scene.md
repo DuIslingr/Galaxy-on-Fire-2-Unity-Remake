@@ -4,10 +4,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## Station scene
 
-`Station.unity` holds a camera, one light, post-processing, `StationLevel` and the station menu (`UI/Station`, `StationMenu`). The level builds the current station's hangar and bar at startup. Switching between them is instant, with no fades, like `ModStation`. Research: `Reference/research/station_interior.md`. All tables (camera positions, slots, ship heights, fighters per race, music) are in `StationTables`.
+`Station.unity` holds a camera, one light, post-processing, `StationLevel` and the station menu (`UI/Station`,
+`StationMenu`). The level builds the current station's hangar and bar at startup. Switching between them is instant,
+with no fades, like `ModStation`. Research: `Reference/research/station_interior.md`. All tables (camera positions,
+slots, ship heights, fighters per race, music) are in `StationTables`.
 
 - **Hangar index:** station 101 uses the battlestation hangar, 100 the deep science one, every other station its system's race.
-  - Rooms: the assembled `hangar_*` prefabs sit at identity; the `bar_*` prefabs at Unity yaw 180 (game identity). Verified in Unity: ships sit on the pads and visitors stand on the floor.
+  - Rooms: the assembled `hangar_*` prefabs sit at identity; the `bar_*` prefabs at Unity yaw 180 (game identity).
+    Verified in Unity: ships sit on the pads and visitors stand on the floor.
   - Camera conversion: a game order-2 rotation (x, y, z) becomes `Quaternion.Euler(-x, -y, z)`. This frames the ship right of centre, like the original.
 - **Hangar** (the main station view):
   - The player's ship sits on a turntable at (0, Y[ship], 0), with the NPC engine meshes and the exhaust off.
@@ -15,10 +19,32 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   - 0..N parked ships: 70 % of the hangar's race, 30 % a random race or pirates.
   - Camera: the phone table, relative to the ship; FOV 0.8 rad vertical; slow random position drift.
   - Lighting: one fixed light from the camera side, a flat per-race ambient, and fog in Vossk hangars.
-  - Depth of field (remake option, Graphics "Hangar depth of field", `Settings.HangarDepthOfField`, off by default (it was on except on phones until 2026-10); `StationLevel.SetupDepthOfField` / `UpdateDepthOfField`): URP's DoF on a volume of its own (layer 26, only in the station camera's volume mask, so the star map and the item window stay sharp; an instance profile, which `Bootstrap.ApplyPostProcessing` leaves alone), focused each frame on the player's ship: Bokeh, a 300 mm lens at f/2 (the hangar cameras keep ~130 m from the turntable: the ~60 m ship sharp, the room behind soft), Gaussian on phones (focus + 25 .. + 140 m); off in the bar, under the star map and in VR. Meanwhile the room's URP Lit materials drop their specular highlights (`CollectRoomHighlights` / `SetRoomMatte`: copies with `_SPECULARHIGHLIGHTS_OFF`, swapped in while the blur is on): the key light's glints on the glossy parts (the Terran forcefield's top beam) popped in and out as the camera drifted, and the blur spread each into a flickering blob, worst at the screen's top edge (Bokeh or Gaussian, with or without DLSS; measured with the camera stepped like its drift: 0.7-1 % of the top strip flickering, 0 without them). URP strips the depth of field shaders from a build unless a volume profile asset has it on (the code-made profile isn't seen): `Assets/Settings/HangarDepthOfFieldShaders.asset` (Bokeh on, used by nothing) keeps them; without it the builds logged "BokehDepthOfField ... has been stripped" and showed no blur.
+  - Depth of field (remake option, Graphics "Hangar depth of field", `Settings.HangarDepthOfField`, off by default (it
+    was on except on phones until 2026-10); `StationLevel.SetupDepthOfField` / `UpdateDepthOfField`): URP's DoF on a
+    volume of its own (layer 26, only in the station camera's volume mask, so the star map and the item window stay
+    sharp; an instance profile, which `Bootstrap.ApplyPostProcessing` leaves alone), focused each frame on the player's
+    ship: Bokeh, a 300 mm lens at f/2 (the hangar cameras keep ~130 m from the turntable: the ~60 m ship sharp, the room
+    behind soft), Gaussian on phones (focus + 25 .. + 140 m); off in the bar, under the star map and in VR. Meanwhile
+    the room's URP Lit materials drop their specular highlights (`CollectRoomHighlights` / `SetRoomMatte`: copies with
+    `_SPECULARHIGHLIGHTS_OFF`, swapped in while the blur is on): the key light's glints on the glossy parts (the Terran
+    forcefield's top beam) popped in and out as the camera drifted, and the blur spread each into a flickering blob,
+    worst at the screen's top edge (Bokeh or Gaussian, with or without DLSS; measured with the camera stepped like its
+    drift: 0.7-1 % of the top strip flickering, 0 without them). URP strips the depth of field shaders from a build
+    unless a volume profile asset has it on (the code-made profile isn't seen):
+    `Assets/Settings/HangarDepthOfFieldShaders.asset` (Bokeh on, used by nothing) keeps them; without it the builds
+    logged "BokehDepthOfField ... has been stripped" and showed no blur.
 - **Space Lounge:**
   - 3-4 generic visitors (the race and gender rules of `Generator::createAgent`) on random slots, as camera-facing billboards with a glow and a floor shadow.
-  - Camera: a 3 s intro on the first visit (a tap skips it), then a slow sway. Remake: while the player talks to a visitor (`LoungePanel.OpenChat` -> `StationLevel.FocusVisitor`) the view turns sideways only (the room camera's pitch and roll kept: tilted down to them it looked odd) so they stand beside the chat window, in the middle of the room left of it (`StationLevel.ChatFrameX`, set by `LoungePanel` from the window's place), and zooms in a quarter, eased over 0.8 s (smoothstep) on top of the sway, and back when the chat closes; not in VR. The chat window (#82) is 940 wide at the bottom right (phones 900, 80 / 140 from the edges, clear of rounded corners and the hint row); it spanned the screen from the side panel's edge and covered the visitors. A visitor standing in the right half of the view at the click keeps to the right: the window goes to the bottom left (`.chat-window--left`, `LoungePanel.chatOnLeft`) and `ChatFrameX` frames the visitor in the middle of the room right of it (the user's request, 2026-10-18; it was always the window on the right).
+  - Camera: a 3 s intro on the first visit (a tap skips it), then a slow sway. Remake: while the player talks to a
+    visitor (`LoungePanel.OpenChat` -> `StationLevel.FocusVisitor`) the view turns sideways only (the room camera's
+    pitch and roll kept: tilted down to them it looked odd) so they stand beside the chat window, in the middle of the
+    room left of it (`StationLevel.ChatFrameX`, set by `LoungePanel` from the window's place), and zooms in a quarter,
+    eased over 0.8 s (smoothstep) on top of the sway, and back when the chat closes; not in VR. The chat window (#82) is
+    940 wide at the bottom right (phones 900, 80 / 140 from the edges, clear of rounded corners and the hint row); it
+    spanned the screen from the side panel's edge and covered the visitors. A visitor standing in the right half of the
+    view at the click keeps to the right: the window goes to the bottom left (`.chat-window--left`,
+    `LoungePanel.chatOnLeft`) and `ChatFrameX` frames the visitor in the middle of the room right of it (the user's
+    request, 2026-10-18; it was always the window on the right).
   - Lighting: the system's sun, with skybox ambient.
   - Anti-aliasing (remake, `StationLevel.ApplyAntialiasing`, both rooms): URP's TAA on the station camera, SMAA when a temporal
     upscaler (DLSS / FSR 2+ / STP) is active or MSAA is on; the thin glossy parts (the Nivelian bar stools, the Midorian
@@ -45,23 +71,106 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
     air). It was an overlay camera stacked on the bar camera (PR #109): a camera stack turns URP's temporal upscalers off
     (DLSS, FSR 3, STP), so the station dropped to the plain render scale from the first lounge visit on.
 - **Menu:**
-  - Layout: header; system, tech level and race; Hangar (opens the shop window, see "Shop"), Space Lounge and Map (the star map, see "Star map and system travel") buttons; **Launch**, refused while the cargo hold is overloaded (204); the original's "Depart the station?" (397) is left out (remake: it launches at once).
-  - Credits and cargo (remake, players' request; `StationMenu.UpdateFunds`, `.station-funds` in StationMenu.uss): the hangar window footer's two plates ("CARGO 65 / 195 t" with text 184, red when overloaded; the credits in amber) at the top right under the bar, on the main view and in the Space Lounge (its visitor list moved down under them), read every frame and written when a value changes (lounge deals, payouts, medal rewards, fines, multiplayer trades, tolls); they fly up and away with the bar in the menu's UI animation; hidden under the hangar window (its own footer), the Missions and Status windows and the star map.
-  - Input modes work like the flight HUD: touch; keyboard 1 / 2 / M / L / Esc (Launch shows its key: L / the controller's X glyph before its text); controller LB / RB / Y / X / B / Menu. The number keys are the PC version's "Menu button 1 - 9" (3356, its key table is still in the Android binary: a tap on `Globals::sub_menu_buttons`): on the main view 1 Hangar, 2 Lounge, 3 Map, 4 Missions, 5 Status; in the Space Lounge 1-9 (and the keypad's) pick its visitors in the list's order instead, numbered "1." on the rows with keys and mouse (remake, #75, `LoungePanel.NumberKey`); in the hangar window 1 / 2 / 3 = Ship / Shop (Store) / Blueprints (`HangarWindow::initialize`), 4 / 5 nothing; Q / E (LB / RB) cycle the tabs. No hint row on the main view (the buttons say it); toasts sit at the bottom, above the ticker.
+  - Layout: header; system, tech level and race; Hangar (opens the shop window, see "Shop"), Space Lounge and Map (the
+    star map, see "Star map and system travel") buttons; **Launch**, refused while the cargo hold is overloaded (204);
+    the original's "Depart the station?" (397) is left out (remake: it launches at once).
+  - Credits and cargo (remake, players' request; `StationMenu.UpdateFunds`, `.station-funds` in StationMenu.uss): the
+    hangar window footer's two plates ("CARGO 65 / 195 t" with text 184, red when overloaded; the credits in amber) at
+    the top right under the bar, on the main view and in the Space Lounge (its visitor list moved down under them), read
+    every frame and written when a value changes (lounge deals, payouts, medal rewards, fines, multiplayer trades,
+    tolls); they fly up and away with the bar in the menu's UI animation; hidden under the hangar window (its own
+    footer), the Missions and Status windows and the star map.
+  - Input modes work like the flight HUD: touch; keyboard 1 / 2 / M / L / Esc (Launch shows its key: L / the
+    controller's X glyph before its text); controller LB / RB / Y / X / B / Menu. The number keys are the PC version's
+    "Menu button 1 - 9" (3356, its key table is still in the Android binary: a tap on `Globals::sub_menu_buttons`): on
+    the main view 1 Hangar, 2 Lounge, 3 Map, 4 Missions, 5 Status; in the Space Lounge 1-9 (and the keypad's) pick its
+    visitors in the list's order instead, numbered "1." on the rows with keys and mouse (remake, #75,
+    `LoungePanel.NumberKey`); in the hangar window 1 / 2 / 3 = Ship / Shop (Store) / Blueprints
+    (`HangarWindow::initialize`), 4 / 5 nothing; Q / E (LB / RB) cycle the tabs. No hint row on the main view (the
+    buttons say it); toasts sit at the bottom, above the ticker.
   - Esc or B steps back: dialog, then lounge, then the system menu (Save game, Back to Main Menu).
   - The mouse takes the selection to the `station-button` it is over (`PointerOverEvent` on the root, like MainMenu's
     `HookFocusSound`): a menu opened with the mouse focused its first entry, which stayed lit beside the hovered one. The
     hover highlight itself (`.can-hover`) shows only while the mouse was the last input (`InputMode.MousePointing`, the
     main menu too): a cursor resting over a row kept it lit while the keys / a controller moved the focus, two rows at
     once at every station docked at (a player's report, 2026-10-18).
-  - Music per race and station; ambience per screen as the FMOD cycle events (`CycleSound`): 122 Mainview, 95 Hangar while the hangar window is open (`StationLevel.SetHangarWindowOpen`, `ModStation::OnKeyPress`), 108 Lounge.
+  - Music per race and station; ambience per screen as the FMOD cycle events (`CycleSound`): 122 Mainview, 95 Hangar
+    while the hangar window is open (`StationLevel.SetHangarWindowOpen`, `ModStation::OnKeyPress`), 108 Lounge.
 - Missions (129, unlocks with the Map) and Status (169): see "Bar and freelance".
-- **System menu** (`StationMenu`, `SysPage` Main / Save / Load / Options): 30 Save game, 29 Load (the slot list), 31 Options (the `OptionControl` rows), 522 Back to Main Menu; Back at the top right. 28 New game and 43 About are built and wired but hidden (`BuildSystemExtras`): the main menu has both, and `SystemMenuItems` skips what is hidden.
-- **New medals** (`ShowNextMedal`, `checkForNewMedal`): the reward 5000 / 2500 / 1000 by grade (none on Extreme); remake: instead of the original's ChoiceWindow per medal that waits for OK, a toast at the top centre (`.medal-toast` in StationMenu.uss: the plate `StatusWindow.MedalPlate`, 353, the name, the reward; border, top band and title in the grade's colour `StatusWindow.MedalTint`; drops in and grows with a short flash; the remake's own sound `Resources/GoF2Sfx/MedalToast`, synthesized by `Reference/tools/audio/medal_sound`) for 4 / 5 / 6 / 7 s (bronze / silver / gold / elite; 3 s while more medals wait, the last one its full time; the pointer resting on it pauses the countdown), then it fades and the next medal follows; it doesn't hold up the station's other checks; a tap / click opens the Status window on that medal (`OpenMedal`, `StatusWindow.SelectMedal`); medal hints 649 / 650 / 651 and the blueprint hints 232 / 3233 (`CheckMedalHints`); first-visit hints (622 hangar, 627 lounge, 635 missions, 640 phones, 628 / 631 on the map via `StarMap.ShowHint`); the hangar's selection hints 587-589.
-- **Inspect ship** (remake, the side menu's "Inspect ship" under Status (hangar view only, not in VR), keys 6 / I, the controller's right stick press; `World.HangarInspect` (plain C#) + `StationLevel.BeginInspect` / `EndInspect`, input in `StationMenu.UpdateInspect`): the camera leaves its drifting hangar spot and orbits the player's ship like the flight's Action Freeze (`PhotoMode`): yaw / pitch around the hull's centre (its meshes' box in the ship's own frame, no glow layers), starting where the hangar camera is and zooming in to 2.1x the hull's radius (1.15x..4x), a 0.9 s eased blend in and back out, the pitch kept above the pad (the hull's lowest point + 1.5 m), the near plane pulled in to stay in front of the hull; drag / one finger turns (0.005 rad per 1080p pixel, the fling x0.9 a 30 fps frame), the wheel, a pinch, + / - (Page Up / Down) and the triggers zoom, the arrows / W A S D and both sticks turn. The menu flies out meanwhile (the UI animation, `UiBlocked`), a footer keeps Back and the hints row at the top right the controls; Hide UI (H, the controller's Y; a short click / tap or H / Y brings it back, a drag still turns) and Screenshot (Enter / P, the controller's A: `PhotoMode.Store`, no UI in it, 55 / 56) are clickable hints (taps on touch). Back: Esc, Backspace, B, 6 / I, the right stick press. The depth of field focuses on the hull's centre meanwhile and turns Gaussian (also in the Mod Builder's orbit): sharp to a little past the hull, the room behind blurred (300 mm at f/2 kept ~6 m sharp up close, a 50 mm lens at the orbit's ~80 m blurred nothing). Leaving the hangar view drops it (`HangarInspect.Reset`); a take-off ends it. The rooms are only modelled where the original camera looks, so some angles see past them. Action Freeze's photo tools work here too (the free camera and the Camera settings panel, see "UI and platforms"); the free camera's reach shows more of the rooms' unmodelled sides.
-- The turret (`CutScene::checkForTurret`): the item's `hangar_turret_item_N` assembly on the turntable ship's slot-2 mount, turned (0, pi, 0) except the plasma collectors, still; rebuilt when the turret item changes (`StationLevel.RefreshTurret`). Remake (`TurretCore.Display`, `StationLevel.AddNpcTurrets`): the NPC ships parked and landing there show their turrets the same way (their type's `Database.NpcTurrets`, else 45 / 51 their fighter turret `turret_002_static` at its spot), the Kaamo Club's stored hulls their own mounted turrets, other players' ships theirs (`NetHangar`); `HangarTraffic.NpcSpawned` tells NPC ships from guests.
-- **Hangar flights** (remake-only, option "Hangar arrival and take-off", `Settings.HangarFlights`; the original cuts straight between space and the parked ship): `HangarFlight` (plain C#) flies a ship along its hangar's lane (`StationTables.HangarLanes`, Unity metres measured on the room meshes: the forcefield's centre and outward direction, the height span it can be passed at, a cruise height above the parked ships; Vossk: the emblem portal on −x, bays facing the ring's centre, so the ships swing through the centre (every bend is a wide fillet) and fly into the bay 5 m up; the remodelled room's central column stands there, so they go round it instead, see "Vossk hangar, remodel"). Arrival: from 450 m outside (growing from nothing, so nothing pops in where the opening shows space) through the forcefield, level (the Nivelian hangar's six roof pillars, `StationTables.HangarLane.pillars` measured on its mesh, are flown round: `HangarFlight.PillarRoute`, an A* over a 4 m grid keeping each pillar's radius + the ship's half width + 10 m clear and favouring the middle of the gaps, string-pulled, cached per pad and width; a player's report 2026-10-16, ships flew through the pillar in front of the right pad; checked with every hangar ship's outline: 10.9 m at the closest), at up to 200 m/s, braking hard, then gently over the last 25 m through a rounded corner with a slight flare to a stop over the pad, a turn on the spot (65 deg/s, a little bank) to the parking yaw, straight down. Departure: the reverse (straight up, the turn at the top, the corner, out, shrinking away; the ship stays hidden at the end, not back at full size for the frame before Space loads). Where the path leaves (enters) the hangar camera's view the ship shrinks to nothing over the last (grows over the first) 160 m in view (at most 60 % of the lane in view), so it never crosses the screen edge at full size (a pad just outside the view, the Midorian hangar's right one, isn't such an edge: the ship takes off there at full size and flies into the view; it vanished over the pad and crossed the hangar unseen); the engine loop takes the space engines' rolloff (`EngineVoices.Setup3D`, to 500 m) and fades with the ship's size. Landings and take-offs are always vertical. The camera keeps the original framing (the rooms are only modelled where the 16:9 hangar camera looks). Only the player's own docking flies in (`SpaceLevel.Dock(true)`: the autopilot, touching the station, the Dock prompt, `Session.DockedFromSpace`); the story's moves into a station (the rescue, arrests, "docked at ...") and loads don't. `Launch` / `Depart` take off first (the story's direct launches into a story orbit don't). The station menu is away meanwhile: it flies / fades out as the take-off starts and back in once the ship has landed (`StationMenu.UpdateUiAnimation`, 450 ms, ease-out cubic: the top bar slides up, Launch right, the ticker down, the safe area fades, and the side panel's entries (the station information, then each shown button) come in one by one like the main menu's buttons: 40 px from the left, 180 ms each, 50 ms apart, the last one first going away; while it is away or moving nothing takes input: a blocker over the panel, the navigation events stopped, `Update` returns early (`UiBlocked`); the station's first frame takes the state as it is, so a fly-in starts with the menu away and a ship simply on its pad shows it at once); its conversations, fines, medals and hints wait until the ship has landed; any key / tap / button skips the flight. `HangarTraffic`: the parked ships (the original's 0..max) come and go every 12-35 s (landings likelier the emptier the hangar, at a random parking yaw like the parked ones; not in the owned Kaamo Club, none at the battlestation, max 0); one flight in the air at a time, the player's included, so nothing collides: the traffic waits for the player, and a departing player holds over its pad while an NPC flight finishes.
-- **Parking heights** (remake, `StationTables.PadPivotY`, `Resources/GoF2Data/hangar_heights.json` from **GoF2 > Build > Hangar Heights**): the original's floor y + ShipY, lifted only where the hull would cut into the pad, per hangar, slot (the
+- **System menu** (`StationMenu`, `SysPage` Main / Save / Load / Options): 30 Save game, 29 Load (the slot list), 31
+  Options (the `OptionControl` rows), 522 Back to Main Menu; Back at the top right. 28 New game and 43 About are built
+  and wired but hidden (`BuildSystemExtras`): the main menu has both, and `SystemMenuItems` skips what is hidden.
+- **New medals** (`ShowNextMedal`, `checkForNewMedal`): the reward 5000 / 2500 / 1000 by grade (none on Extreme);
+  remake: instead of the original's ChoiceWindow per medal that waits for OK, a toast at the top centre (`.medal-toast`
+  in StationMenu.uss: the plate `StatusWindow.MedalPlate`, 353, the name, the reward; border, top band and title in the
+  grade's colour `StatusWindow.MedalTint`; drops in and grows with a short flash; the remake's own sound
+  `Resources/GoF2Sfx/MedalToast`, synthesized by `Reference/tools/audio/medal_sound`) for 4 / 5 / 6 / 7 s (bronze /
+  silver / gold / elite; 3 s while more medals wait, the last one its full time; the pointer resting on it pauses the
+  countdown), then it fades and the next medal follows; it doesn't hold up the station's other checks; a tap / click
+  opens the Status window on that medal (`OpenMedal`, `StatusWindow.SelectMedal`); medal hints 649 / 650 / 651 and the
+  blueprint hints 232 / 3233 (`CheckMedalHints`); first-visit hints (622 hangar, 627 lounge, 635 missions, 640 phones,
+  628 / 631 on the map via `StarMap.ShowHint`); the hangar's selection hints 587-589.
+- **Inspect ship** (remake, the side menu's "Inspect ship" under Status (hangar view only, not in VR), keys 6 / I, the
+  controller's right stick press; `World.HangarInspect` (plain C#) + `StationLevel.BeginInspect` / `EndInspect`, input
+  in `StationMenu.UpdateInspect`): the camera leaves its drifting hangar spot and orbits the player's ship like the
+  flight's Action Freeze (`PhotoMode`): yaw / pitch around the hull's centre (its meshes' box in the ship's own frame,
+  no glow layers), starting where the hangar camera is and zooming in to 2.1x the hull's radius (1.15x..4x), a 0.9 s
+  eased blend in and back out, the pitch kept above the pad (the hull's lowest point + 1.5 m), the near plane pulled in
+  to stay in front of the hull; drag / one finger turns (0.005 rad per 1080p pixel, the fling x0.9 a 30 fps frame), the
+  wheel, a pinch, + / - (Page Up / Down) and the triggers zoom, the arrows / W A S D and both sticks turn. The menu
+  flies out meanwhile (the UI animation, `UiBlocked`), a footer keeps Back and the hints row at the top right the
+  controls; Hide UI (H, the controller's Y; a short click / tap or H / Y brings it back, a drag still turns) and
+  Screenshot (Enter / P, the controller's A: `PhotoMode.Store`, no UI in it, 55 / 56) are clickable hints (taps on
+  touch). Back: Esc, Backspace, B, 6 / I, the right stick press. The depth of field focuses on the hull's centre
+  meanwhile and turns Gaussian (also in the Mod Builder's orbit): sharp to a little past the hull, the room behind
+  blurred (300 mm at f/2 kept ~6 m sharp up close, a 50 mm lens at the orbit's ~80 m blurred nothing). Leaving the
+  hangar view drops it (`HangarInspect.Reset`); a take-off ends it. The rooms are only modelled where the original
+  camera looks, so some angles see past them. Action Freeze's photo tools work here too (the free camera and the Camera
+  settings panel, see "UI and platforms"); the free camera's reach shows more of the rooms' unmodelled sides.
+- The turret (`CutScene::checkForTurret`): the item's `hangar_turret_item_N` assembly on the turntable ship's slot-2
+  mount, turned (0, pi, 0) except the plasma collectors, still; rebuilt when the turret item changes
+  (`StationLevel.RefreshTurret`). Remake (`TurretCore.Display`, `StationLevel.AddNpcTurrets`): the NPC ships parked and
+  landing there show their turrets the same way (their type's `Database.NpcTurrets`, else 45 / 51 their fighter turret
+  `turret_002_static` at its spot), the Kaamo Club's stored hulls their own mounted turrets, other players' ships theirs
+  (`NetHangar`); `HangarTraffic.NpcSpawned` tells NPC ships from guests.
+- **Hangar flights** (remake-only, option "Hangar arrival and take-off", `Settings.HangarFlights`; the original cuts
+  straight between space and the parked ship): `HangarFlight` (plain C#) flies a ship along its hangar's lane
+  (`StationTables.HangarLanes`, Unity metres measured on the room meshes: the forcefield's centre and outward direction,
+  the height span it can be passed at, a cruise height above the parked ships; Vossk: the emblem portal on −x, bays
+  facing the ring's centre, so the ships swing through the centre (every bend is a wide fillet) and fly into the bay 5 m
+  up; the remodelled room's central column stands there, so they go round it instead, see "Vossk hangar, remodel").
+  Arrival: from 450 m outside (growing from nothing, so nothing pops in where the opening shows space) through the
+  forcefield, level (the Nivelian hangar's six roof pillars, `StationTables.HangarLane.pillars` measured on its mesh,
+  are flown round: `HangarFlight.PillarRoute`, an A* over a 4 m grid keeping each pillar's radius + the ship's half
+  width + 10 m clear and favouring the middle of the gaps, string-pulled, cached per pad and width; a player's report
+  2026-10-16, ships flew through the pillar in front of the right pad; checked with every hangar ship's outline: 10.9 m
+  at the closest), at up to 200 m/s, braking hard, then gently over the last 25 m through a rounded corner with a slight
+  flare to a stop over the pad, a turn on the spot (65 deg/s, a little bank) to the parking yaw, straight down.
+  Departure: the reverse (straight up, the turn at the top, the corner, out, shrinking away; the ship stays hidden at
+  the end, not back at full size for the frame before Space loads). Where the path leaves (enters) the hangar camera's
+  view the ship shrinks to nothing over the last (grows over the first) 160 m in view (at most 60 % of the lane in
+  view), so it never crosses the screen edge at full size (a pad just outside the view, the Midorian hangar's right one,
+  isn't such an edge: the ship takes off there at full size and flies into the view; it vanished over the pad and
+  crossed the hangar unseen); the engine loop takes the space engines' rolloff (`EngineVoices.Setup3D`, to 500 m) and
+  fades with the ship's size. Landings and take-offs are always vertical. The camera keeps the original framing (the
+  rooms are only modelled where the 16:9 hangar camera looks). Only the player's own docking flies in
+  (`SpaceLevel.Dock(true)`: the autopilot, touching the station, the Dock prompt, `Session.DockedFromSpace`); the
+  story's moves into a station (the rescue, arrests, "docked at ...") and loads don't. `Launch` / `Depart` take off
+  first (the story's direct launches into a story orbit don't). The station menu is away meanwhile: it flies / fades out
+  as the take-off starts and back in once the ship has landed (`StationMenu.UpdateUiAnimation`, 450 ms, ease-out cubic:
+  the top bar slides up, Launch right, the ticker down, the safe area fades, and the side panel's entries (the station
+  information, then each shown button) come in one by one like the main menu's buttons: 40 px from the left, 180 ms
+  each, 50 ms apart, the last one first going away; while it is away or moving nothing takes input: a blocker over the
+  panel, the navigation events stopped, `Update` returns early (`UiBlocked`); the station's first frame takes the state
+  as it is, so a fly-in starts with the menu away and a ship simply on its pad shows it at once); its conversations,
+  fines, medals and hints wait until the ship has landed; any key / tap / button skips the flight. `HangarTraffic`: the
+  parked ships (the original's 0..max) come and go every 12-35 s (landings likelier the emptier the hangar, at a random
+  parking yaw like the parked ones; not in the owned Kaamo Club, none at the battlestation, max 0); one flight in the
+  air at a time, the player's included, so nothing collides: the traffic waits for the player, and a departing player
+  holds over its pad while an NPC flight finishes.
+- **Parking heights** (remake, `StationTables.PadPivotY`, `Resources/GoF2Data/hangar_heights.json` from **GoF2 > Build >
+  Hangar Heights**): the original's floor y + ShipY, lifted only where the hull would cut into the pad, per hangar, slot
+  (the
   turntable too: its largest lift), ship and heading (24 bins); never lowered (the Terran cradles are open funnels). The
   builder drops each ship's hull bottom (the lowest vertex per 0.1 m column; 0.6 m left up to 1 m of hull in the steep
   pad rims) onto the room's meshes (MeshColliders in a preview scene, the animated parts at their loop start, not the
@@ -78,17 +187,21 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 - **Ship shadows** (remake; the original's hangars have none, and the hangar light comes from the camera's side, so a real
   shadow falls behind the ship and out of URP's 50 m shadow distance): `HangarShipShadow` on every ship `SpawnShip` puts in
   the hangar (the turntable, the parked ships, the flights, other players' ships) projects a soft contact shadow like a decal:
-  `GoF2/HangarShadow` on a box around the footprint (only the ship's yaw, 12 m below (6 until 2026-10-16: the Terran turntable's inner ring, sloping ~7 m under a low kit ship's bottom into its pit, stayed lit) to 8 m above the resting hull's lowest
+  `GoF2/HangarShadow` on a box around the footprint (only the ship's yaw, 12 m below (6 until 2026-10-16: the Terran
+  turntable's inner ring, sloping ~7 m under a low kit ship's bottom into its pit, stayed lit) to 8 m above the resting
+  hull's lowest
   point, a little wider as it lifts) rebuilds each pixel's scene point from the station camera's depth texture (switched on
   by it) and darkens it by the ship's map from **GoF2 > Build > Hangar Shadows** (`ShipShadowSet`, `HangarShadowsBuilder`:
   the hull's triangles rasterised from above into 128 x 128 over a square 2.2 x the hull, linear, uncompressed; R the
   underside's height over each texel (spread outward), G the silhouette, A a wide soft halo): under the silhouette and in
   the halo around it (the part a camera looking down past the hull sees), only below the hull's underside there (so the
   hull never shades itself; 3 m above it past the hull, the rims around a sunk hull), only on surfaces facing up (normals
-  from the depth's derivatives), full up to 2.4 m above the floor, fading out to 8 m (`_Hull.zw`). Shown at once for a ship spawned on its pad (the turntable, the parked ships, a guest), fading out
+  from the depth's derivatives), full up to 2.4 m above the floor, fading out to 8 m (`_Hull.zw`). Shown at once for a
+  ship spawned on its pad (the turntable, the parked ships, a guest), fading out
   over 15 m as it lifts off and staying on the pad; an arriving ship's fades in the same way as it comes down
   (`HangarFlight.Arrival` -> `ExpectLanding`: the pad's floor is known from the start, the hover over the pad isn't
-  taken for the landing; verified: none during the approach at 32 m, 16 % at 12.6 m, full at touch-down). The bake is `ShipShadowBaker` (shared by the builder): the mods' ships
+  taken for the landing; verified: none during the approach at 32 m, 16 % at 12.6 m, full at touch-down). The bake is
+  `ShipShadowBaker` (shared by the builder): the mods' ships
   are baked by it at run time (glTFast keeps their meshes readable; once per assembly and set of mods, the rasterising on a
   worker thread, the shadow hidden until it is done; their engine / throttle glows left out; kept for later plays in
   `persistentDataPath/ModCache/ShipShadows/<mod id>/<hull hash>.shadow` (the hull's triangles are its identity, no mod
@@ -104,12 +217,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   wrong shadow; the builder skips pack "mod"); the debug capital hulls get a soft oval of their bounds (the game's
   meshes are imported non-readable, so a build can't rasterise them). Verified in Play mode in the Terran,
   Nivelian, Vossk, Midorian and deep science hangars. The Graphics option **Hangar ship shadows** (`Settings.HangarShadows`:
-  Off / Player ship only / All ships, default Player ship only since 2026-10-21 (All before; performance complaints on phones)): every hangar ship still gets its
+  Off / Player ship only / All ships, default Player ship only since 2026-10-21 (All before; performance complaints on
+  phones)): every hangar ship still gets its
   `HangarShipShadow` (`Attach(..., player)`: `SpawnShip`'s "Player ship", the turntable's), the box is just hidden while the
   option doesn't allow it, so changing it docked applies at once; Off also gives the station camera's `requiresDepthOption`
   back its own value from before the first shadow (the depth texture is the bigger part of the cost), any other choice sets
   it On (again on every `Settings.Changed`).
-- The room's animations all run (`CutScene::process` updates every geometry, not only the `_anim` meshes), skipping their one-off first key like every animation (`PartAnimation.loopStartMs`, see "Known open items"; played, the key flashed the Nivelian bar and the Midorian bar for a frame on every wrap, parked the Terran gutter lights on the player's pad and made the loops jump; the Vossk bar's streaks start at 500 ms); rotations swing back and forth (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal) and the `_anim` layers fade by their `extra` channel (the Vossk portal light).
+- The room's animations all run (`CutScene::process` updates every geometry, not only the `_anim` meshes), skipping
+  their one-off first key like every animation (`PartAnimation.loopStartMs`, see "Known open items"; played, the key
+  flashed the Nivelian bar and the Midorian bar for a frame on every wrap, parked the Terran gutter lights on the
+  player's pad and made the loops jump; the Vossk bar's streaks start at 500 ms); rotations swing back and forth
+  (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal) and the `_anim` layers fade by
+  their `extra` channel (the Vossk portal light).
 - The Kaamo Club parks its stored hulls: see "Kaamo Club".
 - **Midorian hangar, contributed remodel** (remake, 2026-10; sources `Reference/contrib/immersive_hangars`, Blender OBJs):
   the room made whole (walls, ceiling, tanks and light strips where the original's hangar was open to space, a third row of

@@ -13,12 +13,16 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   applied, `ModShipBuilder.ApplyMaterials`), and only those a build uses: the kit ships' default builds and the player's saved
   builds at the start, any other when a build first needs it (`EnsureBuild` / `Template` start it; `KitPartsLoaded` and
   `ModelsChanged` follow, `StationLevel` / `SpaceLevel.OnModShipModels` rebuild the player's ship, the Customize screen keeps
-  the last build with "Loading parts..." meanwhile; the ES2 kits: 39 of 205 files at the start), assembles the default build as the ship's "ship_NNN_mod" template and a player's
+  the last build with "Loading parts..." meanwhile; the ES2 kits: 39 of 205 files at the start), assembles the default
+  build as the ship's "ship_NNN_mod" template and a player's
   build as "ship_NNN_mod#<build>" the first time `Template` asks (`variants`, the newest 48 kept; `Database.AssemblyByName`
   answers a variant name); `ModShipBuilder.Build`'s kitScale / kitYaw keep the kit's size. `Session.ShipBuilds` (by the ship's
   key, save v17 `shipBuilds` "key|build"), `ModShipKits.PlayerBuild` (normalized: every slot a part the type may fit, the tier
   clamped) -> `PlayerHull.Assembly` (the hangar turntable, flight). The hangar's **Customize ship** button (under Inspect ship,
-  only for a kit ship, `StationMenu.BeginCustomize`) opens `UI.ShipCustomizePanel` over Inspect ship's orbit view (the orbit turned aside so the ship stands in the middle of the screen right of the panel, `StationLevel.InspectFrameX`; the footer's Back hidden, it lay under Apply; the rows scroll in a list sized to the screen, `FitToScreen`, so the stats, buttons and help stay on it): a row per
+  only for a kit ship, `StationMenu.BeginCustomize`) opens `UI.ShipCustomizePanel` over Inspect ship's orbit view (the
+  orbit turned aside so the ship stands in the middle of the screen right of the panel, `StationLevel.InspectFrameX`;
+  the footer's Back hidden, it lay under Apply; the rows scroll in a list sized to the screen, `FitToScreen`, so the
+  stats, buttons and help stay on it): a row per
   slot and the tier, up / down / left / right (W A S D, D-pad, left stick) and the arrows' clicks, every change shown on the
   turntable (`ReplacePlayerShip`), Enter / A applies (autosave), Esc / B / Back cancels (the old build back). Verified in Play
   mode with a box-part test kit (Mods/kit_test): parsing, the default builds, a variant, the type whitelist and tier clamp, the
@@ -48,7 +52,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   slanted hardpoints; the shots still fly along the nose), and a turret model without a `muzzle` node carries its weapon on
   the gun node and fires from the weapon's muzzle; the weapon and turret models take the build's colours
   (`ModHardpoints.Colour` -> `ModShips.ApplyColors` with a cache of copies per build's colours: ES2's missile pod lights its
-  bay frame in Emissive 2 and is painted in the hull colours; they kept the template's white before); a primary / secondary mount's `nodes` (`WeaponMount.nodes`, ship model node
+  bay frame in Emissive 2 and is painted in the hull colours; they kept the template's white before); a primary /
+  secondary mount's `nodes` (`WeaponMount.nodes`, ship model node
   names: the GoF3 hulls' pylons) show only while that mount carries a weapon (`ModHardpoints.ShowMountNodes`, from every
   `AttachWeapons`: flight, the hangar turntable, other players' ships and hangar guests). **Weapon models toggle** (the
   user's request for the GoF3 hulls, 2026-10-17; the kit's hardpoints `"toggle": true`, `ModHardpoints.Toggles`, which the
@@ -58,7 +63,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (shown ?? the player's build): `AttachWeapons` attaches no models and hides every pylon node, `TurretModel` returns null
   (`PlayerTurret`'s invisible stand-in, nothing in the hangar), `MuzzleOffset` zero (the shots from the mount), `HangarHeight`
   without the weapons; other players through `NetPlayer.ShownBuild`. Tests `ModHardpointsToggleTests`; verified in Play mode
-  (the GoF3 Cronus: guns and both kit turrets gone, the stand-ins kept; the hangar row and turntable). **Skins** (a kit's `skins`, `ModShipKits.Skin`; `Build.skin`, text
+  (the GoF3 Cronus: guns and both kit turrets gone, the stand-ins kept; the hangar row and turntable). **Skins** (a
+  kit's `skins`, `ModShipKits.Skin`; `Build.skin`, text
   "skin=id", "none" = the model's own look over a default build's skin, `Build.Reserved` keeps "skin" / "tier" / "color." out
   of the slot names): texture sets per material name (diffuse, emission, metallicSmoothness in URP's layout, normal, colours)
   put on copies of the build's materials (`ModShips.ApplySkin`, before the colours) and an optional `engineColor` for every
@@ -82,7 +88,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   keeps the model's own pack for "#" names); the Customize screen, weapon colour, the rebuild hooks (`SpaceLevel` /
   `StationLevel.OnModShipModels`) and other players' views (`NetPlayer` build text) take `CustomizationOf`. Verified in Play
   mode with throwaway skin mods: the Phantom's Customize screen (Skin + Weapon colour rows), its crimson skin on the
-  turntable and in flight with a mod weapon colour, the game's Groza (22) skinned in the hangar, the mod turned off (plain). Used by the GoF3 Ships mod (version 2: one kit "gof3", a hull part per ship, its GoF3 paint schemes as
+  turntable and in flight with a mod weapon colour, the game's Groza (22) skinned in the hangar, the mod turned off
+  (plain). Used by the GoF3 Ships mod (version 2: one kit "gof3", a hull part per ship, its GoF3 paint schemes as
   skins, the GoF3 guns as hardpoint models by weapon, a GoF3-parts turret on every hull, GoF3's projectile colours as its
   "weapons" palette (Colorize_Color1 of the GoF3 weapon effects' materials); built by the gof3-ships-importer's
   `tools/build_gof3_mod.py`, which finds each hardpoint's pylon by its number (several hulls borrow another's pylons) and
@@ -124,11 +131,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   converter (`flame_across`) writes each card's coordinate across it into UV1.x and its kind into UV1.y, read as
   |y - 0.5| (glTFast flips V): 0 main, 0.25 boost, 0.5 none. The vertex shader moves each vertex u x the length backward
   (`_FlameDir`, the ship root's -Z in the renderer's object space, per renderer and submesh through a MaterialPropertyBlock,
-  the renderer's bounds grown to match): main cards by thrust 0..1 (none at idle: below a drive of 0.02 the flames shrink into the nozzles like free flight's engines off; the user's ES2 shots of a ship at rest), +30 % at a full boost, boost cards by the
+  the renderer's bounds grown to match): main cards by thrust 0..1 (none at idle: below a drive of 0.02 the flames
+  shrink into the nozzles like free flight's engines off; the user's ES2 shots of a ship at rest), +30 % at a full
+  boost, boost cards by the
   boost alone, both x the engines' level (the engine glow part active, 0.25 s fade: shrunk into the nozzles and dark on a
   parked ship; in the station capped at full throttle). The fragment: additive, the colour gold near the nozzle (boost
   cards a tight near-white head, `_BoostCore`, then saturated in the boost colour at `_BoostBrightness` 1.6: matched to the
-  user's ES2 customization-screen shots of the Wraith boosting; they were half as bright with a faint head), ES2's T_Noise_018_M stretched into fine streaks, faded hard toward the tip (`_Fade` 4), each card
+  user's ES2 customization-screen shots of the Wraith boosting; they were half as bright with a faint head), ES2's
+  T_Noise_018_M stretched into fine streaks, faded hard toward the tip (`_Fade` 4), each card
   softened toward its long edges (UV1.x) and, for main cards, faded as it turns edge-on (|N.V|^2, ES2's OpacityExponent:
   from behind only thin rays remain, as in ES2; the remake had widened the cards toward the camera, `_Widen`, now 0, which
   turned Rear_009's boost cards into fans above and below the ring). A ship with flames keeps an empty `engine_glow` part
@@ -158,7 +168,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   M_ShipModules_Holograms parameters (the converter's `holo_rings` reads the rings' vertex colours: red spin, blue bob);
   `"shimmer"` materials (`GoF2/ModNozzleShimmer`, `ModAssets.nozzleShimmer`, `ModMaterials.Shimmer`) draw additively over the
   nozzle glow's faces (the converter splits them twice, "NozzleShimmer"): the glow pattern times T_Noise_001_M scrolling at
-  M_Vehicles_Floaters_Emissive's ScrollSpeed 0.3, driven by `EngineMaterialGlow` like the glow (which keeps 60 % then). `"damageEmission"` (a mask PNG, the emission of a
+  M_Vehicles_Floaters_Emissive's ScrollSpeed 0.3, driven by `EngineMaterialGlow` like the glow (which keeps 60 % then).
+  `"damageEmission"` (a mask PNG, the emission of a
   material that has none): battle damage embers, `DamageEmbers` lighting them ember-orange with the ship's `Target.HullFraction`
   (a third lost to full at 90 %, a slow flicker; EVERSPACE 2's DamageAmount / Ember* parameters); the ES2 converter builds
   the mask from T_Vehicles_Damage_C_R_M_H (the blurred height's burn blobs, cracks from its colour) for the hull and details.
@@ -166,7 +177,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `_DetailMask`, the damage normals), `DamageEmbers` raising `_DetailAlbedoMapScale` / `_DetailNormalMapScale` from a fifth
   of the hull lost to full at 75 %; the mod detail templates use `_DETAIL_SCALED` (MULX2 ignores the scale). `Hitpoints.hull`
   is an int (an eval setting it needs a cast). The
-  ES2 export's skeletal animations (AnimSequence JSON) carry no keyframes and none targets the ship modules. Kit parts' `anchors` / `anchor` (`ModShipKits.Part`): a part sits on a named point another part of the build offers
+  ES2 export's skeletal animations (AnimSequence JSON) carry no keyframes and none targets the ship modules. Kit parts'
+  `anchors` / `anchor` (`ModShipKits.Part`): a part sits on a named point another part of the build offers
   (`ModShips.Assemble` offsets its models; the ES2 bodies offer their SKT_Cockpit socket to the canopy and interior). The ES2
   lights (converter, matched against EVERSPACE 2's customization screen with Emissive 1 / 2 / 3 apart): TechDetails lights
   by `T_ShipModules_TechDetails_00N_E`'s sector IDs into Lamp<N>_S4..S7 (S4 Emissive 1, S5-S7 Emissive 2);
@@ -182,7 +194,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   B's forward keel lamps, the small lamps beside body D's nose frame), the rest from u 0.5 Emissive 2 as before (the nose
   frame, the round dots of body B's rear keel lamps); cyan glow faces Emissive 2 (the missile pod's bay frame); the fin
   edges' dotted bars (u < 0.5) keep the engine colour. Verified in Play mode: thrust (chase, behind, side), a forced boost (the cyan slots in ES2's places),
-  the jets in all four strafe directions and in reverse, parked in the hangar (flames, nozzles and jets off). The ES2 converter reads the meshes' sockets (SKT_PWSlot / SWSlot / Turret / Engine,
+  the jets in all four strafe directions and in reverse, parked in the hangar (flames, nozzles and jets off). The ES2
+  converter reads the meshes' sockets (SKT_PWSlot / SWSlot / Turret / Engine,
   Unreal cm -> the export's glTF metres (X, Z, Y); at most 4 exhausts per part). Stats and slots per part (`Part.armor` / `cargo` /
   `handling` %, `equipment`, flight %, `primarySlots` / `secondarySlots` / `turretSlots`; `ModShipKits.EffectOf` /
   `BuildEffect`, the player's build for the player's ship): `ModShipKits.Armor` / `Cargo` / `Handling` / `Slots` /

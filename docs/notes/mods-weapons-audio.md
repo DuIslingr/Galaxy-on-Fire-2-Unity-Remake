@@ -20,7 +20,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (files or lists, loaded decoded), `shotLoops`. Each item gets a WeaponFx of its own (`Instantiate` of the base item's with
   the parts / clips replaced); `WeaponFx.Load` returns `ModWeapons.Fx(item)` first (null while loading: the base look
   meanwhile; an override's item number resolves through `ModContent.TryResolveItem`, which now loads the table first: on
-  the startup loading screen nothing had, and every override's fx was dropped), so every gun (player, NPCs, turrets, sentries, `NetShotMirror`) uses it. `ModFxPart` (on the sprite / model
+  the startup loading screen nothing had, and every override's fx was dropped), so every gun (player, NPCs, turrets,
+  sentries, `NetShotMirror`) uses it. `ModFxPart` (on the sprite / model
   under the part's root, since GunRig sets the root's scale and rotation): camera facing, lifetime growth and fade through
   `_Color` (rgb additive, alpha otherwise); `PartAnimation.PlayOnce` restarts it (`ModFxPart.RestartAll`, also turning it
   to the camera at once) and `GunRig.MaxLength` counts its lifetime. A beam laser's projectile (`Gun.IsBeamLook`: 9-11 /

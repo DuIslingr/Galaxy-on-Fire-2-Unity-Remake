@@ -16,7 +16,8 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   game in the finished game's world (below) docked at Dis (70) and plays it like single player, their own scenes, economy, map,
   jumps and docking. A new pilot starts in Betty with 10 000 credits and a simple loadout (Nirai Impulse EX 1, Targe Shield,
   Telta Quickscan, IMT Extract 1.3; `NetGame.StartShip` / `StartCredits` / `StartEquipment` in `PrepareSession`), not
-  resetGame's Phantom, so they work up to better ships; a server profile replaces it once it loads. The network objects live in DontDestroyOnLoad and each player shows only what is where they are.
+  resetGame's Phantom, so they work up to better ships; a server profile replaces it once it loads. The network objects
+  live in DontDestroyOnLoad and each player shows only what is where they are.
   The host spawns NetState and its own NetPlayer and loads `Station`; a client connects (10 x 1 s) and loads `Station` when
   NetState reaches it (`NetGame.EnterWorld`); each connecting player gets a NetPlayer. Nothing is saved in a session
   (`SaveGame.Save` refuses), so it never touches the single-player saves; a dedicated server keeps player profiles
@@ -31,16 +32,19 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   Luur its pre-supernova model, Naneroh / Valpatro borrow Midantha's / Tergalon's model and volumes, `OrbitBuilder.StationLook`);
   sessions start docked at Dis (70, `NetGame.Station`), whose shop always sells the Khador Drive (85). The Cronus (37), 0 in the Android
   economy (step 77 sells it for nothing), costs 1 150 000 there (`Database.CronusSessionPrice`, applied by `Database.Load`
-  while `Session.CompletedWorld`; `PrepareSession` resets `NetGame.Db`): a hull of its stats (~500 000) plus its Khador Drive. The world's look and menus read `Session.WorldIndex` (free play's 20, else the index);
+  while `Session.CompletedWorld`; `PrepareSession` resets `NetGame.Db`): a hull of its stats (~500 000) plus its Khador
+  Drive. The world's look and menus read `Session.WorldIndex` (free play's 20, else the index);
   NPC hulls / reloads and the Kaamo outposts use the won game's capped 45 / 180. Naneroh keeps the original's
   gamma rays after the story, 1/s (and the gamma blaze with a gamma shield), like single player (#80; first the remake had none).
 - **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel (a fixed 84 %
   high panel: the title with the "Experimental" badge and the pilot name `mp_name`, a one-line intro, then the server
   browser and the host column). **Pilot name required**: without one (`NetGame.PlayerName` empty, no `-mpname`) opening
   the panel asks for it in the menu's dialog (`MainMenu.NeedsName`: its `dialogField`, OK refuses an empty name, Back
-  closes), and so do Host, Join and a server browser row before they start (`WithName`). **Server browser** (`NetLobby.Query` every 5 s while the panel is open; rows rebuilt
+  closes), and so do Host, Join and a server browser row before they start (`WithName`). **Server browser**
+  (`NetLobby.Query` every 5 s while the panel is open; rows rebuilt
   only when the list changed, so a controller's focus stays): every listed game of every version, this version's first
-  and the fullest first; two lines per game: its name with SERVER (dedicated) / PASSWORD / MODDED tags and PVP / PVE (`NetLobby` key `pvp`, kept current like the player count; none for older listings) and at its right
+  and the fullest first; two lines per game: its name with SERVER (dedicated) / PASSWORD / MODDED tags and PVP / PVE
+  (`NetLobby` key `pvp`, kept current like the player count; none for older listings) and at its right
   the region and ping (remake, players' request 2026-10-22; `NetPing`): the host publishes its Relay allocation's region
   (`NetGame.HostRegion` = `Allocation.Region`, lobby key `region`), shown short ("europe-west4" EU West, `NetPing.RegionName`:
   the area and side, the data centre's number left out; untranslated, like place names), then a dot (green up to 80 ms,
@@ -57,7 +61,11 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   the Game name field, `mp_session_name`, default "<pilot>'s universe"); the password field (`mp_host_password`,
   optional, every mode) and Max players beside it (`mp_max_players`, `NetGame.MaxPlayers`: 2..100, the host included,
   default 16; Relay's connections are that minus a player host, the browser's limit is it, and the connection approval
-  turns away a player past it in every mode, "The game is full (N players)."); **Combat** PvE / PvP (`mp_pvp`, PvE by default: `NetGame.FreePvp`, which NetState carries; PvE = players fight only in arena matches and faction sieges, PvP = anywhere; a dedicated server's `-freepvp`, the launchers' `PVP=1`, the server settings' "freepvp"); Local network shows every address of this device others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi first, then VPNs like Hamachi,
+  turns away a player past it in every mode, "The game is full (N players)."); **Combat** PvE / PvP (`mp_pvp`, PvE by
+  default: `NetGame.FreePvp`, which NetState carries; PvE = players fight only in arena matches and faction sieges, PvP
+  = anywhere; a dedicated server's `-freepvp`, the launchers' `PVP=1`, the server settings' "freepvp"); Local network
+  shows every address of this device others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi
+  first, then VPNs like Hamachi,
   ZeroTier, Radmin, Tailscale; not down, loopback, link-local or virtual-machine adapters; Android's Linux names
   mapped: wlan = Wi-Fi, swlan / ap = Hotspot, rndis / usb = USB, tun = VPN, mobile data (rmnet, ccmni) left out; Windows'
   mobile hotspot = Hotspot; none = a "connect to Wi-Fi" line, never 127.0.0.1), a tap copies it (with
@@ -88,12 +96,15 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `NetGame.Protocol` (the code's fingerprint, `BuildVersion.Fingerprint`: the Editor's `BuildFingerprint` hashes the runtime
   scripts, `Resources/GoF2Net` prefabs, `Resources/GoF2Data` JSON and the resolved versions of the multiplayer packages
   (Netcode, Unity Transport, Multiplayer Services, from `packages-lock.json`; not the rest of the package list: a build-only
-  package such as the Linux toolchain mustn't split players), paths sorted, line endings normalised, SHA-256's first 12 hex digits; `BuildVersionStamp` writes it into `Resources/GoF2Build/BuildFingerprint.txt`
+  package such as the Linux toolchain mustn't split players), paths sorted, line endings normalised, SHA-256's first 12
+  hex digits; `BuildVersionStamp` writes it into `Resources/GoF2Build/BuildFingerprint.txt`
   for the build, git-ignored and deleted afterwards), its password and its shown version (`ConnectionData`); builds of the
   same code play together whenever and for whichever platform they were built (verified: two Windows builds 2 minutes
   apart), the server browser and its sort use the fingerprint too (lobby key `protocol`; "another build" for the same shown
-  version with other code); only the same fingerprint gets in ("This game runs version X, yours is Y..."; the Editor as server takes any version, and every build
-  lets the Editor in, for testing: it skips only the version check, not the password), then the session's password if it has one (`HostPassword`: "needs a password" / "Wrong
+  version with other code); only the same fingerprint gets in ("This game runs version X, yours is Y..."; the Editor as
+  server takes any version, and every build
+  lets the Editor in, for testing: it skips only the version check, not the password), then the session's password if it
+  has one (`HostPassword`: "needs a password" / "Wrong
   password."); the reason is the player's popup. The server checks it: the lobby's join code is public. Builds from
   before the check don't use approval, which is part of Netcode's config hash, so they fail its handshake. Verified with
   a Windows build and the Editor: the version refusal, no / wrong / right password over Relay, the listing and its count.
@@ -106,7 +117,12 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   near, a second frame of the faction's bar 11 px above the hull bar with the shield in the status bar's cyan, and the hull
   bar's fill in the status bar's red with the yellow armor over it (shield, armor, then hull drain, `Player::damage`); a
   pool of -1 is left out, NPC markers (both -1) are unchanged.
-- **Players against players**: another player is a yellow (neutral) marker until one of the two attacks the other (weapons or EMP, 3 hits or 50 damage within 10 s, so a stray shot doesn't count: the victim's game counts in `NetPlayer.HitRpc` / `EmpRpc`, the attacker's game in `RemoteDamage` / `RemoteEmp`): then both are enemies to each other for 120 s from the last hit either way, like an NPC that turned (`NetAggression`): red markers, and the auto turrets, a debug hull's turrets and the sentry guns fire (they read `hostileToPlayer`); forgotten when either is destroyed or the session ends. Hits on their ship (guns, missiles, blasts,
+- **Players against players**: another player is a yellow (neutral) marker until one of the two attacks the other
+  (weapons or EMP, 3 hits or 50 damage within 10 s, so a stray shot doesn't count: the victim's game counts in
+  `NetPlayer.HitRpc` / `EmpRpc`, the attacker's game in `RemoteDamage` / `RemoteEmp`): then both are enemies to each
+  other for 120 s from the last hit either way, like an NPC that turned (`NetAggression`): red markers, and the auto
+  turrets, a debug hull's turrets and the sentry guns fire (they read `hostileToPlayer`); forgotten when either is
+  destroyed or the session ends. Hits on their ship (guns, missiles, blasts,
   NPC shots from the authority's side) go to their game (`NetPlayer.HitRpc`, `Target.RemoteDamage` with the NPC flag),
   which applies them to its own ship. Destroyed by a player: "X was destroyed by Y." for everyone
   (`NetState.DestroyedByRpc`). A destroyed player's game over says "Tap to respawn at the station." and docks them at the
@@ -153,11 +169,15 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
 - **Gameplay rules** (`NetRules`, NetState's `rules` bit mask): the Gameplay options that change how the game plays are
   one rule for the whole session, since every orbit's NPCs, loot and missions run in one player's game: cloak shakes off
   pursuers, pirate outposts and bosses, capital ship enhancements, the informer missions' rule, stackable Kaamo Club
-  upgrades, stored ships keep their equipment, the cloak bay, EMP breaks cloaks, smarter NPC targeting, the ship collision mode. `Settings`' getters return the session's value while a session runs (the
+  upgrades, stored ships keep their equipment, the cloak bay, EMP breaks cloaks, smarter NPC targeting, the ship
+  collision mode. `Settings`' getters return the session's value while a session runs (the
   host's `NetRules.Host`, a client NetState's); a player host takes its own options at hosting and changing one while
   hosting applies to everyone at once (`NetRules.HostChanged`); a dedicated server starts at the defaults, each flag
-  (`-cloakhides`, `-capitalships`, `-informeroriginal`, `-nopirateevents`, `-nokaamostacking`, `-nokaamoequipment`, `-nocloakbay`, `-noempcloak`, `-smarttargeting`) turns
-  one the other way (the ship collision mode is `-shipcollision exact|mixed|original`, two bits set as one setting, `NetRules.SetCollision`), and the server settings (`cloakhides` ...) change them while running. The Kaamo Club upgrade limit
+  (`-cloakhides`, `-capitalships`, `-informeroriginal`, `-nopirateevents`, `-nokaamostacking`, `-nokaamoequipment`,
+  `-nocloakbay`, `-noempcloak`, `-smarttargeting`) turns
+  one the other way (the ship collision mode is `-shipcollision exact|mixed|original`, two bits set as one setting,
+  `NetRules.SetCollision`), and the server settings (`cloakhides` ...) change them while running. The Kaamo Club upgrade
+  limit
   is a number beside the bits (`NetRules.HostKaamoLevel`, `NetState.KaamoLevel`, `GameHooks.SessionKaamoLevel`;
   `-kaamomaxlevel N`, `/set kaamomaxlevel`, 2..20, default 5). So is the flight model (2026-10-16; players flying free
   flight beside the original in PvP had other turn rates, strafing and drift): `NetRules.HostFlight` (`SessionRules`:
@@ -181,7 +201,8 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `Build/Windows`) as client: `GoF2Remake.exe -screen-fullscreen 0 -screen-width 1280 -screen-height 720 -mpjoin 127.0.0.1
   -mpname Pilot2` (`-mpjoin`: the menu skips its intro and joins, again every 2 s until a host answers; development
   builds also take `-mpdock` (docks once, a few seconds into the first flight after launching) and `-mpaccept` (accepts squad invitations
-  while docked) and `-mptrade` (accepts trade requests while docked, offers 500 credits, accepts once the other side has) and `-mphost` (hosts from the menu), so the real hangar / squad flows run without a hand on the client
+  while docked) and `-mptrade` (accepts trade requests while docked, offers 500 credits, accepts once the other side
+  has) and `-mphost` (hosts from the menu), so the real hangar / squad flows run without a hand on the client
   (a phone: `adb shell "am start -n com.joppietoppie.gof2remake/com.unity3d.player.GoF2GameActivity -e unity
   '-mphost -mpname Phone'"`). **Switch the active build profile before building another platform**: URP picks the shader
   variants to keep from the *active* build target's quality levels (`ShaderBuildPreprocessor`), so an Android APK built

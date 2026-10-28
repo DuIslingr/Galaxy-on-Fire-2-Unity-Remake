@@ -5,7 +5,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 ## Mods (remake-only)
 
 Player-made content as data (no code: the game is IL2CPP), in `Scripts/Runtime/Modding` (`GoF2Remake.Modding`); the modders'
-guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/gof2-modding/SKILL.md` with it: an Agent Skill / paste-in guide for Claude and ChatGPT, with `reference.md` from **GoF2 > Build > Modding AI Reference** and the how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (items) and `frontier_systems`
+guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/gof2-modding/SKILL.md` with it: an Agent
+Skill / paste-in guide for Claude and ChatGPT, with `reference.md` from **GoF2 > Build > Modding AI Reference** and the
+how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (items) and `frontier_systems`
 (systems / stations). Items, ships, systems and stations, quests and bar missions (event graphs), voice-over, music.
 
 - **Unreadable mod files** (Android crash reports, 2026-10: "A local file header is corrupt" / "Corrupted data ReadInternal"
@@ -32,7 +34,9 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
 - **Items** (`ModContent`, items.json): `{ "id", "base": n | "mod:id", fields }` adds an item (a copy of the base: type,
   category and *look* kept, `ItemData.modded` / `modKey` / `Look`), `{ "override": n | "mod:id", fields }` changes one;
   fields: name, description, techLevel, occurrence, `stock`, prices (`price` n or [min, max]), price systems, `vosskOnly` (attr 60),
-  `alwaysSoldAt` (attr 61; a mod item's always stocks it there, also at the stations whose original filter allows one kind only, Var Destro 105 weapons, Quineros 107 equipment, Valkyrie 101, Sao Perula 106: `Shop.GenerateItemsOriginal` modAlways), `stats` by name (`ItemStats`: readable names + items.json's statList keys, kept in step with the
+  `alwaysSoldAt` (attr 61; a mod item's always stocks it there, also at the stations whose original filter allows one
+  kind only, Var Destro 105 weapons, Quineros 107 equipment, Valkyrie 101, Sao Perula 106: `Shop.GenerateItemsOriginal`
+  modAlways), `stats` by name (`ItemStats`: readable names + items.json's statList keys, kept in step with the
   attribute), raw `attributes`, `defaultEconomy` (the same, for the Default Economy). **`stock`** (remake, attributes 125 /
   126, a number or [least, most], 1..`Shop.MaxStock` 9999, clamped with a warning): how many units a shop holds of it
   (`Shop.ModStock` in `Shop.GenerateItemsOriginal`, in place of getItemBuyList's amount by item type: goods and secondaries
@@ -52,12 +56,18 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   campaign's filter; picked by occurrence, `Shop.PickByOccurrence`) while it isn't empty (`TrafficPlan.OutpostGear`; no extra
   random draws without such items); the enhanced capital ships' TL5+ gear pool takes them as before; `NpcTables.RollLoot`
   keeps the original's no gear from tech level 8. On the way, `available` is now honoured by the capital ships' gear and
-  shop (`CapitalShips.RollLoot` / `ArmoryItem`), the lounge item sellers and the Purchase missions (`AgentGenerator`); a mod repair bot / gamma shield takes its base's repair rates / loop sound by its
+  shop (`CapitalShips.RollLoot` / `ArmoryItem`), the lounge item sellers and the Purchase missions (`AgentGenerator`); a
+  mod repair bot / gamma shield takes its base's repair rates / loop sound by its
   look (`PlayerHealth`, was by index: a repair bot based on 75 repaired at Mk II's rate). The
   Mod Builder's Items page takes 1-20 (`mbItemTechLevel`). Freelance difficulty stays capped at 10. Tests
   `ModTechLevelTests`. Verified in Play mode with a local test mod (`Mods/tech11_test`: a TL11 armour and a TL11 tractor).
 - **Ships** (ships.json; the format of PR #34's custom_ships.json, `CustomShipData` in Database.cs): `{ "id", "model": glb,
-  stats, slots, race, hangarHeight, mounts (slotType 0-4 (4: manoeuvring jets with a `direction`, `LateralThrusters`), `upsideDown` turrets, `builtIn` turrets: `PlayerTurret` puts an empty pivot / gun stand-in at the point instead of the item's `turretMounted` model (the item's gun, stats, aim, auto fire, turret view; shots from the point + 120 units, the view 60 units above it), `BuildStatic` (hangar, other players) shows nothing there; a plasma collector keeps only its stream, `sn_plasma_stream_anim_add` moved from a copy of the item's model onto the stand-in gun, so it pours from the point and turns with the aim; the ES2 kit's turret sockets), icon, modelLength / modelYaw,
+  stats, slots, race, hangarHeight, mounts (slotType 0-4 (4: manoeuvring jets with a `direction`, `LateralThrusters`),
+  `upsideDown` turrets, `builtIn` turrets: `PlayerTurret` puts an empty pivot / gun stand-in at the point instead of the
+  item's `turretMounted` model (the item's gun, stats, aim, auto fire, turret view; shots from the point + 120 units,
+  the view 60 units above it), `BuildStatic` (hangar, other players) shows nothing there; a plasma collector keeps only
+  its stream, `sn_plasma_stream_anim_add` moved from a copy of the item's model onto the stand-in gun, so it pours from
+  the point and turns with the aim; the ES2 kit's turret sockets), icon, modelLength / modelYaw,
   engineGlowRadius, materials, throttleGlow / extraGlows, lounge }` adds a ship (numbered after the original 64,
   `ModRegistry.Kind.Ship`, assembly "ship_NNN_mod", pack "mod"); `{ "override", armor, cargo, price, priceDefault, slots,
   handling, mounts }` changes one (`mounts` replaces its hardpoints, with or without a new model). Both take `npcTurrets`
@@ -239,9 +249,12 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
 - **Quests and bar missions** (event graphs in a mod's `events/*.gof2event`, found by `EventRunner.Load` / `List` after the
   Events folders, the later mod in the load order winning; then the built-ins): see "Event graph quests" in Multiplayer.
 - **Mod browser** (`ModBrowser`, the main menu's Mods button and `modsPanel`; styles `.mods-*` in MainMenu.uss): the list in
-  load order (thumbnail, name, version · author, On / Off / Error / Can't load), a click or keyboard / controller focus selecting a row (the mouse's hover focus doesn't: passing over the rows on the way to Turn on changed the mod it acted on), the selected mod's preview, name, meta,
+  load order (thumbnail, name, version · author, On / Off / Error / Can't load), a click or keyboard / controller focus
+  selecting a row (the mouse's hover focus doesn't: passing over the rows on the way to Turn on changed the mod it acted
+  on), the selected mod's preview, name, meta,
   description and credits (mod.json `credits`), where it is installed, errors and warnings, Turn on / off (also the
-  controller's X from anywhere in the panel, `ToggleSelected`, its glyph on the button with a controller, `.mods-pad-x`), Earlier / Later, Open mods folder (the selected
+  controller's X from anywhere in the panel, `ToggleSelected`, its glyph on the button with a controller,
+  `.mods-pad-x`), Earlier / Later, Open mods folder (the selected
   mod's folder, else `ModManager.MainFolder`: the user folder, the project's Mods in the Editor; desktop only, phones show
   the path), Refresh, Rebuild cache (`MainMenu.RebuildModCache`: `ModTextureCache.ClearAll` deletes `ModCache` (textures,
   hangar shadows) and the zip mods' unpacked files, then a rescan loads every mod again behind the fade with the loading screen).
@@ -251,12 +264,18 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   activity around ACTION_OPEN_DOCUMENT that copies on a worker thread and is polled through its static fields, registered
   in the unityLibrary manifest by the Editor's `AndroidModImportActivity`; Windows: `FileDialog.Open(title, filter, exts)`;
   Linux: zenity, else kdialog, on a worker thread; macOS: osascript's choose file; UWP: `FileOpenPicker` on the UI thread;
-  the Editor: its open panel; iOS: the document picker, `Plugins/iOS/FileImportPicker.mm`, which moves the system's "asCopy" copy out of tmp/<bundle id>-Inbox (copied, it stayed there as a second copy); `ModImport.Available`), `Inspect` reads it as a zip mod (mod.json, a valid id),
+  the Editor: its open panel; iOS: the document picker, `Plugins/iOS/FileImportPicker.mm`, which moves the system's
+  "asCopy" copy out of tmp/<bundle id>-Inbox (copied, it stayed there as a second copy); `ModImport.Available`),
+  `Inspect` reads it as a zip mod (mod.json, a valid id),
   `Install` moves it into `ModManager.MainFolder` as `<id>.zip` (a mod with that id: replaced in its own folder
   after the menu's Yes / No, keeping on / off and its load order); Delete asks (naming the mods that need it), turns it off,
   releases its zip and deletes the file or folder. The browser takes the menu's `ShowDialog` / `ShowNotice`. Verified in the
   Editor (a non-zip refused, a zip with a top folder installed, replaced by a newer zip and kept on, deleted through the
-  dialog) and compiled for Android / Windows / Linux / UWP; on iOS (the iPhone 18 Pro simulator, 2026-10-17) the private es2_ships zip (120 MB, 60 .ogg sounds) picked from On My iPhone, installed, turned on and loaded (the sounds without a warning: runtime Ogg Vorbis works on iOS; the textures cached as ETC2, the simulator offers no DXT) and its Sentinel flown; the browser names the folder as the Files app shows it on iOS (`ModBrowser.Shown`: "Files › On My iPhone › GoF2 Remake › Mods", not the sandbox path); not yet run on an Android phone, Linux, macOS or UWP.
+  dialog) and compiled for Android / Windows / Linux / UWP; on iOS (the iPhone 18 Pro simulator, 2026-10-17) the private
+  es2_ships zip (120 MB, 60 .ogg sounds) picked from On My iPhone, installed, turned on and loaded (the sounds without a
+  warning: runtime Ogg Vorbis works on iOS; the textures cached as ETC2, the simulator offers no DXT) and its Sentinel
+  flown; the browser names the folder as the Files app shows it on iOS (`ModBrowser.Shown`: "Files › On My iPhone › GoF2
+  Remake › Mods", not the sandbox path); not yet run on an Android phone, Linux, macOS or UWP.
 - **Multiplayer** (`NetMods`): the Host card's "Mods (N on)" Off / Allowed (`mp_allow_mods`, off by default; a dedicated
   server's `-allowmods` / `ALLOWMODS=1` = every usable mod in its Mods folders). Every session starts without mods
   (`PrepareSession` → `BeginClient`); the host's `BeginHost` sets `ModManager.BeginSession` and `NetMods.SessionList`

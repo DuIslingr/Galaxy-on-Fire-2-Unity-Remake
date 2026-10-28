@@ -7,7 +7,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 - **Ship models** (`ModShips`, `ModShipBuilder`, `ModMaterials`, `ModGltfMaterials`; glTFast 6.20, `com.unity.cloud.gltfast`):
   each new ship's GLB loads with glTFast (asynchronous: `Preload` from the main menu, the menu's Leave and `NetGame.EnterWorld`
   wait for `Ready` / `WhenReady`, at most 30 s) into an AssembledObject template under a hidden DontDestroyOnLoad holder
-  (the run-time port of PR #34's CustomShipBuilder: hull turned by modelYaw and scaled to modelLength (a skinned mesh baked into a plain one in its drawn pose first,
+  (the run-time port of PR #34's CustomShipBuilder: hull turned by modelYaw and scaled to modelLength (a skinned mesh
+  baked into a plain one in its drawn pose first,
   `ModShipBuilder.FlattenSkinned`: the sizing, collision, shadows and the Mod Builder read the bind-pose mesh, which the
   bones drew elsewhere and at another size, so bone animations don't play; the GLB's node animations, parts moving on
   their own, loop: `ModGltf.LoopAnimations`, glTFast's legacy Animation at the default wrap mode played its clip once),
@@ -16,14 +17,20 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   or the ship's `engineGlowColor` switches the glow to `ModAssets.engineGlowTint`, the sprite in white
   (`Resources/GoF2Mods/ModEngineGlowWhite.png`, Build Mod Assets; the glow sprite there made round and soft, its ring of
   dashes averaged away) tinted by vertex colour, white-hot at the centre, and
-  `ShipExhaust` tints the exhaust particles with it, on the particles.png cell whose product comes closest and brightest), throttle glows from their masks (`ThrottleGlow` with its trails), one LOD culled at 80000);
-  `AssembledObject.LoadPrefab` hands it out for pack "mod" (while loading the game's own model of that ship stands in, else the Phantom's, always the original prefab: `Database.ShipAssembly(..., original: true)`; a project replacing the Phantom's model looped Template / LoadPrefab into a stack overflow on the builder's Exit), `NetProxy` for an
+  `ShipExhaust` tints the exhaust particles with it, on the particles.png cell whose product comes closest and
+  brightest), throttle glows from their masks (`ThrottleGlow` with its trails), one LOD culled at 80000);
+  `AssembledObject.LoadPrefab` hands it out for pack "mod" (while loading the game's own model of that ship stands in,
+  else the Phantom's, always the original prefab: `Database.ShipAssembly(..., original: true)`; a project replacing the
+  Phantom's model looped Template / LoadPrefab into a stack overflow on the builder's Exit), `NetProxy` for an
   "Assembled/mod/..." path. Materials are always copies of the URP Lit templates in `Resources/GoF2Mods/ModAssets`
   (**GoF2 > Build > Mod Assets**, `ModAssetsBuilder`: opaque / cutout / transparent, with and without detail maps; the
   templates hold placeholder textures and a faint emission so URP keeps their keywords and a build keeps the variants;
   a platform switch can drop their `_EMISSION` (seen switching to Android), so `ModAssetsGuard` (Editor) puts it back before
   every build: without it Linux / Android shipped without the emission variants, mod ships' glowing parts dark): the
-  GLB's own glTF materials (`ModGltfMaterials`; metallic-roughness converted by `Hidden/GoF2/MetallicRoughnessToGloss`, the material's `metallicFactor` / `roughnessFactor` baked in, also on the CPU path, per factor pair (`ModGlbImages.Image.mrFactors`, `ModMaterials.RoleKey`): they were taken as 1, and the GoF3 Ships mod's maps are all metal in B with metallicFactor 0, so its hulls were mirrors, black against space) or
+  GLB's own glTF materials (`ModGltfMaterials`; metallic-roughness converted by `Hidden/GoF2/MetallicRoughnessToGloss`,
+  the material's `metallicFactor` / `roughnessFactor` baked in, also on the CPU path, per factor pair
+  (`ModGlbImages.Image.mrFactors`, `ModMaterials.RoleKey`): they were taken as 1, and the GoF3 Ships mod's maps are all
+  metal in B with metallicFactor 0, so its hulls were mirrors, black against space) or
   the entry's `materials` (`ModMaterials.FromSpec`: the PR's fields plus `doubleSided`). Textures load from the mod's PNGs,
   compressed with mipmaps. Normal maps (ships / stations / rooms `normal` / `detailNormal`, glTF normal textures, `*_normal`
   texture replacements) are loaded with `normal: true`: Android's normal map encoding is "DXT5nm-style" (Player settings),
@@ -42,7 +49,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   crashed phones (2026-10; measured in the Editor: driver memory 4.9 GB -> 1.3 GB, its textures ~195 MB of DXT, 84 ships
   10 s from the cache). Textures load once per key however many ask at once (`ModMaterials.Once`), at most 6 decodes at once
   (2 on phones, `DecodeSlots`), phones compress in Texture2D.Compress's fast mode; at most 8 ships load at once (3 on phones,
-  `ModShips.ShipSlots`), each holding its GLB until glTFast has read it. Shop icon: the entry's PNG (`ItemInfo.ShipIcon`), else the Phantom's; the dialogue tints mod
+  `ModShips.ShipSlots`), each holding its GLB until glTFast has read it. Shop icon: the entry's PNG
+  (`ItemInfo.ShipIcon`), else the Phantom's; the dialogue tints mod
   ship names (no sprite). Code that sizes a ship by its renderers must skip trails (empty at the origin): the item window and
   `NetPlayer` use mesh renderers only. Another player's ship built before the session's mods were on (they join before
   NetState applies them) is built again on `ModShips.ModelsChanged`.
@@ -56,8 +64,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   as camera-facing ribbons of points that keep the ship's velocity plus their own backward speed (they bend when the ship turns,
   as in GoF3's ship viewer) and sway in smooth waves (each trail eases toward random sideways speeds, `SwayEase`; independent
   points made a zigzag), the streak's middle row across them (whole copies per segment read as beads) and a random brightness
-  per point. EngineDrive levels (thrust 0.3..1 length, boost longer; a third of the glow at idle, unlike the ES2 flames); in the station capped; materials copies of
-  `ModAssets.fxAdditive` (`ModMaterials.CopyOf`) at `_Glow` 0.75 / 0.5 / 1 / 0.45 (flare, cone, trail, helix). A mount's `fxScale` sizes it (GoF3's helper scale:
+  per point. EngineDrive levels (thrust 0.3..1 length, boost longer; a third of the glow at idle, unlike the ES2
+  flames); in the station capped; materials copies of
+  `ModAssets.fxAdditive` (`ModMaterials.CopyOf`) at `_Glow` 0.75 / 0.5 / 1 / 0.45 (flare, cone, trail, helix). A mount's
+  `fxScale` sizes it (GoF3's helper scale:
   the Retro 0.5 / 1.62) and its `rotation` turns it (`ModHardpoints.MountTurn`; five Vossk hulls' engines 8.5-10 deg inward;
   an engine on the centreline keeps no sideways turn, the builder's `centreline_turn`: the K'ssshar Ka's centre helper
   carried its right engine's 8.5 deg, so its plume crossed toward that engine).
@@ -65,7 +75,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   10.5 units, spun by its animation): camera-facing strands rebuilt each frame round the exhaust's axis, the texture (GoF3's
   `vfx_generic_electricity_000`, a guess: the spiral's material names its flow textures by GUID only) along them, scrolled, faded
   by (1 - s)^2 (in flight GoF3's crackle is gone well before the strands' end). Part colours (`flareColor` / `coneColor` / `trailColor` /
-  `spiralColor`, over the exhaust's; the flare's until then was always the exhaust's): the builder reads them from GoF3's materials for the helix engine (Colorize_Color1 = the
+  `spiralColor`, over the exhaust's; the flare's until then was always the exhaust's): the builder reads them from
+  GoF3's materials for the helix engine (Colorize_Color1 = the
   EngineAttachment colour, unless Colorize_Custom; times DiffuseColor when DiffuseColorMultiply: cone 0.08 / 0.51 / 1, helix and
   trails 0.22 / 0.56 / 1) with the flare 0.75, cone 0.4 and trails 0.35 dimmer under it; the Terran / Vossk engines keep the hull's
   nozzle colour (their hulls light the nozzles orange / yellow-green while their effect materials colour blue / green; nothing
@@ -113,7 +124,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   freed with the holder's `EngineFlame.ownedMeshes`), an engineFx's cone cards reach the outline (a cone mesh per shaped
   nozzle), its helix runs along it and its trails spread along the long side (`EngineFx.profiles`, `Trail.start`), centred on
   the nozzle. Checked in Play mode: ship 7's wide nozzle blocks (both styles fill them), an ES2 Sentinel's hexagon (measured
-  from its nozzle meshes) with a GoF3 drive, the Moornta's GoF3 outlines with an ES2 thruster. `NozzleRadius`: a mount's `glowSize`, a mod ship's `engineGlowRadius`, else 55 game units x the game
+  from its nozzle meshes) with a GoF3 drive, the Moornta's GoF3 outlines with an ES2 thruster. `NozzleRadius`: a mount's
+  `glowSize`, a mod ship's `engineGlowRadius`, else 55 game units x the game
   ship's exhaust anchor scale (`turretAngles`). An `outline` is used only when plausible against the mount's `glowSize` (mean
   at least half of it, centre within 1.5 x it; `ModExhausts.Plausible`; the builder writes no others, `outline_plausible`):
   the Vossk hulls' outlines were slivers of a few lit texels of their nozzle rings (the Shaan'ra-Grth's 1 unit wide, 18 off
@@ -139,7 +151,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   each nozzle wears the member whose `nozzle` x `scale` is nearest its size on a log scale (the player's Exhaust size
   counted; the instance is named `exhaust_nozzle_<i>_<member>`). The ES2 importer groups its three thrusters as "EVERSPACE
   2 thruster" (`scale` 3.6, the kit scale: nozzles of 1.38 / 1.53 / 2.21 m): the game's ships take the light thruster
-  (the Phantom, the Inflict), larger nozzles the heavy one (ship 7, the GoF3 hulls; the Cronus both). The build carries it (`exhaust=mod_id:id;exhaustcolor=;exhaustcolor2=;exhaustsize=`,
+  (the Phantom, the Inflict), larger nozzles the heavy one (ship 7, the GoF3 hulls; the Cronus both). The build carries
+  it (`exhaust=mod_id:id;exhaustcolor=;exhaustcolor2=;exhaustsize=`,
   `ModShipKits.Build`, kept out of `VariantAssembly`'s name like the weapon colour) and `ModExhausts.Apply` puts it on each model
   instance (the player's in `SpaceLevel` spawn / swap, the turntable and hangar guests in `StationLevel.SpawnShip`, other players'
   ships in `NetPlayer.BuildModel`): a holder `exhaust_style` under the engine glow part aligned with the ship's root (it goes with
@@ -158,7 +171,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   the Veteran's hull; `textures/<assembly>/<name>` for one model only, e.g. `textures/ship_028_terran/glow_terran.png`: the
   shared lights / engine glow on the Veteran alone, before the every-object file; the scope is `AssembledObject.ModScope`,
   its prefab's name taken in Awake, and such objects get their own material copies, keyed (scope, material); the builder's
-  Skins tab offers "This ship..." / "All ships..." on a shared texture): replaces that texture on every assembled object using it (`AssembledObject.Awake` -> `Apply`: the
+  Skins tab offers "This ship..." / "All ships..." on a shared texture): replaces that texture on every assembled object
+  using it (`AssembledObject.Awake` -> `Apply`: the
   object's renderers get cached copies of their materials with the mod's texture in `_BaseMap` / `_MainTex` / `_BumpMap` /
   `_MetallicGlossMap` / `_EmissionMap`; the game's material assets are never touched; when the mods change in a scene, the
   Mod Builder's skins, the objects there get the game's materials back before the copies go and the new textures once
@@ -190,14 +204,16 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   the cache `ModMaterials.Texture` reads; zip files copied out once by `ModInfo.LocalFile`, cache folder by the zip's date and
   size), glTFast's main-thread work for all of them in one `TimeBudgetPerFrameDeferAgent` (0.6 of a frame; the old
   `UninterruptedDeferAgent` built each model in one go), the stations and rooms (`ModStations`), the weapon fx
-  (`ModWeapons`), the music tracks and sound effects (`ModAudio`, `ModMusic`, `ModSounds`), the texture replacements (`ModTextures`), then the ships' hangar shadows
+  (`ModWeapons`), the music tracks and sound effects (`ModAudio`, `ModMusic`, `ModSounds`), the texture replacements
+  (`ModTextures`), then the ships' hangar shadows
   (`World.ShipShadowBaker.ModShipsBaked`, see "Station scene"). Textures are compressed to DXT1 /
   DXT5 with their mipmaps by a Burst job (`ModTextureEncoder`, van Waveren's real-time encoder, native buffers: Texture2D.Compress
   took 110-145 ms per 2048 px texture on the main thread, a managed encoder's garbage a 2 s collection) where the GPU reads
   DXT; elsewhere (phones) Texture2D.Compress, one texture per frame. The result is kept on disk (`ModTextureCache`,
   `persistentDataPath/ModCache/Textures/<mod id>/<hash>.tex`, the hash of the file's path, size, change time, linear and the
   kind of compression): a later start reads it back on a worker thread instead of decoding and compressing (five PR ships
-  2.3 s -> 1.3 s; the first start writes it, 126 MB for their 65 textures); an uninstalled mod's folder goes on `Scan`. The startup splash shows "Loading mods" with a progress
+  2.3 s -> 1.3 s; the first start writes it, 126 MB for their 65 textures); an uninstalled mod's folder goes on `Scan`.
+  The startup splash shows "Loading mods" with a progress
   bar and the ship / track in progress until it is done (`MainMenu.WaitForMods`, then the title; not shown when
   the mods that are on bring nothing to load, `ModLoading.HasWork`: no mods or only quests), so does the fade before a
   game scene when the mods changed in the menu (Leave). Measured in the Editor with the five PR ships: 5.3 s with frames of
