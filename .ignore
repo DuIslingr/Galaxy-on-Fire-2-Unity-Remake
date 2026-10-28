@@ -1,0 +1,12 @@
+# Kept out of ripgrep searches (Claude Code's Grep tool reads this file; git and Unity don't).
+# These are one-line minified tables or third-party code: a search hit dumps the whole thing.
+# To search them anyway: grep -r in a shell (or rg --no-ignore), or read the file directly.
+
+# The embedded Netcode for Entities package (see CLAUDE.md, Environment)
+Packages/com.unity.netcode/
+
+# Generated data tables written on one line
+Assets/Resources/GoF2Data/hangar_heights.json
+Assets/Resources/GoF2Data/item_attributes.json
+Assets/Resources/GoF2Data/nozzle_shapes.json
+Assets/Resources/GoF2Data/void_station_extra.json

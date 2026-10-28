@@ -213,12 +213,80 @@ namespace GoF2Remake.Multiplayer
             return true;
         }
 
-        /// <summary>Nobody else runs this orbit's NPCs: a player there may take the old authority's ships over (NetOrbit).</summary>
-        public static bool IsOrbitAuthority(int station)
+        /// <summary>The player the server made run this orbit's NPC traffic (UpdateOrbitRunners), null = nobody yet.</summary>
+        public static NetPlayer RunnerOf(int station)
         {
+            if (station < 0) return null;
             foreach (var p in NetPlayer.All)
-                if (p != null && !p.IsOwner && p.IsSpawned && p.InSpace && p.Station == station && p.OrbitAuthority) return false;
-            return true;
+                if (p != null && p.IsSpawned && p.RunsOrbit == station) return p;
+            return null;
+        }
+
+        // ---- who runs each orbit (the server's word) ----------------------------------------------------------
+
+        const float RunnerSeconds = 0.25f;
+        /// <summary>Server: the player running each orbit's NPC traffic (client id), by orbit.</summary>
+        readonly Dictionary<int, ulong> orbitRunners = new Dictionary<int, ulong>();
+        float runnerTimer;
+
+        /// <summary>Server, every RunnerSeconds: one player runs each orbit someone flies in. The runner stays while they fly
+        /// there; when they leave (dock, jump, disconnect) the next one is picked: a player whose game built the traffic (the
+        /// first to arrive; of two at once the lower client id, the other stands down, NetOrbit), else the lowest client id.
+        /// The ships the old runner's game ran are handed to the new one (HandOver), so nothing vanishes in between.</summary>
+        void UpdateOrbitRunners()
+        {
+            if ((runnerTimer -= Time.unscaledDeltaTime) > 0f) return;
+            runnerTimer = RunnerSeconds;
+            var here = new Dictionary<int, List<NetPlayer>>();
+            foreach (var p in NetPlayer.All)
+            {
+                if (p == null || !p.IsSpawned || !p.InSpace || p.Station < 0) continue;
+                if (!here.TryGetValue(p.Station, out var list)) here[p.Station] = list = new List<NetPlayer>();
+                list.Add(p);
+            }
+            List<int> empty = null;
+            foreach (int orbit in orbitRunners.Keys) if (!here.ContainsKey(orbit)) (empty ??= new List<int>()).Add(orbit);
+            if (empty != null) foreach (int orbit in empty) orbitRunners.Remove(orbit);   // its objects go with the sweep
+            foreach (var pair in here)
+            {
+                NetPlayer runner = null;
+                if (orbitRunners.TryGetValue(pair.Key, out ulong id))
+                    foreach (var p in pair.Value) if (p.OwnerClientId == id) { runner = p; break; }
+                if (runner != null) continue;
+                foreach (var p in pair.Value)
+                    if (p.OrbitAuthority && (runner == null || p.OwnerClientId < runner.OwnerClientId)) runner = p;
+                if (runner == null)
+                    foreach (var p in pair.Value)
+                        if (runner == null || p.OwnerClientId < runner.OwnerClientId) runner = p;
+                orbitRunners[pair.Key] = runner.OwnerClientId;
+            }
+            foreach (var p in NetPlayer.All)
+            {
+                if (p == null || !p.IsSpawned) continue;
+                int orbit = p.InSpace && orbitRunners.TryGetValue(p.Station, out ulong id) && id == p.OwnerClientId ? p.Station : -1;
+                p.SetRunsOrbit(orbit);
+            }
+            HandOver(here);
+        }
+
+        /// <summary>Server: the traffic ships whose game left their orbit (or the session: the server holds those) go to the
+        /// orbit's runner, which rebuilds each where it flies and drives the same proxy from then on (NetOrbit.AdoptHandedOver),
+        /// so the others see no change. What a runner can't rebuild (fixed objects, turrets, mission, convoy and Most Wanted
+        /// ships: NetProxy.HandOverable) is left to the sweep.</summary>
+        void HandOver(Dictionary<int, List<NetPlayer>> here)
+        {
+            if (orbitRunners.Count == 0) return;
+            foreach (var obj in NetworkManager.SpawnManager.SpawnedObjectsList)
+            {
+                var proxy = obj.GetComponent<NetProxy>();
+                if (proxy == null || !orbitRunners.TryGetValue(proxy.Station, out ulong runner) || obj.OwnerClientId == runner || !proxy.HandOverable) continue;
+                bool ownerHere = false;
+                foreach (var p in here[proxy.Station]) if (p.OwnerClientId == obj.OwnerClientId) { ownerHere = true; break; }
+                if (ownerHere) continue;   // its game still flies there (a mission's ships, a stood-down runner's going)
+                proxy.MarkHandedOver();
+                obj.ChangeOwnership(runner);
+                staleSince.Remove(obj.NetworkObjectId);
+            }
         }
 
         // ---- hits (NetPlayer / NetProxy relays) ----------------------------------------------------------------
@@ -350,6 +418,22 @@ namespace GoF2Remake.Multiplayer
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void WhisperedRpc(string other, string text, bool own, RpcParams rpc = default) => NetChat.ReceiveWhisper(other, text, own);
+
+        /// <summary>Server: /s, a line to the sender's squad (the chat's Squad channel), wherever its members are; the
+        /// sender's own copy marked.</summary>
+        internal void SquadChat(NetPlayer from, string text)
+        {
+            text = NetChat.Clean(text);
+            if (!IsServer || from == null || from.SquadId == 0 || text.Length == 0) return;
+            if (NetAdmin.IsMuted(from.OwnerClientId, out string mutedText)) { NoticeTo(from, mutedText); return; }   // /mute
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.IsSpawned && p.SquadId == from.SquadId)
+                    SquadLineRpc(from.TaggedName, text, p == from, RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
+            Debug.Log($"[Squad {from.SquadId}] {from.TaggedName}: {text}");
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void SquadLineRpc(string from, string text, bool own, RpcParams rpc = default) => NetChat.ReceiveSquad(from, text, own);
 
         // ---- server commands (NetCommands) -----------------------------------------------------------------
 
@@ -1500,7 +1584,7 @@ namespace GoF2Remake.Multiplayer
             ulong client = rpc.Receive.SenderClientId;
             if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Kill)) return;
             var from = NetSquad.Find(client);
-            if (from == null || !from.OrbitAuthority || !NetGuard.InOrbit(client, station) || NetArena.IsArenaOrbit(station)) return;
+            if (from == null || from.RunsOrbit != station || !NetGuard.InOrbit(client, station) || NetArena.IsArenaOrbit(station)) return;
             if (kills < NetNews.MinDefenseKills || kills > 60 || killers == null || killers.Length == 0 || killers.Length > 16)
             {
                 NetRateLimit.Reject(client, $"a defence report of {kills} kills");
@@ -1545,6 +1629,7 @@ namespace GoF2Remake.Multiplayer
                 dirtyStock.Clear();
             }
             UpdatePendingSpawns();   // their senders' places arrived
+            UpdateOrbitRunners();    // who runs each orbit, the ships of one who left handed on
             EventRunner.Tick();   // a running event
             if ((sweepTimer -= Time.unscaledDeltaTime) > 0f) return;
             sweepTimer = SweepSeconds;
@@ -1578,7 +1663,7 @@ namespace GoF2Remake.Multiplayer
                 if (Time.unscaledTime - (proxy != null ? proxy.SpawnedAt : crate.SpawnedAt) < 3f) continue;
                 bool orphan = proxy != null && proxy.Orphan;   // its owner left the session: the host holds it without a ship
                 if (!orphan && owners.TryGetValue(obj.OwnerClientId, out var owner) && owner.InSpace && owner.Station == station) { staleSince.Remove(obj.NetworkObjectId); continue; }
-                // Players still in that orbit take its ships over (NetOrbit): they keep the old proxies a few seconds.
+                // Players still in that orbit get its ships (HandOver); what can't be handed on stays a few seconds.
                 bool watched = false;
                 foreach (var p in owners.Values) if (p.InSpace && p.Station == station) { watched = true; break; }
                 if (!staleSince.TryGetValue(obj.NetworkObjectId, out float since)) staleSince[obj.NetworkObjectId] = since = Time.unscaledTime;

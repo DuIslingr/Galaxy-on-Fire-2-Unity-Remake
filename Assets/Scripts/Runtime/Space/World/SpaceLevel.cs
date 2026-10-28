@@ -462,17 +462,17 @@ namespace GoF2Remake.World
         /// <summary>Multiplayer: this player runs the orbit's NPC traffic (the first one here), see NetOrbit.</summary>
         public bool NetAuthority { get; private set; }
 
-        /// <summary>Multiplayer: the orbit's authority left, this player takes its ships over (NetOrbit).</summary>
-        /// <summary>Multiplayer: the orbit's traffic is this player's now (taken over): its relaunches and waves run, unless the
-        /// level keeps it passive itself (a story, mission or siege orbit).</summary>
+        /// <summary>Multiplayer: the server made this player run the orbit (NetOrbit.FollowRunner): its traffic is this
+        /// player's now, its relaunches and waves run, unless the level keeps it passive itself (a story, mission or siege
+        /// orbit); the old runner's ships come with the server's hand-over (NetOrbit.AdoptHandedOver).</summary>
         public void TakeOverNetAuthority()
         {
             NetAuthority = true;
             Traffic?.SetPassive(ownPassive);
         }
 
-        /// <summary>Multiplayer: another player built this orbit's traffic at the same moment (NetOrbit): this player's goes
-        /// (not its mission ships or wingmen) and theirs is shown instead.</summary>
+        /// <summary>Multiplayer: another player built this orbit's traffic at the same moment and the server picked them
+        /// (NetOrbit.FollowRunner): this player's goes (not its mission ships or wingmen) and theirs is shown instead.</summary>
         public void DropNetAuthority()
         {
             NetAuthority = false;

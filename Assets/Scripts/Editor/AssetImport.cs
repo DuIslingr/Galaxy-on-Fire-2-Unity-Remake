@@ -338,7 +338,10 @@ namespace GoF2Remake.EditorTools
                         // GoF2/Hull: the original's reflection and rim (BumpRimCubeShader), on the ships, stations and objects,
                         // not the station interiors (hangar and bar rooms) or the sky props.
                         bool interior = nrmRel.Contains("/hangars/") || nrmRel.Contains("/bars/") || nrmRel.Contains("/skyboxes/");
-                        if (urp && !interior) { mat.shader = Shader.Find("GoF2/Hull") ?? mat.shader; mat.SetShaderPassEnabled("MotionVectors", false); }   // as Lit's material setup
+                        // The MotionVectors pass stays on: GoF2/Hull borrows URP's LitShader editor, whose ValidateMaterial
+                        // doesn't know the shader and turns the pass on whenever the Editor loads the material (Play mode,
+                        // batch runs, builds). Turned off here, every load rewrote the .mat files.
+                        if (urp && !interior) mat.shader = Shader.Find("GoF2/Hull") ?? mat.shader;
                         if (urp) { mat.EnableKeyword("_METALLICSPECGLOSSMAP"); mat.SetFloat("_Smoothness", 0.8f); }
                         else { mat.EnableKeyword("_METALLICGLOSSMAP"); mat.SetFloat("_GlossMapScale", 0.8f); }
                     }
