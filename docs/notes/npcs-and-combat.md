@@ -143,7 +143,11 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   it the other way round until #27). Crates: salvage lock (ring after 500 ms, tractor attr 24), the beam pulls at 10
   u/ms and captures within 400 units (the first cargo entry, capped to free cargo); without a tractor beam "No tractor
   beam." (540; remake, #45, like the drill: once, the ring drops and that crate is ignored until it leaves the crosshair
-  box).
+  box). **Full hold** (remake, #176; the original's crate was gone with its loot): with no room nothing is taken and the
+  crate stays in space ("Cargo hold is full.", 322; no standing lost; ignored like the 540 case until it leaves the box;
+  a living ship's steal takes nothing), the auto modes and extra beams leave crates alone while the hold is full (a mod
+  blueprint's data crate needs no room); with room for part of it the rest stays in the crate (`keepRest`: single
+  player; in a session it is lost as before, the other players' copies hold the loot the crate spawned with).
 - **HUD** (`CombatView`): shield and hull/armor bars top-left, the selected secondary "<name> (<amount>)" on the plate
   0x4c2 at the bottom centre in every input mode (its text
   centred below the plate's top frame line, `.touch-plate-text`: the interface rework's body size sat at the top, a

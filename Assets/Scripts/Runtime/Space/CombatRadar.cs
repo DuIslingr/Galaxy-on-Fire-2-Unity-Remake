@@ -24,7 +24,11 @@
 //   salvage     a crate in the box: ring after 500 ms, locked after the tractor beam's attr 24 (TractorBeam::update);
 //               without a tractor beam "No tractor beam." (540). The beam (projectile_068..070 / v_194) pulls the crate at
 //               10 u/ms, sound 0 loops; within 400 units it is captured (sound 4): the first non-empty cargo entry, capped
-//               to the free cargo (at least 1) -> "<n>t <item>" or "Cargo hold is full." (322).
+//               to the free cargo (at least 1) -> "<n>t <item>" or "Cargo hold is full." (322). Remake (#176): with no
+//               room the original's crate was gone, its loot lost; now nothing is taken, the crate stays in space (not
+//               locked again while it stays the one in the box), and what doesn't fit of a crate stays in it (single
+//               player: in a session the rest is lost as before, the other players' copies keep the spawn's loot) and the auto modes and extra beams leave crates alone
+//               while the hold is full (a mod blueprint's data crate needs no room); a living ship's steal takes nothing.
 //   steal       an EMP-disabled ship with cargo (KIPlayer+0x20) in the box is a salvage candidate, not a ship lock: the
 //               same ring and tractor lock time; locked, TractorBeam::update makes a container of its cargo at the ship
 //               (createCrate(0)) and pulls that; captureCrate takes rnd(amount) of its first entry (at least 1, capped to
@@ -40,7 +44,7 @@
 //               the nearest within attr 123 "tractorRange" (default 30000 units, 1.5 km), on screen or not, each on a beam
 //               of its own (like the transfusion beams' attr 55 slots): no salvage lock, no scanner needed, and the lock stays
 //               free for ships (the manual salvage, a steal or an auto mode still has the first beam; with none running the
-//               extra beams take all N). Not in the turret view; a mission container only while the hold has room. The
+//               extra beams take all N). Not in the turret view; a crate only while the hold has room. The
 //               beam's look is its item's look (a mod's tractor beam draws its base's beam).
 //   readout     a scanner with attr 31 = 1 (Ecoscan / Proscan / Ultrascan, Radar+0x1a5): a new ship lock within 24000 units
 //               per axis shows the ship's first cargo entry like a pickup ("<n>t <item>", Hud::catchCargo), or "Nothing to
@@ -446,7 +450,7 @@ namespace GoF2Remake.Flight
             if (keep && pick && tractorItem >= 0 && tractorTargets > 1)
             {
                 int free = tractorTargets - (Salvaging != null ? 1 : 0) - extra.Count;
-                bool room = free > 0 && Shop.FreeCargo(db) > 0;
+                bool room = Shop.FreeCargo(db) > 0;
                 float reach2 = tractorRangeUnits * M * tractorRangeUnits * M;
                 while (free-- > 0)
                 {
@@ -455,7 +459,7 @@ namespace GoF2Remake.Flight
                     foreach (var cr in Crate.All)
                     {
                         if (cr == null || cr.pulled || cr == Salvaging || cr.Stolen || cr.claimedByOther || !cr.HasLoot) continue;
-                        if (cr.missionCrate && !room) continue;   // it would only come back: the hold has no room for it
+                        if (!room && NeedsRoom(cr)) continue;   // it would only come back: the hold has no room for it
                         float d = (cr.transform.position - transform.position).sqrMagnitude;
                         if (d < best) { best = d; pickCrate = cr; }
                     }
@@ -508,9 +512,10 @@ namespace GoF2Remake.Flight
         {
             Crate pick = null;
             float best = float.MaxValue;
+            bool room = Shop.FreeCargo(db) > 0;
             foreach (var cr in Crate.All)
             {
-                if (cr.Stolen || !cr.HasLoot || cr.claimedByOther) continue;
+                if (cr.Stolen || !cr.HasLoot || cr.claimedByOther || (!room && NeedsRoom(cr))) continue;
                 if (onScreenOnly)
                 {
                     if (cam == null) return;
@@ -565,8 +570,16 @@ namespace GoF2Remake.Flight
         /// <summary>KIPlayer::captureCrate 0xb2a00: the crate is gone once captured (KIPlayer+0x74 = 0) and a dead ship leaves no
         /// other (+0x48 = 0). Its first non-empty entry: all of it from a wreck, rnd(amount) from a living ship, at least 1,
         /// capped to the free cargo. Every ship's crate costs standing (Standing::applyStealCargo, delict 2) and a friend's is a
-        /// stolen cargo (Level::stealFriendCargo). No room: the unit is lost ("Cargo hold full"); remake: a mission container
-        /// stays for another try. Missiles of a mounted launcher's type reload it (Item::changeAmount), the rest is cargo.</summary>
+        /// stolen cargo (Level::stealFriendCargo). No room: the unit is lost ("Cargo hold full"); remake (#176): nothing is
+        /// taken, the crate stays in space for another try (a living ship's steal: its crate goes, the ship keeps its
+        /// cargo), and no standing is lost for it; what doesn't fit stays in the crate (keepRest). Missiles of a mounted launcher's type reload it (Item::changeAmount), the rest is cargo.</summary>
+        /// <summary>Its loot goes in the hold (not a mod blueprint's data crate, which is only learnt).</summary>
+        static bool NeedsRoom(Crate crate)
+        {
+            var entry = crate.loot.Find(s => s.amount > 0);
+            return entry == null || GoF2Remake.Modding.ModBlueprints.Of(entry.item) == null;
+        }
+
         void Capture(Crate crate)
         {
             if (crate == Salvaging) Salvaging = null;
@@ -590,6 +603,25 @@ namespace GoF2Remake.Flight
             var ship = crate.stolenFrom;
             // KIPlayer::captureCrate: rnd(amount) only from a living ship; a dying one gives it all and leaves no crate.
             var remoteShip = crate.stolenFromRemote;
+            if (free <= 0)
+            {
+                Message?.Invoke(Localization.Get(322), 1, HudMessageKind.Normal);
+                if ((ship != null && ship.Target.Alive) || remoteShip != null)
+                {
+                    refusedSteal = ship != null ? ship.Target : remoteShip;
+                    Destroy(crate.gameObject);   // made for the steal (CreateStealCrate): the cargo stays on the ship
+                }
+                else
+                {
+                    crate.pulled = false;   // multiplayer: the claim goes back (NetCrate.TrackPull)
+                    refusedCrate = crate;
+                }
+                return;
+            }
+            // Remake (#176): what doesn't fit stays in a crate in space (the original's crate was gone with it). Not a steal's
+            // (the rest stays on the ship) and not in a session: the other players' copies hold the loot the crate spawned
+            // with (NetCrate), so a part left here could be taken there in full.
+            bool keepRest = !crate.Stolen && !NetSession.Active;
             int want = (ship != null && ship.Target.Alive) || remoteShip != null ? UnityEngine.Random.Range(0, entry.amount) : entry.amount;
             if (ship != null && !ship.Target.Alive) ship.LootTaken();
             int n = Mathf.Max(1, Mathf.Min(want, free));
@@ -597,17 +629,6 @@ namespace GoF2Remake.Flight
             bool friend = ship != null ? ship.Target.friendToPlayer : crate.fromFriend;
             if (friend && traffic != null) traffic.FriendCargoStolen = true;   // Level::stealFriendCargo
             Standing.ApplyDelict(crate.race, 2);                               // Standing::applyStealCargo
-            if (free < n)
-            {
-                Message?.Invoke(Localization.Get(322), 1, HudMessageKind.Normal);
-                if (crate.missionCrate && ship == null) { crate.pulled = false; return; }
-                entry.amount -= n;
-                ship?.StealFrom(entry.item, n);
-                remoteShip?.RemoteSteal?.Invoke(entry.item, n);
-                crate.CapturedHere?.Invoke();
-                Destroy(crate.gameObject);
-                return;
-            }
             entry.amount -= n;
             ship?.StealFrom(entry.item, n);
             remoteShip?.RemoteSteal?.Invoke(entry.item, n);   // multiplayer: off the owner's ship (NetProxy)
@@ -630,7 +651,7 @@ namespace GoF2Remake.Flight
                 {
                     if (more == entry || more.amount <= 0) continue;
                     int room = Shop.FreeCargo(db);
-                    if (room <= 0) { Message?.Invoke(Localization.Get(322), 1, HudMessageKind.Normal); break; }
+                    if (room <= 0) { if (!keepRest) Message?.Invoke(Localization.Get(322), 1, HudMessageKind.Normal); break; }
                     int k = Mathf.Min(more.amount, room);
                     more.amount -= k;
                     var mountedMore = db.Item(more.item)?.TypeId == 1 ? Session.Equipment.Find(e => e.item == more.item) : null;
@@ -640,6 +661,13 @@ namespace GoF2Remake.Flight
                     else if (Session.IsBooze(more.item)) Session.BoozeTypes.Add(more.item);
                     Message?.Invoke($"{k}t {GameNames.Item(more.item)}", 2, HudMessageKind.Gain);
                 }
+            if (keepRest && crate.HasLoot)
+            {
+                Message?.Invoke(Localization.Get(322), 1, HudMessageKind.Normal);
+                crate.pulled = false;
+                refusedCrate = crate;
+                return;
+            }
             crate.CapturedHere?.Invoke();   // multiplayer: the capture reaches the crate's owner (NetCrate)
             Destroy(crate.gameObject);
         }
