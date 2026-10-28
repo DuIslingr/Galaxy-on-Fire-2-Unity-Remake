@@ -382,8 +382,8 @@ namespace GoF2Remake.World
                         // The EMP systems are put on the player's *reference* matrix (AEGeometry+0x84), a copy that
                         // PlayerEgo never refreshes: they sit where the ship was made, away from it, until state 2's
                         // updateReferenceMatrix each frame brings them onto the ship (#85: the original's chase view shows
-                        // no lightning, the cutscene does). So the sparks start with the cutscene; the hit sounds now.
-                        Sfx.PlayAt(assets?.empHit, Player.position);
+                        // no lightning, the cutscene does). So the sparks start with the cutscene.
+                        // Modified: the hit sound waits for them too (it played at the kill, long before the lightning).
                         Step = 1;
                     }
                     break;
@@ -396,6 +396,7 @@ namespace GoF2Remake.World
                         EnterCutscene(false, false);
                         playerSparks = new EmpSparks(Ship.visualModel != null ? Ship.visualModel : Player);
                         playerSparks.SetEmitting(true);
+                        Sfx.PlayAt(assets?.empHit, Player.position);   // Modified: with the lightning
                         cam.LookAtUnity(Player.position + ToUnity(new Vector3(1000, 700, 1000)), Player);
                         foreach (var s in c.Ships) if (s != null && s.Race == Standing.Pirate) s.Vanish();
                         Step = 2;
@@ -450,10 +451,13 @@ namespace GoF2Remake.World
                     }
                     break;
                 case 1:
-                    if (Over(1)) { LeaveCutscene(); Step = 2; }
+                    // Modified: the wormhole the Void came through closes as this cutscene ends (Keith's "interesting way
+                    // to say hi"); it stayed open until they fled through it, and the player could fly into it meanwhile.
+                    if (Over(1)) { LeaveCutscene(); Hole?.ResetTimer(true); Step = 2; }
                     break;
                 case 2:
-                    if (c.MissionMs >= 20000f) { Hole?.ResetTimer(false); Step = 3; }
+                    // Modified: no reset to a further 60 s here: the wormhole is closed now and reopens at step 3.
+                    if (c.MissionMs >= 20000f) Step = 3;
                     break;
                 case 3:
                     if (Triggered(2) && Hole != null)
@@ -461,7 +465,9 @@ namespace GoF2Remake.World
                         // They flee: the wormhole opens, every Void fighter gets a route through it and drops its targets.
                         Hole.SetVisible(true);
                         Hole.Open();
-                        EnterCutscene(true, false);
+                        // Modified: the player's ship stops for the cutscene (it flew on, and could pass through the
+                        // wormhole while the camera looked away); LeaveCutscene hands its own speed back.
+                        EnterCutscene(false, false);
                         cam.LookAtUnity(Hole.transform.position + ToUnity(new Vector3(-9000, -4000, -30000)), Hole.transform);
                         cam.SetDolly(new Vector3(0.5f, 0f, 0.2f));
                         var w = Hole.GamePosition;
