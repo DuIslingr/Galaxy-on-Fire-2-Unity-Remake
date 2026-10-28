@@ -275,7 +275,7 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   fade; the strongest per motor wins) and the frame's continuous rumble. Pulses (`Haptics.Play` with the presets in
   `Haptics`): primary shots (controller only), secondary launches, a ship lock, player hits by layer (shield / armor /
   hull), ramming an asteroid or a landmark, the boost's start, the hull giving out and the ship's explosion, gate /
-  Khador / planet jumps, mining (landing, each ton, each layer, the drill off target every 180 ms, won / lost). Rumble
+  Khador jumps (with the big flash: 1300 / 1733 ms into the animation, `SystemJump.GateFlashMs` / `KhadorFlashMs`), planet jumps, mining (landing, each ton, each layer, the drill off target every 180 ms, won / lost). Rumble
   (`Haptics.Rumble`, each frame): ChaseCamera's rumble before the camera shake option (explosions, the Liberator, the
   boost), CutsceneCamera's (Rumble × amplitude / 50), scraping a landmark (0.35), the wormhole's pull, the Khador charge,
   the drill on target; on the phone only from 0.2 (overlapping 110 ms one-shots). Everything stops while
