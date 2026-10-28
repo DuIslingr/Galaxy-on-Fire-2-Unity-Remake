@@ -57,7 +57,9 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   1b / 2b at random) plays; 1000 ms in the ship vanishes; at the end `Space` reloads in the target station's orbit.
   Every gate layer opens with a one-off key (t 0, the loop from 50 ms; the Midorian ring lights at the centre there):
   looped from 0 the ring parts jumped 17.8 m on every 2.5 s wrap; now skipped like every animation's (see "Known open
-  items", `PartAnimation`).
+  items", `PartAnimation`). The gate is held at LOD 0 while it jumps (`SystemJump.PlayGateJump`,
+  `LODGroup.ForceLOD`; `ResetGate` lets go; #167): its made levels keep the idle layers but not the jump layer, so on a
+  phone's lower LOD bias (Medium detail, 0.6) the gate fell to level 1 0.4 s into the flash and the jump played unseen.
 - **Khador Drive** (item 85, or ships 37 / 38 / 40): the autopilot menu entry opens the map in jump mode; a jump to
   another system (instant jump) charges 5000 ms (sound 33, cells removed at the start, "-N t Energy Cells", the charge
   bar in the HUD: `Hud::draw` 0x1933f6's frame 0x53a with the striped fill 0x539 revealed from the centre outward,

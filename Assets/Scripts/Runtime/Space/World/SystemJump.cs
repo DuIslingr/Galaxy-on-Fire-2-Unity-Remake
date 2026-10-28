@@ -253,6 +253,10 @@ namespace GoF2Remake.World
                 else if (t.name.EndsWith("_anim_add")) t.gameObject.SetActive(false);
             }
             if (jump == null) return 0f;
+            // Remake (#167): the gate's made levels of detail (AutoLods) keep the idle layers but not the jump layer, so a
+            // gate shown at level 1 (a phone's lower LOD bias: from 0.4 s into the flash at Medium detail) lost the flash
+            // with the idle glow already off: the jump played unseen. Level 0 while it jumps; ResetGate lets it go.
+            foreach (var lg in gate.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
             jump.SetActive(true);
             GunRig.EnableFades(jump);
             return PartAnimation.PlayOnce(jump);
@@ -267,6 +271,7 @@ namespace GoF2Remake.World
                 if (t.name.EndsWith("_jump_anim_add")) t.gameObject.SetActive(false);
                 else if (t.name.EndsWith("_anim_add")) t.gameObject.SetActive(true);
             }
+            foreach (var lg in gate.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(-1);
         }
 
         /// <summary>The khador_jump fx (15026, scale 2) at 'position', played once; 'lengthMs' = its length (4000 without).</summary>
