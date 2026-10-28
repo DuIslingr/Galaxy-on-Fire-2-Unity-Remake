@@ -116,10 +116,27 @@ namespace GoF2Remake.Flight
         bool rollLevelled;    // the roll part of a level-out is done
         bool levelSteerArmed; // the stick was neutral since the level-out began: steering now ends it (remake)
         float levelNeutralMs; // how long the stick has been neutral during a level-out (arms it after LevelArmMs)
+        float levelMs;        // how long the level-out has run (past LevelGraceMs steering ends it, armed or not)
         /// <summary>Remake: a level-out is armed by a neutral stick held this long (one stale neutral frame between a touch
         /// double tap's taps armed it, and the second tap on the stick cancelled it at once), and only a real push
-        /// (LevelCancelInput of a full stick) ends it (a thumb resting past the dead zone did).</summary>
-        const float LevelArmMs = 150f, LevelCancelInput = 0.3f;
+        /// (LevelCancelInput of a full stick) ends it (a thumb resting past the dead zone did). Past LevelGraceMs a push
+        /// ends it without the neutral stick: steered without letting go, it kept rolling and pulling the nose against the
+        /// player (a re-grab of the touch stick within 0.5 s is a double tap too).</summary>
+        const float LevelArmMs = 150f, LevelCancelInput = 0.3f, LevelGraceMs = 300f;
+        /// <summary>Remake: the nose's world-up share past which a roll-only level-out ends (sin 65 deg).</summary>
+        const float LevelSteepNose = 0.906f;
+        /// <summary>Remake (the user's request, 2026-10-27): a level-out request (AlignToHorizon) waits this long before the
+        /// ship levels, and steering meanwhile drops it until the next request: on the touch stick quick inputs in a fight
+        /// made double taps, and the ship began to roll under the player's thumb. Steering = a push of LevelRequestInput
+        /// (the touch stick's value is squared: about a fifth of its travel); a thumb resting on the stick (no dead zone)
+        /// isn't, nor is the double tap's second tap in its first LevelRequestTapMs (it lands off the centre). Counting any
+        /// value above zero, a thumb left on the stick after the double tap dropped every request.</summary>
+        public const float LevelRequestDelayMs = 1000f;
+        const float LevelRequestTapMs = 300f, LevelRequestInput = 0.05f;
+        bool levelRequested;      // a level-out request waiting for its delay
+        float levelRequestMs;     // how long it has waited
+        /// <summary>A level-out request is waiting for its delay (LevelRequestDelayMs).</summary>
+        public bool LevelRequested => levelRequested;
         /// <summary>Remake (#37, Settings.LevelPitch): a level-out also brings the nose to the horizon (world up, the
         /// orbit's and the station's up, like the autopilot's moveToPosition), not only the roll (the original).</summary>
         public bool LevelPitch;
@@ -326,6 +343,8 @@ namespace GoF2Remake.Flight
             freePitch = Mathf.MoveTowards(freePitch, Mathf.Clamp(input.aim.y, -1f, 1f) * maxRate, step);
             float roll = Mathf.Clamp(input.roll, -1f, 1f);
             if (Mathf.Abs(roll) > 0.01f) StopLeveling();
+            UpdateLevelRequest(input.aim, dtMs);
+            SteeringEndsLevelOut(input.aim, dtMs);
             float rollTop = FreeTopTurnRate(he) * RollScale;   // EVERSPACE 2 rolls as fast as it turns
             freeRoll = Mathf.MoveTowards(freeRoll, roll * rollTop, rollTop / (FreeTurnRampMs / Mathf.Max(0.05f, Inertia)) * dtMs);
             float rollRad = -freeRoll * dtMs;
@@ -599,9 +618,50 @@ namespace GoF2Remake.Flight
         public void UpdateCruise(bool cruising, float dtMs) =>
             CruiseVisual = Mathf.MoveTowards(CruiseVisual, cruising ? 1f : 0f, Mathf.Max(0f, dtMs) / CruiseEaseMs);
 
-        public void AlignToHorizon() { IsLeveling = true; levelSide = 0; levelFine = false; rollLevelled = false; levelSteerArmed = false; levelNeutralMs = 0f; }
-        /// <summary>A manual roll (remake) cancels the auto-level.</summary>
-        public void StopLeveling() => IsLeveling = false;
+        /// <summary>The level-out request (PlayerEgo::alignToHorizon: the stick's double tap, the Level out binding). Remake:
+        /// it levels LevelRequestDelayMs later unless the player steers meanwhile (UpdateLevelRequest).</summary>
+        public void AlignToHorizon()
+        {
+            IsLeveling = false;
+            levelRequested = true;
+            levelRequestMs = 0f;
+        }
+
+        /// <summary>Starts levelling at once, without the request's delay (tests, scripts).</summary>
+        public void LevelOutNow()
+        {
+            levelRequested = false;
+            IsLeveling = true; levelSide = 0; levelFine = false; rollLevelled = false; levelSteerArmed = false; levelNeutralMs = 0f; levelMs = 0f;
+        }
+
+        /// <summary>A manual roll (remake) cancels the auto-level, and a request waiting for its delay.</summary>
+        public void StopLeveling() { IsLeveling = false; levelRequested = false; }
+
+        /// <summary>Remake: a waiting level-out request; steering drops it (not in the tap's first LevelRequestTapMs), else it
+        /// starts the level-out once LevelRequestDelayMs have passed.</summary>
+        void UpdateLevelRequest(Vector2 steer, float dtMs)
+        {
+            if (!levelRequested) return;
+            levelRequestMs += dtMs;
+            if (levelRequestMs > LevelRequestTapMs && Mathf.Max(Mathf.Abs(steer.x), Mathf.Abs(steer.y)) >= LevelRequestInput)
+            {
+                levelRequested = false;
+                return;
+            }
+            if (levelRequestMs >= LevelRequestDelayMs) LevelOutNow();
+        }
+
+        /// <summary>Remake: steering ends a level-out once it is armed (a neutral stick after the press) or has run past the
+        /// grace time; both styles (free flight's aim never ended it).</summary>
+        void SteeringEndsLevelOut(Vector2 steer, float dtMs)
+        {
+            if (!IsLeveling) return;
+            levelMs += dtMs;
+            float push = Mathf.Max(Mathf.Abs(steer.x), Mathf.Abs(steer.y));
+            if (push <= 1e-4f) { if ((levelNeutralMs += dtMs) >= LevelArmMs) levelSteerArmed = true; return; }
+            levelNeutralMs = 0f;
+            if ((levelSteerArmed || levelMs >= LevelGraceMs) && push >= LevelCancelInput) IsLeveling = false;
+        }
 
         public void AddCollisionPush(float amount) => collisionPush += amount;
 
@@ -633,25 +693,27 @@ namespace GoF2Remake.Flight
                 PitchRate = RampToward(PitchRate, steer.y, he, dtMs,
                     !TiltMode ? 1f : steer.y > 0 ? PitchDownSensitivityScale : PitchUpSensitivityScale);
 
-            // Remake: steering ends a level-out (PlayerEgo::roll keeps rolling under the stick until level). With the nose
-            // levelled too (LevelPitch) it pulled the nose back to the horizon whenever pitch was let go, and with the nose
-            // steep it never finished, so it fought the player's flying. Only steering that starts after the stick was
-            // neutral counts: the touch double tap's second tap lands on the stick, and keys may still be held.
-            // Armed by a neutral stick held LevelArmMs, ended by a push of at least LevelCancelInput (Discord report,
-            // 2026-10-18: level out didn't work by the touch double tap and ended early on a controller).
-            if (IsLeveling)
-            {
-                float levelPush = Mathf.Max(Mathf.Abs(steer.x), Mathf.Abs(steer.y));
-                if (!yawInput && !pitchInput) { if ((levelNeutralMs += dtMs) >= LevelArmMs) levelSteerArmed = true; }
-                else { levelNeutralMs = 0f; if (levelSteerArmed && levelPush >= LevelCancelInput) IsLeveling = false; }
-            }
+            // The original (PlayerEgo::roll, from PlayerEgo::update while +0x2f4 is set) keeps rolling under the stick until
+            // level; only alignToHorizon (the stick's double tap) starts it. Remake: steering ends it, as it fought the
+            // player's flying (mid-fight it kept rolling the ship; with the nose levelled too, LevelPitch, it pulled the nose
+            // back whenever pitch was let go). Only steering that starts after the stick was neutral counts at first: the
+            // touch double tap's second tap lands on the stick, and keys may still be held. Armed by a neutral stick held
+            // LevelArmMs, ended by a push of at least LevelCancelInput (Discord report, 2026-10-18: level out didn't work by
+            // the touch double tap and ended early on a controller), or by such a push past LevelGraceMs.
+            UpdateLevelRequest(steer, dtMs);
+            SteeringEndsLevelOut(steer, dtMs);
 
             // ---- rotation for this frame --------------------------------------------------------
             float pitchRad = dtMs * PitchRate * RateToRadiansPerMs;
             float yawRad = dtMs * YawRate * RateToRadiansPerMs;
             // The roll is checked every frame until the whole level-out is done (pitching the nose moves the lean); with
             // LevelPitch a steep nose (more than ~45 deg) comes down first, where the lean means little.
-            bool steep = LevelPitch && Mathf.Abs(Vector3.Cross(shipRight, shipUp).normalized.y) > 0.7f;
+            float noseUp = Mathf.Abs(Vector3.Cross(shipRight, shipUp).normalized.y);
+            bool steep = LevelPitch && noseUp > 0.7f;
+            // Remake: with the nose near vertical (roll only) a roll about it can't make the ship upright, so the original's
+            // check (lean below 0.015 and up.y > 0) never passed and it rolled on as long as the nose stayed there (climbs,
+            // dives and loops in a fight): the level-out ends instead.
+            if (IsLeveling && !LevelPitch && noseUp > LevelSteepNose) IsLeveling = false;
             rollLevelled = false;
             float rollRad = IsLeveling && !steep ? AutoLevelRoll(dtMs, shipUp, shipRight) * RollScale : 0f;
             if (IsLeveling)

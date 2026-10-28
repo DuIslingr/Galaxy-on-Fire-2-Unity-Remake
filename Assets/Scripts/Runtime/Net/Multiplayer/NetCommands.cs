@@ -135,6 +135,8 @@ namespace GoF2Remake.Multiplayer
                 needsPlayer = true, description = () => X("mpCmdLocal", "sends one line to Local") },
             new Command { name = "w", usage = "<player> <text>", arg = Arg.PlayerText, available = Everyone, allowed = Anyone, run = Whisper,
                 description = () => X("mpCmdWhisper", "a private message to one player") },
+            new Command { name = "s", usage = "<text>", arg = Arg.Text, available = Everyone, allowed = Anyone, run = SquadSay,
+                needsPlayer = true, description = () => X("mpCmdSquadChat", "one line to your squad, wherever they are") },
             new Command { name = "invite", usage = "<player>", arg = Arg.Player, available = Everyone, allowed = Anyone, run = Invite,
                 needsPlayer = true, description = () => X("mpCmdInvite", "invites a player docked here to your squad") },
             new Command { name = "leave", available = Everyone, allowed = Anyone,
@@ -858,6 +860,15 @@ namespace GoF2Remake.Multiplayer
             NetState.Instance.Whisper(by as NetPlayer, to as NetPlayer, text);
             return "";
         });
+
+        static string SquadSay(string text, IPilot by)
+        {
+            if (by.SquadId == 0) return X("mpCmdNoSquad", "You're not in a squad.");
+            text = NetChat.Clean(text);
+            if (text.Length == 0) return Usage(Get("s"));
+            NetState.Instance.SquadChat(by as NetPlayer, text);
+            return "";
+        }
 
         static string Invite(string args, IPilot by) => ForEachTarget(args, by, false, (to, _) =>
         {

@@ -290,6 +290,9 @@ namespace GoF2Remake.Data
         /// -1 = the original's defaults (S 415, F 365; TouchControls).</summary>
         public static float TouchLeftHeight { get => Get("touchLeftHeight", -1f); set => Set("touchLeftHeight", value < 0f ? -1f : Mathf.Clamp01(value)); }
         public static float TouchRightHeight { get => Get("touchRightHeight", -1f); set => Set("touchRightHeight", value < 0f ? -1f : Mathf.Clamp01(value)); }
+        /// <summary>Remake (the user's request, 2026-10-27): a touch on the stick's area moves the stick under the thumb (that
+        /// spot is the centre, no deflection) and it goes back to its place when let go; off = the original's fixed stick.</summary>
+        public static bool FloatingTouchStick { get => GetBool("floatingTouchStick", false); set => SetBool("floatingTouchStick", value); }
         public static float StickDeadzone { get => Get("stickDeadzone", DefaultDeadzone); set => Set("stickDeadzone", Mathf.Clamp(value, 0.05f, 0.4f)); }
 
         // ---- gameplay ----------------------------------------------------------------------------------------
@@ -462,9 +465,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake: the touch fire button's double-press autofire latch on the keyboard / mouse / controller fire
         /// binding (the PC version had none).</summary>
         public static bool KeyAutofire { get => GetBool("keyAutofire", false); set => SetBool("keyAutofire", value); }
-        /// <summary>Remake (#37): Level out also brings the nose to the horizon (FlightModel.LevelPitch); off = the original's
-        /// roll only.</summary>
-        public static bool LevelPitch { get => GetBool("levelPitch", true); set => SetBool("levelPitch", value); }
+        /// <summary>Remake (#37): Level out also brings the nose to the horizon (FlightModel.LevelPitch); off (the default since
+        /// 2026-10-27, the user's request: it pulled the nose back as soon as pitch was let go) = the original's roll only,
+        /// which steering doesn't end.</summary>
+        public static bool LevelPitch { get => GetBool("levelPitch", false); set => SetBool("levelPitch", value); }
         /// <summary>Remake (desktop): no sound while the window isn't focused (Bootstrap; the volume, not AudioListener.pause,
         /// which the pause menu uses).</summary>
         public static bool MuteInBackground { get => GetBool("muteInBackground", false); set => SetBool("muteInBackground", value); }
@@ -557,7 +561,7 @@ namespace GoF2Remake.Data
         {
             "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "invertPitch", "invertYaw", "invertDrillY",
             "invertDrillX", "invertOrbitY", "invertOrbitX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "vrGrabControls", "haptics", "stickDeadzone",
-            "touchLeftHeight", "touchRightHeight", "flightStyle", "padGlyphs",
+            "touchLeftHeight", "touchRightHeight", "floatingTouchStick", "flightStyle", "padGlyphs",
         };
         public static readonly string[] GameplayKeys =
         {

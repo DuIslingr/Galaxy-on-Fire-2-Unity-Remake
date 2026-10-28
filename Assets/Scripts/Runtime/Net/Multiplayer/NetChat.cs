@@ -2,7 +2,8 @@
 // Multiplayer chat: global (every player anywhere) and local (the players in the same orbit, or docked at the same
 // station). A message goes to the host (NetState.SendChatRpc), which stamps it with the sender's name and where they are
 // and sends it to everyone; each player keeps the global ones and the local ones from where they are themselves. Plus
-// the session's notices (a player joined / left). A line starting with "/" is a command for this game (NetCommands). ChatView shows them in the flight HUD and the station menu.
+// the session's notices (a player joined / left), the faction's lines (/f) and the squad's (/s: the Squad channel, to the
+// members wherever they are). A line starting with "/" is a command for this game (NetCommands). ChatView shows them in the flight HUD and the station menu.
 // While a chat line is being typed (Typing) the game's key input is off: the code-made InputActions are disabled and the
 // direct keyboard reads go through Keys (null meanwhile); outside a session Keys is just Keyboard.current.
 
@@ -26,7 +27,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>A typed command may be longer (a /dialog conversation; the server's cap NetGuard.MaxCommandArgs).</summary>
         public const int MaxCommandLength = 500;
 
-        public enum Channel { Local, Global, Notice, Whisper, Faction }
+        public enum Channel { Local, Global, Notice, Whisper, Faction, Squad }
 
         public sealed class Message
         {
@@ -51,32 +52,40 @@ namespace GoF2Remake.Multiplayer
         public static IReadOnlyList<Message> Messages => messages;
         public static event Action<Message> Added;
 
-        /// <summary>The channel new lines go to (ChatView's switch). Faction only while this player is in one (InFaction):
-        /// SendingNow falls back to Local when they leave it.</summary>
+        /// <summary>The channel new lines go to (ChatView's switch). Squad / Faction only while this player is in one
+        /// (InSquad / InFaction): SendingNow falls back to Local when they leave it.</summary>
         public static Channel Sending = Channel.Local;
 
         /// <summary>This player is in a faction (a dedicated server with profiles): the Faction channel is offered.</summary>
         public static bool InFaction => NetPlayer.Local != null && NetPlayer.Local.FactionTag.Length > 0;
 
-        /// <summary>The channel lines go to now: Sending, but Local once the player has left their faction.</summary>
-        public static Channel SendingNow => Sending == Channel.Faction && !InFaction ? Channel.Local : Sending;
+        /// <summary>This player is in a squad: the Squad channel is offered.</summary>
+        public static bool InSquad => NetSquad.InSquad;
 
-        /// <summary>The channel key / button: Local, Global, then Faction when in one, round again.</summary>
+        /// <summary>The channel lines go to now: Sending, but Local once the player has left their squad / faction.</summary>
+        public static Channel SendingNow =>
+            (Sending == Channel.Faction && !InFaction) || (Sending == Channel.Squad && !InSquad) ? Channel.Local : Sending;
+
+        /// <summary>The channel key / button: Local, Global, then Squad and Faction when in one, round again.</summary>
         public static void NextChannel()
         {
             var now = SendingNow;
-            Sending = now == Channel.Local ? Channel.Global : now == Channel.Global && InFaction ? Channel.Faction : Channel.Local;
+            if (now == Channel.Local) Sending = Channel.Global;
+            else if (now == Channel.Global && InSquad) Sending = Channel.Squad;
+            else if ((now == Channel.Global || now == Channel.Squad) && InFaction) Sending = Channel.Faction;
+            else Sending = Channel.Local;
         }
 
         /// <summary>A channel's name on its button and line tag.</summary>
         public static string ChannelName(Channel c) =>
             c == Channel.Global ? Localization.Extra("mpChatGlobal", "Global")
             : c == Channel.Faction ? Localization.Extra("mpChatFaction", "Faction")
+            : c == Channel.Squad ? Localization.Extra("mpSquad", "Squad")
             : Localization.Extra("mpChatLocal", "Local");
 
-        /// <summary>A channel's colour (#rrggbb): Local cyan, Global amber, Faction green.</summary>
+        /// <summary>A channel's colour (#rrggbb): Local cyan, Global amber, Faction green, Squad pink.</summary>
         public static string ChannelColor(Channel c) =>
-            c == Channel.Global ? "#f0b35a" : c == Channel.Faction ? "#8fe28f" : "#8fd8ff";
+            c == Channel.Global ? "#f0b35a" : c == Channel.Faction ? "#8fe28f" : c == Channel.Squad ? "#ff9ecb" : "#8fd8ff";
 
         /// <summary>A chat line is being typed: the game's keys are off.</summary>
         public static bool Typing { get; private set; }
@@ -150,8 +159,10 @@ namespace GoF2Remake.Multiplayer
             text = (text ?? "").TrimStart().StartsWith("/") ? CleanCommand(text) : Clean(text);
             if (NetCommands.TryRun(text)) return;   // "/help", "/sos": this game's own; the rest to the server, never as chat
             if (text.Length == 0 || NetState.Instance == null || !NetState.Instance.IsSpawned) return;
-            // The Faction channel: the line goes as the server's /f (NetFactions.Talk, to the members online).
+            // The Faction channel: the line goes as the server's /f (NetFactions.Talk, to the members online); the Squad
+            // channel as /s (NetState.SquadChat, to every member wherever they are).
             if (text[0] != '/' && SendingNow == Channel.Faction) text = "/f " + text;
+            else if (text[0] != '/' && SendingNow == Channel.Squad) text = "/s " + text;
             NetState.Instance.SendChatRpc(text, SendingNow == Channel.Global);
         }
 
@@ -171,6 +182,10 @@ namespace GoF2Remake.Multiplayer
         /// <summary>NetState: a faction member's line (NetFactions.Talk); 'tag' the faction's.</summary>
         public static void ReceiveFaction(string from, string text, bool own) =>
             Add(new Message { channel = Channel.Faction, from = from, text = text, own = own });
+
+        /// <summary>NetState: a squadmate's line (NetState.SquadChat).</summary>
+        public static void ReceiveSquad(string from, string text, bool own) =>
+            Add(new Message { channel = Channel.Squad, from = from, text = text, own = own });
 
         public static void Notice(string text) => Add(new Message { channel = Channel.Notice, text = text });
 
