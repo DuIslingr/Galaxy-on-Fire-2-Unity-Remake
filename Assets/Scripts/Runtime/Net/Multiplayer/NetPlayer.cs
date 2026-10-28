@@ -20,8 +20,8 @@
 // a phase cloak: shots, blasts and the local ship pass through, Target.phased),
 // and an EMP's lightning. Their jumps too: the Khador Drive's charge sound and khador_jump fx, a jumpgate's jump animation and
 // sound (SystemJump's events, JumpFxRpc), the ship gone when theirs vanishes (and an explosion when it was destroyed). EMP on a player (the remake's pick: players have no EMP pool) drains that much shield and
-// shows the lightning for 1.5 s. The owner also shares their standings (Standing.*With), so the NPCs of an orbit another
-// player runs treat them by their own standing.
+// shows the lightning for 1.5 s. The owner also shares their standings (Standing.*With; mods'races too,
+// NetModRaceStandings), so the NPCs of an orbit another player runs treat them by their own standing.
 // Elsewhere (another orbit, docked) all of it is hidden; the players docked at the same station see them in their hangar
 // instead (NetHangar).
 
@@ -79,6 +79,9 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<int> standing0 = new NetworkVariable<int>(0, Read, Write);    // Session.Standing, the signature
         readonly NetworkVariable<int> standing1 = new NetworkVariable<int>(0, Read, Write);
         readonly NetworkVariable<int> signature = new NetworkVariable<int>(-1, Read, Write);
+        // Remake mods: the standings toward mods'races (NetModRaceStandings), and another player's read back
+        readonly NetworkVariable<FixedString4096Bytes> modRaceStanding = new NetworkVariable<FixedString4096Bytes>(default, Read, Write);
+        readonly Dictionary<string, int> modRaceStandings = new Dictionary<string, int>(System.StringComparer.Ordinal);
         readonly NetworkVariable<long> missionRun = new NetworkVariable<long>(0, Read, Write);   // NetMissions: the mission its level runs
         readonly NetworkVariable<long> missionHeld = new NetworkVariable<long>(0, Read, Write);  // the mission this player holds (netId)
         readonly NetworkVariable<int> missionCargo = new NetworkVariable<int>(0, Read, Write);   // containers 116 | 117 << 10 | passengers << 20
@@ -124,6 +127,8 @@ namespace GoF2Remake.Multiplayer
         public int Standing0 => standing0.Value;
         public int Standing1 => standing1.Value;
         public int Signature => signature.Value;
+        /// <summary>This player's standings toward mods'races (mod race key -> value): Standing.IsEnemyWith.</summary>
+        public IReadOnlyDictionary<string, int> ModRaceStandings => IsOwner ? Session.ModRaceStanding : modRaceStandings;
         public float CloakPercent => cloak.Value;
         /// <summary>The squad mission (FreelanceMission.netId) this player's level runs here, 0 = none.</summary>
         public long MissionRun => missionRun.Value;
@@ -311,6 +316,7 @@ namespace GoF2Remake.Multiplayer
                 spawnedAt = Time.unscaledTime;
                 ship.Value = Session.ShipIndex;
                 pilot.Value = NetGame.Clean(NetGame.PlayerName);
+                NetModRaceStandings.Resend();
                 sender = new NetShotSender(ShotUpRpc, BlastUpRpc, () => level != null && level.Weapons != null ? level.Weapons.LockTarget : null);
                 SceneManager.sceneLoaded += OnSceneLoaded;
                 admin.OnValueChanged += (_, on) => NetChat.Notice(on
@@ -337,6 +343,8 @@ namespace GoF2Remake.Multiplayer
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
             factionTag.OnValueChanged += (_, _) => ApplyName();
+            NetModRaceStandings.Decode(modRaceStanding.Value, modRaceStandings);
+            modRaceStanding.OnValueChanged += (_, v) => NetModRaceStandings.Decode(v, modRaceStandings);
             Target.NetShips.Add(target);
             obstacle = gameObject.AddComponent<Obstacle>();
             obstacle.projectFromVolume = false;
@@ -713,6 +721,8 @@ namespace GoF2Remake.Multiplayer
             if (standing1.Value != Session.Standing[1]) standing1.Value = Session.Standing[1];
             int sig = Standing.SignatureRace;
             if (signature.Value != sig) signature.Value = sig;
+            if (NetModRaceStandings.Changed(out var factionStandings) && factionStandings != modRaceStanding.Value)
+                modRaceStanding.Value = factionStandings;
             if (empShockMs > 0f) empShockMs -= Time.deltaTime * 1000f;
             bool shock = empShockMs > 0f;
             if (empShock.Value != shock) empShock.Value = shock;

@@ -41,7 +41,9 @@ namespace GoF2Remake.Data
         public List<string> systemShown;
         public int jumpgatesUsed, kills, pirateKills;
         public int[] standing;
-        /// <summary>Session.FactionStanding: "mod_id:faction|value" (remake mods' factions; no save version of its own).</summary>
+        /// <summary>Session.ModRaceStanding: "mod_id:race|value" (remake mods' races; no save version of its own).</summary>
+        public List<string> modRaceStanding;
+        /// <summary>modRaceStanding's name before mod races were called so (read when a save has no modRaceStanding).</summary>
         public List<string> factionStanding;
         // version 2: the story
         public bool freePlay;
@@ -356,7 +358,7 @@ namespace GoF2Remake.Data
                 kills = Session.Kills,
                 pirateKills = Session.PirateKills,
                 standing = (int[])Session.Standing.Clone(),
-                factionStanding = Session.FactionStanding.Select(kv => kv.Key + "|" + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList(),
+                modRaceStanding = Session.ModRaceStanding.Select(kv => kv.Key + "|" + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList(),
                 freePlay = Session.FreePlay,
                 storyMission = Session.StoryMission,
                 storyStepStart = Session.StoryStepStart,
@@ -542,12 +544,12 @@ namespace GoF2Remake.Data
             Session.Kills = s.kills;
             Session.PirateKills = s.pirateKills;
             if (s.standing != null && s.standing.Length == 2) Session.Standing = s.standing;
-            Session.FactionStanding = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (var e in s.factionStanding ?? new List<string>())
+            Session.ModRaceStanding = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var e in (s.modRaceStanding != null && s.modRaceStanding.Count > 0 ? s.modRaceStanding : s.factionStanding) ?? new List<string>())
             {
                 int bar = e.LastIndexOf('|');
                 if (bar > 0 && int.TryParse(e.Substring(bar + 1), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int v))
-                    Session.FactionStanding[e.Substring(0, bar)] = Mathf.Clamp(v, -100, 100);
+                    Session.ModRaceStanding[e.Substring(0, bar)] = Mathf.Clamp(v, -100, 100);
             }
             if (s.version < 2)
             {

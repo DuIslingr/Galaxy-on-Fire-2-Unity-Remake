@@ -645,9 +645,12 @@ namespace GoF2Remake.UI
                     case QuestFieldKind.Item: s = RefLabel(RefKind.Item, s, s); break;
                     case QuestFieldKind.Bool: s = (bool)v ? T("mb_" + f.key, f.english) : ""; break;
                     case QuestFieldKind.Choice:
-                    case QuestFieldKind.Race:
                         int i = Array.IndexOf(f.values, s);
                         if (i >= 0 && i < f.labels.Length) s = f.labels[i];
+                        break;
+                    case QuestFieldKind.Race:   // remake: a mod race's key reads as its name (RaceFieldChoices)
+                        var rc = RaceFieldChoices(f).FirstOrDefault(c => c.value == s);
+                        if (rc.value != null) s = rc.label;
                         break;
                 }
                 if (s.Length > 0) parts.Add(s);
@@ -775,6 +778,19 @@ namespace GoF2Remake.UI
                 {
                     bool on = st[f.key] is JValue b && b.Type == JTokenType.Boolean ? (bool)b : f.def is JValue d && d.Type == JTokenType.Boolean && (bool)d;
                     FlagButton(Row(card), label, on, v => Set(v, false), () => BuildQuestPage());
+                    break;
+                }
+                case QuestFieldKind.Race when RaceFieldChoices(f).Count > f.values.Length:
+                {
+                    // Remake: the mods' own races after the game's, in the picker (Segments wouldn't fit them).
+                    var choices = RaceFieldChoices(f);
+                    string now = Cur() ?? "";
+                    var shown = choices.FirstOrDefault(c => c.value == now);
+                    Caption(card, label);
+                    var row = Row(card);
+                    Add(row, new Label(shown.value != null ? shown.label : now), "mbv-inline-label");
+                    Act(row, T("mbChoose", "Choose…"), () => ShowPicker(label, choices.Select(c =>
+                        (c.label, (Texture2D)null, (Action)(() => Set(c.value.Length == 0 ? null : c.value, true)))).ToList()), "mbv-step");
                     break;
                 }
                 case QuestFieldKind.Choice:

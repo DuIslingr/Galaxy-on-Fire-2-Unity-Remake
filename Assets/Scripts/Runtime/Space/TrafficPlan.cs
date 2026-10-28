@@ -160,8 +160,8 @@ namespace GoF2Remake.Flight
                 return list;
             }
             if (system == null) return list;
-            // Remake mods: a mod faction's system keeps its faction (ModFactions); "traffic": "mod" flies mods' ships only.
-            int sysRace = Modding.ModFactions.Is(system.raceId) ? system.raceId : Mathf.Clamp(system.raceId, 0, 3);
+            // Remake mods: a mod race's system keeps its mod race (ModRaces); "traffic": "mod" flies mods' ships only.
+            int sysRace = Modding.ModRaces.Is(system.raceId) ? system.raceId : Mathf.Clamp(system.raceId, 0, 3);
             bool modOnly = Modding.ModWorld.ModTrafficOnly(system.index);
             var localRaces = Modding.ModWorld.Locals(system.index);
             var raiderRaces = Modding.ModWorld.Raiders(system.index);
@@ -179,7 +179,7 @@ namespace GoF2Remake.Flight
             bool raidersOn = !(mido && !hardcore) && r100 < NpcTables.RaiderChance(secEff);
             var raiderSpawn = RaiderSpawn();
             int raiderRace = raiderRaces != null ? raiderRaces[Random.Range(0, raiderRaces.Count)]   // remake mods: the system's "raiders"
-                : modOnly || Modding.ModFactions.Is(sysRace) ? Standing.EnemyRaceOf(sysRace)   // a faction's: its hostile enemies
+                : modOnly || Modding.ModRaces.Is(sysRace) ? Standing.EnemyRaceOf(sysRace)   // a mod race's: its hostile enemies
                 : Random.Range(0, 100) < 75 ? Standing.Pirate : Standing.EnemyRaceOf(sysRace);
             // (the game's pirates where a mod system has mods' ships only: its raiders instead)
             int pirateRace = modOnly && raiderRace != Standing.Void ? raiderRace : Standing.Pirate;
@@ -275,7 +275,7 @@ namespace GoF2Remake.Flight
                     modCapital = Modding.ModCapitalShips.PickCapital(sysRace, true);
                     if (modCapital >= 0) terran = vossk = carrier = false;
                 }
-                else if ((sysRace == 2 || sysRace == 3 || Modding.ModFactions.Is(sysRace)) && freighters > 0
+                else if ((sysRace == 2 || sysRace == 3 || Modding.ModRaces.Is(sysRace)) && freighters > 0
                          && Modding.ModCapitalShips.Has(sysRace, Modding.ModCapitalShips.Battleship) && Random.Range(0, 100) < 30)
                     modCapital = Modding.ModCapitalShips.PickCapital(sysRace, false);
             }
@@ -334,7 +334,7 @@ namespace GoF2Remake.Flight
             int raidersFrom = list.Count;
             AddRaiders(list, raiders, raiderRace, raiderSpawn);
             // Remake mods: now and then a pirate / Void warship of the mods comes with the raiders, parked beyond their point.
-            if (raiders > 0 && !lootOrbit && (raiderRace == Standing.Pirate || raiderRace == Standing.Void || Modding.ModFactions.Is(raiderRace)))
+            if (raiders > 0 && !lootOrbit && (raiderRace == Standing.Pirate || raiderRace == Standing.Void || Modding.ModRaces.Is(raiderRace)))
             {
                 int hostileCapital = Modding.ModCapitalShips.PickHostile(raiderRace, 0.35f);
                 if (hostileCapital >= 0)

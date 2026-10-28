@@ -697,6 +697,24 @@ namespace GoF2Remake.EditorTools
         }
     }
 
+    /// <summary>Remake: /standing (NetAdminStanding): the standing toward a game race or a mod's race.</summary>
+    [Serializable]
+    [Node("Commands", null, "Standing")]
+    public class EventStandingNode : EventCommandNode
+    {
+        public const string Side = "Toward", Amount = "Amount", Set = "Set";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+            context.AddOption<bool>(Set).WithTooltip("Set the standing to the amount instead of moving it.").Build();
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            PlayersIn(context);
+            TextIn(context, Side, "terran", "terran, vossk, nivelian, midorian, or a mod's race (its id or mod_id:id).");
+            NumberIn(context, Amount, 10f, "-200..200 (below 0: liked less); the standing stays within -100..100.");
+        }
+    }
+
     [Serializable]
     [Node("Commands", null, "Credits")]
     public class EventCreditsNode : EventCommandNode

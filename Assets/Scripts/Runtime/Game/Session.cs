@@ -363,9 +363,9 @@ namespace GoF2Remake.Data
         /// a new game starts at 30 / 0.</summary>
         public static int[] Standing = { 30, 0 };
 
-        /// <summary>Remake mods: the player's standing toward each mod faction (Modding.ModFactions), by its key ("mod_id:id"),
-        /// -100..100; a faction not in it stands at its own "standing".</summary>
-        public static Dictionary<string, int> FactionStanding = new Dictionary<string, int>(System.StringComparer.Ordinal);
+        /// <summary>Remake mods: the player's standing toward each mod race (Modding.ModRaces), by its key ("mod_id:id"),
+        /// -100..100; a mod race not in it stands at its own "standing".</summary>
+        public static Dictionary<string, int> ModRaceStanding = new Dictionary<string, int>(System.StringComparer.Ordinal);
 
         /// <summary>Stations whose race the player attacked (Station::setAttackedFriends): on the next visit at least 7
         /// hostile local fighters wait there.</summary>
@@ -545,7 +545,7 @@ namespace GoF2Remake.Data
             EnergyCellsForNextJump = 0;
             JumpgatesUsed = 0;
             Standing = new[] { 30, 0 };
-            FactionStanding = new Dictionary<string, int>(System.StringComparer.Ordinal);
+            ModRaceStanding = new Dictionary<string, int>(System.StringComparer.Ordinal);
             AttackedStations = new HashSet<int>();
             RecentOrbits = new List<int>();
             Kills = PirateKills = 0;

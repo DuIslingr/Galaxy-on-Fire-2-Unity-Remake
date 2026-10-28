@@ -5,7 +5,9 @@
 // (by its key). Picking another mod's content makes that mod a dependency of the project (Use: mod.json "dependencies",
 // with the version installed now as the lowest), so it is on whenever this mod is (and in the builder at once:
 // ModManager.SetBuilderProject turns a project's dependencies on). The other mods' content is read from their files
-// (ModContent.Parse, characters.json, interiors.json, events/, music/), whether they are on or not. Plain C#.
+// (ModContent.Parse, characters.json, interiors.json, events/, music/), whether they are on or not. Remake: races are a
+// kind too (RefKind.Race): the game's by word (what races.json relations, systems.json locals / raiders and ships.json
+// traffic races take), the project's and other mods' own races (ModRaces) by key. Plain C#.
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +17,7 @@ using Newtonsoft.Json.Linq;
 
 namespace GoF2Remake.Modding
 {
-    public enum RefKind { Item, Ship, System, Station, Character, Quest, Music, Interior }
+    public enum RefKind { Item, Ship, System, Station, Character, Quest, Music, Interior, Race }
 
     /// <summary>One thing a picker offers.</summary>
     public sealed class RefEntry
@@ -85,14 +87,37 @@ namespace GoF2Remake.Modding
         public static string Label(RefKind kind, string value, ModProject p)
         {
             if (string.IsNullOrEmpty(value)) return "";
+            if (kind == RefKind.Race) value = RaceValue(value, p);
             var e = List(kind, p).FirstOrDefault(x => string.Equals(x.value, value, StringComparison.OrdinalIgnoreCase));
             if (e == null) return value;
             return e.group == GameGroup || e.own ? e.name : $"{e.name} ({e.group})";
         }
 
         /// <summary>The entry of a stored reference (null: not found, e.g. a mod that isn't installed).</summary>
-        public static RefEntry Find(RefKind kind, string value, ModProject p) =>
-            string.IsNullOrEmpty(value) ? null : List(kind, p).FirstOrDefault(x => string.Equals(x.value, value, StringComparison.OrdinalIgnoreCase));
+        public static RefEntry Find(RefKind kind, string value, ModProject p)
+        {
+            if (string.IsNullOrEmpty(value)) return null;
+            if (kind == RefKind.Race) value = RaceValue(value, p);
+            return List(kind, p).FirstOrDefault(x => string.Equals(x.value, value, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>The game's races as races.json and the race lists name them (ModRaces.GameRaceWord), with their numbers.</summary>
+        public static readonly (string word, int race, string name)[] RaceWords =
+        {
+            ("terran", 0, "Terran"), ("vossk", 1, "Vossk"), ("nivelian", 2, "Nivelian"), ("midorian", 3, "Midorian"),
+            ("pirates", 8, "Pirate"), ("void", 9, "Void"), ("specters", 10, "Specters"),
+        };
+
+        /// <summary>A race reference as the Race kind's entries have it: a game race's number or word as its word, a mod race
+        /// id of the project as its key.</summary>
+        public static string RaceValue(string value, ModProject p)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            int race = int.TryParse(value, out int n) ? n : ModRaces.GameRaceWord(value);
+            foreach (var r in RaceWords) if (r.race == race) return r.word;
+            var own = p?.OwnRace(value);
+            return own != null ? p.Key(own.Id) : value;
+        }
 
         // ---- the game -------------------------------------------------------------------------------------------
 
@@ -143,6 +168,10 @@ namespace GoF2Remake.Modding
                 case RefKind.Music:
                     foreach (var t in GameMusic) l.Add(new RefEntry { value = t, name = t, group = GameGroup });
                     break;
+                case RefKind.Race:
+                    foreach (var (word, race, name) in RaceWords)
+                        l.Add(new RefEntry { value = word, name = Localization.Extra("race" + name, name), sub = race.ToString(), group = GameGroup });
+                    break;
             }
         }
 
@@ -179,7 +208,8 @@ namespace GoF2Remake.Modding
                     break;
                 case RefKind.System:
                     foreach (var s in p.Systems.Where(s => !s.IsOverride && s.LocalId != null))
-                        l.Add(new RefEntry { value = p.Key(s.LocalId), name = s.Name ?? s.LocalId, sub = RaceName(s.Race), group = g, own = true });
+                        l.Add(new RefEntry { value = p.Key(s.LocalId), name = s.Name ?? s.LocalId, group = g, own = true,
+                                             sub = s.Race >= 0 ? RaceName(s.Race) : p.OwnRace(s.ModRace)?.Name ?? s.ModRace });
                     break;
                 case RefKind.Station:
                     foreach (var s in p.Stations.Where(s => !s.IsOverride && s.LocalId != null))
@@ -200,6 +230,10 @@ namespace GoF2Remake.Modding
                 case RefKind.Interior:
                     foreach (var r in p.Interiors.Where(r => r.Id != null))
                         l.Add(new RefEntry { value = p.Key(r.Id), name = r.Id, sub = r.IsBar ? "bar" : "hangar", group = g, own = true });
+                    break;
+                case RefKind.Race:
+                    foreach (var r in p.Races.Where(r => r.Id != null))
+                        l.Add(new RefEntry { value = p.Key(r.Id), name = r.Name ?? r.Id, sub = ProjectRace.Looks[r.Look] + (r.Hostile ? ", hostile" : ""), group = g, own = true });
                     break;
             }
         }
@@ -255,6 +289,11 @@ namespace GoF2Remake.Modding
                         string n = System.IO.Path.GetFileNameWithoutExtension(f);
                         if (!GameMusic.Contains(n, StringComparer.OrdinalIgnoreCase)) l.Add(E(n, n));
                     }
+                    break;
+                case RefKind.Race:
+                    foreach (var d in ModContent.Parse(m).races.Where(d => d.localId != null))
+                        l.Add(E(d.key, ModManifest.Pick(d.name) ?? d.localId, ProjectRace.Looks[Math.Max(0, Array.IndexOf(ProjectRace.LookRaces, d.look))]
+                                                                            + (d.hostile ? ", hostile" : "")));
                     break;
             }
         }

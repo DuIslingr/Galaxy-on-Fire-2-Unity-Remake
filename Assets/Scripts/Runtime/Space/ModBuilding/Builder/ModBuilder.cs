@@ -71,8 +71,9 @@ namespace GoF2Remake.Modding
         public static ProjectShip Ship { get; set; }
         /// <summary>The kinds of content the builder edits (its top tabs).</summary>
         /// <summary>The kinds of content (and AiTools: the MCP server's tab, ModBuilderScreen; shown wherever the builder is).</summary>
-        public enum Kind { Ships, Items, Characters, Skins, WeaponFx, Systems, Stations, Interiors, Quests, Campaigns, Audio, Blueprints, Kits, AiTools }
-        public const int KindCount = 14;
+        // Remake: Races (the mod's own races, races.json) before AiTools, edited on the star map beside Systems.
+        public enum Kind { Ships, Items, Characters, Skins, WeaponFx, Systems, Stations, Interiors, Quests, Campaigns, Audio, Blueprints, Kits, Races, AiTools }
+        public const int KindCount = 15;
 
         /// <summary>Where a kind is edited: in the game's own place for it.</summary>
         public enum Place { Hangar, Lounge, Map, Space }
@@ -81,7 +82,7 @@ namespace GoF2Remake.Modding
         public static Place PlaceOf(Kind k) => k switch
         {
             Kind.Characters or Kind.Quests or Kind.Audio => Place.Lounge,
-            Kind.Systems => Place.Map,
+            Kind.Systems or Kind.Races => Place.Map,
             Kind.Stations or Kind.WeaponFx => Place.Space,
             Kind.Interiors => InteriorIsBar ? Place.Lounge : Place.Hangar,
             _ => Place.Hangar,

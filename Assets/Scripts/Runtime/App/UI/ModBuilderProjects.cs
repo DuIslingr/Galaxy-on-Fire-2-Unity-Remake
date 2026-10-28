@@ -60,6 +60,7 @@ namespace GoF2Remake.UI
             ("mbQuests", "Missions", "Story missions and bar missions as steps: conversations, fights, rewards. In the Space Lounge.", ModBuilder.Kind.Quests),
             ("mbAudio", "Audio", "Replace or add music, sound effects and voice lines. In the Space Lounge.", ModBuilder.Kind.Audio),
             ("mbSystems", "Systems", "New star systems and their routes, placed on the star map.", ModBuilder.Kind.Systems),
+            ("mbModRaces", "Races", "Races of your own beside the Terrans, Vossk, Nivelians and Midorians: who owns systems, flies ships and raids, and who fights whom. On the star map.", ModBuilder.Kind.Races),
             ("mbStations", "Stations", "New stations and changes to the game's: models, rooms, planets. In their own orbit.", ModBuilder.Kind.Stations),
             ("mbInteriors", "Hangars & bars", "Hangar and Space Lounge rooms of your own, with their markers. In the room itself.", ModBuilder.Kind.Interiors),
             ("mbCampaigns", "Campaign", "A new game of your own: start, galaxy, ships; new-game options.", ModBuilder.Kind.Campaigns),
@@ -324,6 +325,7 @@ namespace GoF2Remake.UI
             Part(p.Quests.Count, "mbOneQuest", "1 mission", "mbQuestsN", "{0} missions");
             Part(AudioCount(p), "mbOneAudio", "1 sound", "mbAudioN", "{0} sounds");
             Part(p.Systems.Count, "mbOneSystem", "1 system", "mbSystemsN", "{0} systems");
+            Part(p.Races.Count, "mbOneModRace", "1 race", "mbModRacesN", "{0} races");
             Part(p.Stations.Count, "mbOneStation", "1 station", "mbStationsN", "{0} stations");
             Part(p.Interiors.Count, "mbOneRoom", "1 room", "mbRoomsN", "{0} rooms");
             if (p.Campaign != null) parts.Add(T("mbHasCampaign", "a campaign"));
@@ -386,6 +388,7 @@ namespace GoF2Remake.UI
                     ModBuilder.Kind.Quests => Count(selected.Quests.Count + selected.EventGraphs().Count, "mbOneQuest", "1 mission", "mbQuestsN", "{0} missions"),
                     ModBuilder.Kind.Audio => Count(AudioCount(selected), "mbOneAudio", "1 sound", "mbAudioN", "{0} sounds"),
                     ModBuilder.Kind.Systems => Count(selected.Systems.Count, "mbOneSystem", "1 system", "mbSystemsN", "{0} systems"),
+                    ModBuilder.Kind.Races => Count(selected.Races.Count, "mbOneModRace", "1 race", "mbModRacesN", "{0} races"),
                     ModBuilder.Kind.Stations => Count(selected.Stations.Count, "mbOneStation", "1 station", "mbStationsN", "{0} stations"),
                     ModBuilder.Kind.Interiors => Count(selected.Interiors.Count, "mbOneRoom", "1 room", "mbRoomsN", "{0} rooms"),
                     ModBuilder.Kind.Campaigns => selected.Campaign != null ? T("mbYes", "yes") + (selected.GameOptions.Count > 0 ? " · " + Count(selected.GameOptions.Count, "mbOneOption", "1 option", "mbOptionsN", "{0} options") : "")

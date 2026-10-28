@@ -104,6 +104,7 @@ namespace GoF2Remake.Data
         public static void MakePeace()
         {
             if (Session.Standing != null) for (int i = 0; i < Session.Standing.Length; i++) Session.Standing[i] = 0;
+            foreach (var d in Modding.ModRaces.All) if (!d.hostile) Modding.ModRaces.SetStanding(d.race, 0);   // remake mods: mod races too
             Session.AttackedStations.Clear();
         }
 

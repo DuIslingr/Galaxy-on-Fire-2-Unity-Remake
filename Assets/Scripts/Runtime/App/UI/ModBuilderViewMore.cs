@@ -137,6 +137,10 @@ namespace GoF2Remake.UI
                 BuildShipPage();
             }, e => int.TryParse(e.value, out int idx) ? Database.Shared.Item(idx)?.categoryId == 8 : true), "mbv-add");
             Note(ship, T("mbNpcTurretsNote", "The n-th turret item goes on NPC ships' n-th turret mount."));
+            // Remake: traffic "races", the game's or the mods' own races whose fighters fly it (ModBuilderViewRaces).
+            RaceListField(ship, T("mbModRaceTraffic", "Flown by the NPC fighters of"), s.TrafficRaces, l => { s.TrafficRaces = l; MarkDirty(); BuildShipPage(); },
+                          T("mbModRaceTrafficNone", "Its own race's (with the Gameplay option \"Mod ships in traffic\"; a mod race's fighters always fly mods' ships)."),
+                          numbers: true);
 
             // The engine flame.
             Heading(ship, T("mbEngineFlame", "Engine flame"));

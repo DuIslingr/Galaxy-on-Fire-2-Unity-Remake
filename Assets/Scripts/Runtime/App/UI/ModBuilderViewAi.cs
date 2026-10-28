@@ -96,6 +96,14 @@ namespace GoF2Remake.UI
                     RebuildQuests(); BuildQuestPage();
                     return null;
                 }
+                case "races":
+                {
+                    var mr = Project.Races.FirstOrDefault(x => x.Ref == r);
+                    if (mr == null) return $"No race \"{id}\" in the project.";
+                    currentModRace = mr;
+                    RebuildModRaces(); BuildModRacePage();
+                    return null;
+                }
                 case "systems":
                 {
                     var s = Project.Systems.FirstOrDefault(x => x.Ref == r);
@@ -124,6 +132,7 @@ namespace GoF2Remake.UI
                 case ModBuilder.Kind.Interiors: o["entry"] = currentInterior?.Ref; break;
                 case ModBuilder.Kind.Quests: o["entry"] = currentQuest?.Name ?? currentGraph; o["graphView"] = GraphMode; break;
                 case ModBuilder.Kind.Systems: o["entry"] = currentSystem?.Ref; break;
+                case ModBuilder.Kind.Races: o["entry"] = currentModRace?.Ref; break;
             }
             if (InHangar && ShipKind(kind)) { o["turntableShip"] = Session.ShipIndex; o["engines"] = Math.Round(engineLevel, 2); }
             o["hangar"] = HangarTypeName(Session.StationIndex);
@@ -370,7 +379,7 @@ namespace GoF2Remake.UI
 
         internal override string ExternalMap(string what)
         {
-            if (kind != ModBuilder.Kind.Systems) return "The star map is the Systems kind's: show_kind systems first.";
+            if (!OnMap(kind)) return "The star map is the Systems and Races kinds': show_kind systems first.";
             if (builderMap == null) return "The map is still opening: try again in a moment.";
             string w = (what ?? "").Trim();
             // Not the full-map overview: framing every system the builder's map shows (placeholders far out too) broke it.

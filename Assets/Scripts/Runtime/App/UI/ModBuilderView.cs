@@ -52,6 +52,9 @@ namespace GoF2Remake.UI
         readonly ModBuilderGizmo gizmo;
         int tab;
         ProjectShip Current => ModBuilder.Ship;
+        // the Races kind (ModBuilderViewRaces)
+        VisualElement modRaceList, modRacePage;
+        ProjectRace currentModRace;
 
         // reloading the project (the model changes)
         bool launchPending;
@@ -163,6 +166,7 @@ namespace GoF2Remake.UI
             BuildQuestsPanels(leftGroups[(int)ModBuilder.Kind.Quests], rightGroups[(int)ModBuilder.Kind.Quests]);
             BuildAudioPanels(leftGroups[(int)ModBuilder.Kind.Audio], rightGroups[(int)ModBuilder.Kind.Audio]);
             BuildSystemsPanels(leftGroups[(int)ModBuilder.Kind.Systems], rightGroups[(int)ModBuilder.Kind.Systems]);
+            BuildRacesPanels(leftGroups[(int)ModBuilder.Kind.Races], rightGroups[(int)ModBuilder.Kind.Races]);
 
             // ---- bottom ----
             placeHint = Add(root, new Label { pickingMode = PickingMode.Ignore }, "mbv-place-hint", SafeArea.EdgeClass);
@@ -294,7 +298,7 @@ namespace GoF2Remake.UI
             uiEngines.style.display = turntable ? StyleKeyword.Null : DisplayStyle.None;
             // Item changes reach the rest of the builder (the loadout's pickers) once the game has read them.
             if (was == ModBuilder.Kind.Items && itemsChanged) { itemsChanged = false; RequestReload(true); }
-            if (was == ModBuilder.Kind.Systems && k != ModBuilder.Kind.Systems) CloseMap();
+            if (OnMap(was) && !OnMap(k)) CloseMap();   // Systems and Races share the map
             if (was == ModBuilder.Kind.Interiors && k != ModBuilder.Kind.Interiors) EndInteriorView();
             if (k == ModBuilder.Kind.Items) { RebuildItems(); BuildItemPage(); }
             if (k == ModBuilder.Kind.Characters) { RebuildCharacters(); BuildCharacterPage(); }
@@ -308,6 +312,7 @@ namespace GoF2Remake.UI
             else UpdateQuestGraph();
             if (k == ModBuilder.Kind.Audio) { RebuildAudio(); BuildAudioPage(); }
             if (k == ModBuilder.Kind.Systems) { RebuildSystems(); BuildSystemPage(); OpenMap(); }
+            if (k == ModBuilder.Kind.Races) { RebuildModRaces(); BuildModRacePage(); OpenMap(); }
             // The turntable swaps between the project's ship, the skinned game ship and the campaign's start ship.
             if (SwapsTurntable(was) != SwapsTurntable(k) && (int)was >= 0) { ModBuilder.ApplyShip(); boundShip = -2; }
             if (ships) { RebuildShips(); BuildHardpointsPage(); BuildLoadoutPage(); }
@@ -337,6 +342,7 @@ namespace GoF2Remake.UI
             if (kind == ModBuilder.Kind.Audio) { RebuildAudio(); BuildAudioPage(); }
             if (kind == ModBuilder.Kind.Characters) { RebuildCharacters(); BuildCharacterPage(); }
             if (kind == ModBuilder.Kind.Systems) { RebuildSystems(); BuildSystemPage(); RefreshMap(); }
+            if (kind == ModBuilder.Kind.Races) { RebuildModRaces(); BuildModRacePage(); RefreshMap(); }
             if (kind == ModBuilder.Kind.Interiors) { RebuildInteriors(); BuildInteriorPage(); }
         }
 
@@ -442,17 +448,7 @@ namespace GoF2Remake.UI
             var name = Text(ship, T("mbName", "Name"), s.Name, 40, v => { s.Name = v.Trim(); RebuildShips(); MarkDirty(); });
             if (s.IsOverride) name.textEdition.placeholder = GameNames.Ship(s.OverrideIndex);
             Text(ship, T("mbDescription", "Description"), s.Description, 600, v => { s.Description = v; MarkDirty(); }, true);
-            if (!s.IsOverride)
-            {
-                Add(ship, new Label(T("mbRace", "Built by").ToUpperInvariant()), "mbv-label");
-                var row = Add(ship, new VisualElement(), "mbv-seg-row");
-                for (int i = 0; i < Races.Length; i++)
-                {
-                    int race = Races[i];
-                    var b = Act(row, T("race" + RaceNames[i], RaceNames[i]), () => { s.Race = race; MarkDirty(); BuildShipPage(); }, "mbv-seg");
-                    b.EnableInClassList("mbv-seg--on", s.Race == race);
-                }
-            }
+            if (!s.IsOverride) ShipRaceField(s);   // a game race or a mod's own (ModBuilderViewRaces)
             Heading(ship, T("mbStats", "Stats"));
             Int(ship, T("mbArmor", "Hull points"), s.Armor, 1, 100000, v => { s.Armor = v; MarkDirty(); });
             Int(ship, T("mbCargo", "Cargo (t)"), s.Cargo, 0, 100000, v => { s.Cargo = v; MarkDirty(); });

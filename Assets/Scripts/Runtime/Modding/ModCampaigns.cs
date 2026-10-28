@@ -7,6 +7,8 @@
 //     "startStation": "mod_id:station_id" | number,  "startShip": "mod_id:ship_id" | number,  "credits": 5000,
 //     "equipment": [item, { "item": item, "amount": n }, ...]  (mounted; a secondary weapon's amount = its ammo),
 //     "cargo": [{ "item": item, "amount": n }, ...],  "standing": [terran_vossk, nivelian_midorian]  (-100..100),
+//     "raceStanding": { "race": -100..100, "mod_id:race": ... }  (the start toward mods' races, ModRaces; default each
+//                              race's own "standing"),
 //     "quest": "graph_name"  (an event graph started as a quest when the game begins: the campaign's story),
 //     "galaxy": "mod" | "all"  ("mod": only this mod's systems (and its dependencies') exist for the game: the map, the
 //                               missions, the ticker; default "all"),
@@ -37,7 +39,7 @@ namespace GoF2Remake.Modding
         static readonly HashSet<string> Fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "name", "description", "image", "imageHover", "showTitle", "startStation", "startShip", "credits", "equipment", "cargo", "standing", "quest",
-            "galaxy", "items", "ships", "trafficShips", "flightStyle",
+            "galaxy", "items", "ships", "trafficShips", "flightStyle", "raceStanding",
         };
 
         public class Def
@@ -49,6 +51,7 @@ namespace GoF2Remake.Modding
             public int credits;
             public List<(string item, int amount)> equipment = new List<(string, int)>(), cargo = new List<(string, int)>();
             public int[] standing;
+            public readonly Dictionary<string, int> raceStanding = new Dictionary<string, int>(StringComparer.Ordinal);   // mod race reference -> -100..100
             public bool modGalaxy, modItems, modShips;
             public int flightStyle = -1;   // "flightStyle": the campaign's games fly so (ModFlight), -1 = the player's option
             public readonly Dictionary<int, List<string>> trafficShips = new Dictionary<int, List<string>>();
@@ -106,6 +109,17 @@ namespace GoF2Remake.Modding
             if (ModJson.Get(o, "cargo") is JArray ca)
                 foreach (var t in ca) if (t is JObject c) d.cargo.Add(((string)c["item"], c["amount"] != null ? (int)c["amount"] : 1));
             if (ModJson.Get(o, "standing") is JArray st && st.Count == 2) d.standing = new[] { Mathf.Clamp((int)st[0], -100, 100), Mathf.Clamp((int)st[1], -100, 100) };
+            if (ModJson.Get(o, "raceStanding") is JToken fs)
+            {
+                // Remake: the start toward mods' races (resolved when the game starts: the mod races are numbered then)
+                if (!(fs is JObject fo)) throw new ModJsonException($"{File}: \"raceStanding\" must be an object {{ \"race\": 50 }}");
+                foreach (var prop in fo.Properties())
+                {
+                    if (prop.Value.Type != JTokenType.Integer && prop.Value.Type != JTokenType.Float)
+                        throw new ModJsonException($"{File}: raceStanding \"{prop.Name}\" must be a number from -100 to 100");
+                    d.raceStanding[prop.Name] = Mathf.Clamp(Mathf.RoundToInt((float)prop.Value), -100, 100);
+                }
+            }
             if (ModJson.Get(o, "trafficShips") is JObject ts)
                 foreach (var prop in ts.Properties())
                 {
@@ -244,6 +258,9 @@ namespace GoF2Remake.Modding
                 if (ModContent.TryResolveItem(item, out int i) && db.Item(i) != null) Session.Cargo.Add(new ItemStack(i, Mathf.Max(1, amount)));
                 else Warn(c.mod, $"{File}: cargo \"{item}\" is no item");
             if (c.standing != null) Session.Standing = new[] { c.standing[0], c.standing[1] };
+            foreach (var kv in c.raceStanding)
+                if (ModRaces.TryResolve(kv.Key, c.mod, out int fr) && ModRaces.Is(fr)) ModRaces.SetStanding(fr, kv.Value);
+                else Warn(c.mod, $"{File}: raceStanding \"{kv.Key}\" is no mod race (the game's four are \"standing\")");
             Session.VisitedStations = new HashSet<int> { station };
             Session.SystemVisible = null;
             GalaxyMap.Visibility(db);              // the campaign's galaxy (GalaxyMap hides the rest)

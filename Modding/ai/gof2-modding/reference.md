@@ -382,6 +382,12 @@ remake's own. The original's attributes without a name: 37, 56, 57, 58, 59 (set 
 | 122 | tractorTargets |  |
 | 123 | tractorRange |  |
 | 124 | shieldDamage |  |
+| 127 | echoDelayMs |  |
+| 128 | echoPercent |  |
+| 129 | echoRadius |  |
+| 130 | echoExplosion |  |
+| 131 | missileDefense |  |
+| 132 | miningTime |  |
 
 ## Blueprints
 
@@ -1603,6 +1609,7 @@ items.json fx (see the guide's "The game's own models").
 | hangar_terran_bot_b | main | hangar_terran_diffuse, hangar_terran_metallic_smoothness, hangar_terran_normal_specular |
 | hangar_terran_bot_c | main | hangar_terran_diffuse, hangar_terran_metallic_smoothness, hangar_terran_normal_specular |
 | hangar_terran_bot_d | main | hangar_terran_diffuse, hangar_terran_metallic_smoothness, hangar_terran_normal_specular |
+| hangar_terran_bot_e | main | hangar_terran_diffuse, hangar_terran_metallic_smoothness, hangar_terran_normal_specular |
 
 ### hangar_turret
 

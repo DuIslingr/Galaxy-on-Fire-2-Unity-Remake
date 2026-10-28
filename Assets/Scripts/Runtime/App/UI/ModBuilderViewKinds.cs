@@ -2,9 +2,10 @@
 // The Mod Builder's hangar screen (part of ModBuilderView): what the kinds with a view of their own share with the screen's
 // frame: the picks remembered over an undo, the hint line, the per-frame work, Esc, the pointer over the 3D view (the rooms'
 // free camera, the star map) and the clean-up. Each kind's file implements its part (ModBuilderViewBlueprints, ...Campaign,
-// ...Interiors, ...Quests, ...Audio, ...Systems).
+// ...Interiors, ...Quests, ...Audio, ...Systems, ...Races).
 
 using System;
+using System.Linq;
 using GoF2Remake.Modding;
 using UnityEngine.UIElements;
 
@@ -15,7 +16,8 @@ namespace GoF2Remake.UI
         /// <summary>The kinds' picks before an undo; the returned action picks them again.</summary>
         Action RememberPicks()
         {
-            string bp = currentBlueprint?.Ref, option = currentOption?.Ref, room = currentInterior?.Ref, quest = currentQuest?.Name, system = currentSystem?.Ref;
+            string bp = currentBlueprint?.Ref, option = currentOption?.Ref, room = currentInterior?.Ref, quest = currentQuest?.Name, system = currentSystem?.Ref,
+                   modRace = currentModRace?.Ref;
             return () =>
             {
                 currentBlueprint = Project.Blueprints.Find(b => b.Ref == bp) ?? (Project.Blueprints.Count > 0 ? Project.Blueprints[0] : null);
@@ -23,6 +25,7 @@ namespace GoF2Remake.UI
                 currentInterior = Project.Interiors.Find(r => r.Ref == room) ?? (Project.Interiors.Count > 0 ? Project.Interiors[0] : null);
                 currentQuest = Project.Quests.Find(q => q.Name == quest) ?? (Project.Quests.Count > 0 ? Project.Quests[0] : null);
                 currentSystem = Project.Systems.Find(s => s.Ref == system) ?? (Project.Systems.Count > 0 ? Project.Systems[0] : null);
+                currentModRace = Project.Races.Find(r => r.Ref == modRace) ?? Project.Races.FirstOrDefault();
                 currentStep = null;
             };
         }
@@ -32,6 +35,7 @@ namespace GoF2Remake.UI
         {
             ModBuilder.Kind.Interiors => InteriorHint(),
             ModBuilder.Kind.Systems => SystemsHint(),
+            ModBuilder.Kind.Races => ModRacesHint(),
             _ => "",
         };
 
@@ -44,7 +48,7 @@ namespace GoF2Remake.UI
         bool EscapeKind() => kind switch
         {
             ModBuilder.Kind.Interiors => EscapeInterior(),
-            ModBuilder.Kind.Systems => EscapeSystems(),
+            ModBuilder.Kind.Systems or ModBuilder.Kind.Races => EscapeSystems(),
             _ => false,
         };
 

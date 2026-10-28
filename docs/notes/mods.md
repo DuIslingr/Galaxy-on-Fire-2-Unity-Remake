@@ -147,8 +147,8 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   cargo, Kaamo storage, the parked ship refunded at the saved price; shop rows, bar sellers, records, blueprints, a Purchase
   mission dropped). Imports accept a modded number the save names (`ModSaves.Names`).
 - **Mod campaigns** (`ModCampaigns`, a mod's `campaign.json`: name, description, image, imageHover, showTitle, startStation,
-  startShip, credits, equipment, cargo, standing, quest, galaxy mod | all, items mod | all, ships mod | all, trafficShips per
-  race): a card after the three campaign cards, picked the same way (`MainMenu.RefreshModCampaigns` / `ModCard` /
+  startShip, credits, equipment, cargo, standing, raceStanding (mods' races, mods-world.md "Mod races"), quest, galaxy
+  mod | all, items mod | all, ships mod | all, trafficShips per race): a card after the three campaign cards, picked the same way (`MainMenu.RefreshModCampaigns` / `ModCard` /
   `PickModCampaign`: the art cropped to the card, the hover art fading in while selected, a name plate unless showTitle is
   false; four cards shrink to fit the row (`.card-row--4`), five or more go small and the row scrolls sideways
   (`.card-row--many`, `card-scroll`, `DragScroll` horizontal too)) → difficulty →
@@ -193,7 +193,8 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   style); not yet played with a real mod.
 - **Conditions** (`Events.EventRunner.Condition(expression, out error)`: the event graphs' expression language outside an
   event, a throwaway run like the quests' "Starts when"; new words `option(mod:id)`, `won(main | valkyrie | supernova)`
-  (or the multiplayer finished world), `systemsvisited` (distinct systems of `Session.VisitedStations`)): items.json /
+  (or the multiplayer finished world), `systemsvisited` (distinct systems of `Session.VisitedStations`), `standing(race)`
+  (2026-10-28: a game race's or a mod race's standing, `Standing.RawToward`; the always-hostile sides -100)): items.json /
   ships.json "available" (new entries and overrides; `ModUnlocks.ItemAvailable` in `Shop.GenerateItems` and
   `NpcTables.RollLoot`, `ShipAvailable` in `Shop.GenerateShips` and the lounge ship sellers), blueprints' "available"; an
   unreadable one is false with a warning on its mod. ships.json "dealer" { chance %, systemRace, minTechLevel }

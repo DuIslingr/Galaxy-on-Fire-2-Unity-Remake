@@ -92,10 +92,10 @@ namespace GoF2Remake.Modding
         }
 
         /// <summary>A mod capital ship of 'kind' may fly for 'race' now (the option not Off).</summary>
-        public static bool Has(int race, string kind) => (ModFactions.Is(race) || Settings.ModShipTrafficChance > 0f) && Candidates(race, kind).Count > 0;
+        public static bool Has(int race, string kind) => (ModRaces.Is(race) || Settings.ModShipTrafficChance > 0f) && Candidates(race, kind).Count > 0;
 
-        /// <summary>The "Mod ships in traffic" chance, always for a mod faction (the game has no ships of its own for it).</summary>
-        static float ChanceFor(int race) => ModFactions.Is(race) ? 1f : Settings.ModShipTrafficChance;
+        /// <summary>The "Mod ships in traffic" chance, always for a mod race (the game has no ships of its own for it).</summary>
+        static float ChanceFor(int race) => ModRaces.Is(race) ? 1f : Settings.ModShipTrafficChance;
 
         /// <summary>TrafficPlan's freighter loop: the game's 'fallback' freighter, or now and then a mod freighter of 'race'
         /// (at the "Mod ships in traffic" chance).</summary>

@@ -8,11 +8,11 @@
 //   the route back), "gateStation" (the station orbit with the jumpgate; default its first station) } or
 //   { "override": n | "mod:id", name, security, visible, gates (added) }; both may name "spaceMusic" / "stationMusic" (a
 //   mod's track, ModMusic: the calm space music in the system's orbits, the music docked at its stations).
-//   "race" may also name a mod's faction (ModFactions: "mod_id:id" or the mod's own id): it owns the system (its locals,
+//   "race" may also name a mod's race (ModRaces: "mod_id:id" or the mod's own id): it owns the system (its locals,
 //   lounge visitors, docking fines; its hangar and bar its "look"). Remake mods, also on overrides: "traffic": "mod" (only
 //   mods' ships fly there: no game fighters, freighters or capital ships, no GoF2 pirate events; ModTraffic and
-//   ModCapitalShips without the "Mod ships in traffic" chance), "locals": [races / factions] (the local fighters' sides,
-//   default the owner), "raiders": [races / factions] (who raids it, default the owner's hostile enemies, else pirates).
+//   ModCapitalShips without the "Mod ships in traffic" chance), "locals": [races / mod races] (the local fighters' sides,
+//   default the owner), "raiders": [races / mod races] (who raids it, default the owner's hostile enemies, else pirates).
 //   Both may name "available": a condition (ModUnlocks, the event graphs' expressions): while it holds the system is on
 //   the map, while it doesn't it is hidden, revealed or not (GalaxyMap.Visibility); a player in it is taken out.
 // stations.json may name "music" too (that station's docked music).
@@ -96,7 +96,7 @@ namespace GoF2Remake.Modding
         {
             Read(mod, SystemsFile, SystemFields, systems, (o, d) =>
             {
-                if (!(ModJson.Get(o, "race") is JToken rt) || rt.Type != JTokenType.String) ModJson.Int(o, "race", 0, d.file);   // (a faction: resolved in Apply)
+                if (!(ModJson.Get(o, "race") is JToken rt) || rt.Type != JTokenType.String) ModJson.Int(o, "race", 0, d.file);   // (a mod race: resolved in Apply)
                 ModJson.Int(o, "security", 0, d.file); ModJson.Int(o, "sky", 0, d.file);
                 if (ModJson.Str(o, "traffic") is string tr && tr != "mod" && tr != "all")
                     throw new ModJsonException($"{d.where}: \"traffic\" must be \"mod\" (only mods' ships) or \"all\"");
@@ -112,7 +112,7 @@ namespace GoF2Remake.Modding
                     if (!(ModJson.Get(o, "race") is JToken r2) || r2.Type != JTokenType.String)
                     {
                         int race = ModJson.Int(o, "race", 0, d.file);
-                        if (race < 0 || race > 3) throw new ModJsonException($"{d.where}: \"race\" must be 0-3 (Terran, Vossk, Nivelian, Midorian) or a faction");
+                        if (race < 0 || race > 3) throw new ModJsonException($"{d.where}: \"race\" must be 0-3 (Terran, Vossk, Nivelian, Midorian) or a mod race");
                     }
                 }
             });
@@ -536,14 +536,14 @@ namespace GoF2Remake.Modding
 
         static int InteriorOf(JObject o) => RaceToken(ModJson.Get(o, "interior"));
 
-        /// <summary>A system's "race": 0-3, or a mod faction ("mod_id:id", the mod's own id) by its race number.</summary>
+        /// <summary>A system's "race": 0-3, or a mod race ("mod_id:id", the mod's own id) by its race number.</summary>
         static int RaceOf(JObject o, Def d, ModInfo mod)
         {
             var t = ModJson.Get(o, "race");
             if (t == null) return 0;
             if (t.Type != JTokenType.String) return Mathf.Clamp(ModJson.Int(o, "race", 0, d.file), 0, 3);
-            if (ModFactions.TryResolve((string)t, mod, out int race)) return race;
-            Report(mod, $"{d.where}: \"race\": {(string)t} is no faction (Terran instead)");
+            if (ModRaces.TryResolve((string)t, mod, out int race)) return race;
+            Report(mod, $"{d.where}: \"race\": {(string)t} is no race (Terran instead)");
             return 0;
         }
 
@@ -599,10 +599,10 @@ namespace GoF2Remake.Modding
         /// ships or GoF2 pirate events).</summary>
         public static bool ModTrafficOnly(int system) => modTrafficSystems.Contains(system);
 
-        /// <summary>systems.json "locals": the races / factions of the system's local fighters (null: its owner).</summary>
+        /// <summary>systems.json "locals": the races / mod races of the system's local fighters (null: its owner).</summary>
         public static List<int> Locals(int system) => systemLocals.TryGetValue(system, out var l) ? l : null;
 
-        /// <summary>systems.json "raiders": the races / factions that raid the system (null: the game's rule).</summary>
+        /// <summary>systems.json "raiders": the races / mod races that raid the system (null: the game's rule).</summary>
         public static List<int> Raiders(int system) => systemRaiders.TryGetValue(system, out var l) ? l : null;
 
         /// <summary>stations.json "subtitle": what the place is ("Satellite Ruins"), under its name on the star map; null without.</summary>
@@ -674,7 +674,7 @@ namespace GoF2Remake.Modding
                             int index = systemIndex[d.key];
                             var pos = (JArray)ModJson.Get(o, "position");
                             int race = RaceOf(o, d, mod);
-                            int look = ModFactions.Look(race);   // a faction's system: the template of its look race
+                            int look = ModRaces.Look(race);   // a mod race's system: the template of its look race
                             var template = db.Systems.Find(x => x.index < originalSystems && x.raceId == look) ?? db.Systems[0];
                             s = new SystemData
                             {
@@ -696,8 +696,8 @@ namespace GoF2Remake.Modding
                             if (!ModJson.Has(o, field)) continue;
                             var l = new List<int>();
                             foreach (var r in ModJson.Strings(o, field))
-                                if (ModFactions.TryResolve(r, mod, out int rr)) l.Add(rr);
-                                else Report(mod, $"{d.where}: {field}: \"{r}\" is no race or faction");
+                                if (ModRaces.TryResolve(r, mod, out int rr)) l.Add(rr);
+                                else Report(mod, $"{d.where}: {field}: \"{r}\" is no race");
                             if (l.Count > 0) into[s.index] = l;
                         }
                         s.securityLevel = Mathf.Clamp(ModJson.Int(o, "security", s.securityLevel, d.file), 0, 3);

@@ -47,7 +47,7 @@ This file holds only what every task needs. Everything about one area of the gam
 | [mods.md](docs/notes/mods.md) | Mod format, items, ships, numbers, saves, campaigns, options, flight styles, conditions, traffic, capital ships, mobile stations, ES2 docking, blueprints, browser, multiplayer |
 | [mods-models.md](docs/notes/mods-models.md) | Ship models, how a ship is seen, engine effects, exhaust styles, textures / skins, image formats, loading |
 | [mods-ship-kits.md](docs/notes/mods-ship-kits.md) | Ship kits, builds, colours, skins, hardpoint models, engine flames, lateral thrusters, liveries, decals, engine trails |
-| [mods-world.md](docs/notes/mods-world.md) | Systems, stations, station models, planets, suns, skies, interiors, characters, factions |
+| [mods-world.md](docs/notes/mods-world.md) | Systems, stations, station models, planets, suns, skies, interiors, characters, mod races |
 | [mods-weapons-audio.md](docs/notes/mods-weapons-audio.md) | Weapon fx, missile turrets, game models, sounds, voices, music |
 | [mod-builder.md](docs/notes/mod-builder.md) | The in-game mod editor, its kinds, quest graph, optimizer, imports |
 | [mod-builder-mcp.md](docs/notes/mod-builder-mcp.md) | The builder's MCP server for AI assistants |

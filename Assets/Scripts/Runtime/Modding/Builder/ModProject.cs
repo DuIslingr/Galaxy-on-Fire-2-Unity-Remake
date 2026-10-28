@@ -9,7 +9,9 @@
 // characters (characters.json) are ProjectItem / ProjectCharacter (ProjectContent.cs) the same way; their files are written
 // only once the project has some (or had the file). So are the systems / stations / rooms (ProjectWorld.cs), blueprints,
 // new-game options and the campaign (ProjectGame.cs) and the quests made in the builder (events/<name>.gof2quest,
-// ProjectQuest). Its audio is plain files: music/, sounds/ and voices/ (AudioFiles). What other mods it uses is its
+// ProjectQuest). Remake: the mod's own races, races.json (ProjectRace, ProjectWorld.cs; an older project's factions.json is
+// read and written back as races.json) the same way; adding and removing them, with what names them, in ModProjectRaces.cs.
+// Its audio is plain files: music/, sounds/ and voices/ (AudioFiles). What other mods it uses is its
 // manifest's "dependencies" (AddDependency: ModRefs adds one when another mod's content is picked).
 // A project can also start from a mod made elsewhere (an installed one, a downloaded .zip): CopyMod copies its files as
 // they are and keeps its id, so Export replaces the installed copy; what the builder doesn't edit stays as it was.
@@ -28,7 +30,7 @@ using UnityEngine;
 namespace GoF2Remake.Modding
 {
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
-    public class ModProject
+    public partial class ModProject
     {
         public const string BuilderFile = "builder.json";
         public const string ModelsFolder = "models";
@@ -86,6 +88,12 @@ namespace GoF2Remake.Modding
             }
             foreach (var s in Systems) { string id = s.IsOverride ? s.OverrideRef : s.LocalId; if (id != null) list.Add(($"systems.{id}.name", s.Name ?? "")); }
             foreach (var s in Stations) { string id = s.IsOverride ? s.OverrideRef : s.LocalId; if (id != null) list.Add(($"stations.{id}.name", s.Name ?? "")); }
+            // Remake: a mod race's texts (ModRaces reads "races.<id>.name" / ".description").
+            foreach (var r in Races.Where(r => r.Id != null))
+            {
+                list.Add(($"races.{r.Id}.name", r.Name ?? ""));
+                list.Add(($"races.{r.Id}.description", r.Description ?? ""));
+            }
             return list;
         }
 
@@ -123,6 +131,8 @@ namespace GoF2Remake.Modding
         public readonly List<ProjectSystem> Systems = new List<ProjectSystem>();
         public readonly List<ProjectStation> Stations = new List<ProjectStation>();
         public readonly List<ProjectInterior> Interiors = new List<ProjectInterior>();
+        /// <summary>races.json: the mod's own races (ModRaces).</summary>
+        public readonly List<ProjectRace> Races = new List<ProjectRace>();
         public readonly List<ProjectBlueprint> Blueprints = new List<ProjectBlueprint>();
         /// <summary>shipkits.json: the customizable ships' kits of parts (ModShipKits).</summary>
         public readonly List<ProjectKit> Kits = new List<ProjectKit>();
@@ -218,7 +228,8 @@ namespace GoF2Remake.Modding
                 p.Id = Str(p.manifest, "id") ?? Path.GetFileName(folder);
                 p.Modified = Directory.GetLastWriteTimeUtc(folder);
                 foreach (var f in new[] { ModManifest.FileName, ModContent.ShipsFile, ModContent.ItemsFile, ModCharacters.File, BuilderFile,
-                                          ModWorld.SystemsFile, ModWorld.StationsFile, InteriorsFile, ModBlueprints.File, ModGameOptions.File, CampaignFile, ProjectKit.File })
+                                          ModWorld.SystemsFile, ModWorld.StationsFile, InteriorsFile, ModBlueprints.File, ModGameOptions.File, CampaignFile, ProjectKit.File,
+                                          ModRaces.File, ModRaces.OldFile })
                 {
                     string path = Path.Combine(folder, f);
                     if (File.Exists(path)) { var t = File.GetLastWriteTimeUtc(path); if (t > p.Modified) p.Modified = t; }
@@ -238,6 +249,7 @@ namespace GoF2Remake.Modding
                 p.ReadList(ModWorld.SystemsFile, o => p.Systems.Add(new ProjectSystem(o)));
                 p.ReadList(ModWorld.StationsFile, o => p.Stations.Add(new ProjectStation(o)));
                 p.ReadList(InteriorsFile, o => p.Interiors.Add(new ProjectInterior(o)));
+                p.ReadList(File.Exists(Path.Combine(folder, ModRaces.File)) ? ModRaces.File : ModRaces.OldFile, o => p.Races.Add(new ProjectRace(o)));
                 p.ReadList(ModBlueprints.File, o => p.Blueprints.Add(new ProjectBlueprint(o)));
                 p.ReadList(ProjectKit.File, o => p.Kits.Add(new ProjectKit(o)));
                 p.ReadList(ModGameOptions.File, o => p.GameOptions.Add(new ProjectGameOption(o)));
@@ -292,6 +304,8 @@ namespace GoF2Remake.Modding
             WriteList(ModWorld.SystemsFile, Systems.Select(c => c.ToJson()));
             WriteList(ModWorld.StationsFile, Stations.Select(c => c.ToJson()));
             WriteList(InteriorsFile, Interiors.Select(c => c.ToJson()));
+            WriteList(ModRaces.File, Races.Select(c => c.ToJson()));
+            if (File.Exists(Path.Combine(Folder, ModRaces.OldFile))) File.Delete(Path.Combine(Folder, ModRaces.OldFile));   // the old name, now races.json
             WriteList(ModBlueprints.File, Blueprints.Select(c => c.ToJson()));
             WriteList(ProjectKit.File, Kits.Select(c => c.ToJson()));
             WriteList(ModGameOptions.File, GameOptions.Select(c => c.ToJson()));
@@ -310,7 +324,7 @@ namespace GoF2Remake.Modding
         static readonly string[] KeptBuilderKeys = { "station", "lastShip", "previousIds" };
 
         /// <summary>Everything the project's JSON files hold, as it is in memory now (the mod, ships with their hardpoints,
-        /// items, characters, systems, stations, rooms, blueprints, new-game options, the campaign, the builder's quests,
+        /// items, characters, systems, stations, rooms, races, blueprints, new-game options, the campaign, the builder's quests,
         /// builder.json).</summary>
         public JObject CaptureState()
         {
@@ -327,6 +341,7 @@ namespace GoF2Remake.Modding
                 ["systems"] = new JArray(Systems.Select(c => c.ToJson())),
                 ["stations"] = new JArray(Stations.Select(c => c.ToJson())),
                 ["interiors"] = new JArray(Interiors.Select(c => c.ToJson())),
+                ["races"] = new JArray(Races.Select(c => c.ToJson())),
                 ["blueprints"] = new JArray(Blueprints.Select(c => c.ToJson())),
                 ["kits"] = new JArray(Kits.Select(c => c.ToJson())),
                 ["gameOptions"] = new JArray(GameOptions.Select(c => c.ToJson())),
@@ -355,6 +370,7 @@ namespace GoF2Remake.Modding
             Systems.Clear(); Systems.AddRange(Objects(state, "systems").Select(o => new ProjectSystem(o)));
             Stations.Clear(); Stations.AddRange(Objects(state, "stations").Select(o => new ProjectStation(o)));
             Interiors.Clear(); Interiors.AddRange(Objects(state, "interiors").Select(o => new ProjectInterior(o)));
+            Races.Clear(); Races.AddRange(Objects(state, "races").Select(o => new ProjectRace(o)));
             Blueprints.Clear(); Blueprints.AddRange(Objects(state, "blueprints").Select(o => new ProjectBlueprint(o)));
             Kits.Clear(); Kits.AddRange(Objects(state, "kits").Select(o => new ProjectKit(o)));
             GameOptions.Clear(); GameOptions.AddRange(Objects(state, "gameOptions").Select(o => new ProjectGameOption(o)));
@@ -1235,7 +1251,38 @@ namespace GoF2Remake.Modding
         public string Model { get => S("model"); set { if (string.IsNullOrEmpty(value)) json.Remove("model"); else json["model"] = value; } }
         /// <summary>The shop icon (a 180 x 88 PNG in the project), null = none.</summary>
         public string Icon { get => S("icon"); set { if (string.IsNullOrEmpty(value)) json.Remove("icon"); else json["icon"] = value; } }
-        public int Race { get => I("race", 0); set => json["race"] = value; }
+        /// <summary>The game race that builds it (0-3, 8 pirate, 9 Void); -1 when a mod's race does (ModRace). Setting it
+        /// replaces a mod race.</summary>
+        public int Race
+        {
+            get => json["race"] is JValue v && v.Type == JTokenType.String ? ModRaces.GameRaceWord((string)v) : I("race", 0);
+            set => json["race"] = value;
+        }
+
+        /// <summary>Remake: the mod race that builds it (ships.json "race" as a mod race's id or "mod_id:id", ModRaces), null =
+        /// a game race. Setting null leaves "race" alone (pick a game race with Race).</summary>
+        public string ModRace
+        {
+            get => json["race"] is JValue v && v.Type == JTokenType.String && ModRaces.GameRaceWord((string)v) < 0 ? (string)v : null;
+            set { if (!string.IsNullOrEmpty(value)) json["race"] = value; }
+        }
+
+        /// <summary>Remake: "traffic" "races": the game and mod races whose NPC fighters fly it (numbers stay numbers, mod
+        /// races and race words strings), empty = its own race. The rest of "traffic" (weight, boss, capital...) stays.</summary>
+        public List<string> TrafficRaces
+        {
+            get => json["traffic"] is JObject t && t["races"] is JArray a ? a.Select(ProjectEntry.RefText).Where(x => x != null).ToList() : new List<string>();
+            set
+            {
+                if (value == null || value.Count == 0)
+                {
+                    if (json["traffic"] is JObject old) { old.Remove("races"); if (!old.HasValues) json.Remove("traffic"); }
+                    return;
+                }
+                if (!(json["traffic"] is JObject t)) json["traffic"] = t = new JObject();
+                t["races"] = new JArray(value.Select(ProjectEntry.RefToken));
+            }
+        }
         public int Armor { get => I("armor", 100); set => json["armor"] = value; }
         public int Cargo { get => I("cargo", 0); set => json["cargo"] = value; }
         public int Handling { get => I("handling", 100); set => json["handling"] = value; }

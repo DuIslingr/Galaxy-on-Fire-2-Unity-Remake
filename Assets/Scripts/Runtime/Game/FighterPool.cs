@@ -27,7 +27,7 @@ namespace GoF2Remake.Flight
 
         static int RandomOriginal(int race)
         {
-            race = Modding.ModFactions.Look(race);   // remake mods: a faction without ships of its own flies its look race's
+            race = Modding.ModRaces.Look(race);   // remake mods: a mod race without ships of its own flies its look race's
             // Valkyrie won: the Vossk also fly the K'Suukk (41) and the S'Kanarr (39).
             if (race == 1 && Story.Dlc1Won) { int r = UnityEngine.Random.Range(0, 100); return r < 60 ? 9 : r < 85 ? 41 : 39; }
             if (!Fighters.TryGetValue(race, out var pool)) pool = Fighters[8];   // the minor races: pirates
@@ -39,7 +39,7 @@ namespace GoF2Remake.Flight
         public static int Strong(Database db, int race)
         {
             int[] pool;
-            race = Modding.ModFactions.Look(race);
+            race = Modding.ModRaces.Look(race);
             if (race == 1 && Story.Dlc1Won) pool = new[] { 9, 41, 39 };
             else if (!Fighters.TryGetValue(race, out pool)) pool = Fighters[8];
             var sorted = new List<int>(pool);

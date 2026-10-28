@@ -47,7 +47,7 @@ namespace GoF2Remake.Events
             "enemies", "ships", "time", "missionstation", "toppoints", "players", "inspace", "docked", "dead", "campaign", "credits",
             "rank", "station", "system", "ship", "kills", "systemsvisited", "random", "min", "max", "floor", "count", "alive", "distance",
             "cargo", "has", "visited", "quest", "option", "won", "inorbit", "and", "or", "not", "main", "valkyrie", "supernova",
-            "randomstation", "stationname", "systemname",
+            "randomstation", "stationname", "systemname", "standing",
         };
 
         public static bool IsName(string s) => !string.IsNullOrEmpty(s) && Regex.IsMatch(s, "^[A-Za-z_][A-Za-z0-9_]*$");
@@ -905,6 +905,14 @@ namespace GoF2Remake.Events
                     return w.Count == 1 ? new JObject { ["type"] = "points", ["amount"] = NumOrText(w[0]) } : null;
                 case "credits":
                     return w.Count == 1 && IsNumberOrExpr(w[0]) ? new JObject { ["type"] = "credits", ["amount"] = NumOrText(w[0]) } : null;
+                case "standing":
+                {
+                    // standing <race|race> <amount> [set] (QuestSteps "standing")
+                    if ((w.Count != 2 && !(w.Count == 3 && w[2] == "set")) || !IsNumberOrExpr(w[1])) return null;
+                    var st = new JObject { ["type"] = "standing", ["race"] = w[0], ["amount"] = NumOrText(w[1]) };
+                    if (w.Count == 3) st["set"] = true;
+                    return st;
+                }
                 case "restrict":
                     return w.Count == 1 && new[] { "jumps", "docking", "all", "off" }.Contains(w[0]) ? new JObject { ["type"] = "restrict", ["what"] = w[0] } : null;
                 case "wormhole":

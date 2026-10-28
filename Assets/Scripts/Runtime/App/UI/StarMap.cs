@@ -1096,10 +1096,10 @@ namespace GoF2Remake.UI
                 if (faction != null) it.name.text += $" [{faction}]";
                 it.name.text += SquadMark(s.index, -1);   // multiplayer: squadmates here
                 it.name.text += MobileMark(s.index, -1);  // remake mods: a mobile station in this system now
-                bool owned = GalaxyMap.HasOwner(s.index) && (s.raceId >= 0 && s.raceId <= 3 || Modding.ModFactions.Icon(s.raceId) != null);
+                bool owned = GalaxyMap.HasOwner(s.index) && (s.raceId >= 0 && s.raceId <= 3 || Modding.ModRaces.Icon(s.raceId) != null);
                 // Remake: the owner's emblem in the player's standing colours (allied / neutral / enemy), the old radar icon as fallback;
-                // remake mods: a faction's own emblem.
-                if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(Modding.ModFactions.Icon(s.raceId) ?? StatusWindow.StandingIcon(s.raceId) ?? Tex($"race_{s.raceId}"));
+                // remake mods: a mod race's own emblem.
+                if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(Modding.ModRaces.Icon(s.raceId) ?? StatusWindow.StandingIcon(s.raceId) ?? Tex($"race_{s.raceId}"));
                 it.raceIcon.style.display = owned ? DisplayStyle.Flex : DisplayStyle.None;
                 if (s.index == KaamoClub.SystemIndex && KaamoClub.Owned)
                 {
@@ -1218,7 +1218,7 @@ namespace GoF2Remake.UI
                 if (it.raceIcon != null) it.raceIcon.style.opacity = other ? 64f / 255f : 1f;
                 it.pulse.style.opacity = pulse;
                 var sys = db.Systems.Find(s => s.index == i);
-                bool owned = GalaxyMap.HasOwner(i) && (sys.raceId >= 0 && sys.raceId <= 3 || Modding.ModFactions.Is(sys.raceId));
+                bool owned = GalaxyMap.HasOwner(i) && (sys.raceId >= 0 && sys.raceId <= 3 || Modding.ModRaces.Is(sys.raceId));
                 float y = 68.5f + 30f;
                 if (sel && owned) { it.line1.text = GoF2Remake.Flight.Standing.RaceName(sys.raceId); it.line1.style.top = y; y += 30f; }
                 it.line1.style.display = sel && owned ? DisplayStyle.Flex : DisplayStyle.None;
@@ -1300,15 +1300,15 @@ namespace GoF2Remake.UI
         {
             var sys = db.Systems.Find(s => s.index == system);
             if (sys == null) return;
-            bool owned = GalaxyMap.HasOwner(system) && (sys.raceId >= 0 && sys.raceId <= 3 || Modding.ModFactions.Is(sys.raceId));
+            bool owned = GalaxyMap.HasOwner(system) && (sys.raceId >= 0 && sys.raceId <= 3 || Modding.ModRaces.Is(sys.raceId));
             var logo = root.Q("systemLogo");
-            var tex = !owned ? null : Modding.ModFactions.Is(sys.raceId) ? Modding.ModFactions.Icon(sys.raceId) : Tex($"logo_{sys.raceId}");   // (a faction: its emblem)
+            var tex = !owned ? null : Modding.ModRaces.Is(sys.raceId) ? Modding.ModRaces.Icon(sys.raceId) : Tex($"logo_{sys.raceId}");   // (a mod race: its emblem)
             logo.style.display = tex != null ? DisplayStyle.Flex : DisplayStyle.None;
             if (tex != null)
             {
-                bool faction = Modding.ModFactions.Is(sys.raceId);   // (a faction's emblem at a logo's size, whatever its PNG's)
+                bool modRace = Modding.ModRaces.Is(sys.raceId);   // (a mod race's emblem at a logo's size, whatever its PNG's)
                 logo.style.backgroundImage = new StyleBackground(tex);
-                logo.style.width = faction ? 120f : tex.width; logo.style.height = faction ? 120f : tex.height;
+                logo.style.width = modRace ? 120f : tex.width; logo.style.height = modRace ? 120f : tex.height;
             }
             root.Q<Label>("systemName").text = sys.name;
             var race = root.Q<Label>("systemRace");

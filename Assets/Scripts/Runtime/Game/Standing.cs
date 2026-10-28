@@ -10,10 +10,11 @@
 // signature of race S mounted, S is a friend (+100), its rival an enemy (-100), the other two races neutral (70) whatever
 // the axes say; a pirate kill then gives no +1. Friendly fire on the signature's race (33 % / 10 % hc) or on any race
 // 0..3 (50 % / 25 % hc) makes it invalid: the item is removed, delict 100 toward S, "Signature invalid" (324).
-// Remake mods: a mod's factions (Modding.ModFactions, race numbers from ModFactions.FirstRace) have one standing each
-// (Session.FactionStanding), hostile at -71 and below, friends at 71 and above, always hostile when the faction says so (like
-// the pirates); their relations decide NPC vs NPC (ModFactions.Relation). Signatures are the game races' only.
+// Remake mods: a mod's races (Modding.ModRaces, race numbers from ModRaces.FirstRace) have one standing each
+// (Session.ModRaceStanding), hostile at -71 and below, friends at 71 and above, always hostile when the mod race says so (like
+// the pirates); their relations decide NPC vs NPC (ModRaces.Relation). Signatures are the game races' only.
 
+using System.Collections.Generic;
 using GoF2Remake.Data;
 using UnityEngine;
 
@@ -47,27 +48,31 @@ namespace GoF2Remake.Flight
         /// <summary>The value toward 'race' (positive = liked), races 0..3; a signature overrides it (Standing::getStanding).</summary>
         public static int Toward(int race) => TowardWith(race, Session.Standing[0], Session.Standing[1], SignatureRace);
 
-        /// <summary>Toward with given axes and signature (multiplayer: another player's, NetPlayer).</summary>
-        public static int TowardWith(int race, int axis0, int axis1, int signature)
+        /// <summary>Toward with given axes, signature and mod race standings (multiplayer: another player's, NetPlayer;
+        /// mod races null = this game's, Session.ModRaceStanding).</summary>
+        public static int TowardWith(int race, int axis0, int axis1, int signature, IReadOnlyDictionary<string, int> modRaces = null)
         {
-            if (Modding.ModFactions.Is(race)) return Modding.ModFactions.Standing(race);   // (another player's: this game's, not synced)
+            if (Modding.ModRaces.Is(race)) return Modding.ModRaces.StandingIn(race, modRaces ?? Session.ModRaceStanding);
             if (signature >= 0 && race >= 0 && race <= 3) return race == signature ? 100 : race == EnemyRace[signature] ? -100 : 70;
             return race switch { 0 => axis0, 1 => -axis0, 2 => axis1, 3 => -axis1, _ => 0 };
         }
 
-        /// <summary>IsEnemy / IsFriend with given axes and signature (multiplayer: another player's).</summary>
-        public static bool IsEnemyWith(int race, int axis0, int axis1, int signature) =>
-            Modding.ModFactions.Is(race) ? FactionEnemy(race)
+        /// <summary>IsEnemy / IsFriend with given axes, signature and mod race standings (multiplayer: another player's).</summary>
+        public static bool IsEnemyWith(int race, int axis0, int axis1, int signature, IReadOnlyDictionary<string, int> modRaces = null) =>
+            Modding.ModRaces.Is(race) ? ModRaceEnemy(race, modRaces ?? Session.ModRaceStanding)
             : race == Pirate || race == Void || (race >= 0 && race <= 3 && TowardWith(race, axis0, axis1, signature) <= -71);
-        public static bool IsFriendWith(int race, int axis0, int axis1, int signature) =>
-            Modding.ModFactions.Is(race) ? FactionFriend(race) : race >= 0 && race <= 3 && TowardWith(race, axis0, axis1, signature) >= 71;
+        public static bool IsFriendWith(int race, int axis0, int axis1, int signature, IReadOnlyDictionary<string, int> modRaces = null) =>
+            Modding.ModRaces.Is(race) ? ModRaceFriend(race, modRaces ?? Session.ModRaceStanding)
+            : race >= 0 && race <= 3 && TowardWith(race, axis0, axis1, signature) >= 71;
 
-        /// <summary>A mod faction is the player's enemy: always if "hostile", else at -71 and below.</summary>
-        static bool FactionEnemy(int race) => Modding.ModFactions.Get(race) is var d && d != null && (d.hostile || Modding.ModFactions.Standing(race) <= -71);
-        static bool FactionFriend(int race) => Modding.ModFactions.Get(race) is var d && d != null && !d.hostile && Modding.ModFactions.Standing(race) >= 71;
+        /// <summary>A mod race is the player's enemy: always if "hostile", else at -71 and below.</summary>
+        static bool ModRaceEnemy(int race, IReadOnlyDictionary<string, int> modRaces) =>
+            Modding.ModRaces.Get(race) is var d && d != null && (d.hostile || Modding.ModRaces.StandingIn(race, modRaces) <= -71);
+        static bool ModRaceFriend(int race, IReadOnlyDictionary<string, int> modRaces) =>
+            Modding.ModRaces.Get(race) is var d && d != null && !d.hostile && Modding.ModRaces.StandingIn(race, modRaces) >= 71;
 
         /// <summary>The standing axes themselves (the Status window, mission bonuses).</summary>
-        public static int RawToward(int race) => Modding.ModFactions.Is(race) ? Modding.ModFactions.Standing(race) : race switch
+        public static int RawToward(int race) => Modding.ModRaces.Is(race) ? Modding.ModRaces.Standing(race) : race switch
         {
             0 => Session.Standing[0],
             1 => -Session.Standing[0],
@@ -76,20 +81,31 @@ namespace GoF2Remake.Flight
             _ => 0,
         };
 
+        /// <summary>Remake (/standing, the quests' Standing step): the value toward race 0..3 moved by 'amount' (positive =
+        /// liked more) or set to it, on its axis, -100..100; no Extreme doubling (no delict). Mods' mod races:
+        /// ModRaces.SetStanding.</summary>
+        public static void Move(int race, int amount, bool set)
+        {
+            if (race < 0 || race > 3 || Session.Standing == null) return;
+            int axis = race / 2, sign = race % 2 == 0 ? 1 : -1;   // 0 / 2 the axis's + end, 1 / 3 its - end
+            int toward = set ? amount : RawToward(race) + amount;
+            Session.Standing[axis] = Mathf.Clamp(sign * Mathf.Clamp(toward, -100, 100), -100, 100);
+        }
+
         /// <summary>Standing::isEnemy (plus the always-hostile pirates and Void).</summary>
-        public static bool IsEnemy(int race) => Modding.ModFactions.Is(race) ? FactionEnemy(race) : race == Pirate || race == Void || (race >= 0 && race <= 3 && Toward(race) <= -71);
+        public static bool IsEnemy(int race) => Modding.ModRaces.Is(race) ? ModRaceEnemy(race, Session.ModRaceStanding) : race == Pirate || race == Void || (race >= 0 && race <= 3 && Toward(race) <= -71);
 
         /// <summary>Standing::isFriend.</summary>
-        public static bool IsFriend(int race) => Modding.ModFactions.Is(race) ? FactionFriend(race) : race >= 0 && race <= 3 && Toward(race) >= 71;
+        public static bool IsFriend(int race) => Modding.ModRaces.Is(race) ? ModRaceFriend(race, Session.ModRaceStanding) : race >= 0 && race <= 3 && Toward(race) >= 71;
 
         /// <summary>Standing::applyDelict: moves the race's axis away from it by p (x2 on Extreme).</summary>
         public static void ApplyDelict(int race, int p)
         {
-            if (Modding.ModFactions.Is(race))
+            if (Modding.ModRaces.Is(race))
             {
-                // a mod faction: its standing down by p (x2 on Extreme), like one end of a game axis
+                // a mod race: its standing down by p (x2 on Extreme), like one end of a game axis
                 if (Session.IsExtreme) p *= 2;
-                Modding.ModFactions.SetStanding(race, Modding.ModFactions.Standing(race) - p);
+                Modding.ModRaces.SetStanding(race, Modding.ModRaces.Standing(race) - p);
                 return;
             }
             if (race < 0 || race > 3) return;
@@ -102,14 +118,14 @@ namespace GoF2Remake.Flight
         /// <summary>A kill by the player: race 0..3 -> delict 5; a pirate -> 1 toward the system race.</summary>
         public static void ApplyKill(int race, int systemRace)
         {
-            if (Modding.ModFactions.Get(race) is Modding.ModFactions.Def f)
+            if (Modding.ModRaces.Get(race) is Modding.ModRaces.Def f)
             {
-                // a hostile faction's ship, like a pirate: +1 with the system's faction when it is that faction's enemy; any
-                // other faction's: delict 5
+                // a hostile mod race's ship, like a pirate: +1 with the system's mod race when it is that mod race's enemy; any
+                // other mod race's: delict 5
                 if (f.hostile)
                 {
-                    if (Modding.ModFactions.Is(systemRace) && Modding.ModFactions.Relation(race, systemRace) == Modding.ModFactions.Enemy)
-                        Modding.ModFactions.SetStanding(systemRace, Modding.ModFactions.Standing(systemRace) + 1);
+                    if (Modding.ModRaces.Is(systemRace) && Modding.ModRaces.Relation(race, systemRace) == Modding.ModRaces.Enemy)
+                        Modding.ModRaces.SetStanding(systemRace, Modding.ModRaces.Standing(systemRace) + 1);
                     return;
                 }
                 ApplyDelict(race, 5);
@@ -122,13 +138,13 @@ namespace GoF2Remake.Flight
         /// <summary>SolarSystem::getAttackRace / Standing::getEnemyRace: [1, 0, 3, 2][race], else pirates.</summary>
         public static int EnemyRaceOf(int race)
         {
-            if (Modding.ModFactions.Is(race)) { var e = Modding.ModFactions.EnemiesOf(race); return e.Count > 0 ? e[0] : Pirate; }   // remake mods
+            if (Modding.ModRaces.Is(race)) { var e = Modding.ModRaces.EnemiesOf(race); return e.Count > 0 ? e[0] : Pirate; }   // remake mods
             return race >= 0 && race <= 3 ? EnemyRace[race] : Pirate;
         }
 
         /// <summary>NPC vs NPC: do ships of races a and b fight each other? (The player's ship counts as race 0.)</summary>
         public static bool RacesHostile(int a, int b) =>
-            Modding.ModFactions.Is(a) || Modding.ModFactions.Is(b) ? Modding.ModFactions.Relation(a, b) == Modding.ModFactions.Enemy :
+            Modding.ModRaces.Is(a) || Modding.ModRaces.Is(b) ? Modding.ModRaces.Relation(a, b) == Modding.ModRaces.Enemy :
             (a == Pirate) != (b == Pirate) || (a == Void) != (b == Void) || (a == Specter) != (b == Specter)
             || (a == 0 && b == 1) || (a == 1 && b == 0) || (a == 2 && b == 3) || (a == 3 && b == 2);
 
@@ -147,18 +163,18 @@ namespace GoF2Remake.Flight
             }
             foreach (int r in new[] { 0, 1, 2, 3, Standing.Pirate, Standing.Void, Standing.Specter })
                 if (string.Equals(GoF2Remake.Data.Localization.Get(406 + r), w, System.StringComparison.OrdinalIgnoreCase)) return r;
-            // remake mods: a faction by its key, id or name
-            if (Modding.ModFactions.TryResolve(w, null, out int fr) && Modding.ModFactions.Is(fr)) return fr;
-            foreach (var d in Modding.ModFactions.All)
-                if (string.Equals(Modding.ModFactions.Name(d.race), w, System.StringComparison.OrdinalIgnoreCase)) return d.race;
+            // remake mods: a mod race by its key, id or name
+            if (Modding.ModRaces.TryResolve(w, null, out int fr) && Modding.ModRaces.Is(fr)) return fr;
+            foreach (var d in Modding.ModRaces.All)
+                if (string.Equals(Modding.ModRaces.Name(d.race), w, System.StringComparison.OrdinalIgnoreCase)) return d.race;
             return -1;
         }
 
-        /// <summary>The game race whose tables a race uses (hangar, bar, visitors, music, guns): a mod faction's "look".</summary>
-        public static int Look(int race) => Modding.ModFactions.Look(race);
+        /// <summary>The game race whose tables a race uses (hangar, bar, visitors, music, guns): a mod race's "look".</summary>
+        public static int Look(int race) => Modding.ModRaces.Look(race);
 
-        /// <summary>A race's name: the game's (text 406 + race) or a mod faction's.</summary>
+        /// <summary>A race's name: the game's (text 406 + race) or a mod race's.</summary>
         public static string RaceName(int race) =>
-            Modding.ModFactions.Is(race) ? Modding.ModFactions.Name(race) : race >= 0 && race <= 10 ? GoF2Remake.Data.Localization.Get(406 + race) : "";
+            Modding.ModRaces.Is(race) ? Modding.ModRaces.Name(race) : race >= 0 && race <= 10 ? GoF2Remake.Data.Localization.Get(406 + race) : "";
     }
 }

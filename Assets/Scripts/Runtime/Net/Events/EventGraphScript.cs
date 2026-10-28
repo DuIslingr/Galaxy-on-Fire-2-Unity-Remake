@@ -804,6 +804,10 @@ namespace GoF2Remake.Events
                     case "EventCreditsNode":
                         Line(Join("credits", Text(n, "Players"), Arg(n, "Amount")));
                         break;
+                    case "EventStandingNode":   // remake: /standing (NetAdminStanding)
+                        if (Text(n, "Toward").Length == 0) Error(n, "Name the race.");
+                        Line(Join("standing", Text(n, "Players"), Text(n, "Toward"), Arg(n, "Amount"), Bool(n, "Set") ? "set" : ""));
+                        break;
                     case "EventTeleportNode":
                         Line(Join("tp", Text(n, "Players"), Text(n, "Destination")));
                         break;

@@ -454,7 +454,7 @@ namespace GoF2Remake.UI
             "/ voices.md / events.md / guide.md for numbers and formats). Find the game's, this project's and other mods' content " +
             "with search_content (use the values it returns); read entries with list_entries / get_entries, write them with " +
             "put_entry (the same JSON as the mod files: ships.json, items.json, characters.json, systems.json, stations.json, " +
-            "interiors.json, blueprints.json, gameoptions.json, campaign.json, mod.json, events/<name>.gof2mission), files " +
+            "interiors.json, races.json, blueprints.json, gameoptions.json, campaign.json, mod.json, events/<name>.gof2mission), files " +
             "(images, models, audio) with write_file. Check with validate (and compile_mission for a mission); try it with " +
             "play_test, read get_log and take a screenshot. Every change is an undo step in the builder (the undo tool takes the " +
             "last one back). To see your work: view_model draws any model (game, project ship with its hardpoints, station, .glb) " +
@@ -467,7 +467,10 @@ namespace GoF2Remake.UI
             "A station's star map planet is stations.json mapTexture (a 2:1 map wrapped round the sphere) / mapRing; a sky that " +
             "turns its top to each orbit's sun is skybox.sunAligned; a station's orbit level (station / jumpgate / arrival / asteroids / " +
             "fog / sun / planet) is stations.json orbit and its map planet's place mapPlace (SKILL.md); a mission's wormhole step opens a wormhole whose destination " +
-            "may be a variable; play_test mode mission offers a bar mission in the Space Lounge to take as a player would. ";
+            "may be a variable; play_test mode mission offers a bar mission in the Space Lounge to take as a player would. " +
+            "Races of the mod's own (races.json: who owns systems, flies ships and raids, and who fights whom): list_races, " +
+            "put_race, delete_race (with every reference to it), set_race (a system's owner / locals / raiders, a ship's race / " +
+            "trafficRaces). ";
 
         /// <summary>The instructions' line on the permission mode (builder_status says the current one).</summary>
         static string PermissionNote(Permissions p) => p switch

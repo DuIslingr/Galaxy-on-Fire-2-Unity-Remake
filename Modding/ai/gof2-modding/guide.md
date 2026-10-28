@@ -96,6 +96,8 @@ What mods can do so far:
   that decide which of the two the game flies with (see [Flight styles](#flight-styles)).
 - **Add star systems and stations**: on the star map, linked by jumpgates, with their own orbits, shops and bars, their own
   station models (glTF / GLB), planets and suns, and their own hangars and bars to dock in.
+- **Add races**: new races beside the game's four, that own systems, fly ships and raid, each with its own reputation,
+  relations and lounge diplomats.
 - **Add story missions and bar missions**: story chains and side jobs made as event graphs in the Unity Editor, with dialogue,
   voice-over, objectives, map markers, checkpoints that saves keep, rewards and failure.
 - **Add and replace music**: replace any of the game's tracks, or add new ones for your systems, stations and missions.
@@ -314,6 +316,12 @@ energy cells.
 | `tractorTargets` | 122 | Tractor beams: how many containers it pulls at once, 1 to 8 (default 1; see [Multi-grab tractor beams](#multi-grab-tractor-beams)) |
 | `tractorRange` | 123 | Multi-grab tractor beams: how far the extra beams reach for containers (game units, 20 per metre; default 30000 = 1.5 km) |
 | `shieldDamage` | 124 | A weapon's damage to a shield in percent (default 100; the Disruptor Laser and items based on it 200). What the shield doesn't absorb hits the armor and hull at the plain damage. Only ships with a shield feel it: the players (each other in multiplayer), not the game's NPCs |
+| `echoDelayMs` | 127 | A second, weaker blast at each hit, this many ms after it (0 or none = no echo; see [Echo blasts](#echo-blasts)) |
+| `echoPercent` | 128 | The echo's damage, EMP and size in percent of the shot's (default 50) |
+| `echoRadius` | 129 | The echo's reach in game units (0 = the gun's own `blastRadius`) |
+| `echoExplosion` | 130 | The explosion the echo shows: 0 ship, 8 to 10 scatter (8 the default), 11 shock blast, 13 fireworks; -1 none |
+| `missileDefense` | 131 | Missile defense: with this item mounted, the ship's automatic turrets shoot down the homing missiles flying at it within this reach (game units, 20 per metre), before turning to enemy ships. Any item can carry it; on a seatless cabin (`"base": 91`, `"cabinSize": 0`) it changes nothing else and the shop calls it "Missile defense". Another player's missiles in multiplayer are left alone |
+| `miningTime` | 132 | An ore's mining time in percent of the game's 6 seconds per layer (default 100; 200 = twice as long). The ore a whole asteroid gives stays the same: it comes slower. Counts for the drill's minigame and the mining beam |
 
 Which stats an item uses depends on its category, so copy the stats its base item has (see `items.json` and
 `item_attributes.json` in `Assets/Resources/GoF2Data`). items.json's own stat names (`loadingTimeMs`, `range`,
@@ -443,6 +451,27 @@ With the look of a missile, its own turret model and the missile's launch sound 
 }
 ```
 
+### Echo blasts
+
+A shot can set off a second, weaker explosion where it hit, a little later: the echo. Any gun does it (a plain gun, a scatter
+gun, a homing missile, a turret, an NPC's gun), when its shot hits something; a bomb or a mine doesn't. The echo's blast
+hurts everything in its reach with `percent` of the shot's damage, EMP and size, and shows the explosion `echoExplosion`
+at that size. The shot's own hit and its burst are unchanged.
+
+```json
+{
+    "id": "icarus_heavy_red",
+    "base": 178,
+    "name": { "en": "Icarus Heavy Enhanced" },
+    "stats": { "damage": 50, "echoDelayMs": 500, "echoPercent": 60, "echoExplosion": 10 }
+}
+```
+
+Here every burst of the Icarus Heavy is followed half a second later by a second burst at 60 % of the damage and size. Its
+reach is the gun's own `blastRadius` (`echoRadius` left out). A gun without a blast radius has an echo that only shows its
+explosion unless `echoRadius` is given. The echo is the shooter's blast, so it hurts what the shooter's own blasts hurt: not
+the player's own ship, and no EMP for a turret or sentry.
+
 ### Weapon effects
 
 A weapon (a new one or an `override` of an original) can look and sound like its own thing with `fx`. Anything it leaves out
@@ -559,7 +588,7 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | Field | |
 |---|---|
 | `id`, `name`, `description` | As for items. |
-| `race` | Who builds it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirate, 9 Void. Prices are 1 % lower in its race's systems. |
+| `race` | Who builds it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirate, 9 Void, or a [mod's race](#races) (`"guild"`, `"mod_id:guild"`). Prices are 1 % lower in its race's systems. |
 | `armor`, `cargo`, `handling` | Hull points, hold size (t), handling (the originals use 60 to 160). |
 | `price`, `priceDefault` | The price, and the price in the Default Economy (0 = the same). |
 | `slots` | `primary`, `secondary`, `turret`, `equipment`. A ship may have several turret slots, one per turret mount. |
@@ -572,7 +601,7 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). A customizable ship's is measured from its build instead. |
 | `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point; a customizable ship's primary / secondary mounts may also carry `"rotation"`, see [Customizable ships](#customizable-ships)), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; with `engineFx`, `"fxScale"` sizes that exhaust's effect and `"rotation"` turns the way it blows, as a weapon mount's below;
 `"outline": [x0, y0, x1, y1, ...]` the nozzle's shape seen from behind, game units around the mount, for the [exhaust
-styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet in the flames' boost colour fires whenever the ship strafes, rises, sinks or reverses against it, like EVERSPACE 2's lateral thrusters). |
+styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet fires whenever the ship strafes, rises, sinks or reverses against it, and with no input the jets blowing along the ship's drift fire to brake it, like EVERSPACE 2's lateral thrusters; only on the player's ship. Its colour is the hue of the `lateral thruster` colour slot, else of the flames' boost colour, at EVERSPACE 2's own brightness: a slot's `intensity` doesn't change it), 5 booster (a ship with engine flames: EVERSPACE 2's booster socket, its trail and light in `boostColor` while boosting; `"socketScale"` sizes them, as on an exhaust). |
 | `engineGlowRadius` | Size of the engine flame at each exhaust mount (game units, default 24); a mount's `glowSize` replaces it. |
 | `engineGlowColor` | `[r, g, b]` (0 to 1): the flame colour of every exhaust without its own `glowColor`. None = the game's own blue-white flame. |
 | `materials` | Optional. Replace the model's own materials, see below. |
@@ -582,7 +611,7 @@ styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way 
 | `lounge` | Optional. A visitor in the Space Lounges sells it: in systems of `systemRace` (-1 = any), from story step `minCampaign` (in free play from rank `minRank`), `chance` % each time a bar fills with new visitors. |
 | `npcTurrets` | Optional, also in an `override`. Turret items (numbers or `"mod:id"`, e.g. `[ 48, "my_mod:flak" ]`) the **NPC** ships of this type carry on its turret mounts (`slotType` 2), the n-th item on the n-th mount: in space they aim and fire by themselves at whatever that ship is hostile to (your own turret model, missiles and salvos included), and parked in a hangar they show them. Items that are no turret, or more items than mounts, give a warning. The game's own NPC ships carry none; the Bloodstar (45) and the Rhino (51) swap their built-in turret for yours. |
 | `dealer` | Optional. The ordinary ship dealers may stock it: `{ "chance": 2, "systemRace": -1, "minTechLevel": 0 }`, `chance` % (decimals allowed) each time a station's dealer list is made, at stations of `systemRace` systems (-1 = any) with at least that tech level (above 10: the tech level 10 stations). Not the special yards (Kothar, Quineros, Thynome...). |
-| `traffic` | Optional. How NPC fighters fly it: `{ "weight": 1, "races": [8] }`. With the Gameplay option "Mod ships in traffic" (Off / 10 / 25 % (default) / 50 %) that share of the game's NPC fighters (patrols, raiders, pirates, escorts, guards) fly one of the mods' ships of their race instead, picked by `weight` (0 = never); `races` are the races whose fighters fly it (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirates, 9 Void; default its own `race`). Only ships up to 150 m long, available now (`available`), with their model loaded. Their hull and guns stay those of the fighter they replace. Freighters and capital ships aren't replaced, and a [campaign's](#campaigns) `trafficShips` win. A [customizable ship](#customizable-ships)'s NPCs each fly a random build of it (parts the type may fit, a tier, one of the kit's colour presets or random palette colours, now and then a skin); `"randomBuild": false` keeps them to its default build. The builds use the parts already loaded, and every docking loads a few more in the background, so the variety grows as you play. |
+| `traffic` | Optional. How NPC fighters fly it: `{ "weight": 1, "races": [8] }`. With the Gameplay option "Mod ships in traffic" (Off / 10 / 25 % (default) / 50 %) that share of the game's NPC fighters (patrols, raiders, pirates, escorts, guards) fly one of the mods' ships of their race instead, picked by `weight` (0 = never); `races` are the races whose fighters fly it (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirates, 9 Void, or [races](#races); default its own `race`). A mod race's fighters always fly one of the mods' ships, whatever the option. Only ships up to 150 m long, available now (`available`), with their model loaded. Their hull and guns stay those of the fighter they replace. Freighters and capital ships aren't replaced, and a [campaign's](#campaigns) `trafficShips` win. A [customizable ship](#customizable-ships)'s NPCs each fly a random build of it (parts the type may fit, a tier, one of the kit's colour presets or random palette colours, now and then a skin); `"randomBuild": false` keeps them to its default build. The builds use the parts already loaded, and every docking loads a few more in the background, so the variety grows as you play. `"boss": true` makes it a boss hull instead: it never flies as an ordinary fighter, and the pirate bosses (Pirate outposts and bosses, the Pirate activity board) fly it at the same option's chance, up to 400 m long; give it `npcTurrets` to arm its turret mounts. Their hull, guns and escorts stay the pirate boss's. `"capital": "battleship"` or `"freighter"` makes it a capital ship instead, see [Capital ships and freighters](#capital-ships-and-freighters). |
 | `available` | Optional. A [condition](#conditions) that must hold before it is sold anywhere (dealers and lounges), and before NPCs fly it. |
 | `sounds` | Optional. The ship's own engine and boost sounds, see [Ship sounds](#ship-sounds). |
 | `integrated` | Optional, also in an `override`. Equipment built into the hull, like the Kothar ships' Khador Drive (Cronus, Typhon, Nemesis) and the Specter's / Scimitar's cloak: `{ "khadorDrive": true, "cloak": true }`. `khadorDrive`: the ship can make Khador jumps without the drive in a slot (it still needs energy cells). `cloak`: `true` (the U'tool's stats), a cloak item (a number or `"mod:id"`, e.g. `96`) whose stats it has, or `false`; a cloak the player mounts replaces it, and with the Gameplay option "Cloak bay on cloaking ships" it goes into the built-in cloak's bay instead of a slot. `false` takes an original ship's away. `items`: any equipment built in, a list of item numbers, `"mod:id"` keys or `{ "item": ..., "amount": n }` (a secondary weapon's starting ammo, default 10), e.g. `"items": [46, { "item": 36, "amount": 20 }, 54]`. Built-in items work like mounted ones but take no slot, show on the hangar's Ship tab under "Built into the ship", and can't be demounted, sold or stored; they stay with the ship type when the player changes ships. A one-per-ship item the player fits (a shield, armor, a booster, a scanner, a drill, a cloak...) takes the built-in one's place without a slot, and the built-in one is back when it is demounted; built-in weapons and turrets add to the ship's own slots. A built-in launcher's missiles are refilled by buying more; a one-off item that is used up (an emergency system) is back at the next docking. An empty list takes them away. |
@@ -603,6 +632,98 @@ Moving parts animate: the model's first animation (a spinning radar dish, bobbin
 scaled over time) plays on a loop wherever the ship is shown, in flight, in the hangar and on NPC ships. Animations
 that bend the mesh with bones (an armature) don't play: such a hull is shown in its rest pose. Keep moving parts as
 separate objects animated by themselves, and put the animation you want looped first in the file.
+
+### Capital ships and freighters
+
+A big hull can fly in the orbits as a capital ship or a freighter rather than a fighter: give it
+`"traffic": { "capital": "battleship" }` or `"traffic": { "capital": "freighter" }` (it never flies as a fighter then).
+
+- **`"battleship"`** parks in the orbit's capital ship special: in a Terran or Vossk system, at the "Mod ships in traffic"
+  chance, in place of the game's Terran battleship or Vossk battleship; in a Nivelian or Midorian system (the game has no
+  capital ships there) in 30 % of the orbits with freighters. It has the Terran battleship's hull (25 x a freighter's)
+  and its `npcTurrets` on its turret mounts fire although it is parked.
+- **`"freighter"`** is one of the orbit's freighters now and then (the same option's chance), cruising like them.
+
+A **pirate** (`race` 8) or **Void** (9) capital ship is hostile instead: now and then one comes with a pirate raid (a third of
+the option's chance, parked 3 km beyond the raiders) and with the Void's ships in their own orbit. `"traffic": { "capital":
+"battleship", "weight": 0 }` keeps one out of the traffic altogether: a mission brings it (the `spawn` step or `/spawn
+mod_id:ship`, which parks any capital ship 1-2 hull lengths ahead of the player, subsystems and all). `"hullFactor": 6` makes
+its hull that many times the Terran battleship's.
+
+Its race is its `race` (or the races in `"races"`). Its collision boxes are measured on the model: the hull cut along its
+length into 8 slices. The player and the shots still meet its real shape (unless Options > Gameplay "Ship collision" is
+Original). It leaves no wreck: it burns, explodes at its `explosionScale` and is gone. The capital ship enhancements
+(escorts, resupply, fleet battles) stay with the game's own capital ships. A capital ship's hardpoints carry at most 8 turrets
+in multiplayer copies, so give it 8 at most. Keep it under about 5 km: the flight level's far plane is 15 km.
+
+### Capital ship subsystems
+
+A capital ship's turrets, shield generators, weak spots and hangars can be parts of their own that the player shoots off its
+hull (EVERSPACE 2's warships): `"subsystems"`, each placed like a mount (`position_engine`, game units in the ship's frame;
+`turretUp` / `upsideDown` the way it faces):
+
+```json
+"subsystems": [
+    { "kind": "turret", "name": "Torpedo launcher", "position_engine": [0, 3200, 9000], "item": "my_mod:torpedo_turret", "scale": 2, "stage": 1 },
+    { "kind": "object", "name": "Field emitter", "position_engine": [4000, 0, 21000], "model": "my_mod:emitter", "shields": true, "stage": 1, "hull": 2600 },
+    { "kind": "object", "name": "Weak point", "position_engine": [-2500, -3300, 8000], "model": "gof2:v_station_battlestation_shield", "weakspot": 2.5, "bonus": 0.08, "stage": 3 },
+    { "kind": "hangar", "model": "none", "position_engine": [-4400, 0, 4400], "turretUp": [1, 0, 0], "ships": [ "my_mod:raider", 2 ], "every": 30, "perWave": 2, "maxAlive": 4, "total": 8 }
+],
+"shieldMaterial": "energyfield|", "shieldedDamage": 0
+```
+
+- `"turret"`: a turret object of turret item `item` (its model, gun and aim; `scale` sizes its model).
+- `"object"`: a part without a gun: its `model` is one of the game's (`"gof2:<model>"`) or a ship of a mod (its model; give such
+  a prop ship `"race": -1` and `"traffic": { "weight": 0 }` so it never flies), the game's battlestation shield generator
+  without one.
+- `"hangar"`: launches `ships` (numbers or `"mod:id"`, random builds for customizable ships) along its facing, `perWave` every
+  `every` seconds while the capital ship is the player's enemy and the player within 7.5 km, at most `maxAlive` flying and
+  `total` in all (-1 = no end); `"model": "none"` makes it a launch point on the hull that can't be shot off.
+- `hull`: its hit points (default by kind, growing with the rank), x the difficulty.
+- `shields`: while any part with it stands, the hull takes `shieldedDamage` of every hit (0 = none; the player is told to
+  find the generators), and its renderers whose material name contains `shieldMaterial` (its energy fields) show, hidden once
+  the last of them falls.
+- `weakspot`: hits on it also go to the hull x this; its destruction takes `bonus` (a share) of the hull's maximum.
+- `stage`: a part can't be harmed while a part of a lower stage still stands (an encounter's order: fields, then guns, then
+  the weak points).
+
+Parts take the capital ship's side, go when it dies, and a mission's `alive("<name>")` counts them. Every turret (these, the
+`npcTurrets` on a ship's mounts, the game's own capital ship turrets, your own) holds its fire while its barrel points into
+its own ship's hull and turns to another target: a turret on the far side can't shoot you through the ship. Without `subsystems` its
+`npcTurrets` still arm its turret mounts. `"engineStyle": "es2"` gives a capital ship EVERSPACE 2's engine glow and trails at
+its exhaust mounts (`slotType` 3, sized by `socketScale`) without flame meshes of its own; `"es2Engine": { "glow": false,
+"trails": false }` turns either off, as EVERSPACE 2's own warships and freighters have them (their blueprints'
+`SpawnEngineGlow` / `SpawnEngineTrails`). A parked `battleship`'s engines idle (its flames, nozzle glow and glow at 60 % of
+full thrust): another ship's engine effects follow its speed, and a parked one has none. `"retreat": true` makes a capital
+ship jump away instead of being destroyed (EVERSPACE 2's Dreadnought): when its hull runs out it keeps 1 point, can't be harmed,
+holds its fire, its subsystems stop and its hangars' fighters jump out, and after a 4 second charge it jumps away in a Khador
+jump the size of the ship, its parts with it, leaving no wreck and nobody's kill; a mission's `alive("<name>")` drops to 0
+once it is gone. With a mission's `"repeat"` the encounter can come again.
+
+### Camera, cockpit, damage smoke and explosion
+
+How a ship is seen, for a new ship or an original through `override` (each one optional; left out = the game's):
+
+```json
+"camera": { "distance": 2400, "height": 900, "lookHeight": 900, "lookAhead": -1100 },
+"cockpit": [0, 90, 760],
+"smoke": [[39, 68, -64], [-62, 65, 10]],
+"explosionScale": 1.2
+```
+
+- `camera`: the chase camera, in game units: `distance` behind the ship's pivot and `height` above it, aimed at a point
+  `lookHeight` above the pivot and `lookAhead` ahead of it (negative: behind it). The game's are 1338 / 600 / 600 / -650 for
+  every ship, made for hulls of about 1200-1400 units; a bigger hull needs the camera further out or it fills the screen.
+  A field left out keeps the game's.
+- `cockpit`: where the cockpit view (F2, or holding the camera button) sits, a point like a hardpoint's `position_engine`
+  (x the pilot's left, y up, z the nose). Without it the game puts the seat on the bow from the hull's shape. Either way
+  the seat stays behind the frontmost gun, so its shots start in view.
+- `smoke`: up to 4 points where the ship trails smoke and fire once it is below a third of its hull (NPC ships); without
+  them it smokes from its middle. The smoke is shared between the points, so two points don't make twice as much.
+- `explosionScale`: how big the explosion is when the ship dies, as a multiple of a fighter's (1); 0.25 to 20. The NPC
+  ships, the player's ship and other players' ships use it. Freighters and capital ships keep their own.
+
+The Mod Builder has them on a ship's page under **Camera and damage**.
 
 ### Ship sounds
 
@@ -640,6 +761,7 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 |---|---|
 | `diffuse`, `color` | Base colour map (PNG) and / or an RGB tint `[r, g, b]` (0 to 1). |
 | `normal`, `normalScale` | Normal map. |
+| `tiling` | How many times the main textures (colour, normal, metallic, emission) repeat over the UVs (default 1): a plating texture laid over a big hull. |
 | `metallicSmoothness`, `metallic`, `smoothness` | Metallic (red) / smoothness (alpha) map; without a map `metallic` sets the metalness. |
 | `emission`, `emissionColor`, `emissionIntensity` | Emission map and / or colour; above 1 it blooms. |
 | `alphaClip` | Cut the diffuse's alpha below this (decals). |
@@ -654,19 +776,26 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 | `shimmer` | `true`: a nozzle shimmer: an additive layer over the same faces as the nozzle's glow, its `emission` pattern times the `flameNoise` texture scrolling along it, in `emissionColor` x `emissionIntensity` (with `engine` it follows the engines like the glow). |
 | `hologram` | `true`: a hologram projector: additive rings in `emissionColor` x `emissionIntensity` through the `emission` pattern, which turns about each ring's centre (UV 0.5, 0.5) while the rings bob along their normal. A second UV channel per ring: x its spin (-1..1: direction and share of the speed), y its share of the bob (written as 1 - share: the loader flips V). |
 | `flame` | `true`: these surfaces are engine flames drawn by the game (see below); `emissionColor` x `emissionIntensity` is the flame's colour. |
-| `flameLength`, `flameIdle` | The flame's length at full throttle in the model's own units (default 5), and at idle as a share of it (default 0.15). |
+| `flameLength`, `flameIdle` | How far the flame reaches behind its stub, in the model's own units (default 5: EVERSPACE 2's 500 cm). `flameIdle` is no longer used. |
 | `boostColor` | The flame's colour while boosting, RGB 0 to 1 (default a hot blue), x `emissionIntensity`. |
-| `flameNoise` | A tiling grey noise PNG streaked through the flame and eating its tip (optional). |
+| `flameNoise` | A tiling grey noise PNG (its red channel): each row across the flame flickers with it (EVERSPACE 2's `T_Noise_018_M`). |
 
 **Engine flames.** Model each flame as a short stub behind its nozzle: one or more flat cards (crossed cards read as a round
 flame) whose first UV's u runs from 0 at the nozzle to 1 at the tip, with a material the `flame` entry names. The game
-stretches the tip backward with the throttle (a little longer while boosting, shrunk into the nozzle while the engines are
-off, as on a ship parked in a hangar), streaks it with the noise, and fades and narrows it toward the tip. A second UV
-channel, x = 0..1 across the card, softens each card's long edges, and its y says what the card is: 0.5 a main flame card
-(the engine colour, also while boosting), 0.25 (or 0.75) a boost card (only while boosting, in `boostColor`; EVERSPACE 2's
-boost jets). Main cards fade as they turn edge-on, so from behind only thin rays remain. Without the second channel the
-cards fade by how far their normals bend off the card, and the whole flame turns toward `boostColor` while boosting. A ship
-with flames gets neither the engine glow discs nor the exhaust particles at its exhaust mounts. A colour slot's `emission` target recolours the flame like any glow.
+draws it as EVERSPACE 2 draws its own (its exhaust material, decompiled): each vertex is moved u x `flameLength` backward;
+the flame's strength is the thrust to the 6th power (bright only near full thrust, gone at idle and while the engines are
+off), it falls off steeply along its length ((1 - u) / (1 + 18 u), to the 4th power), and each row across it flickers with
+the noise, so it reads as a short white-hot core ringed in its colour. A second UV channel's y says what the card is: 0.5
+(or none) a main flame card (the engine colour), 0.25 (or 0.75) a boost card (only while boosting, in `boostColor` x 2;
+EVERSPACE 2's boost jets). There is no fading by the view angle: seen from behind, flat cards are thin by their shape. On
+the player's own ship the flame eases with the controls (faster rising than falling) and its tip bends against the
+ship's movement, by at most a sixth of its length at full speed (EVERSPACE 2's steering offset); other ships' flames
+follow their speed at once. A ship with flames gets neither the engine glow discs nor the exhaust particles at its exhaust
+mounts; it gets EVERSPACE 2's other engine effects instead, at every exhaust mount (`slotType` 3) and booster mount
+(`slotType` 5), each sized by the mount's `"socketScale"` (EVERSPACE 2's socket scale, default 1) in the kit's metres: on
+the player's ship a faint veil trail behind each engine and a point light on the hull that grows with the thrust; on any
+other ship a camera-facing glow and a long trail, seen only while it flies nose first. A booster mount's effects are in
+`boostColor` and show only while boosting. A colour slot's `emission` target recolours the flame like any glow.
 
 ### Glows
 
@@ -684,31 +813,76 @@ with flames gets neither the engine glow discs nor the exhaust particles at its 
 
 ### Engine effect
 
-`engineFx` draws an engine like Galaxy on Fire 3's at every exhaust mount, in place of the flame disc and the exhaust
-particles: up to four parts, each an additive PNG in the mod (black shows nothing; a grey image is tinted by the part's own
-colour if given, else the exhaust's `glowColor`, else the ship's `engineGlowColor`, else `color`). Every part follows the engines like the other engine effects:
-off while the ship is parked or the engines are off, stronger and longer with the throttle and while boosting.
+`engineFx` draws a Galaxy on Fire 3 engine at every exhaust mount as that game draws it, in place of the flame disc and the
+exhaust particles: the engine's own parts (`meshes`, below) and its particle trail, contrails and booster flash. It follows
+the engines like the other engine effects: off while the ship is parked or the engines are off, a little shorter at idle,
+stronger while boosting.
 
 | Field | |
 |---|---|
-| `glow`, `glowSize`, `glowIntensity` | A flare facing the camera at the nozzle, brightest seen from behind: a square of the whole picture plus a long thin streak at half brightness (the picture turned a quarter). `glowSize`: the square's half size, the streak's half width and half height (game units, default 240, 720, 72). |
-| `cone`, `coneLength`, `coneWidth`, `coneIntensity` | Four crossed cards along the exhaust, `coneLength` at full throttle and `coneWidth` half wide (default 650, 87); along them the picture's horizontal middle band from 0.39 (the nozzle) to 0.69, brightest just behind the nozzle. |
-| `nozzle` | The nozzle radius the effect is drawn for (game units, default `coneWidth`): exhaust styles on this ship are sized so its nozzles are this large (only when `nozzle` is given), and a style made from this effect fits other ships' nozzles against it. The GoF3 Ships mod's: Nivelian 87, Terran 100, Vossk 45 (the Vossk plume is three times its nozzles). |
-| `coneProfile`, `coneFade` | The cards' own shape: `coneProfile` a ring after ring `[share of the length, brightness 0..1, u of the picture, ...]` from the nozzle (default `[0, 0, 0.39, 0.143, 0.77, 0.44, 0.571, 0.2, 0.56, 1, 0, 0.69]`); `coneFade` `[from, to]` fades each card out as it turns edge-on to the camera (how much it faces the camera, 0 edge-on to 1 face-on: gone at `from`, full from `to`): seen from straight behind only the flare shows, as Galaxy on Fire 3 draws its exhausts (its engines use `[0, 0.3]`). |
-| `trail`, `trailCount`, `trailLength`, `trailWidth`, `trailWander`, `trailTime`, `trailIntensity` | `trailCount` streams per exhaust (default 2) that waver in smooth waves and bend behind the ship when it turns: each reaches `trailLength` behind at full throttle (default 2800), `trailWidth` half wide at the nozzle (default 28, thinner toward the end), swaying by `trailWander` (default 650; 0 = a straight streak), each point living `trailTime` seconds (default 0.75). `trail` is one soft streak; the stream takes its middle row across. |
-| `spiral`, `spiralCount`, `spiralLength`, `spiralRadius`, `spiralWidth`, `spiralTurns`, `spiralSpin`, `spiralScroll`, `spiralRepeat`, `spiralIntensity` | A helix: `spiralCount` strands per exhaust (default 2) winding round it, `spiralLength` long at full throttle (default 560), from `spiralRadius` `[at the nozzle, at the end]` (default 27, 5), each `spiralWidth` half wide (default 22), `spiralTurns` turns along it (default 2), spinning `spiralSpin` turns a second (default 1.2). The picture runs along each strand (taller than wide: Galaxy on Fire 3's Nivelian engines use a lightning bolt, so the strands crackle), `spiralRepeat` times along it (default 3), scrolling `spiralScroll` lengths a second (default 3); the strands fade out toward their end. |
-| `color` | `[r, g, b]` for exhausts with no colour of their own. |
-| `flareColor`, `coneColor`, `trailColor`, `spiralColor` | `[r, g, b]`: that part's own colour, over the exhaust's (the GoF3 Ships mod's Nivelian engines take them from the game's materials: a deep blue helix and plume; its Terran engines the textures' own amber). |
+| `meshes` | The engine's parts (below): `"fx/engines/<name>.json"`. |
+| `meshScale` | Game units per unit of the file (Galaxy on Fire 3's: 53.5). Each exhaust's `fxScale` sizes it further. |
+| `meshGlow` | Brightness multiplier (default 1; above 1 blooms). |
+| `nozzle` | The nozzle radius the effect is drawn for (game units, default 87): exhaust styles on this ship are sized so its nozzles are this large (only when `nozzle` is given), and a style made from this effect fits other ships' nozzles against it. The GoF3 Ships mod's: Nivelian 60, Terran 100, Vossk 45 (the Vossk plume is three times its nozzles), Inouac 138, the capital engines 108-117. |
+| `trailParticles`, `contrailParticles`, `boostParticles`, `contrails` | Galaxy on Fire 3's particle trail, contrails and booster flash ([below](#galaxy-on-fire-3s-trails-contrails-and-booster-flash-trailparticles-contrailparticles-boostparticles)). |
 
 An exhaust mount may carry `"fxScale"` (that exhaust's effect larger or smaller) and `"rotation"` (the way it blows, turned
-from straight back; Euler degrees or a quaternion in the ship model's frame, as a weapon mount's). The sizes match Galaxy on
-Fire 3's own at 53.5 game units per GoF3 unit: the GoF3 Ships mod uses that game's flare, exhaust, streak and lightning
-textures.
+from straight back; Euler degrees or a quaternion in the ship model's frame, as a weapon mount's), and `"outline"` (its
+nozzle's shape: [x0, y0, x1, y1, ...] game units around the mount in `position_engine`'s axes, as for
+[Exhaust styles](#exhaust-styles)): the engine's parts (all but its sprites) are then spread to that shape and centred on
+it; without one it is round.
 
 ```json
-"engineFx": { "glow": "fx/nivelian_glow.png", "cone": "fx/nivelian_cone.png", "trail": "fx/engine_trail.png",
-              "glowSize": [238, 714, 72], "coneLength": 647, "coneWidth": 87 }
+"engineFx": { "meshes": "fx/engines/engine_nivelian.json", "meshScale": 53.5, "nozzle": 87,
+              "trailParticles": { "texture": "fx/particles/beam_001.png", "life": [1.8, 1.8], "rate": 30, "max": 60 } }
 ```
+
+(Before 2026-10-24 `engineFx` drew an imitation from PNGs: `glow`, `cone`, `trail`, `spiral` and their sizes and colours.
+Those fields are gone and ignored now.)
+
+#### Galaxy on Fire 3's engines as the game draws them (`meshes`)
+
+`"meshes": "fx/engines/<name>.json"` draws an engine part by part as Galaxy on Fire 3 itself does. The
+GoF3 Ships mod's importer writes these files from the game's engine scenes (`tools/engine_meshes.py`); you can write your
+own. Each part has its own mesh and the options of the shader Galaxy on Fire 3 compiled for its material:
+
+| Part field | |
+|---|---|
+| `name`, `pos`, `rot`, `scale` | Its place in the engine's frame: `+z` runs backward along the exhaust from the nozzle, in the file's units (`rot` a quaternion x y z w). |
+| `v`, `n`, `uv`, `c`, `i` | Its mesh: positions, normals, UVs, vertex colours (r g b a, 0 to 1) and triangles. |
+| `o`, `sprite` | A sprite: every vertex sits at the part's centre and is pushed out by its offset (`o`, 2 per vertex) facing the camera, sized by the engine's scale. |
+| `texture`, `useTex`, `flowMap`, `flow` | Its picture (a PNG in the mod, read as stored, as GoF3 does) or, without one, its `diffuse` colour; a flow map's red / green push the picture around (`flowStrength`, `flowTiling`). |
+| `diffuse`, `lumAlpha`, `rgbFromDc`, `mulDc` | GoF3's DiffuseColor: the picture's alpha times its brightness, the picture's colour replaced by `diffuse`, the picture times `diffuse`. |
+| `opacity`, `alpha` | Its brightness (above 1 is allowed: GoF3 caps each pixel at white) and Alpha_Value. |
+| `colorize`, `c1`, `c2`, `colorizeMul`, `colorizeVtx` | Colourising by the picture's red: 1 multiplies by `mix(c1, c2, red) x colorizeMul`, 2 tints (`rgb x (rgb + colour x (1 - rgb) x colorizeMul)`); `colorizeVtx` uses the vertex colour for `c1`. |
+| `angle`, `angleMin`, `angleMax` | Fading by the angle to the camera: 1 how squarely the face is seen (either side), 2 seen from its back, 3 from its front, mapped `angleMin` (gone) to `angleMax` (full). |
+| `pulsate`, `pulseMin`, `pulseMax`, `pulseFreq` | Pulsing: `|sin(time x pulseFreq)|` kept between the two. |
+| `uvSpeed`, `scrollDirect`, `scrollFlow` | The picture or the flow map scrolling `uvSpeed` [u, v] a second. |
+| `vertexAnim`, `vaFreq`, `vaStrength` | Vertices wobbling along their normals (by their vertex alpha). |
+| `blend` | 2 additive (default), 1 alpha blended. |
+| `tint` | Which of an exhaust style's two colours recolours it: `"main"` or `"second"` (default `"second"` for Galaxy on Fire 3's helix, a part named "...spiral", else `"main"`). |
+| `intensity` | How much brighter than GoF3's formula an additive part is drawn, before each pixel is capped at white (default 4; the GoF3 Ships mod's Nivelian flare 1.5, plume 2, helix 5, Vossk flare 1.5, plume 5, the rest 4). |
+| `anims` | `[ { "kind": "loop" \| "ignite" \| "off", "length": ms, "channels": [ { "name": "rotation.x".."w" \| "translation.x".."z" \| "scale.x".."z" \| "alpha", "keys": [ms, value, ms, value, ...] } ] } ]`: `loop` plays all the time (a spiral turning), `ignite` as the engines light and as a boost starts, `off` as they go out. |
+
+
+#### Galaxy on Fire 3's trails, contrails and booster flash (`trailParticles`, `contrailParticles`, `boostParticles`)
+
+Particle emitters as Galaxy on Fire 3's Fork Particle runtime runs them (the GoF3 Ships mod's importer reads them from the
+game's `.psb` files, `tools/fork_psb.py`). Particles are born at `rate` a second, spread along the path the emitter moved
+since the last frame (none while it stands still), and stay where they were born, so they lie along the wake; each is drawn as a quad facing the camera,
+stretched along the wake, additively. `trailParticles` runs at every exhaust (in place of `trail`), `contrailParticles` at
+the points in `contrails`, `boostParticles` at every exhaust only while boosting.
+
+| Field | |
+|---|---|
+| `texture` | A PNG in the mod (read as stored). |
+| `life` | `[min, max]` seconds each particle lives. |
+| `sizeStart`, `sizeMid`, `sizeEnd`, `sizeMidTime` | `[min, max]` each, in the units of `meshScale`, the middle one at `sizeMidTime` of its life. |
+| `colors`, `colorTimes` | Four colour keys (16 numbers, r g b a) at four shares of the life (`[0, a, b, 1]`). |
+| `rate`, `max` | Particles a second; the most alive at once. |
+| `local` | `true`: the particles ride with the ship instead of staying behind. |
+
+`"contrails": [x, y, z, ...]`: the contrail points, game units from the ship's centre (as `position_engine`).
 
 ### Exhaust styles
 
@@ -719,9 +893,8 @@ colours. "Ship's own" keeps the model's exhaust.
 ```json
 [
   { "id": "nivelian", "name": "Nivelian drive",
-    "engineFx": { "glow": "fx/nivelian_glow.png", "cone": "fx/nivelian_cone.png", "trail": "fx/engine_trail.png",
-                  "spiral": "fx/engine_spiral.png", "coneWidth": 87, "color": [0.22, 0.86, 1] },
-    "mainName": "Flare colour", "secondName": "Trail and helix colour" },
+    "engineFx": { "meshes": "fx/engines/engine_nivelian.json", "meshScale": 53.5, "nozzle": 87 },
+    "mainName": "Engine colour", "secondName": "Helix and trail colour" },
   { "id": "thruster", "name": "Thruster", "model": "exhausts/thruster.glb", "nozzle": 0.38,
     "materials": [ { "material": "EngineExhaust", "flame": true, "flameLength": 4, "emissionColor": [1, 0.29, 0.05],
                      "boostColor": [0.05, 0.53, 1], "emissionIntensity": 4 } ],
@@ -733,36 +906,39 @@ colours. "Ship's own" keeps the model's exhaust.
 | Field | |
 |---|---|
 | `id`, `name` | The style (builds name it `"mod_id:id"`). |
-| `engineFx` | A Galaxy on Fire 3 style effect, the fields of a ship's [`engineFx`](#engine-effect). Its two colours: the flare and cone, then the trails and helix. |
+| `engineFx` | A Galaxy on Fire 3 engine, the fields of a ship's [`engineFx`](#engine-effect). Its two colours: every part but the helix, then the helix and the particles (each pixel takes the colour's hue and keeps its white, so the hot core stays white); "Original" keeps Galaxy on Fire 3's own. |
 | `model`, `materials`, `yaw` | Or a flame model put at each exhaust: its origin at the nozzle's exit, the flame blowing along -Z (`yaw`: degrees about the up axis when it faces another way); `materials` as a ship's, a `"flame": true` entry for the flame cards (see [materials](#materials)). Its two colours: the flame and the boost cards. |
-| `nozzle` | The nozzle radius the effect is made for: game units for `engineFx` (default its own `nozzle`, else its `coneWidth`), the model's units for `model` (default 1). Each exhaust of the ship is scaled by its own nozzle's size against it (a mod mount's `glowSize`, a mod ship's `engineGlowRadius`, the game's ships' exhaust sizes; on a ship with an `engineFx` of its own that gives a `nozzle`, its nozzles are taken as large as that `nozzle` x `fxScale`, so a ship wearing a style made like its own engine shows it at its own engine's size). |
+| `nozzle` | The nozzle radius the effect is made for: game units for `engineFx` (default its own `nozzle`, else 87), the model's units for `model` (default 1). Each exhaust of the ship is scaled by its own nozzle's size against it (a mod mount's `glowSize`, a mod ship's `engineGlowRadius`, the game's ships' exhaust sizes; on a ship with an `engineFx` of its own that gives a `nozzle`, its nozzles are taken as large as that `nozzle` x `fxScale`, so a ship wearing a style made like its own engine shows it at its own engine's size). |
 | `palette` | The colours offered, `[ { "id", "name", "color": "#RRGGBB" } ]` (default the game's bright colour list). Each row also offers "Original", the style's own colour. |
 | `mainName`, `secondName` | The two colour rows' names (default "Exhaust colour" / "Second colour"). |
 | `group`, `groupName`, `scale` | Flame models of one mod with the same `group` are offered as one choice (named `groupName`, else the first one's name): each nozzle of the ship wears the one made for the nearest nozzle size, its `nozzle` x `scale` (the model's size as the mod's own ships show it: Unity metres per model unit, default 1). The EVERSPACE 2 importer offers its three thrusters this way. |
 
 The style sits where the ship's exhausts are (`slotType` 3 mounts: a kit ship's build's, a mod ship's, the game's own) and takes
 each nozzle's shape: its outline (the hull of the nozzle seen from behind) and centre. A flame model's cross-section is bent to
-that outline (a square nozzle gets a square flame, a hexagon a hexagonal one), a GoF3 effect's cone and helix follow it and its
-trails spread along a slot. Where the outline comes from: a mount's `"outline"` (below; only when it is at least half the
+that outline (a square nozzle gets a square flame, a hexagon a hexagonal one), a GoF3 engine's parts are spread to it. Where the outline comes from: a mount's `"outline"` (below; only when it is at least half the
 mount's `glowSize` and centred within 1.5 x it, else it is taken for stray lit pixels), else the ship's meshes whose material
 name contains "nozzle", else a mount's `glowSize` (an oval), else the game's ships' own nozzles (measured from their engine
 glow). It goes
 with the engines: off while parked, mining or docking at an object, stronger with the throttle and the boost. The model's own
 exhaust (glow, particles, flames, engine effect) is hidden meanwhile; its manoeuvring jets stay. An **Exhaust size** row
-resizes it (50 % to 200 % of the fitted size, in 10 % steps) so it fits the ship's nozzles. A flame model's boost cards are its
+resizes it (50 % to 200 % of the fitted size, in 10 % steps) so it fits the ship's nozzles. A Galaxy on Fire 3 engine is
+also drawn longer on a ship whose nozzles are small for its length (the game's own ships: the Phantom's are a third of a GoF3
+hull's of its size), so its plume reads at the ship's scale. A flame model's boost cards are its
 own mod's ships' boost jets: on the game's ships and other mods' ships they stay hidden, and a boost turns each nozzle's main
 flame to the boost colour instead. While the Customize screen is open the engines run on the turntable, boosting while a
 boost colour row is picked. A build may carry it (`"exhaust": "mod_id:id"`, `"exhaustColor"`, `"exhaustColor2"`: a palette id or
 `"#RRGGBB"`, `"exhaustSize"`: 0.5 to 2); it is saved with the game and other players see it. A flame model style isn't
 offered on its own mod's ships: it is cut from those ships' own exhaust parts, which they choose in their own rows. The Galaxy
-on Fire 3 Ships mod offers GoF3's Nivelian (with its helix), Terran and Vossk drives, the EVERSPACE 2 importer three ES2
-thrusters cut from rear parts.
+on Fire 3 Ships mod offers GoF3's Nivelian (with its helix), Terran and Vossk drives with their trails and booster flashes,
+and its Terran, Nivelian and Vossk capital ship drives; the EVERSPACE 2 importer three ES2 thrusters cut from rear parts.
 
 ### Changing ships
 
 `override`: an original ship's number or another mod's `"mod_id:ship_id"`, with any of `armor`, `cargo`, `price`,
 `priceDefault`, `slots`, `handling`, `name`, `description`, `mounts`, `flightStyle`, `flight` (see
-[Flight styles](#flight-styles)), `sounds` (see [Ship sounds](#ship-sounds)) (and for mod ships `race`, `hangarHeight`).
+[Flight styles](#flight-styles)), `sounds` (see [Ship sounds](#ship-sounds)), `camera`, `cockpit`, `smoke`,
+`explosionScale` (see [Camera, cockpit, damage smoke and explosion](#camera-cockpit-damage-smoke-and-explosion)) (and for
+mod ships `race`, `hangarHeight`).
 
 **More (or fewer) weapons:** `slots` sets how many primaries, secondaries, turrets and equipment the ship takes (give only the
 ones you change), and `mounts`
@@ -903,6 +1079,55 @@ Skin row ("Standard" is the model's own look, then the skins the ship's type may
 | `types` | The ship types that may wear it (a ship's `kitType`; none = every type of the kit). |
 | `materials` | Per material whose name contains `material` (the model's own glTF material name, or part of it), the textures that replace its own: `diffuse` (base colour), `emission`, `metallicSmoothness` (URP Lit's layout: R metallic, A smoothness; not glTF's metallic-roughness), `normal`; `color` / `emissionColor` (`[r, g, b]`, 0 to 1) and `emissionIntensity` too. A field left out keeps the model's own; a material no entry names is untouched. PNG or JPG. |
 | `engineColor` | `[r, g, b]`: every exhaust's glow in this skin (otherwise the mounts' own `glowColor` / the ship's `engineGlowColor`). |
+| `colors` | A colour scheme the skin brings along: a preset's id, or `{ "slot": value }` like a preset's `colors`. Picking the skin sets them; the colour rows can change them after. |
+| `livery`, `decal` | A livery's / decal's id (below) the skin brings along. |
+
+**Liveries.** A pattern projected onto the hull from above, like EVERSPACE 2's projection decals: a greyscale mask over the
+ship's length and width, mirrored at the middle, that tints the base colour (keeping the texture's shading) and changes the
+metallic and smoothness where it is white. It shows on the materials marked `"livery": true` (a kit `materials` entry), and
+the Customize screen gets a Livery row ("None", then the liveries the ship's type may wear).
+
+```json
+"liveries": [ { "id": "blossom", "name": "Nebula Blossom", "texture": "liveries/blossom.png", "color": "#FFF5F4",
+                "metallic": 0, "smoothness": 0.4, "opacity": 1, "mirror": [false, false], "scale": [1, 1], "offset": [0, 0],
+                "tiling": false, "clipAngle": 90 } ],
+"liveryAxes": { "forward": "x", "right": "z", "up": "y" }
+```
+
+| Field | |
+|---|---|
+| `texture` | **Required.** The mask (PNG; white = the livery). Its middle is the ship's middle, the nose to the image's right. |
+| `color`, `metallic`, `smoothness` | What the masked area becomes. A colour slot with `"property": "livery"` lets the player pick the colour. |
+| `opacity`, `mirror`, `scale`, `offset`, `tiling` | How strongly it shows; mirrored at the middle per axis; scaled and moved over the ship; repeated outside the image. |
+| `clipAngle` | Faces steeper than this from horizontal get none (90: every face). |
+| `liveryAxes` | The parts' axes (glTF's, signed: `"-x"`): forward, right and up. Default EVERSPACE 2's export. |
+
+**Decals.** Two masks for the parts' decal faces, the insignia and the type lettering (EVERSPACE 2's ship decals): R colour 1,
+G colour 2, B the border colour, A where it shows. They draw on the materials marked `"decal": "insignia"` or `"decal": "type"`;
+their colours are colour slots with `"property": "decal1"`, `"decal2"` and `"decal3"`. The Customize screen gets a Decal row.
+
+```json
+"decals": [ { "id": "ramen_cat", "name": "Ramen Cat", "insignia": "decals/ramen_cat_insignia.png", "type": "decals/ramen_cat_type.png" } ]
+```
+
+**Engine trails.** EVERSPACE 2's customization trails behind the player's own engines and boosters: the Customize screen gets
+an Engine trail and a Booster trail row. The trails are EVERSPACE 2's own particle systems rebuilt in the game, so a kit can
+only pick from them (`kind`) and give their data; the ES2 Ships importer writes all thirteen from your copy of the game.
+
+```json
+"trails": [ { "id": "glitter", "name": "Stardust", "kind": "glitter", "icon": "trails/glitter_icon.png",
+              "curves": [[1, 1.006, 0.95, 0.395, 0]], "texture": "trails/T_Pattern_Barcode_001.png" } ]
+```
+
+| Field | |
+|---|---|
+| `kind` | `default` (the plain veil), `glitter`, `smoke`, `bubbles`, `sparks`, `darktrail`, `firetrail`, `lines`, `lightning`, `rings`, `squares`, `triangles` or `veils`. |
+| `curves` | The system's curve tables over a particle's life (0 to 1), in this order: glitter [alpha]; smoke [size, alpha]; bubbles [colour, size, alpha]; sparks [size, unused]; darktrail, firetrail, lines [alpha]; lightning [ribbon alpha, arc size, arc alpha]; rings [alpha, scale]; squares, triangles [alpha, unused]; veils [first veil alpha, second veil alpha]. A missing curve counts as 1. |
+| `texture`, `mask`, `normal` | The textures the trail's material samples (the masks as sRGB images, `normal` a normal map): glitter and lightning the barcode, smoke its colour (`texture`), puff (`mask`) and sphere normal, bubbles the sphere normal, darktrail and firetrail T_Noise_020, lines T_Noise_012. |
+| `mesh` | The rings / squares / triangles cross section: `positions`, `normals` (3 numbers each), `uv` (2) and `indices`, in EVERSPACE 2's centimetres and axes (x forward, y right, z up). |
+
+A build picks them with `"trail"` and `"boostTrail"` (ids; none = the plain veil). Only the player's own ship shows them; the
+Customize screen shows them on the turntable while its engines run (the booster trail while its row is selected).
 
 **Weapon colour.** Every customizable ship also has a Weapon colour row in the Customize screen: "Original" (the weapons'
 own look) or one colour for all its energy weapons: the lasers and beams, blasters (EMP ones too), thermo guns, and the turrets
@@ -1086,7 +1311,10 @@ New star systems and their stations. Both are lists: `"id"` adds one, `"override
 | Field | |
 |---|---|
 | `id`, `name` | As for items. |
-| `race` | Who owns it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian. It sets the hangars, bars, music, traffic, shops and the jumpgate. |
+| `race` | Who owns it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, or a [mod's race](#races) (`"guild"` or `"mod_id:guild"`). It sets the hangars, bars, music, traffic, shops and the jumpgate (a mod's race: those of its `look`). |
+| `traffic` | `"mod"`: only the mods' ships fly here. No game freighters (the mods' freighters of the system's race take their place, or none), no pirate outposts or bosses, and the raiders are the system's `raiders`. Default: the game's traffic. |
+| `locals` | The races (the game's or mods') whose patrols fly here, e.g. `["guild", "allies"]`. Default: the system's `race`. |
+| `raiders` | The races (the game's or mods') that raid it, e.g. `["gang"]`. Default: the game's pick (pirates, or the system race's enemy). |
 | `security` | 0 (lawless) to 3 (secure): how many raiders show up. |
 | `visible` | On the star map from the start (default true). A hidden system can't be reached yet. |
 | `available` | A condition (the expressions of [Conditions](#conditions)) for a system that comes and goes: while it holds the system is on the star map, while it doesn't it is hidden, whatever was revealed, with its routes and jumps. A player inside when it disappears is told so and, 4 seconds later, taken to the nearest system on the map. For example `"available": "quest(smuggler_run) == 1"`: only while that story mission or bar mission is under way. |
@@ -1097,9 +1325,10 @@ New star systems and their stations. Both are lists: `"id"` adds one, `"override
 | `sunTexture` | Its own sun: a PNG like the game's suns (512 x 512, a small bright core and a dim glow fading to black well inside the edge, on black; it is drawn additively). Default: the sun of its `sky`. |
 | `sunColor` | `[r, g, b]` from 0 to 1: the colour and strength of the sunlight on ships and stations. Default: the light of its `sky`. |
 | `skybox` | Its own sky, see [Skies](#skies). Default: the nebula of its `sky` and the game's stars. |
+| `jumpgate` | Its own jumpgate model in its gate orbit: `{ "model": "models/gate.glb", "size": 15000, "yaw": 0, "radius": 7500, "materials": [...] }`. `model` a glTF / GLB in the mod (like a station's) or a game model (`"gof2:jumpgate_vossk_anim"`); `size` its largest extent in game units (default 15000; the game's gates are about 15000, the Vossk one 22500); `yaw` degrees about its up axis (ships fly through it along its front, the model's +Z); `radius` how near a ship must come to jump, and its collision sphere (default half its size); `materials` like [ships.json's](#materials). Default: its race's gate. A gate of your own has no jump flash (the game's gates play one as a ship goes through). |
 | `spaceMusic`, `stationMusic` | A mod's track (see [Music](#music)). |
 
-Changing a system (`"override"`): `name`, `security`, `visible`, `available`, `sky`, `sunTexture`, `sunColor`, `skybox`, the music, and `gates` (added to its routes; links original systems too).
+Changing a system (`"override"`): `name`, `security`, `visible`, `available`, `sky`, `sunTexture`, `sunColor`, `skybox`, `jumpgate`, the music, and `gates` (added to its routes; links original systems too).
 
 Events and missions can also show or hide a system themselves: the `system` step (Show / hide a system), the graph's **Show /
 Hide System** node, or the command `system [players] <system> <show | hide | reset>` (the system by number, name or
@@ -1134,6 +1363,8 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | Field | |
 |---|---|
 | `id`, `name` | As for items. Translations: `stations.<id>.name` (systems: `systems.<id>.name`). |
+| `subtitle` | A short description shown after its name: under its planet on the star map, in the map's lore panel and in the station ticker (`"Jump Gate & Trading Station"`). Translations: `stations.<id>.subtitle`. |
+| `description` | Its lore: shown in a panel when its planet is picked in the star map's system view, and up to three stations' lore of the docked system runs in the station ticker. Translations: `stations.<id>.description`. |
 | `system` | **Required.** Its system (a number or `"mod_id:system_id"`). A system holds at most 7 stations. |
 | `techLevel` | 0 to 10: which items its shop sells. |
 | `planet` | The planet it orbits: one of the game's planet textures, 0 to 22 or 24 to 26. |
@@ -1153,9 +1384,45 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | `mapPlace` | `{ "angle": degrees, "distance": n }`: where its planet sits in the star map's system view, round the sun (0 to 360) and how far out (the game's planets lie about 8000 to 45000 out). Either may be left out. Default: the game's place for it. |
 | `orbit` | The layout of its orbit level: station or not, jumpgate, arrivals, asteroids, fog, sun and planet. See [Orbit layouts](#orbit-layouts). |
 | `music` | A mod's track for its docked music (see [Music](#music)). |
+| `mobile` | A new station that moves: `true` or `{ "route": [stations] \| "any", "stayMinutes": 15, "systemMinutes": 90, "speed": 0.2, "race": "terran", "engines": [mounts] }`. See [Mobile stations](#mobile-stations). |
 
-Changing a station (`"override"`): `name`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
+Changing a station (`"override"`): `name`, `subtitle`, `description`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
 `mapTexture`, `mapRing`, `mapPlace`, `orbit`, `music` (an original station can get a new model too).
+
+### Mobile stations
+
+`"mobile"` makes a new station a moving one, like a carrier you can dock in. It has no planet: it isn't one of its system's
+stations (so it doesn't count toward the 7, isn't on the star map and can't be travelled to by planet jump). Instead it
+cruises from orbit to orbit:
+
+- `route`: the stations whose orbits it visits, in order (numbers or `"mod_id:station_id"`), in any systems. Default:
+  every station of its own `system`. `"any"`: it roams every system, staying `systemMinutes` in one (its orbits there
+  `stayMinutes` each, so a pilot who leaves can come back to it soon), then another; every system once per round, in an
+  order of its own, never the same one twice in a row. It never stops at the story's places (Kothar's deep science
+  station, the Valkyrie, Skavac, the supernova system, Alda) or the Kaamo Club.
+- `systemMinutes`: with `"any"`, how long it stays in a system (default 90; at least `stayMinutes`, at most a day).
+- `exclude`: with `"any"`, systems it never goes to (numbers, `"mod_id:system_id"`).
+- `systems`: with `"any"`, the only systems it goes to (numbers, `"mod_id:system_id"`); none: every system.
+- `engines`: its exhausts, lit while it cruises: mounts like a ship's (`position_engine` in game units from the model's
+  centre, its front +Z; `glowSize`, `glowColor`, `fxScale`); `engineColor` [r, g, b] for every one.
+- `engineFx`: an engine effect at those exhausts instead of the glow discs, the same object as a ship's `engineFx` (see
+  [Engine effect](#engine-effect)), each exhaust sized by its `fxScale`; it runs at a cruise's thrust.
+- `race`: its race, `terran`, `vossk`, `nivelian`, `midorian` or 0-3, the same wherever it is (its hangar, the docked
+  screen's race). Default: its `interior`'s, else its own system's.
+- `stayMinutes`: how long it stays in each orbit (1-240, default 15).
+- `speed`: game units per ms (0-2, default 0.2, 10 m/s; the freighters fly 1).
+
+Where it is follows the real clock, so it is in the same place for every player of a multiplayer game, and it has
+moved on when you come back later. In each orbit it crosses a straight course sideways past the station, its middle 6 to 8
+km out in front of it, so its hull never sweeps through the station. Fly close and lock it like a station: the autopilot
+flies to it, and within its range (its size + 300 m) **Dock** takes you into its hangar and bar (its `interior`, or your own
+`hangar` / `bar`). Its shop, bar and missions are a station's like any other. A launch from it comes out beside it, in the
+orbit it is in by then. Docked, the system it shows (the header, the prices, the star map's "you are here") is the one of
+the orbit it was in when you docked. Its title is its name alone, without "Station". The star map marks where it is now:
+its name in amber after the system's and under the planet of its orbit, with how long until it leaves the system.
+
+Give it a `model` and a `modelSize`; the course runs along the model's front (+Z after `modelYaw`). Keep it under about
+6 km: the flight level's far plane is 15 km.
 
 ### Orbit layouts
 
@@ -1201,6 +1468,42 @@ screen waits for them).
 Prices follow the distance on the star map, like the originals. The story stays in the original galaxy: the Void's invasions
 never pick a mod's system.
 
+## Races
+
+`races.json` adds races of the mod's own beside the game's (Terran, Vossk, Nivelian, Midorian, the pirates, the Void and
+the Specters), for a galaxy whose ships don't fly for the game's four. A mod's race can own systems (systems.json `race`),
+fly ships (ships.json `race` and `traffic.races`) and raid (systems.json `raiders`). Each has its own standing with the
+player, shown on the Status window under the game's reputation bars, and its own relations to the other races. Wherever
+a race goes (a system's or ship's `race`, `/spawn`, `/standing`, `standing(...)`), name it by its `id` or `"mod_id:id"`.
+(Mods made before this was renamed may still have a `factions.json`: it is read the same way.)
+
+```json
+[
+  { "id": "guild", "name": "Mining Guild", "look": "midorian", "icon": "races/guild.png", "color": [1, 0.7, 0.2],
+    "standing": 10, "relations": { "gang": "enemy", "allies": "friend" } },
+  { "id": "gang", "name": "The Gang", "look": "pirates", "hostile": true },
+  { "id": "allies", "name": "Allies", "look": "terran", "standing": 80 }
+]
+```
+
+| Field | |
+|---|---|
+| `id`, `name`, `description` | As for items. Other mods name it `"mod_id:id"`. |
+| `look` | The game race whose hangar, bar, lounge visitors, music, NPC guns and jumpgate the race borrows: `terran`, `vossk`, `nivelian`, `midorian`, `pirates` or `void` (default `terran`). |
+| `icon` | Its emblem, a PNG (square, transparent around it, like the game's race emblems). Default: its look race's. Shown on the station's header, the star map, the lock plate and the Status window. |
+| `color` | `[r, g, b]` (0 to 1). |
+| `standing` | The player's standing at the start of a game, -100 to 100 (default 0). At -71 and below the race is hostile, at 71 and above a friend, as with the game's races. Killing its ships costs 5 (10 on Extreme). |
+| `hostile` | `true`: always the player's enemy, whatever the standing, and the enemy of every race it doesn't call a friend, like the game's pirates. It isn't listed on the Status window. Killing one of its ships in the system of a race it is at war with raises that race's standing by 1. |
+| `relations` | `{ "<race>": "friend" \| "neutral" \| "enemy" }`: who its ships fight. Mods' races by id or `"mod_id:id"`, the game's races by word (`terran`, `vossk`, `nivelian`, `midorian`, `pirates`, `void`, `specters`). A relation one side leaves out is the other side's; when neither names it the two are enemies if either is `hostile` or one is the game's pirates, Void or Specters, else neutral. |
+| `diplomats` | `false`: no lounge diplomat reconciles it (default `true`, `false` for a hostile race). |
+| `gun` | An item (a number or `"mod:id"`): the gun look and sound of its NPC fighters. Default: its look race's. |
+
+In the Space Lounges of a mod race's system, now and then (the game's 35 %) a diplomat of a race of the same mod that
+the player is at war with offers to restore it to neutral, for |standing| / 100 x 16 000 credits, like the game's
+diplomats. The standings are saved with the game, and in multiplayer each player's own standings decide how the races'
+ships treat them. A campaign can start the player elsewhere (`campaign.json` `raceStanding`), and a story can change
+them (`/standing`, the quests' Standing step) or ask for them (`standing(guild) > 50`).
+
 ## Campaigns
 
 A mod can be a game of its own: `campaign.json` adds an entry under the three campaigns in **Start new game**. Picking it
@@ -1238,6 +1541,7 @@ story off.
 | `equipment` | What is mounted on the ship: items, or `{ "item", "amount" }` (a secondary weapon's amount is its ammo). Default: nothing. |
 | `cargo` | What is in the hold: `{ "item", "amount" }`. |
 | `standing` | `[Terran / Vossk, Nivelian / Midorian]` from -100 to 100 (positive leans toward the first race). Default `[30, 0]`. |
+| `raceStanding` | The start toward mods' [races](#races): `{ "guild": -60, "mod_id:allies": 80 }`, -100 to 100. Default: each race's own `standing`. |
 | `quest` | An event graph (a mission, see [Story missions and bar missions](#story-missions-and-bar-missions)) that starts with the game: the campaign's story. Its other missions start by their own conditions as usual. |
 | `galaxy` | `"mod"`: only this mod's star systems and those of the mods it depends on exist in this game (the map, missions, the news); `"all"` (default): the whole galaxy. |
 | `items` | `"mod"`: shops and bar sellers offer only mods' items (sell the player anything they find; mining still brings the game's ores). Default `"all"`. Give the campaign its own goods and energy cells if it needs them. |
@@ -1276,6 +1580,7 @@ game remembers it in its saves, and your content asks for it with `option(...)` 
 | `showTitle` | `true` (default): the name and the mod on a plate at the card's foot; `false` when the art has its own title. |
 | `default` | The switch's position the first time (afterwards the player's last choice). Also what a multiplayer session plays with. |
 | `flightStyle` | `"free"` or `"original"`: while the option is on, the game flies so (see [Flight styles](#flight-styles)). |
+| `setting` | `true`: no card, a switch in **Options > Gameplay** instead, shown only while your mod is on and the player's own for every game (it starts at `default`; Default settings puts it back). `option(...)` reads it the same way. For what a player may want to turn off at any time (the ES2 Ships mod's Dreadnought raids). |
 
 Two cards show at a time; more scroll sideways (drag, wheel, or the arrow keys / D-pad). A game started before your mod was
 installed has every option off.
@@ -1287,9 +1592,10 @@ the event graphs' expression language and is checked when it matters (a shop's s
 
 | Word | |
 |---|---|
-| `option(mod_id:option_id)` | 1 when that new-game option is on in this game. |
+| `option(mod_id:option_id)` | 1 when that new-game option (or gameplay setting) is on in this game. |
 | `won(main)`, `won(valkyrie)`, `won(supernova)` | 1 when that campaign's story is finished in this game. |
 | `systemsvisited` | How many star systems the player has docked in (2 or more: they have left Mido). |
+| `standing(race)` | The player's standing toward a race, -100 to 100: `terran`, `vossk`, `nivelian`, `midorian` or a mod's [race](#races) (`guild`, `mod_id:guild`); pirates, the Void, the Specters and a `hostile` race are always -100. |
 | `campaign` | The story step (-1 in free play and mod campaigns). |
 | `rank`, `credits`, `kills`, `station`, `system`, `ship` | The player's rank, credits, kills, where they are docked / flying, the ship they fly. |
 | `visited(station)`, `has(item)`, `cargo(item)`, `quest(name)` | A station docked at; how many of an item the player has (mounted too) / has in the hold; a mission under way (1) or done (2). |
@@ -1342,16 +1648,18 @@ autocomplete), and the product is made at the station where the first ingredient
 | `autocomplete` | `true` (default): the game's price, 1.25 x the product's price. A number: that price. `false`: it can't be autocompleted. |
 | `available` | A [condition](#conditions) before any source offers it. |
 | `unlocked` | `true`: the player knows it as soon as it is available (the next docking), without finding it. |
-| `lounge` | A Space Lounge visitor sells it: `chance` % each time a bar fills with new visitors, for `price` (default half the product's price), in `systemRace` systems (-1 = any). |
+| `lounge` | A Space Lounge visitor sells it: `chance` % each time a bar fills with new visitors, for `price` (default half the product's price), in `systemRace` systems (-1 = any). `stations`: only in those bars (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100), like the game's own blueprint sellers, each at one station: `{ "stations": [ 54 ], "price": 59999 }`. |
 | `derelict` | `chance` % of the orbits visited hold a derelict freighter (`race`: terran, vossk, nivelian, midorian or any) to dock at and hack; it leaves the blueprint in a data container. `stations`: only in those orbits (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100, always there). `position`: `[ x, y, z ]` in game units (what `/pos` shows in that orbit), else somewhere out in front of the station. Hacking it also fires the missions' and events' `hacked` trigger. |
-| `drops` | A ship the player destroys may leave it in a data container: `race` (terran, vossk, nivelian, midorian, pirate, void, specter or any), `chance` % per kill (decimals allowed). |
+| `drops` | A ship the player destroys may leave it in a data container: `race` (terran, vossk, nivelian, midorian, pirate, void, specter or any), `chance` % per kill (decimals allowed). Or `ship` (a number or `"mod_id:ship_id"`) instead of `race`: only ships of that type drop it, whatever their race, and before any race-wide drop; `{ "ship": "my_mod:boss_hull", "chance": 100 }` makes a boss leave its own hull's blueprint. A blueprint already known is never dropped again. |
 
 A blueprint found in a data container is learnt when the tractor beam pulls the container in ("Blueprint found: ..."). A
 ship's blueprint shows the ship in the Blueprints tab, and the finished ship waits at the station where it was built: there
 it replaces the player's ship like a purchase (the old one is traded in at its price, or parked in the Kaamo Club when the
 player owns it and has no ship of that type stored), the equipment moving over as far as it fits.
 
-Every source stops offering a blueprint once the player knows it.
+A blueprint is obtained once: once the player knows it, every source stops offering it. A seller already standing in a bar
+has nothing left ("I don't have anything left, sorry."), a derelict hacked afterwards is empty, and no second data container
+is dropped while one with it still floats in the orbit. It can be built from as often as the player likes.
 
 ## Hangars and bars
 
@@ -1365,7 +1673,29 @@ GLB model listed in `interiors.json`:
 ]
 ```
 
-and picked by the station: `"hangar": "kepler_hangar", "bar": "kepler_bar"` in stations.json.
+and picked by the station: `"hangar": "kepler_hangar", "bar": "kepler_bar"` in stations.json. `"bar": "none"`: the station has
+no Space Lounge (its button is gone).
+
+**Docking EVERSPACE 2's way** (`"dock": "es2"` on a hangar): the hangar is the station's own model, the same file as its
+stations.json `model` at the room's `scale` (so the room's metres are the station's), and the player docks in the station's
+orbit: the dock's marker shows in space, inside the dock zone the Dock button lands the ship on the pad, under the dock's
+camera, over 4 s (EVERSPACE 2's own docking timeline, its wobble and camera sway), and the station's menu opens over the
+live orbit (the traffic flies on; no separate hangar scene). Launch takes the ship off from the pad there: up `rise` metres,
+turning toward `takeoff`, then out to it on a boost while the view blends back behind the ship over 3 s. It works on a
+mobile station too (the dock rides along). Its markers, beside `pad` and `camera`:
+
+| Marker | |
+|---|---|
+| `ship`, `ship_ahead` | Where the docked ship's middle sits, and a point ahead of its nose. |
+| `takeoff`, `takeoff_ahead` | Where the take-off ends, and a point ahead of it (the way the ship faces there). |
+| `camera_target` | The point the dock's camera looks at while the ship is down (it follows the ship by the same offset). |
+| `dock_zone` | The middle of the box the ship docks from (`dockZone` its half sizes). Default: the pad. |
+
+Fields: `rise` (metres the take-off climbs first; default 14), `dockZone` `[right, up, forward]` half sizes in metres in the
+dock's own axes (default 196, 84, 196), `dockSound` / `undockSound` (the mod's own sounds by name, from its `sounds/`
+folder, played as the docking / take-off starts), `dust` (an image in the mod: the landing dust's 6 x 6 flipbook, frames
+row by row from the top, its grey the opacity; none without it). The dock lights the docking ship with EVERSPACE 2's
+two spotlights by itself. Hangar flights don't apply (`flights` is ignored).
 
 **Markers** can also be listed in `interiors.json` (`"markers": { "pad": [x, y, z], "parked_1": [x, y, z] }`, room metres;
 they win over the model's nodes of that name): the Mod Builder's Hangars & bars kind places them by clicking into the room. A
@@ -1566,7 +1896,13 @@ shows it). It can be written by hand too:
 ```
 
 `kind` is `quest`, `mission` (a bar mission: `offer`, `client`, `stations`, `players` [min, max] as the Start node's) or
-`event` (started by `/event <name>` or another one's Next event step). `variables`: numbers the mission keeps (`setting`: true
+`event` (started by `/event <name>` or another one's Next event step). A `quest` with `"repeat": <minutes>` (the Start node's
+"Comes again after", the builder's "Comes again after (minutes of play)") is an encounter that comes back: done, it isn't
+done for good but starts again that many minutes of playing time later, as soon as its `startsWhen` holds (add a chance to
+it, `random(1, 300) == 1`, for a random moment); `quest(<name>)` reads 2 meanwhile. `randomstation()` picks a station of a
+system on the map for a roaming encounter (not the player's own orbit, an empty or special orbit, a story's orbit, Loma, a
+pirate base's system; -1 when none), kept in a variable; a text shows its name with `{stationname(st)}` and its system's
+with `{systemname(st)}`, and a station field takes the variable (`"station": "{st}"`). `variables`: numbers the mission keeps (`setting`: true
 lets `/event name x=3` change it); a text shows one in braces (`{waves}`). Without `complete` / `fail` a mission completes after
 its last step (`"autoComplete": false` turns that off). Every step takes `who` (whom it is for: `@a` everyone the mission is for,
 the default; `@trigger` the player a When block is about; any selector). The steps:

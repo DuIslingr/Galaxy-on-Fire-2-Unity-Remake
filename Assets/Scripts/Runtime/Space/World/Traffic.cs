@@ -62,8 +62,8 @@ namespace GoF2Remake.World
             systemIndex = layout.systemIndex;
             this.storyOrbit = storyOrbit;
             var sys = db.Systems.Find(s => s.index == layout.systemIndex);
-            // (a mod faction's system keeps its faction: its locals, kills and alarms; the tables use its look, Standing.Look)
-            SystemRace = Modding.ModFactions.Is(sys?.raceId ?? 0) ? sys.raceId : Mathf.Clamp(sys?.raceId ?? 0, 0, 3);
+            // (a mod race's system keeps its mod race: its locals, kills and alarms; the tables use its look, Standing.Look)
+            SystemRace = Modding.ModRaces.Is(sys?.raceId ?? 0) ? sys.raceId : Mathf.Clamp(sys?.raceId ?? 0, 0, 3);
             AttackRace = Standing.EnemyRaceOf(SystemRace);
             Security = sys?.securityLevel ?? 0;
             blackMarket = layout.systemIndex == 25;
@@ -220,7 +220,7 @@ namespace GoF2Remake.World
             {
                 var state = UnityEngine.Random.state;
                 UnityEngine.Random.InitState(5 * names[i].Length);
-                int ship = NpcTables.RandomFighter(race <= 3 || Modding.ModFactions.Is(race) ? race : Standing.Pirate);   // races 4-7: the pirate pool
+                int ship = NpcTables.RandomFighter(race <= 3 || Modding.ModRaces.Is(race) ? race : Standing.Pirate);   // races 4-7: the pirate pool
                 UnityEngine.Random.state = state;
                 var pos = player.position + (player.right * right[i] - player.forward * 2000f + Vector3.up * (i == 2 ? 1000f : 0f)) * 0.05f;
                 var spec = new SpawnSpec

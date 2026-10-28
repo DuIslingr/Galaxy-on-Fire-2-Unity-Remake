@@ -159,7 +159,10 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   takes it (`NpcShip.OnRemoteEmp`: past a third of its EMP points it turns on that player, like `OnPlayerEmp`), an
   EMP-disabled proxy shows its lightning to everyone (`EmpSparks`); on another player (remake pick: players have no EMP
   pool) it drains that much shield and shows the lightning on their ship for 1.5 s. Squadmates are exempt.
-- **Standings per player**: each player shares their standing axes and signature (`Standing.*With`); an orbit
+- **Standings per player**: each player shares their standing axes and signature (`Standing.*With`), and their
+  standings toward mods' races (2026-10-28, `NetModRaceStandings`: "key=value;" in a `FixedString4096Bytes`
+  `NetPlayer` variable, packed again only when `ModRaces.StandingRevision` or the Session table changes; before, an
+  authority judged everyone by its own mod race standings); an orbit
   authority's NPCs are hostile to another player whose own standing makes the race an enemy, and each player's markers
   use their own standing. Another player's hits turn a ship on their squad by the single-player friendly-fire rule (half
   its hull, a quarter on Extreme; `NpcShip.OnRemoteHit`), and whoever destroys another game's NPC gets the kill in their

@@ -125,19 +125,25 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `TextReveal.Names` tints character names as people (rebuilt when `ModManager.Revision` changes). Portraits
   through `ModMaterials` (Preload from the main menu). Example: frontier_systems' Captain Vega. Verified in Play mode: a
   dialogue page by id, one by key with a rename, a replaced story speaker (mirrored), a radio call in flight.
-- **Factions** (remake, 2026-10-25, the user's request for the ES2 galaxy; `Modding.ModFactions`, a mod's
-  `factions.json`): factions are race numbers from `ModFactions.FirstRace` (32), numbered by the registry
-  (`ModRegistry.Kind.Faction`, afresh in a session), with a `look` race (0-3, 8, 9) for every table indexed by race
-  (hangar, bar, visitors, music, NPC guns, freighter model, jumpgate: `Standing.Look`), an emblem (`ModFactions.Icon`),
-  a standing of their own (`Session.FactionStanding`, key -> -100..100, saved as `factionStanding`; hostile at -71,
-  friend at 71; `hostile` = always an enemy) and relations (`ModFactions.Relation`, `Standing.RacesHostile`: unnamed =
-  enemies if either is hostile or the other is pirates / Void / Specters, else neutral). `Standing` handles them
-  everywhere the game races go (Toward / IsEnemy / IsFriend / ApplyKill / ApplyDelict / EnemyRaceOf / RaceName).
-  systems.json `race` may name one, `"traffic": "mod"` (`ModWorld.ModTrafficOnly`: no game freighters, no pirate
-  events), `locals`, `raiders` (`TrafficPlan`); ships.json `race` / `traffic.races` (resolved in `ModContent.ShipData`:
-  JsonUtility can't read strings into ints); a faction's fighters always fly mods' ships (`ModTraffic.Pick` chance 1,
-  `ModCapitalShips.ChanceFor`). Lounge diplomats in a faction's system (`AgentGenerator. AddFactionDiplomats`,
-  `Agent.faction`, `LoungeChat`: restores to 0). The Status window lists the non-hostile factions in the game's
-  reputation look (the race status bar, the emblem with a standing-coloured glow, `StatusWindow.FactionEmblem`). The
-  station header, star map, lock plate and HUD use the faction's name and emblem. Not yet: multiplayer sync of faction
-  standings (each game keeps its own). Tests `ModFactionsTests`.
+- **Mod races** (remake, 2026-10-25, the user's request for the ES2 galaxy; called factions until 2026-10-28, renamed
+  because the game itself only has races, and the multiplayer factions (`NetFactions`) are something else;
+  `Modding.ModRaces`, a mod's `races.json`, an older `factions.json` read the same way): race numbers from
+  `ModRaces.FirstRace` (32), numbered by the registry (`ModRegistry.Kind.Race`, "races" in mod_registry.json, the old
+  "factions" read; afresh in a session), with a `look` race (0-3, 8, 9) for every table indexed by race (hangar, bar,
+  visitors, music, NPC guns, freighter model, jumpgate: `Standing.Look`), an emblem (`ModRaces.Icon`), a standing of their
+  own (`Session.ModRaceStanding`, key -> -100..100, saved as `modRaceStanding`, an old save's `factionStanding` read;
+  hostile at -71, friend at 71; `hostile` = always an enemy) and relations (`ModRaces.Relation`, `Standing.RacesHostile`:
+  unnamed = enemies if either is hostile or the other is pirates / Void / Specters, else neutral). `Standing` handles them
+  everywhere the game races go (Toward / IsEnemy / IsFriend / ApplyKill / ApplyDelict / EnemyRaceOf / RaceName /
+  RaceWord). systems.json `race` may name one, `"traffic": "mod"` (`ModWorld.ModTrafficOnly`: no game freighters, no
+  pirate events), `locals`, `raiders` (`TrafficPlan`); ships.json `race` / `traffic.races` (resolved in
+  `ModContent.ShipData`: JsonUtility can't read strings into ints; an unknown one is a mod warning, once:
+  `ShipDef.refsReported`); a mod race's fighters always fly mods' ships (`ModTraffic.Pick` chance 1,
+  `ModCapitalShips.ChanceFor`). Lounge diplomats in a mod race's system (`AgentGenerator.AddModRaceDiplomats`,
+  `Agent.modRace` (saved as "faction" before: `FormerlySerializedAs`), `LoungeChat`: restores to 0). The Status window
+  lists the non-hostile mod races in the game's reputation look (the race status bar, the emblem with a standing-coloured
+  glow, `StatusWindow.RaceEmblem`). The station header, star map, lock plate and HUD use the mod race's name and emblem.
+  campaign.json `raceStanding` { race: value } sets the start (`ModCampaigns.Start`, after the races are numbered);
+  `/peace` (`Cheats.MakePeace`) sets the non-hostile ones to 0 too; `/standing` and `standing(race)` (event-graphs.md,
+  chat-and-commands.md) change and read them. Multiplayer: each player's own standings
+  (`NetModRaceStandings`, multiplayer.md "Standings per player"). Tests `ModRacesTests`.

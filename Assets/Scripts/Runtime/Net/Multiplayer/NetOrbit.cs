@@ -198,7 +198,7 @@ namespace GoF2Remake.Multiplayer
             // A faction's held station: its own race's fighters spare its members and attack other factions' pilots without the toll.
             int territory = Territory(ship, p.Station, p.FactionTag, p.TollStation);
             if (territory != 0) return territory < 0;
-            if (Standing.IsEnemyWith(r, p.Standing0, p.Standing1, p.Signature)) return true;   // their own standing toward the race
+            if (Standing.IsEnemyWith(r, p.Standing0, p.Standing1, p.Signature, p.ModRaceStandings)) return true;   // their own standing toward the race
             foreach (var id in ship.aggressors) if (NetSquad.SameClient(id, p)) return true;
             return ship.Target != null && ship.Target.hostileToPlayer && NetSquad.Same(p, NetPlayer.Local);
         }

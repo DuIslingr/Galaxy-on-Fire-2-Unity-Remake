@@ -94,3 +94,15 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `replace_game_character` (`Portrait.RenderSpeaker`, as the Characters kind). Verified with curl in Play mode: both
   searches, a character replacing Gunant, an optimized normal map (2.1 -> 0.87 MB), an .aem quad converted, an installed
   mod imported, and three undos putting it all back.
+- **Races** (remake, 2026-10-28, with the builder's Races kind; `ModBuilderMcpRaces`): the entry kind `races` (races.json,
+  so list_entries / get_entries / put_entry / patch_entry / delete_entry / select_entry / show_kind take it),
+  search_content kind `race` (`RefKinds` is in `RefKind`'s order: the index is the kind), builder_status's count, and
+  four tools: `list_races` (the game's by word and number, the project's with relations, owned systems and ships, other
+  mods' by key), `put_race` (`CheckRace`: id, name, look, color, standing, flags, an icon file in the project, the gun an
+  item, each relation a known race and a relation word; another mod's race or item becomes a dependency), `delete_race`
+  (asks like delete_entry, `ModProject.RemoveRace` with every reference, answers how many changed) and `set_race` (target
+  system: owner / locals / raiders, ship: race / trafficRaces; each value resolved through `ModRefs.Find(RefKind.Race)`,
+  an owner only Terran-Midorian or a mod race, a ship's no Specters; traffic races' game races as numbers). Edits run
+  through `EditProject`: the project's own methods inside `ExternalEdit`, the state replaced by a fresh `CaptureState`
+  (ModRefs.Use writes the manifest, which a state captured before would have put back); answered after the reload like
+  put_entry. Docs: Modding/ai/README.md, SKILL.md, the server's Instructions. Not verified with a client yet.

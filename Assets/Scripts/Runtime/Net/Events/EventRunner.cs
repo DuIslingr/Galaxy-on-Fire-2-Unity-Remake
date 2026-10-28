@@ -537,7 +537,7 @@ namespace GoF2Remake.Events
                     {
                         while (i < s.Length && (char.IsLetterOrDigit(s[i]) || s[i] == '_')) i++;
                         string name = s.Substring(start, i - start).ToLowerInvariant();
-                        if ((name == "cargo" || name == "has" || name == "visited" || name == "quest" || name == "option" || name == "won") && Peek('('))
+                        if ((name == "cargo" || name == "has" || name == "visited" || name == "quest" || name == "option" || name == "won" || name == "standing") && Peek('('))
                         {
                             // An item / station / quest by number or name: the text up to its ")" ({expression} parts filled in).
                             Sym("(");
@@ -646,6 +646,16 @@ namespace GoF2Remake.Events
                             _ => throw new Exception($"won({arg}): main, valkyrie or supernova."),
                         };
                         return Session.CompletedWorld || (!Session.FreePlay && Session.CampaignMission >= need) ? 1 : 0;
+                    }
+                    // standing(<race|race>): the player's standing toward a game race(terran, vossk, nivelian, midorian) or a
+                    // mod's race, -100..100 (Standing.RawToward); the always-hostile sides (pirates, the Void, Specters, a
+                    // "hostile"race) -100.
+                    if (name == "standing")
+                    {
+                        int race = Flight.Standing.RaceWord(arg);
+                        if (race < 0) throw new Exception($"standing({arg}): terran, vossk, nivelian, midorian or a mod's race.");
+                        bool fixedEnemy = Modding.ModRaces.Is(race) ? Modding.ModRaces.Get(race)?.hostile ?? true : race > 3;
+                        return fixedEnemy ? -100 : Flight.Standing.RawToward(race);
                     }
                     if (name == "visited")
                     {

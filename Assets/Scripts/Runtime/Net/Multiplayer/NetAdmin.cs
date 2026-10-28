@@ -7,11 +7,14 @@
 //   /give [players] <item> [amount] [mount] items into the hold (an item index or name; 1..1000, default 1); "mount" docked:
 //                                           mounted like the hangar does (Cheats.GiveAndMount)
 //   /credits [players] <amount>             credits added (negative: taken, never below 0)
+//   /standing [players] <race> <amount> [set]   the standing toward a game race or a mod's race moved by the
+//                                           amount (or set to it); NetAdminStanding.cs
 //   /spawn [players] <ship | object> [race] [count] [enemy | friendly | neutral | standing] [turrets <item,item>]
 //          [named <name>] [at x y z]
 //                                           NPC ships 400 m ahead of each player as their orbit's traffic (DebugSpawner):
 //                                           a ship index or name, a race (terran, vossk, nivelian, midorian, pirate, void,
-//                                           specter; default the ship's maker, else pirates), 1..10 of them, enemy by
+//                                           specter, or a mod's race; default the ship's maker, else pirates),
+//                                           1..10 of them, enemy by
 //                                           default; neutral = neither side whatever the standings, until shot; standing =
 //                                           by the race's standing; "at x y z": there in that player's orbit (game
 //                                           coordinates, what /pos shows), else 400 m ahead of them; a name that is no
@@ -67,9 +70,9 @@ using GoF2Remake.Events;
 namespace GoF2Remake.Multiplayer
 {
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
-    public static class NetAdmin
+    public static partial class NetAdmin
     {
-        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13, Dialog = 14, Reward = 15, Scoreboard = 16, Sound = 17, Music = 18, Respawn = 19, Rules = 20, Ask = 21, Provoke = 22, Radio = 23, Waypoint = 24, Cutscene = 25, Camera = 26, Fade = 27, Letterbox = 28, Npc = 29, Flight = 30, Wreck = 31, System = 32, Wormhole = 33 }
+        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13, Dialog = 14, Reward = 15, Scoreboard = 16, Sound = 17, Music = 18, Respawn = 19, Rules = 20, Ask = 21, Provoke = 22, Radio = 23, Waypoint = 24, Cutscene = 25, Camera = 26, Fade = 27, Letterbox = 28, Npc = 29, Flight = 30, Wreck = 31, System = 32, Wormhole = 33, Standing = 34 }
 
         const int MaxGive = 1000, MaxSpawn = 10, MaxCredits = 999999999;
         /// <summary>A /spawn name's length, and its separator in the order's text (taken out of names).</summary>
@@ -246,7 +249,7 @@ namespace GoF2Remake.Multiplayer
                 var b = BehaviourWord(w);
                 if (b.HasValue) behaviour = b.Value;
                 else if (int.TryParse(w, out int n)) count = Mathf.Clamp(n, 1, MaxSpawn);
-                else if (RaceWord(w) >= 0) race = RaceWord(w);
+                else if (RaceWord(w) >= 0) race = RaceWord(w);   // (a mod's race too: Standing.RaceWord)
                 else break;
                 words.RemoveAt(words.Count - 1);
             }
@@ -272,7 +275,8 @@ namespace GoF2Remake.Multiplayer
             if (race < 0)
             {
                 race = Shop.ShipMakerRace(ship);
-                if (race < 0 || (race > 3 && race != Standing.Pirate && race != Standing.Void && race != Standing.Specter)) race = Standing.Pirate;
+                if (race < 0 || (race > 3 && race != Standing.Pirate && race != Standing.Void && race != Standing.Specter && !Modding.ModRaces.Is(race)))
+                    race = Standing.Pirate;
             }
             int tag = EventRunner.NewBatch(count, behaviour == DebugSpawner.Behaviour.Hostile);   // an event's spawn: counted (enemies / ships)
             Send(t, Order.Spawn, ship, race, tag << 12 | count << 8 | (int)behaviour, by,
@@ -1147,6 +1151,9 @@ namespace GoF2Remake.Multiplayer
                 case Order.Peace:
                     Cheats.MakePeace();
                     NetChat.Notice(string.Format(X("mpAdmPeaceYou", "{0} made peace for you with every race."), by));
+                    break;
+                case Order.Standing:
+                    ApplyStanding(a, b, c != 0, text, by);
                     break;
                 case Order.Cheat:
                     if (a < 0 || a >= Cheats.Flags.Length) return;

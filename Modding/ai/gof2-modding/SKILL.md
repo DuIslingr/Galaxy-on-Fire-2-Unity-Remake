@@ -72,7 +72,7 @@ my_mod/
   campaign.json       a whole new game under Start new game
   exhausts.json       exhaust styles any ship can wear (the hangar's Customize screen)
   systems.json, stations.json, interiors.json   new star systems, stations, hangars and bars
-  factions.json                                factions of the mod's own (owners of systems, NPC sides)
+  races.json                                   races of the mod's own (owners of systems, NPC sides)
   characters.json     speakers with portraits
   events/*.gof2event  story missions and bar missions as Unity event graphs
   events/*.gof2mission  story missions and bar missions as step lists (by hand or the Mod Builder)
@@ -413,22 +413,26 @@ A whole new game under Start new game, shown as a card next to the three campaig
 (default [30, 0]). `galaxy`/`items`/`ships` `"mod"` limit the game to mods' content. `quest` = an event graph started with
 the game. `"flightStyle": "free" | "original"`: the campaign's games always fly so.
 
-## factions.json
+## races.json
 
 ```json
-[ { "id": "guild", "name": "Mining Guild", "look": "midorian", "icon": "factions/guild.png", "color": [1, 0.7, 0.2],
+[ { "id": "guild", "name": "Mining Guild", "look": "midorian", "icon": "races/guild.png", "color": [1, 0.7, 0.2],
     "standing": 10, "relations": { "gang": "enemy", "allies": "friend", "pirates": "enemy" } },
   { "id": "gang", "name": "The Gang", "look": "pirates", "hostile": true } ]
 ```
 
-Factions are races of the mod's own (race numbers 32 and up, named `"id"` or `"mod_id:id"` wherever a race goes:
-systems.json `race` / `locals` / `raiders`, ships.json `race` / `traffic.races`). `look` (terran, vossk, nivelian, midorian,
+Races of the mod's own, beside the game's (race numbers 32 and up, named `"id"` or `"mod_id:id"` wherever a race goes:
+systems.json `race` / `locals` / `raiders`, ships.json `race` / `traffic.races`, `/spawn`, `/standing`, `standing(...)`;
+an older mod's `factions.json` is read the same way). `look` (terran, vossk, nivelian, midorian,
 pirates, void) lends its hangar, bar, visitors, music, NPC guns and jumpgate. Each has its own player standing (-100..100,
 hostile at -71, friend at 71; saved), `hostile: true` = always an enemy (not on the Status window), `relations` decide NPC vs
 NPC fights (unnamed: enemies if either is hostile or one is pirates / Void / Specters, else neutral), `diplomats: false`
-stops the lounge diplomats (in a faction's system, 35 %: restore an enemy faction of the same mod to neutral for
+stops the lounge diplomats (in a mod race's system, 35 %: restore an enemy race of the same mod to neutral for
 |standing| / 100 x 16 000). systems.json `"traffic": "mod"` = only mods' ships there (no game freighters, no pirate events),
-`"locals": [...]` the patrols' races, `"raiders": [...]` the raiders'. A faction's fighters always fly mods' ships.
+`"locals": [...]` the patrols' races, `"raiders": [...]` the raiders'. A mod race's fighters always fly mods' ships.
+campaign.json `"raceStanding": { "guild": -60 }` sets the start; `/standing [players] <race> <amount> [set]` (the quests'
+Standing step) moves or sets a standing, `standing(guild)` reads it in conditions. In multiplayer each player's own
+standings count.
 
 ## systems.json, stations.json
 
@@ -545,7 +549,10 @@ When the user has the game's Mod Builder open with its **AI tools** MCP server o
 and a mission's graph layout, so prefer it to rewriting the whole entry; `test` a step's type first so a stale index can't
 edit the wrong step; `get_entries` with `path` reads one part), `delete_entry`, `list_files`, `read_file`, `write_file`,
 `compile_mission`, `validate`, `get_mission_schema`, `play_test`, `end_play_test`, `get_log`, `screenshot`, `undo`, `redo`,
-`show_kind`; and to see and drive the builder: `view_model` (a model from named angles in one image: "gof2:<assembly>",
+`show_kind`; for the mod's own races `list_races` (the game's, the project's and other mods' races with the values to
+use), `put_race` (a races.json entry, checked field by field), `delete_race` (its systems and ships go back to its look
+race, references to it go) and `set_race` (target system: owner / locals / raiders; target ship: race / trafficRaces);
+and to see and drive the builder: `view_model` (a model from named angles in one image: "gof2:<assembly>",
 "ship:<id | override:N | number>" with its hardpoints as tagged dots P / S / T / E, hollow where the hull hides them,
 "station:...", or "models/x.glb"), `view_texture` / `list_textures`, `select_entry` (an entry on screen; ships' tab, a mission's
 graph), `view` (the builder's camera from front / back / left / right / top / bottom / threequarter / rear, zoom, with a

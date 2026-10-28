@@ -154,7 +154,7 @@ namespace GoF2Remake.World
         public string ModJumpgateAssembly => Modding.ModWorld.GateModelOf(systemIndex)?.Assembly;
         public int JumpgateRadius => Modding.ModWorld.GateModelOf(systemIndex) is Modding.ModWorld.StationModel g && g.gateRadius > 0f
             ? Mathf.RoundToInt(g.gateRadius) : Look == 1 ? GateRadiusVossk : GateRadius;
-        /// <summary>The race whose tables the orbit uses (a mod faction's look, Standing.Look).</summary>
+        /// <summary>The race whose tables the orbit uses (a mod race's look, Standing.Look).</summary>
         int Look => Flight.Standing.Look(raceId);
 
         static float Angle(int v) => v * 1.52587890625e-05f * 6.2831855f;   // 65536 per turn

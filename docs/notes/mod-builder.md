@@ -126,15 +126,17 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `ModelViewer.Angles`, the pan centred, the distance kept; Top at the orbit's ~83 deg limit from a little behind, the
   nose up on screen, no view from below the pad) and
   Orbit puts the orbit back around the ship's centre after a pan (`CentreOrbit`, the middle click's `ResetPan`).
-  **Its other kinds** (2026-10-15): the kinds are `ModBuilder.Kind` (12) and each is edited where it lives in the game
-  (`ModBuilder.PlaceOf`: Ships / Items / Skins / Blueprints / Campaign in the hangar, Characters / Quests / Audio in the Space
-  Lounge, Systems on the star map, Stations / Weapon fx in space, Hangars & bars in the room itself); a kind of the other
+  **Its other kinds** (2026-10-15): the kinds are `ModBuilder.Kind` (12; 15 with Kits, Races and AiTools) and each is
+  edited where it lives in the game (`ModBuilder.PlaceOf`: Ships / Items / Skins / Blueprints / Campaign in the hangar,
+  Characters / Quests / Audio in the Space Lounge, Systems and Races on the star map, Stations / Weapon fx in space, Hangars
+  & bars in the room itself); a kind of the other
   scene loads it (`ModBuilder.GoTo`, `ReloadSpace`, `ReloadStation`). The screens share `ModBuilderScreen` (top bar with all
   kinds, Undo / Redo, Menu with Dependencies, the modal pickers, the save / reload cycle, the status line):
   `ModBuilderView` over the Station scene (partials per kind: ...Blueprints, ...Campaign, ...Interiors, ...Quests, ...Audio,
   ...Systems, ...Kinds the dispatch) and `ModBuilderSpaceView` over the Space scene (FlightHud hands it Update while
   `ModBuilder.InSpace`; `SpaceLevel.HoldForBuilder`: the player's ship held, no traffic, the chase camera off; its own orbit
   camera; ...SpaceViewFx). Project files: `ProjectSystem` / `ProjectStation` / `ProjectInterior` (ProjectWorld.cs),
+  `ProjectRace` (ProjectWorld.cs, races.json; see "Races kind" below),
   `ProjectBlueprint` / `ProjectCampaign` / `ProjectGameOption` (ProjectGame.cs), `ProjectQuest` (events/*.gof2mission), audio as
   files (music/, sounds/, voices/); all in the undo steps. **References** (`ModRefs`): every picker of other content
   (`PickRef` / `RefField`) lists the game's, the project's own (by key) and every other installed mod's (read from its files,
@@ -214,6 +216,32 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   conversation in the station, back to the builder), a system on the map with its route, a game hangar as the project's
   room with its markers, a project station in its own orbit, a laser recoloured and a project missile hitting the target
   ship. Not yet: a system dragged by hand, a marker clicked by hand, the campaign play test.
+- **Races kind** (remake, 2026-10-28; the mods' own races, `ModRaces`, called factions until that day; `ModBuilder.Kind.Races`
+  before AiTools, KindCount 15, on the star map beside Systems: `ModBuilderView.OnMap` keeps the map open between the two,
+  only Systems drags suns, a tapped system picks the project's race that owns it and the status line names its owner).
+  Model: `ProjectRace` (ProjectWorld.cs: name, description, look, icon, colour, standing, hostile, diplomats, gun,
+  relations; unknown fields kept), `ModProject.Races` (races.json; a project's old factions.json, `ModRaces.OldFile`, is
+  read when there is no races.json and deleted at the next save), in the undo steps as "races", its texts in
+  Translations as `races.<id>.name` / `.description`; `ModProjectRaces.cs`: `AddRace`, `OwnRace` (an id or the project's
+  key), `RaceUses`, `RemoveRace` (systems it owned and ships it built back to its look race, a system to Terran for a
+  pirates / Void look; locals, raiders, traffic races and other races' relations naming it removed). A race reference is
+  kept as the string it was: `ProjectSystem.Race` / `ProjectShip.Race` read -1 for a mod race (`ModRace` the string; a
+  race word reads as its game race), `Locals` / `Raiders` / `TrafficRaces` lists of strings (numbers stay numbers),
+  `ModTraffic` ("traffic": "mod"); only a pick writes them (`ProjectSystem.Race` used to read "race" as an int clamped to
+  0-3: a mod race's system showed as Terran and an edit overwrote its owner). `ModRefs`' `RefKind.Race`: the game's races
+  by word (`RaceWords`, Specters too), the project's and other mods' by key (another mod's makes it a dependency);
+  `RaceValue` maps a number / word / own id to the entries' values. UI (`ModBuilderViewRaces`, fields in the main file):
+  list (emblem framed in its colour, look, standing or hostile, systems owned), + New race, Remove (says how many
+  references change); page: name, description, look (segments), emblem (a PNG into `icons/race_<id>`), colour, start
+  standing (number, -100..100), hostile, diplomats, gun (an item picker), relations (friend / neutral / enemy segments, ×,
+  + Relation to a race), its systems (Edit opens Systems on one). Elsewhere: Ships' Built by and Systems' Owned by
+  (`RaceOrModRace`: the game races' segments plus "Mod race…", picked from the list and named under it), Systems' Patrolled
+  by / Raided by and "Only the mods' ships fly here" (`SystemRaceLists`, also for overrides), the Ship tab's traffic races
+  under NPC turrets (`RaceListField`, game races written as numbers), and a mission step's Race field (spawn, provoke,
+  standing): the field's own values first, then the project's races and those of the mods that are on (`ModRaces.All`) by
+  key, in the picker instead of segments once there are any (`RaceFieldChoices`). MCP: see mod-builder-mcp.md "Races".
+  Tests: `ModBuilderRacesTests` (round trip, the old file, a race-owned system and ship through an edit, removal). Not
+  checked in Play mode yet.
 - **Leaving Play mode inside the builder** (Editor `ModBuilderPlayModeReset`, `ModBuilder.CloseAfterPlayMode`): Play mode runs
   without a domain reload and the builder's statics reset only when Play starts again, so after stopping Play mode with a
   project open it stayed the active mod and saving stayed refused: edit-mode tests run then saw its ships (65 instead of 64)

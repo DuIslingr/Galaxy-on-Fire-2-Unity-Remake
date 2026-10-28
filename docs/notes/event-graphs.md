@@ -150,7 +150,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   Triggers (On: no flow in, its Do runs on each firing; Orbit limits it; Player / Name / Victim outputs into Players / texts),
   Event (Score, Winner, Add Points, Scoreboard, Mission Complete, Mission Failed, Start Event (with a picker of the project's
   events), Free For All, Set / Clear
-  Respawn Point, Restrict Travel, Make Hostile, Set / Clear Waypoint), Commands (one per event command, Radio, Play Sound /
+  Respawn Point, Restrict Travel, Make Hostile, Set / Clear Waypoint), Commands (one per event command, e.g. Standing for
+  `/standing` (2026-10-28, `EventStandingNode`: Toward a race word or a mod race's id, Amount, Set; the quests' Standing
+  step writes the same line, `QuestFile` reads it back), Radio, Play Sound /
   Music, Stop Music, Command for any other line), Ships (Fly To, Fly Route, Follow, Attack, Ship Action), Cutscene
   (Start / End Cutscene, Camera Shot, Chase Camera, Fade, Letterbox),
   Players (Get Orbit: a station by number, name, void or a wired number -> Get Players (who, optionally in that orbit) -> any

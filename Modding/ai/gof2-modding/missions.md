@@ -395,6 +395,14 @@ Every system on the star map
 Every race neutral again
 
 
+### `standing`: Standing
+
+Moves the standing toward a race (a mod's too), or sets it
+
+- `race`: Toward: terran = Terran, vossk = Vossk, nivelian = Nivelian, midorian = Midorian. Default `terran`.
+- `amount` (wirable): Amount (below 0: liked less); a number, or an expression as a string. Default `10`.
+- `set`: Set it to the amount. Default `False`.
+
 ## Cutscenes
 
 ### `cutscene`: Start a cutscene
