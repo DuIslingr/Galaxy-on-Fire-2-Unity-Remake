@@ -62,6 +62,9 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 37458fd11be53f246a93856d31cb28db, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 5500258171218644136}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 37458fd11be53f246a93856d31cb28db, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 6193124228559465102}
   m_SourcePrefab: {fileID: 100100000, guid: 37458fd11be53f246a93856d31cb28db, type: 3}
 --- !u!1 &4604950231446431525 stripped
@@ -69,6 +72,44 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 37458fd11be53f246a93856d31cb28db, type: 3}
   m_PrefabInstance: {fileID: 3686609743683164788}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5500258171218644136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4604950231446431525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GoF2.Space::GoF2Remake.Visuals.PartAnimation
+  meta: {fileID: 4900000, guid: 31232677605b67947aa585a5eb7a2473, type: 3}
+  play: 0
+  loop: 1
+  loopStartMs: 0
+  pingPongRotation: 0
+  headingFirst: 0
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: 1
+  rotationInRadians: 1
+  applyMaterialChannels: 0
+  ownMaterials: 0
+  onlyWhenSeen: 0
 --- !u!114 &6193124228559465102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -80,7 +121,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  m_EditorClassIdentifier: GoF2.Space::GoF2Remake.Visuals.ResourceInfo
   meshId: 14310
   materialId: 20069
   originalPath: data/assets/main/3d/meshes/hangars/hangar_midorian_add.aem
