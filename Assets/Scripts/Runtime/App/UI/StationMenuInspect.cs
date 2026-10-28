@@ -59,6 +59,7 @@ namespace GoF2Remake.UI
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             inspectTitle.text = GameNames.Ship(Session.ShipIndex).ToUpperInvariant();
             var insp = level.Inspect;
+            inspectTools.Collide = level.RoomMove;   // Modified: the free camera stops at the hangar's walls too
             inspectTools.Begin(Camera.main, level.PlayerShip, () => insp.Centre, insp.Radius, insp.Radius * 6f, insp.FloorY,
                                () => (insp.OrbitPosition, insp.OrbitRotation), true);
             BuildInspectHints(InputMode.Current);
