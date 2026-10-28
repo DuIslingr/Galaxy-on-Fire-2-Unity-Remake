@@ -1165,3 +1165,35 @@
 .layout-compact .detail-preview-side {
     width: 44%;
 }
+
+/* Modified: the item and ship icons at about the same size on screen when the whole UI is drawn larger (UiLayout's
+   ui-scale-up / ui-scale-up2: the scale S at least 1.15 / 1.4), so they don't crowd the lists. */
+.ui-scale-up .row-icon {
+    width: 124px;
+    height: 60px;
+}
+
+.ui-scale-up .detail-icon {
+    width: 180px;
+    height: 88px;
+}
+
+.ui-scale-up .info-icon {
+    width: 150px;
+    height: 73px;
+}
+
+.ui-scale-up2 .row-icon {
+    width: 104px;
+    height: 50px;
+}
+
+.ui-scale-up2 .detail-icon {
+    width: 152px;
+    height: 74px;
+}
+
+.ui-scale-up2 .info-icon {
+    width: 124px;
+    height: 60px;
+}

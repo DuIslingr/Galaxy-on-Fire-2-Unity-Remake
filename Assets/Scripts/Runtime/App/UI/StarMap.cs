@@ -336,6 +336,9 @@ namespace GoF2Remake.UI
             labels = root.Q("mapLabels");
             mapSafe = root.Q("mapSafe");
             lastSafeScreen = default;   // insets applied again on the next frame
+            // Modified: the layout (the interface size, the chosen font, the safe area) at once: UpdateSafeArea ran only in
+            // the first Update, so the map's first frame drew its title at the default size and font and then switched.
+            UpdateSafeArea();
             systemHeader = root.Q("systemHeader");
             // Remake mods: the selected planet's lore (stations.json "description"), under the system block.
             planetLore = mapSafe.Q(className: "planet-lore");
@@ -386,6 +389,19 @@ namespace GoF2Remake.UI
                 help.style.position = Position.Relative;
                 help.style.width = help.style.height = 40f;
                 header.Add(help);
+            }
+            // Modified: an invisible copy of the station's Menu button (StarMap.uss .map-header-spacer), so the header is as
+            // tall as the station's top bar and the title lines up with the station's name whatever the font.
+            if (header != null && header.Q(name: "mapHeaderSpacer") == null)
+            {
+                // A no-break space: the line's height comes from the font, and no letters can show for the frame before
+                // the style sheet applies (the text "MENU" flashed there for one frame). Hidden inline for the same reason.
+                var spacer = new Label("\u00A0") { name = "mapHeaderSpacer", pickingMode = PickingMode.Ignore };
+                spacer.style.visibility = Visibility.Hidden;
+                spacer.style.width = 0f;
+                spacer.AddToClassList("map-header-spacer");
+                spacer.AddToClassList("gof-semibold");
+                header.Add(spacer);
             }
             RefreshHelp();
             backButton.text = Localization.Extra("hudBack", "BACK");

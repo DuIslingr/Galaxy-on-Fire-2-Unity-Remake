@@ -216,6 +216,22 @@
     -unity-text-align: middle-left;
 }
 
+/* Modified: the flight pause menu's prompts (PauseMenu): each prompt's keys with its label under them, the row centred. */
+.prompt-bar--stacked {
+    justify-content: center;
+}
+
+.prompt-bar--stacked .hint {
+    flex-direction: column;
+    align-items: center;
+    margin: 4px 14px;
+}
+
+.prompt-bar--stacked .hint-label {
+    margin: 3px 0 0 0;
+    -unity-text-align: middle-center;
+}
+
 /* In a window's footer, beside its buttons: it gives way first when the footer is short of room. */
 .prompt-bar--footer {
     flex-shrink: 1;

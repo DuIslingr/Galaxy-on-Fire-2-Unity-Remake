@@ -22,6 +22,12 @@ namespace GoF2Remake.UI
         readonly StationMenu menu;
         readonly StationLevel level;
         readonly VisualElement root, tags, list, chatWindow, portrait, choices;
+        // Modified: the visitor list as a drawer at the right edge, closed until its arrow tab is pressed (or a controller /
+        // the arrow keys move into it): open, it covered the bar's right side.
+        readonly VisualElement rowsBox;
+        readonly Button drawerTab;
+        readonly Label drawerArrow;
+        bool drawerOpen;
         bool chatOnLeft;   // the chat window on the left, the visitor talked to right of it (OpenChat)
         readonly Label chatName, chatSub, chatText;
         readonly TextReveal chatReveal;   // the animated dialogue option
@@ -45,6 +51,21 @@ namespace GoF2Remake.UI
             this.root = root;
             tags = root.Q("loungeTags");
             list = root.Q("loungeList");
+            list.AddToClassList("lounge-list--closed");
+            drawerTab = new Button { focusable = false };
+            drawerTab.AddToClassList("lounge-drawer-tab");
+            drawerArrow = new Label("\u2039") { pickingMode = PickingMode.Ignore };
+            drawerArrow.AddToClassList("lounge-drawer-arrow");
+            drawerTab.Add(drawerArrow);
+            drawerTab.RegisterCallback<PointerDownEvent>(_ => menu.PlayPush(), TrickleDown.TrickleDown);
+            drawerTab.clicked += () => { menu.PlayRelease(); SetDrawer(!drawerOpen); };
+            list.Add(drawerTab);
+            rowsBox = new VisualElement { pickingMode = PickingMode.Ignore };
+            rowsBox.AddToClassList("lounge-rows");
+            // Keys or a controller moving through the rows open it, so a hidden row is never the one selected.
+            rowsBox.RegisterCallback<NavigationMoveEvent>(_ => SetDrawer(true), TrickleDown.TrickleDown);
+            rowsBox.RegisterCallback<FocusInEvent>(_ => { if (InputMode.Current == InputKind.Gamepad) SetDrawer(true); });
+            list.Add(rowsBox);
             chatWindow = root.Q("chatWindow");
             portrait = root.Q("chatPortrait");
             choices = root.Q("chatChoices");
@@ -60,6 +81,14 @@ namespace GoF2Remake.UI
             chatClose.text = Localization.Extra("hudBack", "BACK");
             chatClose.RegisterCallback<PointerDownEvent>(_ => menu.PlayPush(), TrickleDown.TrickleDown);
             chatClose.clicked += () => { menu.PlayRelease(); CloseChat(); };
+        }
+
+        /// <summary>Opens or closes the visitor drawer (the arrow points the way it will move).</summary>
+        public void SetDrawer(bool open)
+        {
+            drawerOpen = open;
+            list.EnableInClassList("lounge-list--closed", !open);
+            drawerArrow.text = open ? "\u203A" : "\u2039";
         }
 
         Database Db => level.Database;
@@ -82,7 +111,7 @@ namespace GoF2Remake.UI
         void Build()
         {
             built = true;
-            tags.Clear(); list.Clear(); tagItems.Clear(); rows.Clear();
+            tags.Clear(); rowsBox.Clear(); tagItems.Clear(); rows.Clear();
             for (int i = 0; i < level.VisitorAgentCount; i++)
             {
                 int index = i;
@@ -117,7 +146,7 @@ namespace GoF2Remake.UI
                 row.RegisterCallback<PointerDownEvent>(_ => menu.PlayPush(), TrickleDown.TrickleDown);
                 row.clicked += () => { menu.PlayRelease(); OpenChat(index); };
                 row.RegisterCallback<FocusInEvent>(_ => selected = index);
-                list.Add(row);
+                rowsBox.Add(row);
                 rows.Add(row);
             }
             RefreshMarks();
