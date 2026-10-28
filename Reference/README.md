@@ -24,7 +24,7 @@ Source material for the remake. Nothing in here is used by Unity; it's for readi
 ## Reading the pseudocode
 
 - Addresses use Ghidra's image base **0x10000**.
-- Fields show up as offsets like `*(float *)(this + 0x27c)`. See `CLAUDE.md` at the project root for the offsets identified so far.
+- Fields show up as offsets like `*(float *)(this + 0x27c)`. See `docs/notes/flight-model.md` for the offsets identified so far.
 - `DAT_xxxxxxxx` values are constants in the binary; read them with `tools/rf.py`.
 - Floating-point arguments are sometimes lost (`extraout_s1`, `in_r1`). Check call sites when something looks missing.
 - Game time is in milliseconds (`update(int dt)`).

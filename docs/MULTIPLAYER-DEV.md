@@ -2,7 +2,7 @@
 
 This page explains the multiplayer code: what runs where, who decides what, and where to look when you change it.
 It is for people who work on the code. The player guide is **[MULTIPLAYER.md](MULTIPLAYER.md)**; the server operator
-guide is **[SERVER.md](../SERVER.md)**. The full, detailed notes for every feature are in `CLAUDE.md` ("Multiplayer").
+guide is **[SERVER.md](../SERVER.md)**. The full, detailed notes for every feature are in `docs/notes/` (the multiplayer*, chat-and-commands and event-graphs files).
 
 All multiplayer code is in `Assets/Scripts/Runtime/Multiplayer` (namespace `GoF2Remake.Multiplayer`). The event graphs
 are in `Assets/Scripts/Runtime/Events`. Single player never runs any of it: every multiplayer path checks
@@ -116,7 +116,7 @@ on the server.
    `RuntimeInitializeOnLoadMethod(SubsystemRegistration)` (Play mode runs without a domain reload).
 8. A chat command: add a row to `NetCommands` (it then shows in `/help`, Tab completion and the console).
 9. Buttons: add them to `MultiplayerWindow`; they send the chat command, so there is one code path.
-10. Update `docs/MULTIPLAYER.md`, `SERVER.md` (server options) and `CLAUDE.md`.
+10. Update `docs/MULTIPLAYER.md`, `SERVER.md` (server options) and the matching `docs/notes/` file.
 
 ## Testing
 
