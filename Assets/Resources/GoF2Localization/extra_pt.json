@@ -1229,6 +1229,8 @@
   "shopTradeInNote": "Sua {0} é dada como parte do pagamento por {1}, então você paga {2}.",
   "shopTradeInRefund": "Sua {0} é dada como parte do pagamento por {1}, então você recebe {2} de volta.",
  "showFps": "Mostrar FPS",
+ "gameCursor": "Cursor do jogo",
+ "gameCursorHelp": "Um cursor do mouse no estilo da interface; desligado, o do sistema.",
  "showStoryStep": "Mostrar etapa da história",
  "showStoryStepHelp": "A etapa atual da história no canto inferior direito, para relatar bugs.",
  "slot": "Espaço",

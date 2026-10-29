@@ -474,6 +474,8 @@ namespace GoF2Remake.Data
         public static bool MuteInBackground { get => GetBool("muteInBackground", false); set => SetBool("muteInBackground", value); }
         /// <summary>Remake: the frame rate on screen (FpsCounter, placed by FpsPosition).</summary>
         public static bool ShowFps { get => GetBool("showFps", false); set => SetBool("showFps", value); }
+        /// <summary>Modified: the mouse cursor drawn in the interface's style (GameCursor) instead of the system's.</summary>
+        public static bool GameCursor { get => GetBool("gameCursor", true); set => SetBool("gameCursor", value); }
 
         /// <summary>Remake: where the FPS counter sits (Options > Graphics "FPS counter position", FpsCounter): the four corners
         /// and the middles of the four sides, top centre by default.</summary>
@@ -555,7 +557,7 @@ namespace GoF2Remake.Data
         {
             "displayMode", "resolutionWidth", "resolutionHeight", "frameRate", "quality", "fireSmoke", "fog", "detailDistance", "textureFiltering", "renderScale", "upscaler", "upscalerQuality",
             "msaa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "lensFlare", "npcPlayerEngines", "fov",
-            "cameraShake", "originalChaseCamera", "uiWidth", "uiMargin", "showFps", "fpsPosition",
+            "cameraShake", "originalChaseCamera", "uiWidth", "uiMargin", "showFps", "fpsPosition", "gameCursor",
         };
         public static readonly string[] ControlsKeys =
         {
