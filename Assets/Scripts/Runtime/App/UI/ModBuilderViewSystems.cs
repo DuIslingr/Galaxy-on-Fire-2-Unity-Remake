@@ -55,7 +55,7 @@ namespace GoF2Remake.UI
             {
                 var s = sys;
                 string sub = s.IsOverride ? string.Format(T("mbChanges", "Changes {0}"), RefLabel(RefKind.System, s.OverrideRef, s.OverrideRef))
-                           : $"{T("race" + ModRefs.RaceNames[Mathf.Clamp(s.Race, 0, 3)], ModRefs.RaceNames[Mathf.Clamp(s.Race, 0, 3)])}  ·  {Project.Stations.Count(st => st.System == Project.Key(s.LocalId))} {T("mbStationsLower", "stations")}";
+                           : $"{OwnerLabel(s)}  ·  {Project.Stations.Count(st => st.System == Project.Key(s.LocalId))} {T("mbStationsLower", "stations")}";
                 ListRow(systemList, SystemTitle(s), sub, s == currentSystem, () =>
                 {
                     currentSystem = s;
@@ -78,7 +78,7 @@ namespace GoF2Remake.UI
             var db = Database.Load();
             builderMap = StarMap.OpenBuilder(db, new StarMap.Builder
             {
-                movable = i => Project.Systems.Any(s => !s.IsOverride && SystemIndex(s) == i),
+                movable = i => kind == ModBuilder.Kind.Systems && Project.Systems.Any(s => !s.IsOverride && SystemIndex(s) == i),
                 picked = OnMapPicked,
                 moved = OnMapMoved,
                 stationPicked = OnMapStation,
@@ -96,7 +96,7 @@ namespace GoF2Remake.UI
         /// <summary>The game has read the project: the map shows it again (only after an edit the map can't show itself).</summary>
         void RefreshMap()
         {
-            if (!mapStale || kind != ModBuilder.Kind.Systems) return;
+            if (!mapStale || !OnMap(kind)) return;
             CloseMap();
             OpenMap();
         }
@@ -104,6 +104,7 @@ namespace GoF2Remake.UI
         void OnMapPicked(int system)
         {
             if (system < 0) return;
+            if (kind == ModBuilder.Kind.Races) { ModRaceMapPicked(system); return; }
             var own = Project.Systems.FirstOrDefault(s => SystemIndex(s) == system);
             currentSystem = own;
             pickedGameSystem = own == null ? system : -1;
@@ -221,13 +222,9 @@ namespace GoF2Remake.UI
             Heading(systemPage, isNew ? T("mbNewSystemSub", "New system") : string.Format(T("mbChanges", "Changes {0}"), RefLabel(RefKind.System, s.OverrideRef, s.OverrideRef)));
             if (isNew) Note(systemPage, string.Format(T("mbSystemKey", "Other content names it {0}."), Project.Key(s.LocalId)));
             var name = Text(systemPage, T("mbName", "Name"), s.Name, 40, v => { s.Name = v.Trim(); SystemEdited(false); RebuildSystems(); });
-            if (isNew)
-            {
-                Segments(systemPage, T("mbOwner", "Owned by"), ModRefs.RaceNames.Select(r => T("race" + r, r)).ToArray(), s.Race, n => { s.Race = n; SystemEdited(); RebuildSystems(); });
-                Segments(systemPage, T("mbSecurity", "Security"), SecurityNames.Select(n => T("mbSec" + n, n)).ToArray(), s.Security, n => { s.Security = n; SystemEdited(); });
-            }
-            else
-                Segments(systemPage, T("mbSecurity", "Security"), SecurityNames.Select(n => T("mbSec" + n, n)).ToArray(), s.Security, n => { s.Security = n; SystemEdited(); });
+            if (isNew) SystemOwnerField(s);   // a game race or a mod's own (ModBuilderViewRaces)
+            Segments(systemPage, T("mbSecurity", "Security"), SecurityNames.Select(n => T("mbSec" + n, n)).ToArray(), s.Security, n => { s.Security = n; SystemEdited(); });
+            SystemRaceLists(s);   // locals, raiders, mods' traffic only
             var vrow = Row(systemPage);
             FlagButton(vrow, T("mbVisible", "On the map from the start"), s.Visible, v => s.Visible = v, () => SystemEdited());
             // systems.json "available" (ModUnlocks): on the map only while it holds, e.g. quest(name) == 1 while a quest runs.
@@ -340,7 +337,7 @@ namespace GoF2Remake.UI
                     Act(systemPage, T("mbNewStationHere", "+ New station here"), () => AskText(T("mbNewStationHere", "+ New station here"), T("mbName", "Name"), "", n =>
                     {
                         var st = Project.AddStation(n, key, 5, (count * 3 + 2) % 23);
-                        st.LooksLike = DefaultLook(s.Race);
+                        st.LooksLike = DefaultLook(s.Race >= 0 ? s.Race : Project.OwnRace(s.ModRace)?.LookRace ?? 0);
                         SystemEdited();
                     }), "mbv-add");
                 Note(systemPage, T("mbStationsNote", "At most 7 stations per system; edit their look in space (Stations)."));

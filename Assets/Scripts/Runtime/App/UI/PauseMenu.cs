@@ -152,13 +152,14 @@ namespace GoF2Remake.UI
 
         // ---- open / close -----------------------------------------------------------------------------------
 
-        string choiceText, choiceYes, choiceNo;
+        string choiceText, choiceYes, choiceNo, choiceTitle;
         Action choiceOnYes, choiceOnNo;
 
         /// <summary>A ChoiceWindow in flight (MGame+0x90, e.g. Loma's toll 448): the game and its sounds pause (MGame+0x5d,
         /// pauseSounds) until it is answered; Back picks the second answer. 'no' null = a message with one button.</summary>
-        public void Ask(SpaceLevel spaceLevel, string text, string yes, string no, Action onYes, Action onNo)
+        public void Ask(SpaceLevel spaceLevel, string text, string yes, string no, Action onYes, Action onNo, string title = null)
         {
+            choiceTitle = title;   // Modified: a titled question has its answers side by side
             choiceText = text;
             choiceYes = yes;
             choiceNo = no;
@@ -262,7 +263,7 @@ namespace GoF2Remake.UI
                     if (!Photo.Active) { backdrop.AddToClassList("pause-backdrop--shown"); Show(Page.Main); }
                     return;
                 case Page.Choice:
-                    title.text = "";
+                    title.text = choiceTitle ?? "";
                     Text(choiceText);
                     InfoSound?.Invoke();
                     Item((choiceYes ?? Localization.Extra("ok", "OK")).ToUpperInvariant(), () => { Close(); var a = choiceOnYes; choiceOnYes = choiceOnNo = null; a?.Invoke(); });
@@ -271,6 +272,24 @@ namespace GoF2Remake.UI
                     {
                         Item(choiceNo.ToUpperInvariant(), () => { Close(); var a = choiceOnNo; choiceOnYes = choiceOnNo = null; a?.Invoke(); });
                         InputGlyph.PadPrompt(items[items.Count - 1] as Button, PadButton.B);
+                        // Modified: a titled question (the Supernova Challenge's end) has Yes and No side by side, as the
+                        // original's ChoiceWindow; left / right move between them (TickKeys).
+                        if (choiceTitle != null)
+                        {
+                            var row = new VisualElement { pickingMode = PickingMode.Ignore };
+                            row.style.flexDirection = FlexDirection.Row;
+                            row.style.justifyContent = Justify.Center;
+                            row.style.marginTop = 12f;
+                            body.Add(row);
+                            foreach (var b in new[] { items[items.Count - 2], items[items.Count - 1] })
+                            {
+                                row.Add(b);
+                                b.style.flexGrow = 1f;
+                                b.style.flexBasis = 0f;
+                                b.style.marginLeft = b.style.marginRight = 8f;
+                                b.style.unityTextAlign = TextAnchor.MiddleCenter;
+                            }
+                        }
                     }
                     break;
                 case Page.Quit:
@@ -311,6 +330,7 @@ namespace GoF2Remake.UI
             {
                 pagePrompts = p == Page.Debug ? MenuKeys.DebugPrompts() : MenuKeys.Bar(MenuKeys.Rows.Select | MenuKeys.Rows.Confirm | MenuKeys.Rows.Back);
                 pagePrompts.AddToClassList("prompt-bar--row");
+                pagePrompts.AddToClassList("prompt-bar--stacked");   // Modified: label under the keys, centred (GoF2InputGlyphs.uss)
                 panel.Add(pagePrompts);
             }
             Highlight();
@@ -830,6 +850,13 @@ namespace GoF2Remake.UI
                 else if (scroll != null) scroll.scrollOffset += new Vector2(0f, move * 120f);
             }
             int side = sideFirst;
+            // Modified: a titled question's answers stand side by side: left / right move between them.
+            if (side != 0 && page == Page.Choice && choiceTitle != null && items.Count > 1)
+            {
+                int next = Mathf.Clamp(index + side, 0, items.Count - 1);
+                if (next != index) { index = next; Highlight(); HoverSound?.Invoke(); }
+                side = 0;
+            }
             var current = index < items.Count ? items[index] : null;
             optionRows.TryGetValue(current ?? backdrop, out var option);
             if (side != 0 && debugGrid && (option == null || !option.StepsSideways))

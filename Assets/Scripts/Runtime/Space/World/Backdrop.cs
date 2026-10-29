@@ -39,6 +39,7 @@ namespace GoF2Remake.World
         class Body
         {
             public Transform t;
+            public MeshRenderer r;       // t's renderer (the streak's is updated every frame)
             public Vector3 dir;          // Unity direction from the camera
             public Quaternion rot;       // fixed orientation (planets)
             public float scale;
@@ -234,7 +235,7 @@ namespace GoF2Remake.World
             r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
             r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
             if (mat != null && mat.renderQueue != queue) r.material.renderQueue = queue;   // painter's order
-            return new Body { t = go.transform, dir = dir, rot = rot, scale = scale };
+            return new Body { t = go.transform, r = r, dir = dir, rot = rot, scale = scale };
         }
 
         static Mesh Quad
@@ -274,8 +275,10 @@ namespace GoF2Remake.World
                 if (b == null) continue;
                 var block = new MaterialPropertyBlock();
                 block.SetColor("_Color", Color.white);
+                // The streak (and the supernova glow) get the core's HDR lift like the sun; over the sun's disc the streak
+                // still can't add past the sun's white (GoF2/Backdrop's _SunInStreak limit, applied before the lift).
                 block.SetFloat("_CoreGlow", core);
-                b.t.GetComponent<MeshRenderer>().SetPropertyBlock(block);
+                b.r.SetPropertyBlock(block);
             }
             // Remake mods: the star planets' small glow (only under the remake's bloom, like the sun's core).
             Modding.ModBackdrop.StarPlanets(out float planetGlow);
@@ -307,7 +310,7 @@ namespace GoF2Remake.World
                 float d = Vector2.Distance(new Vector2(sp.x, sp.y), new Vector2(W * 0.5f, H * 0.5f));
                 flareIntensity = (layout.flareColor == 5 ? 80f : 64f) * (1f - d / (H * 0.5f));
             }
-            float e = Mathf.Max((flareIntensity - 10f) / 64f, 0f);
+            float e = NoSwell ? 0f : Mathf.Max((flareIntensity - 10f) / 64f, 0f);
 
             float s = layout.sunScale * sunScaleFactor;
             var sunRot = Quaternion.LookRotation(sun.dir, cam.transform.up);
@@ -315,8 +318,11 @@ namespace GoF2Remake.World
             {
                 Place(sun, c, sunRot, new Vector3(s + e, s + e, 1f));
                 // renderSunStreak: the scaled sun matrix scaled again by (e * (s + e + 1), s / ((1 - e) * 6 + 6)).
-                Place(streak, c, sunRot, new Vector3((s + e) * e * (s + e + 1f), (s + e) * s / ((1f - e) * 6f + 6f), 1f));
+                float streakY = (s + e) * s / ((1f - e) * 6f + 6f);
+                float streakX = (s + e) * e * (s + e + 1f);
+                Place(streak, c, sunRot, new Vector3(streakX, streakY, 1f));
                 streak.t.gameObject.SetActive(e > 0f);
+                SunInStreak(streak, new Vector2(s + e, s + e), new Vector2(streakX, streakY));
             }
             else
             {
@@ -334,6 +340,10 @@ namespace GoF2Remake.World
                     Place(glow, c, sunRot, new Vector3(glowScale.x, glowScale.y, 1f));
                     Place(streak, c, sunRot, new Vector3(streakScale.x, streakScale.y, 1f));
                     streak.t.gameObject.SetActive(e > 0f);
+                    // Limited against the glow quad only (the streak's own texture, the same up): the sun under both has
+                    // its own texture and a world-fixed roll, which _SunInStreak's axis-aligned uv mapping can't follow,
+                    // so over the supernova sun's disc the streak can still add past its white.
+                    SunInStreak(streak, new Vector2(glowScale.x, glowScale.y), new Vector2(streakScale.x, streakScale.y));
                 }
                 for (int i = 0; i < supernova.Count; i++)
                 {
@@ -391,6 +401,23 @@ namespace GoF2Remake.World
             double ul = System.Math.Sqrt(ux * ux + uy * uy + uz * uz);
             if (ul < 1e-9) return fallback;
             return Quaternion.LookRotation(dir, new Vector3((float)(ux / ul), (float)(uy / ul), (float)(uz / ul)));
+        }
+
+        MaterialPropertyBlock streakBlock;
+
+        /// <summary>Modified: the sun never swells or streaks (the station's rooms: StationLevel).</summary>
+        [System.NonSerialized] public bool NoSwell;
+
+        /// <summary>Modified: where the sun's quad lies in the streak's uv (GoF2/Backdrop _SunInStreak), so the streak adds
+        /// over the sun only up to white, like the original's gamma-space blending.</summary>
+        void SunInStreak(Body b, Vector2 sunSize, Vector2 streakSize)
+        {
+            if (b == null || !b.t.gameObject.activeSelf || streakSize.x <= 0f || sunSize.y <= 0f) return;
+            var r = b.r;
+            streakBlock ??= new MaterialPropertyBlock();
+            r.GetPropertyBlock(streakBlock);   // keeps _Color / _CoreGlow
+            streakBlock.SetVector("_SunInStreak", new Vector4(sunSize.x / streakSize.x, streakSize.y / sunSize.y, 0f, 0f));
+            r.SetPropertyBlock(streakBlock);
         }
 
         static void Place(Body b, Vector3 camPos, Quaternion rot, Vector3 scale)

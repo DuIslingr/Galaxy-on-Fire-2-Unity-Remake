@@ -20,6 +20,8 @@ using UnityEngine;
 
 namespace GoF2Remake.Modding
 {
+    // (its statics are constant tables: nothing to reset between plays)
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class ModShipView
     {
         public const int MaxSmokePoints = 4;

@@ -35,6 +35,11 @@
       "minimum": 0,
       "description": "credits paid at complete"
     },
+    "repeat": {
+      "type": "number",
+      "minimum": 0,
+      "description": "a story mission that comes again: this many minutes of playing time after it was done, as soon as its startsWhen holds then (add a chance to it, random(1, 300) == 1, for a random moment; 0 / left out: once)"
+    },
     "offer": {
       "$ref": "#/$defs/text",
       "description": "a bar mission: what the visitor says"
@@ -2251,6 +2256,60 @@
               "$ref": "#/$defs/who",
               "description": "For",
               "default": "@a"
+            },
+            "pos": {
+              "type": "array",
+              "description": "the node's place in the builder's graph view [x, y] (optional)"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "title": "Standing",
+          "description": "Moves the standing toward a race (a mod's too), or sets it",
+          "properties": {
+            "type": {
+              "const": "standing"
+            },
+            "who": {
+              "$ref": "#/$defs/who",
+              "description": "For",
+              "default": "@a"
+            },
+            "race": {
+              "type": "string",
+              "enum": [
+                "terran",
+                "vossk",
+                "nivelian",
+                "midorian"
+              ],
+              "description": "Toward: terran = Terran, vossk = Vossk, nivelian = Nivelian, midorian = Midorian",
+              "default": "terran"
+            },
+            "amount": {
+              "anyOf": [
+                {
+                  "type": [
+                    "number",
+                    "string"
+                  ],
+                  "description": "Amount (below 0: liked less); a number, or an expression as a string",
+                  "default": 10
+                },
+                {
+                  "$ref": "#/$defs/wire"
+                }
+              ],
+              "description": "Amount (below 0: liked less); a number, or an expression as a string"
+            },
+            "set": {
+              "type": "boolean",
+              "description": "Set it to the amount",
+              "default": false
             },
             "pos": {
               "type": "array",

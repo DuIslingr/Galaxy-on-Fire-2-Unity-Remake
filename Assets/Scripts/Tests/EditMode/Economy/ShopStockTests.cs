@@ -452,6 +452,25 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void NoTimeExtenderForSaleInMultiplayer()
+        {
+            // Quineros (107) always stocks the Rhoda Vortex (184, attr 61); a multiplayer session doesn't (Shop.NotInSession:
+            // TimeExtender.Attach does nothing there).
+            Session.CampaignMission = 100;
+            Assert.IsTrue(Items(107).Exists(s => s.item == 184), "single player: Quineros sells the time extender");
+            var old = NetSession.ActiveProvider;
+            try
+            {
+                NetSession.ActiveProvider = () => true;
+                for (int i = 0; i < 5; i++) Assert.IsFalse(Items(107).Exists(s => s.item == 184), "a session: not for sale");
+                Assert.IsTrue(Shop.NotInSession(Db, 184));
+                Assert.IsFalse(Shop.NotInSession(Db, 185), "the emergency system is still sold");
+            }
+            finally { NetSession.ActiveProvider = old; }
+            Assert.IsFalse(Shop.NotInSession(Db, 184));
+        }
+
+        [Test]
         public void OwnedKaamoClubStockIsTheStorage()
         {
             Session.KaamoState = 3;

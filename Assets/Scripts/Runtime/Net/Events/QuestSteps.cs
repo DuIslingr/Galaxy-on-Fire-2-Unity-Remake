@@ -223,6 +223,8 @@ namespace GoF2Remake.Events
 
         static readonly string[] Races = { "", "pirate", "terran", "vossk", "nivelian", "midorian", "void" };
         static readonly string[] RaceLabels = { "Its maker", "Pirates", "Terran", "Vossk", "Nivelian", "Midorian", "Void" };
+        static readonly string[] StandingSides = { "terran", "vossk", "nivelian", "midorian" };
+        static readonly string[] StandingSideLabels = { "Terran", "Vossk", "Nivelian", "Midorian" };
         static readonly string[] Then = { "hold", "resume", "vanish", "jump" };
         static readonly string[] ThenLabels = { "Hold there", "Back to its route", "Vanish", "Jump out" };
 
@@ -462,6 +464,15 @@ namespace GoF2Remake.Events
             Plain("kill", "player", "Destroy the ship", "The player's ship is destroyed", r => QuestReader.Join("kill", r.Who), Who()),
             Plain("reveal", "player", "Reveal the map", "Every system on the star map", r => QuestReader.Join("reveal", r.Who), Who()),
             Plain("peace", "player", "Make peace", "Every race neutral again", r => QuestReader.Join("peace", r.Who), Who()),
+            // Remake: /standing (NetAdminStanding): toward a game race or a mod's race (the builder lists the mod races too)
+            Plain("standing", "player", "Standing", "Moves the standing toward a race (a mod's too), or sets it", r =>
+            {
+                string side = r.S("race");
+                if (side.Length == 0) { r.Problem("pick the race."); return null; }
+                return QuestReader.Join("standing", r.Who, side, r.Arg("amount"), r.B("set") ? "set" : "");
+            }, Who(), new QuestField { key = "race", kind = QuestFieldKind.Race, english = "Toward", values = StandingSides, labels = StandingSideLabels, def = "terran" },
+               F("amount", QuestFieldKind.Int, "Amount (below 0: liked less)", 10, min: -200, max: 200),
+               F("set", QuestFieldKind.Bool, "Set it to the amount", false)),
 
             // ---- cutscenes ----
             Plain("cutscene", "cutscene", "Start a cutscene", "HUD and controls off, bars", r =>

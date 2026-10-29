@@ -190,6 +190,17 @@ Flow: in; out: Next.
 | input | Name | Text |  | Optional: the name on the HUD (a ship's lock plate, numbered "Name 1", "Name 2"... for several; an object gets a marker with it), at most 32 characters. Empty = the usual name. |
 | input | At | Text |  | Empty = ahead of each player; else game coordinates "x y z" in their orbit. |
 
+### Standing
+
+Flow: in; out: Next.
+
+| Kind | Name | Type | Default | What it is |
+|---|---|---|---|---|
+| option | Set | Yes/No |  | Set the standing to the amount instead of moving it. |
+| input | Players | Text | `@a` | Who: @a everyone, @r a random player, @alive, @space, @docked, @dead, @survivors (never destroyed since the fight began), or a player's name. |
+| input | Toward | Text | `terran` | terran, vossk, nivelian, midorian, or a mod's race (its id or mod_id:id). |
+| input | Amount | Number | `10` | -200..200 (below 0: liked less); the standing stays within -100..100. |
+
 ### Stop Music
 
 Flow: in; out: Next.
@@ -586,6 +597,7 @@ Flow: no input (starts a flow of its own); out: Next.
 | option | Description | Text |  | What the event is (written as # lines at the top of the script). |
 | option | Kind | Choice: Event / BarMission / StoryMission |  | Event: started by /event (with a Mission title it is offered as a bar mission, as before). Bar Mission: offered by a Space Lounge visitor (multiplayer squads and single player). Story Mission: single player, like the story: starts by itself when Starts when holds, lasts across saves (Checkpoint), shows its Mission title and objective in the Missions window; Mission Complete finishes it for good, Mission Failed loads the last save. |
 | option | Starts when | Text |  | A story mission: the condition that starts it, checked every second in a game (an expression: "campaign >= 20", "visited(Kepler Prime)", "quest(first_contact) == 2", "credits > 50000"). Empty: at once; "never": only by another graph's Start Mission. |
+| option | Comes again after (minutes) | Number |  | A story mission that comes again (an encounter): this many minutes of playing time after it was done, as soon as Starts when holds then (add a chance to it, random(1, 300) == 1, for a random moment). 0: once. |
 | option | Mission title | Text |  | Set it to offer this event as a bar mission: a visitor in the multiplayer Space Lounge offers it, and it runs for the squad that takes it (its selectors, counts, triggers and scoreboard cover only them). Empty: only /event starts it, for everyone. |
 | option | Offer text | Text |  | What the visitor says about the job. |
 | option | Client | Text |  | Who offers it: a story character (Keith, "Keith as Bob"), a mod's character ("vega", "frontier_systems:vega"), or a race and a name ("vossk K'ekki", "terran female Jane"). Empty: someone of the station's race. |
@@ -831,6 +843,7 @@ leading `/`, the dedicated server's console without it. `[players]` is a player'
 | /g | <text> | sends one line to Global |
 | /l | <text> | sends one line to Local |
 | /w | <player> <text> | a private message to one player |
+| /s | <text> | one line to your squad, wherever they are |
 | /invite | <player> | invites a player docked here to your squad |
 | /leave |  | leaves your arena queue or match, else your squad |
 | /kick | <player> [minutes] [reason] | admins: removes a player (with profiles: can't rejoin for the minutes, default 5) |
@@ -840,6 +853,7 @@ leading `/`, the dedicated server's console without it. `[players]` is a player'
 | /heal | [players] | admins: repairs hull, shield and armor (yourself by default) |
 | /give | [players] <item> [amount] [mount] | admins: items into the hold (an item's number or name) |
 | /credits | [players] <amount> | admins: gives credits (negative: takes them) |
+| /standing | [players] <race> <amount> [set] | admins: moves the standing toward a race, a mod's too (set: to the amount) |
 | /spawn | [players] <ship / object / wreck> [race] [count] [enemy / friendly / neutral / standing] [turrets <item,item>] [named <name>] [at x y z] | admins: NPC ships or an object, ahead or at x y z (enemy by default; named: a HUD name) |
 | /ship | [players] <ship / own> | admins: flies any ship of the debug Ships tab (its number or name; own = back) |
 | /ammo | [players] | admins: every mounted secondary to 50 |

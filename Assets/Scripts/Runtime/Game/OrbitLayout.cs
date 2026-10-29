@@ -154,7 +154,7 @@ namespace GoF2Remake.World
         public string ModJumpgateAssembly => Modding.ModWorld.GateModelOf(systemIndex)?.Assembly;
         public int JumpgateRadius => Modding.ModWorld.GateModelOf(systemIndex) is Modding.ModWorld.StationModel g && g.gateRadius > 0f
             ? Mathf.RoundToInt(g.gateRadius) : Look == 1 ? GateRadiusVossk : GateRadius;
-        /// <summary>The race whose tables the orbit uses (a mod faction's look, Standing.Look).</summary>
+        /// <summary>The race whose tables the orbit uses (a mod race's look, Standing.Look).</summary>
         int Look => Flight.Standing.Look(raceId);
 
         static float Angle(int v) => v * 1.52587890625e-05f * 6.2831855f;   // 65536 per turn
@@ -474,7 +474,8 @@ namespace GoF2Remake.World
             var sorted = list.Select((e, i) => (e, i)).OrderByDescending(x => x.e.p).ThenBy(x => x.i).Select(x => x.e).ToList();
             for (int k = 0; k < sorted.Count; k++) if (sorted[k].p > 0) sorted[k] = (sorted[k].item, sorted[k].p - 2 * k);
             // The supernova orbit after step 0x59: every pair's ore becomes Novanium (0xd9), the chances stay.
-            if (NovaniumOrbit(layout)) for (int k = 0; k < sorted.Count; k++) sorted[k] = (Novanium, sorted[k].p);
+            // Modified: the Supernova Challenge's orbit too (ChallengeNovaniumOrbit).
+            if (NovaniumOrbit(layout) || ChallengeNovaniumOrbit(layout)) for (int k = 0; k < sorted.Count; k++) sorted[k] = (Novanium, sorted[k].p);
             return sorted;
         }
 
@@ -485,5 +486,11 @@ namespace GoF2Remake.World
         /// normal ores). The remake reads Session.WorldIndex, so the finished game's world (multiplayer) has it too.</summary>
         public static bool NovaniumOrbit(OrbitLayout layout) =>
             layout.systemIndex >= 0 && layout.stationIndex == 0x6d && Session.WorldIndex > 0x59;
+
+        /// <summary>Modified (#179, the user's comparison with the original's video): the Supernova Challenge's round at Luur
+        /// (111) is ringed with Novanium's magma asteroids too. Kept apart from NovaniumOrbit, which is the original's
+        /// Status::inSupernovaOrbit (0x6d only).</summary>
+        public static bool ChallengeNovaniumOrbit(OrbitLayout layout) =>
+            layout.systemIndex >= 0 && layout.stationIndex == 111 && SupernovaChallenge.Active;
     }
 }

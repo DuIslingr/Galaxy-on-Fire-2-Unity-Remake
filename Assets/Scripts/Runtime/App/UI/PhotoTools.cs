@@ -252,6 +252,9 @@ namespace GoF2Remake.UI
 
         // ---- the session -----------------------------------------------------------------------------------------
 
+        /// <summary>Modified: the free camera's walls (FreeCamera.Collide), set by the host (the hangar's room); null in flight.</summary>
+        public Func<Vector3, Vector3, Vector3> Collide;
+
         /// <summary>A photo mode opens on 'camera' around 'shipRoot' ('centre' its middle, 'radius' its size, m); the free
         /// camera stays within 'range' metres of the ship and above 'floor'; 'pose' is the orbit camera's pose (the free camera
         /// starts there). 'hangarMode': the hangar sets the lens itself (HangarInspect), flight here.</summary>
@@ -300,6 +303,7 @@ namespace GoF2Remake.UI
         void StartFree()
         {
             var (pos, rot) = orbitPose != null ? orbitPose() : (cam.transform.position, cam.transform.rotation);
+            free.Collide = Collide;
             free.Begin(pos, rot, shipCentre != null ? shipCentre() : pos, freeRange, floorY);
         }
 

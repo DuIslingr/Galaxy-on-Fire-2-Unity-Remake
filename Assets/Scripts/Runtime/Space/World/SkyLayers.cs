@@ -12,6 +12,7 @@
 // The storm / flare parts animate with their `extra` (opacity) and `v5_0` (UV scroll) channels (PartAnimation).
 // Not built: the alien-orbit and prologue sky exceptions (their own levels handle the sky).
 
+using System.Collections.Generic;
 using GoF2Remake.Data;
 using GoF2Remake.Visuals;
 using UnityEngine;
@@ -19,9 +20,40 @@ using UnityEngine.Rendering;
 
 namespace GoF2Remake.World
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class SkyLayers : MonoBehaviour
     {
         const int RingQueue = 2899, FlaresQueue = 2904, StormsQueue = 2906, BeltQueue = 2907;
+
+        /// <summary>The flares' steady opacity: the sidecars' 50 (the original's), Modified: 75 (the user's pick).</summary>
+        public const float FlaresOriginalOpacity = 50f, FlaresOpacity = 75f;
+
+        /// <summary>Modified: a flares sidecar's `extra` (opacity) key raised so the steady 50 shows at FlaresOpacity; 100
+        /// (the one-off fade's start) stays 100, the values between follow on a line.</summary>
+        public static float FlaresFade(float v) => 100f - (100f - v) * (100f - FlaresOpacity) / (100f - FlaresOriginalOpacity);
+
+        // The flares' sidecars with FlaresFade applied, one per sidecar for the run (PartAnimation caches what it parses).
+        static readonly Dictionary<TextAsset, TextAsset> flaresMeta = new Dictionary<TextAsset, TextAsset>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => flaresMeta.Clear();
+
+        /// <summary>A copy of the sidecar with every `extra` key through FlaresFade (the converter's file stays as written).</summary>
+        static TextAsset FlaresMeta(TextAsset meta)
+        {
+            if (meta == null) return null;
+            if (flaresMeta.TryGetValue(meta, out var done) && done != null) return done;
+            var m = JsonUtility.FromJson<MeshMeta>(meta.text);
+            if (m?.parts != null)
+                foreach (var p in m.parts)
+                    if (p.channels != null)
+                        foreach (var c in p.channels)
+                            if (c.target == "extra" && c.keys != null)
+                                foreach (var k in c.keys) k.v = FlaresFade(k.v);
+            var copy = new TextAsset(JsonUtility.ToJson(m)) { name = $"{meta.name} ({FlaresOpacity} %)" };
+            flaresMeta[meta] = copy;
+            return copy;
+        }
 
         Camera cam;
         Transform stormRoot;
@@ -52,13 +84,18 @@ namespace GoF2Remake.World
                 var mat = mission < 106 ? a.flaresMaterial : a.flaresNastyMaterial;
                 float speed = mission > 106 ? 1.5f : 1f;
                 // Their loop is 1000 .. 60000 ms: the UV scroll runs one texture width over it (a seamless wrap); the first
-                // second is a one-off fade from 100 to the steady 50.
+                // second is a one-off fade from 100 to the steady 50 (Modified: 75, the user's pick: FlaresFade on a copy
+                // of the sidecars' `extra` keys, so the converter's files stay as it writes them).
                 // Level::renderBG draws them with the nebula's matrix, R_sky included (in system 27 its +Y points at the
                 // supernova), so the fire streams out of the supernova; only the ring sky and the storms reset to the bare
                 // camera rotation.
                 var skyRotation = OrbitBuilder.SkyRotation(layout);
-                var f1 = Add(a.flares1, mat, FlaresQueue, speed);   // from 1000 ms: their first positive key (the default)
-                var f2 = Add(a.flares2, mat, FlaresQueue + 1, speed);
+                var f1 = Add(a.flares1, mat, FlaresQueue, speed, metaOverride: FlaresMeta);   // from 1000 ms: their first positive key (the default)
+                var f2 = Add(a.flares2, mat, FlaresQueue + 1, speed, metaOverride: FlaresMeta);
+                // Modified: their low-poly sphere subdivided onto the sphere (SkySphereSmoothing): no facets in the fire.
+                foreach (var t in new[] { f1, f2 })
+                    if (t != null)
+                        foreach (var mf in t.GetComponentsInChildren<MeshFilter>(true)) mf.sharedMesh = SkySphereSmoothing.Smooth(mf.sharedMesh);
                 if (f1 != null) f1.rotation = skyRotation;
                 if (f2 != null) f2.rotation = skyRotation;
             }
@@ -100,11 +137,25 @@ namespace GoF2Remake.World
             }
         }
 
-        /// <summary>'loopStartMs' 0 = the animation's own start (PartAnimation's default, the original's range start).</summary>
-        Transform Add(GameObject prefab, Material mat, int queue, float speed, float loopStartMs = 0f)
+        /// <summary>'loopStartMs' 0 = the animation's own start (PartAnimation's default, the original's range start).
+        /// 'metaOverride' replaces the animations' sidecars before they read them (their Awake).</summary>
+        Transform Add(GameObject prefab, Material mat, int queue, float speed, float loopStartMs = 0f,
+            System.Func<TextAsset, TextAsset> metaOverride = null)
         {
             if (prefab == null || mat == null) return null;
-            var go = Instantiate(prefab, transform, false);
+            GameObject go;
+            if (metaOverride == null) go = Instantiate(prefab, transform, false);
+            else
+            {
+                // Made under an inactive holder, so no PartAnimation has woken before its sidecar is swapped.
+                var holder = new GameObject("Sky layer (inactive)");
+                holder.SetActive(false);
+                go = Instantiate(prefab, holder.transform, false);
+                foreach (var anim in go.GetComponentsInChildren<PartAnimation>(true))
+                    if (anim.meta != null) anim.meta = metaOverride(anim.meta);
+                go.transform.SetParent(transform, false);
+                Destroy(holder);
+            }
             go.transform.rotation = OrbitLayout.RotationToUnity(Vector3.zero);   // world-aligned: game identity
             foreach (var r in go.GetComponentsInChildren<Renderer>(true))
             {

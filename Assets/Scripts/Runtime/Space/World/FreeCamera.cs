@@ -16,6 +16,10 @@ namespace GoF2Remake.World
         Vector3 centre;
         float range, floorY;
 
+        /// <summary>Modified: where a move from the first point toward the second may end (the hangar's walls and the ship's
+        /// hull: StationLevel.RoomMove, a 0.4 m sphere cast); null = anywhere.</summary>
+        public System.Func<Vector3, Vector3, Vector3> Collide;
+
         public Vector3 Position { get; private set; }
         /// <summary>Radians: + yaw turns right (toward +x from +z), + pitch looks up.</summary>
         public float Yaw { get; private set; }
@@ -50,8 +54,10 @@ namespace GoF2Remake.World
             var rot = Rotation;
             var flat = rot * Vector3.right;
             var dir = flat * input.x + Vector3.up * input.y + rot * Vector3.forward * input.z;
+            var from = Position;
             Position += Vector3.ClampMagnitude(dir, 1f) * metres;
             Clamp();
+            if (Collide != null) Position = Collide(from, Position);
         }
 
         void Clamp()

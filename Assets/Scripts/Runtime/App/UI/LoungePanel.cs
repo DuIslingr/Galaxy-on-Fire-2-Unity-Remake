@@ -22,6 +22,12 @@ namespace GoF2Remake.UI
         readonly StationMenu menu;
         readonly StationLevel level;
         readonly VisualElement root, tags, list, chatWindow, portrait, choices;
+        // Modified: the visitor list as a drawer at the right edge, closed until its arrow tab is pressed (or a controller /
+        // the arrow keys move into it): open, it covered the bar's right side.
+        readonly VisualElement rowsBox;
+        readonly Button drawerTab;
+        readonly Label drawerArrow;
+        bool drawerOpen;
         bool chatOnLeft;   // the chat window on the left, the visitor talked to right of it (OpenChat)
         readonly Label chatName, chatSub, chatText;
         readonly TextReveal chatReveal;   // the animated dialogue option
@@ -45,6 +51,26 @@ namespace GoF2Remake.UI
             this.root = root;
             tags = root.Q("loungeTags");
             list = root.Q("loungeList");
+            list.AddToClassList("lounge-list--closed");
+            drawerTab = new Button { focusable = false };
+            drawerTab.AddToClassList("lounge-drawer-tab");
+            drawerArrow = new Label("\u2039") { pickingMode = PickingMode.Ignore };
+            drawerArrow.AddToClassList("lounge-drawer-arrow");
+            drawerTab.Add(drawerArrow);
+            drawerTab.RegisterCallback<PointerDownEvent>(_ => menu.PlayPush(), TrickleDown.TrickleDown);
+            drawerTab.clicked += () => { menu.PlayRelease(); SetDrawer(!drawerOpen); };
+            list.Add(drawerTab);
+            rowsBox = new VisualElement { pickingMode = PickingMode.Ignore };
+            rowsBox.AddToClassList("lounge-rows");
+            // Keys or a controller giving a row the focus open it (the station's first focus, FocusFirst, the arrows), so a
+            // hidden row is never the one selected. Modified: on any focus but the mouse's or a touch (a hovered row takes the
+            // focus too, and it is open then anyway); a NavigationMoveEvent here never arrived (StationMenu.OnNavigate, on the
+            // root's trickle-down, stops every one), and a FocusIn opened it for a controller only.
+            rowsBox.RegisterCallback<FocusInEvent>(_ =>
+            {
+                if (InputMode.Current != InputKind.Touch && !InputMode.MousePointing) SetDrawer(true);
+            });
+            list.Add(rowsBox);
             chatWindow = root.Q("chatWindow");
             portrait = root.Q("chatPortrait");
             choices = root.Q("chatChoices");
@@ -60,6 +86,18 @@ namespace GoF2Remake.UI
             chatClose.text = Localization.Extra("hudBack", "BACK");
             chatClose.RegisterCallback<PointerDownEvent>(_ => menu.PlayPush(), TrickleDown.TrickleDown);
             chatClose.clicked += () => { menu.PlayRelease(); CloseChat(); };
+        }
+
+        /// <summary>Opens or closes the visitor drawer (the arrow points the way it will move).</summary>
+        public void SetDrawer(bool open)
+        {
+            drawerOpen = open;
+            list.EnableInClassList("lounge-list--closed", !open);
+            drawerArrow.text = open ? "\u203A" : "\u2039";
+            // Modified: closed, the rows' left edge stays on screen beside the tab (invisible): not clickable then, and a row
+            // keeping the focus (closed with the mouse) gives it up, so Enter can't open a chat with a hidden visitor.
+            foreach (var row in rows) row.pickingMode = open ? PickingMode.Position : PickingMode.Ignore;
+            if (!open && root.focusController?.focusedElement is VisualElement f && rowsBox.Contains(f)) f.Blur();
         }
 
         Database Db => level.Database;
@@ -82,7 +120,7 @@ namespace GoF2Remake.UI
         void Build()
         {
             built = true;
-            tags.Clear(); list.Clear(); tagItems.Clear(); rows.Clear();
+            tags.Clear(); rowsBox.Clear(); tagItems.Clear(); rows.Clear();
             for (int i = 0; i < level.VisitorAgentCount; i++)
             {
                 int index = i;
@@ -117,7 +155,8 @@ namespace GoF2Remake.UI
                 row.RegisterCallback<PointerDownEvent>(_ => menu.PlayPush(), TrickleDown.TrickleDown);
                 row.clicked += () => { menu.PlayRelease(); OpenChat(index); };
                 row.RegisterCallback<FocusInEvent>(_ => selected = index);
-                list.Add(row);
+                row.pickingMode = drawerOpen ? PickingMode.Position : PickingMode.Ignore;   // (SetDrawer)
+                rowsBox.Add(row);
                 rows.Add(row);
             }
             RefreshMarks();
@@ -383,7 +422,11 @@ namespace GoF2Remake.UI
         public void FocusFirst()
         {
             if (ChatOpen) menu.Focus(choiceButtons.Count > 0 ? choiceButtons[0] : chatClose);
-            else if (rows.Count > 0) menu.Focus(rows[Mathf.Clamp(selected, 0, rows.Count - 1)]);
+            else if (rows.Count > 0)
+            {
+                SetDrawer(true);   // Modified: asked for the keys and a controller only (StationMenu): the rows shown for them
+                menu.Focus(rows[Mathf.Clamp(selected, 0, rows.Count - 1)]);
+            }
         }
     }
 }

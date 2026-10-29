@@ -242,20 +242,8 @@ namespace GoF2Remake.Flight
             if (firstPerson) { PlaceFirstPerson(ship, dtMs, boosting, boostRumble, mass); return; }
             EndFirstPerson();
 
-            float posK = positionCoefficient, rotK = rotationCoefficient;
-            if (handlingDependent)
-            {
-                float h = model.Handling;
-                posK = 0.01f * h * 0.011f + 0.001f;
-                rotK = (1f - 0.01f * h) * 0.015f + 0.003f;
-            }
-            if (mass > 0f) { posK *= Mathf.Lerp(1f, 0.35f, mass); rotK *= Mathf.Lerp(1f, 0.35f, mass); }   // a heavy, unhurried follow
-            // Remake, free flight: it turns several times faster than the original (an Inflict 127 deg/s against 54), so the
-            // camera follows that much faster and the ship trails a turn by the original's angle (players' report: at full
-            // deflection it swung to the edge of the picture and out).
+            Coefficients(out float posK, out float rotK);
             float speedup = model.FreeTurnSpeedup;
-            posK *= speedup;
-            rotK *= speedup;
 
             // Slide opposite to the turn, proportional to turn rate (approximation of the target offset); free flight's
             // faster rates no further than the original's full stick.
@@ -326,6 +314,47 @@ namespace GoF2Remake.Flight
 
             if (cam != null)   // a heavy hull's boost pushes the view out less (it gathers speed slowly anyway)
                 cam.fieldOfView = GoF2Remake.Visuals.Aspect.VerticalFov(baseFov + boostFovAdd * model.BoostVisualPercent * Mathf.Lerp(1f, 0.5f, mass), cam.aspect);
+        }
+
+        /// <summary>The follow's position / look coefficients this frame (per ms; LateUpdate).</summary>
+        void Coefficients(out float posK, out float rotK)
+        {
+            var model = target.Model;
+            posK = positionCoefficient;
+            rotK = rotationCoefficient;
+            if (handlingDependent)
+            {
+                float h = model.Handling;
+                posK = 0.01f * h * 0.011f + 0.001f;
+                rotK = (1f - 0.01f * h) * 0.015f + 0.003f;
+            }
+            float mass = target.mass;
+            if (mass > 0f) { posK *= Mathf.Lerp(1f, 0.35f, mass); rotK *= Mathf.Lerp(1f, 0.35f, mass); }   // a heavy, unhurried follow
+            // Remake, free flight: it turns several times faster than the original (an Inflict 127 deg/s against 54), so the
+            // camera follows that much faster and the ship trails a turn by the original's angle (players' report: at full
+            // deflection it swung to the edge of the picture and out).
+            float speedup = model.FreeTurnSpeedup;
+            posK *= speedup;
+            rotK *= speedup;
+        }
+
+        /// <summary>Modified: where this camera settles behind a ship flying straight at 'velocity' (Unity m per ms): the
+        /// standard view's place trailing by the follow's lag (a lerp by k a frame toward a point moving v dt a frame settles
+        /// (1 - k) / k x v dt behind it), looking as it would. A camera that hands over here goes on without a jump (the
+        /// Supernova Challenge's fly-in).</summary>
+        public void SteadyPose(Vector3 velocity, float dtMs, out Vector3 position, out Quaternion rotation)
+        {
+            var ship = target.transform;
+            dtMs = Mathf.Max(dtMs, 0.1f);
+            Coefficients(out float posK, out float rotK);
+            bool original = GoF2Remake.Data.Settings.OriginalChaseCamera;
+            float kp = original ? Ease(posK, dtMs) : Follow(posK, dtMs), kr = original ? Ease(rotK, dtMs) : Follow(rotK, dtMs);
+            Vector3 desiredPos = ship.TransformPoint(offset), desiredLook = ship.TransformPoint(lookOffset);
+            position = desiredPos - velocity * ((1f - kp) / Mathf.Max(kp, 1e-4f) * dtMs);
+            var look = original ? desiredLook - velocity * ((1f - kr) / Mathf.Max(kr, 1e-4f) * dtMs) : desiredLook;
+            var from = original ? position : desiredPos;
+            var dir = look - from;
+            rotation = dir.sqrMagnitude > 1e-8f ? Quaternion.LookRotation(dir, ship.up) : ship.rotation;
         }
 
         /// <summary>Snap behind the ship (use after spawning / undocking).</summary>

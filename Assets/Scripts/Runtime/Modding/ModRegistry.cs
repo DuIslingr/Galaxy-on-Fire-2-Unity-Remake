@@ -19,7 +19,7 @@ namespace GoF2Remake.Modding
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class ModRegistry
     {
-        public enum Kind { Item, Ship, System, Station, Faction }
+        public enum Kind { Item, Ship, System, Station, Race }
 
         static Dictionary<Kind, Dictionary<string, int>> table;
 
@@ -41,7 +41,7 @@ namespace GoF2Remake.Modding
                     if (!File.Exists(FilePath) && File.Exists(OldPath)) File.Move(OldPath, FilePath);
                     if (File.Exists(FilePath) && JToken.Parse(File.ReadAllText(FilePath)) is JObject o)
                         foreach (Kind k in Enum.GetValues(typeof(Kind)))
-                            if (o[Key(k)] is JObject entries)
+                            if ((o[Key(k)] ?? (k == Kind.Race ? o["factions"] : null)) is JObject entries)   // (mod races' old name)
                                 foreach (var p in entries.Properties())
                                     if (p.Value.Type == JTokenType.Integer) table[k][p.Name] = (int)p.Value;
                 }
@@ -50,7 +50,7 @@ namespace GoF2Remake.Modding
             }
         }
 
-        static string Key(Kind k) => k switch { Kind.Item => "items", Kind.Ship => "ships", Kind.System => "systems", Kind.Faction => "factions", _ => "stations" };
+        static string Key(Kind k) => k switch { Kind.Item => "items", Kind.Ship => "ships", Kind.System => "systems", Kind.Race => "races", _ => "stations" };
 
         /// <summary>Every key of a kind with its number.</summary>
         public static IReadOnlyDictionary<string, int> All(Kind kind) => Table[kind];

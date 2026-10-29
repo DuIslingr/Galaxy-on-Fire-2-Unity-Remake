@@ -86,8 +86,8 @@ namespace GoF2Remake.UI
             nextRefresh = 0f;
         }
 
-        /// <summary>In a game scene (not the main menu) and not hidden for a photo.</summary>
-        static bool Wanted() => Settings.ShowStoryStep && !FpsCounter.Suppressed && SceneManager.GetActiveScene().buildIndex > 0;
+        /// <summary>In a game scene (not the startup logos or the main menu) and not hidden for a photo.</summary>
+        static bool Wanted() => Settings.ShowStoryStep && !FpsCounter.Suppressed && SceneManager.GetActiveScene().name is not ("Splash" or "MainMenu");
 
         string Text()
         {

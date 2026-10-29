@@ -20,8 +20,8 @@
 // a phase cloak: shots, blasts and the local ship pass through, Target.phased),
 // and an EMP's lightning. Their jumps too: the Khador Drive's charge sound and khador_jump fx, a jumpgate's jump animation and
 // sound (SystemJump's events, JumpFxRpc), the ship gone when theirs vanishes (and an explosion when it was destroyed). EMP on a player (the remake's pick: players have no EMP pool) drains that much shield and
-// shows the lightning for 1.5 s. The owner also shares their standings (Standing.*With), so the NPCs of an orbit another
-// player runs treat them by their own standing.
+// shows the lightning for 1.5 s. The owner also shares their standings (Standing.*With; mods'races too,
+// NetModRaceStandings), so the NPCs of an orbit another player runs treat them by their own standing.
 // Elsewhere (another orbit, docked) all of it is hidden; the players docked at the same station see them in their hangar
 // instead (NetHangar).
 
@@ -41,7 +41,7 @@ using GoF2Remake.Events;
 namespace GoF2Remake.Multiplayer
 {
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
-    public sealed class NetPlayer : NetworkBehaviour, IPilot, World.IOrbitPeer
+    public sealed partial class NetPlayer : NetworkBehaviour, IPilot, World.IOrbitPeer
     {
         public enum Place : byte { None = 0, Space = 1, Hangar = 2, Departing = 3 }
 
@@ -60,7 +60,8 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<FixedString128Bytes> pilot = new NetworkVariable<FixedString128Bytes>(default, Read, Write);
         readonly NetworkVariable<int> station = new NetworkVariable<int>(-1, Read, Write);
         readonly NetworkVariable<byte> place = new NetworkVariable<byte>((byte)Place.None, Read, Write);
-        readonly NetworkVariable<bool> authority = new NetworkVariable<bool>(false, Read, Write);
+        readonly NetworkVariable<bool> authority = new NetworkVariable<bool>(false, Read, Write);   // its game built / runs its orbit's traffic
+        readonly NetworkVariable<int> runsOrbit = new NetworkVariable<int>(-1);   // the server's: the orbit it runs (NetState.UpdateOrbitRunners), -1 = none
         readonly NetworkVariable<int> squad = new NetworkVariable<int>(0);   // the host's (NetSquad), 0 = none
         readonly NetworkVariable<bool> observer = new NetworkVariable<bool>(false);   // the server's: another device controls the profile
         readonly NetworkVariable<FixedString32Bytes> factionTag = new NetworkVariable<FixedString32Bytes>();   // the server's: NetFactions, "" = none
@@ -78,6 +79,9 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<int> standing0 = new NetworkVariable<int>(0, Read, Write);    // Session.Standing, the signature
         readonly NetworkVariable<int> standing1 = new NetworkVariable<int>(0, Read, Write);
         readonly NetworkVariable<int> signature = new NetworkVariable<int>(-1, Read, Write);
+        // Remake mods: the standings toward mods'races (NetModRaceStandings), and another player's read back
+        readonly NetworkVariable<FixedString4096Bytes> modRaceStanding = new NetworkVariable<FixedString4096Bytes>(default, Read, Write);
+        readonly Dictionary<string, int> modRaceStandings = new Dictionary<string, int>(System.StringComparer.Ordinal);
         readonly NetworkVariable<long> missionRun = new NetworkVariable<long>(0, Read, Write);   // NetMissions: the mission its level runs
         readonly NetworkVariable<long> missionHeld = new NetworkVariable<long>(0, Read, Write);  // the mission this player holds (netId)
         readonly NetworkVariable<int> missionCargo = new NetworkVariable<int>(0, Read, Write);   // containers 116 | 117 << 10 | passengers << 20
@@ -109,7 +113,11 @@ namespace GoF2Remake.Multiplayer
         public bool InSpace => Where == Place.Space;
         /// <summary>Docked (taking off included).</summary>
         public bool InHangar => Where == Place.Hangar || Where == Place.Departing;
+        /// <summary>This player's game says it runs its orbit's traffic (it built it, or was handed it): the server's pick
+        /// among the claims is RunsOrbit.</summary>
         public bool OrbitAuthority => authority.Value;
+        /// <summary>The orbit the server made this player run (NetState.UpdateOrbitRunners), -1 = none.</summary>
+        public int RunsOrbit => runsOrbit.Value;
         public int ShipIndex => ship.Value;
         /// <summary>Server: the ship this player flew before ShipIndex (a dealer trade-in puts it on the dealer's list,
         /// NetState.StockShipRpc: the trade may arrive before or after the new ship), -1 = none.</summary>
@@ -119,6 +127,8 @@ namespace GoF2Remake.Multiplayer
         public int Standing0 => standing0.Value;
         public int Standing1 => standing1.Value;
         public int Signature => signature.Value;
+        /// <summary>This player's standings toward mods'races (mod race key -> value): Standing.IsEnemyWith.</summary>
+        public IReadOnlyDictionary<string, int> ModRaceStandings => IsOwner ? Session.ModRaceStanding : modRaceStandings;
         public float CloakPercent => cloak.Value;
         /// <summary>The squad mission (FreelanceMission.netId) this player's level runs here, 0 = none.</summary>
         public long MissionRun => missionRun.Value;
@@ -231,6 +241,8 @@ namespace GoF2Remake.Multiplayer
         public void SetStaffRole(int role) { if (IsServer && staffRole.Value != role) staffRole.Value = (byte)Mathf.Clamp(role, 0, 3); }
         /// <summary>Host: into squad 'id' (0 = none).</summary>
         public void SetSquad(int id) { if (IsServer && squad.Value != id) squad.Value = id; }
+        /// <summary>Server: this player runs 'orbit' (-1 = none).</summary>
+        public void SetRunsOrbit(int orbit) { if (IsServer && runsOrbit.Value != orbit) runsOrbit.Value = orbit; }
         /// <summary>Another device of this player's profile controls it: this one stays docked (NetProfiles).</summary>
         public bool Observer => observer.Value;
         /// <summary>Server: NetProfiles' role for this device.</summary>
@@ -304,6 +316,7 @@ namespace GoF2Remake.Multiplayer
                 spawnedAt = Time.unscaledTime;
                 ship.Value = Session.ShipIndex;
                 pilot.Value = NetGame.Clean(NetGame.PlayerName);
+                NetModRaceStandings.Resend();
                 sender = new NetShotSender(ShotUpRpc, BlastUpRpc, () => level != null && level.Weapons != null ? level.Weapons.LockTarget : null);
                 SceneManager.sceneLoaded += OnSceneLoaded;
                 admin.OnValueChanged += (_, on) => NetChat.Notice(on
@@ -327,9 +340,12 @@ namespace GoF2Remake.Multiplayer
             // relayed by this orbit's authority isn't.
             target.RemoteDamage = (amount, hitVector, byNpc, shieldFactor) => { if (!byNpc) NetAggression.Hit(OwnerClientId, amount); HitUpRpc(amount, hitVector, byNpc, shieldFactor); };
             target.RemoteEmp = emp => { NetAggression.Hit(OwnerClientId, emp); EmpUpRpc(emp); };
+            target.RemoteHeal = points => HealUpRpc(points);   // a squadmate's repair beam (NetPlayerEquipment)
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
             factionTag.OnValueChanged += (_, _) => ApplyName();
+            NetModRaceStandings.Decode(modRaceStanding.Value, modRaceStandings);
+            modRaceStanding.OnValueChanged += (_, v) => NetModRaceStandings.Decode(v, modRaceStandings);
             Target.NetShips.Add(target);
             obstacle = gameObject.AddComponent<Obstacle>();
             obstacle.projectFromVolume = false;
@@ -371,6 +387,7 @@ namespace GoF2Remake.Multiplayer
             cloakLook?.Dispose();
             sparks?.Clear();
             ownSparks?.Clear();
+            ClearEquipment();
         }
 
         GameObject turretModel, weaponModels;
@@ -679,6 +696,7 @@ namespace GoF2Remake.Multiplayer
                 if (shown && !show && SharesOrbit && hull.Value <= 0f) Explosion.Spawn(transform.position, Database.Shared.Ship(ShipIndex)?.explosionScale ?? 1f);
                 if (show != shown) SetShown(show);
                 if (InSpace && hull.Value <= 0f) NetAggression.Forget(OwnerClientId);   // destroyed: no longer this player's enemy
+                ApplyEquipment(shown);   // the emergency bubble, the sentry copies (NetPlayerEquipment)
                 if (!shown) return;
                 smoothing.Apply(transform, rotation.Value);
                 ApplyLook(Time.deltaTime * 1000f);
@@ -698,6 +716,7 @@ namespace GoF2Remake.Multiplayer
                 return;
             }
             NetProfileClient.Tick();   // the server profile's periodic upload
+            WriteEquipment();   // max hull, emergency clock, sentries (NetPlayerEquipment)
             if (tollStation.Value != NetFactionsClient.TollStation) tollStation.Value = NetFactionsClient.TollStation;
             NetDistress.Tick(this);
             if (distress.Value != NetDistress.Active) distress.Value = NetDistress.Active;
@@ -706,6 +725,8 @@ namespace GoF2Remake.Multiplayer
             if (standing1.Value != Session.Standing[1]) standing1.Value = Session.Standing[1];
             int sig = Standing.SignatureRace;
             if (signature.Value != sig) signature.Value = sig;
+            if (NetModRaceStandings.Changed(out var factionStandings) && factionStandings != modRaceStanding.Value)
+                modRaceStanding.Value = factionStandings;
             if (empShockMs > 0f) empShockMs -= Time.deltaTime * 1000f;
             bool shock = empShockMs > 0f;
             if (empShock.Value != shock) empShock.Value = shock;
@@ -718,9 +739,11 @@ namespace GoF2Remake.Multiplayer
                 hookedJump = jump;
                 if (jump != null) { jump.JumpFxStarted += OnJumpFx; jump.ChargeStarted += OnCharge; }
             }
-            // Where the local player is: the scene they are in.
-            Place now = level != null ? Place.Space : dock != null ? (dock.PlayerDeparting ? Place.Departing : Place.Hangar) : Place.None;
-            int at = level != null && level.Layout != null ? level.NetOrbitId : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;
+            // Where the local player is: the scene they are in. Modified (review of #168): docked EVERSPACE 2's way the flight
+            // level stays loaded under the station (SpaceLevel.DockedInOrbit): docked at that station, not in space.
+            bool docked = level != null && level.DockedInOrbit;
+            Place now = docked ? Place.Hangar : level != null ? Place.Space : dock != null ? (dock.PlayerDeparting ? Place.Departing : Place.Hangar) : Place.None;
+            int at = docked ? Session.StationIndex : level != null && level.Layout != null ? level.NetOrbitId : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;
             if (place.Value != (byte)now) place.Value = (byte)now;
             if (station.Value != at) station.Value = at;
             bool runs = level != null && level.NetAuthority;

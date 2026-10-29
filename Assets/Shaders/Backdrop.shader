@@ -15,6 +15,7 @@ Shader "GoF2/Backdrop"
         _Tint ("Added tint", Color) = (0, 0, 0, 0)
         _Mirror ("Mirror U", Float) = 0
         _CoreGlow ("Core glow (HDR on the near-white texels)", Float) = 1
+        _SunInStreak ("Streak: the sun's size in the streak's uv (x: sun width / streak width, y: streak height / sun height; 0 = not a streak)", Vector) = (0, 0, 0, 0)
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 5
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 10
     }
@@ -42,6 +43,7 @@ Shader "GoF2/Backdrop"
                 half4 _Tint;
                 float _Mirror;
                 float _CoreGlow;
+                float4 _SunInStreak;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -67,6 +69,17 @@ Shader "GoF2/Backdrop"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 half4 t = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 half core = smoothstep(0.7, 1.0, max(t.r, max(t.g, t.b)));
+                // Modified: the sun streak is the sun's own texture stretched (renderSunStreak), added like the original, but
+                // never past white over the sun: the original adds in gamma space into an 8-bit target, where the sun's white
+                // middle saturates and the streak vanishes into it, keeping the star's colours along its length. In linear
+                // HDR the sum kept growing, a line brighter than the sun through it. _SunInStreak maps this texel onto the
+                // sun's own quad; the streak adds per channel at most what the sun leaves below 1 there.
+                if (_SunInStreak.x > 0)
+                {
+                    float2 su = float2(0.5 + (i.uv.x - 0.5) / _SunInStreak.x, 0.5 + (i.uv.y - 0.5) * _SunInStreak.y);
+                    half3 sunHere = all(su > 0.0) && all(su < 1.0) ? SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, su, 0).rgb : half3(0, 0, 0);
+                    t.rgb = min(t.rgb, max(1.0 - sunHere, 0.0));
+                }
                 return half4((t.rgb + _Tint.rgb) * _Color.rgb * lerp(1.0, _CoreGlow, core), t.a * _Color.a);
             }
             ENDHLSL

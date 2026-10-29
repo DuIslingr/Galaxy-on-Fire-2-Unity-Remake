@@ -46,8 +46,8 @@ namespace GoF2Remake.Modding
         /// <summary>The fighter 'fallback' (the game's pick for 'race'), or now and then one of the mods' ships of that race.</summary>
         public static int Pick(int race, int fallback, bool strong = false)
         {
-            // A mod faction (ModFactions) flies its mods' ships whenever it has any, whatever the chance: the game has none of its own.
-            bool faction = ModFactions.Is(race);
+            // A mod race (ModRaces) flies its mods' ships whenever it has any, whatever the chance: the game has none of its own.
+            bool faction = ModRaces.Is(race);
             float chance = faction ? 1f : Settings.ModShipTrafficChance;
             if (chance <= 0f || (!faction && ModCampaigns.HasTrafficShips(race)) || Random.value >= chance) return fallback;
             var pool = Candidates(race);
@@ -198,7 +198,7 @@ namespace GoF2Remake.Modding
 
         /// <summary>A race as the traffic groups it: the four races, pirates (8, also the minor races), the Void (9); the
         /// Specters (10) -1.</summary>
-        static int Key(int race) => Modding.ModFactions.Is(race) ? race : race >= 0 && race <= 3 ? race : race == 9 ? 9 : race == 10 ? -1 : race < 0 ? -1 : 8;
+        static int Key(int race) => Modding.ModRaces.Is(race) ? race : race >= 0 && race <= 3 ? race : race == 9 ? 9 : race == 10 ? -1 : race < 0 ? -1 : 8;
 
         /// <summary>A built mod ship's length (Unity metres, its meshes' bounds along its nose; 0: not built).</summary>
         public static float HullLength(int ship) => Length(ship);

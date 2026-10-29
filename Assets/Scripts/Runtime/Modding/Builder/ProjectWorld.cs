@@ -1,8 +1,11 @@
 // ProjectWorld.cs
-// Remake-only: the Mod Builder's star systems, stations and rooms, each one entry of the mod's own file (systems.json,
-// stations.json, interiors.json; Modding/README.md "systems.json and stations.json", "Hangars and bars") kept as a JObject
-// with typed accessors, like ProjectItem (ProjectContent.cs). Plain C#.
+// Remake-only: the Mod Builder's star systems, stations, rooms and the mod's own races, each one entry of the mod's own
+// file (systems.json, stations.json, interiors.json, races.json; Modding/README.md "systems.json and stations.json",
+// "Hangars and bars", "Races") kept as a JObject with typed accessors, like ProjectItem (ProjectContent.cs). Wherever a race
+// goes (a system's owner, locals and raiders) a mod race's reference is kept as the string it was: the accessors read it,
+// and only a pick in the builder replaces it. Plain C#.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -21,8 +24,38 @@ namespace GoF2Remake.Modding
         public string Ref => IsOverride ? "override:" + OverrideRef : "id:" + LocalId;
 
         public string Name { get => Text("name"); set => SetText("name", value); }
-        /// <summary>0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian.</summary>
-        public int Race { get => N("race") ?? 0; set => json["race"] = Mathf.Clamp(value, 0, 3); }
+        /// <summary>0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian (a race word reads as its number); -1 when a mod's race owns it
+        /// (ModRace). Setting it replaces a mod race.</summary>
+        public int Race
+        {
+            get
+            {
+                if (json["race"] is JValue v && v.Type == JTokenType.String)
+                {
+                    int r = ModRaces.GameRaceWord((string)v);
+                    return r >= 0 && r <= 3 ? r : -1;
+                }
+                return Mathf.Clamp(N("race") ?? 0, 0, 3);
+            }
+            set => json["race"] = Mathf.Clamp(value, 0, 3);
+        }
+        /// <summary>Remake: the mod race that owns it ("race" as a mod race's id or "mod_id:id", ModRaces), null = a game race.
+        /// Setting null leaves "race" alone (pick a game race with Race).</summary>
+        public string ModRace
+        {
+            get => Race < 0 ? S("race") : null;
+            set { if (!string.IsNullOrEmpty(value)) json["race"] = value; }
+        }
+        /// <summary>"locals": the game and mod races whose patrols fly here (empty = the owner's).</summary>
+        public List<string> Locals { get => RaceList("locals"); set => SetRaceList("locals", value); }
+        /// <summary>"raiders": the game and mod races that raid it (empty = the game's pick).</summary>
+        public List<string> Raiders { get => RaceList("raiders"); set => SetRaceList("raiders", value); }
+        /// <summary>"traffic": "mod": only the mods' ships fly here. Off leaves another value ("all") as it is.</summary>
+        public bool ModTraffic
+        {
+            get => S("traffic") == "mod";
+            set { if (value) json["traffic"] = "mod"; else if (S("traffic") == "mod") json.Remove("traffic"); }
+        }
         public int Security { get => N("security") ?? 2; set => json["security"] = Mathf.Clamp(value, 0, 3); }
         public bool Visible { get => B("visible", true); set => SetB("visible", value, true); }
         /// <summary>The star map position (the originals 15-94 / 2-96 / 10-90).</summary>
@@ -40,6 +73,17 @@ namespace GoF2Remake.Modding
         public string StationMusic { get => S("stationMusic"); set => SetS("stationMusic", value); }
 
         static float Round(float f) => Mathf.Round(f * 1000f) / 1000f;
+
+        /// <summary>A list of races as written (a number, a race word, a mod race's id or key; one value or a list).</summary>
+        List<string> RaceList(string k) =>
+            json[k] is JArray a ? a.Select(RefText).Where(x => x != null).ToList()
+            : RefText(json[k]) is string one ? new List<string> { one } : new List<string>();
+
+        void SetRaceList(string k, List<string> value)
+        {
+            if (value == null || value.Count == 0) json.Remove(k);
+            else json[k] = new JArray(value.Select(RefToken));
+        }
 
         /// <summary>The systems its jumpgate reaches (numbers or keys).</summary>
         public List<string> Gates
@@ -171,5 +215,75 @@ namespace GoF2Remake.Modding
         }
 
         public IEnumerable<string> MarkerNames => Markers?.Properties().Select(p => p.Name) ?? Enumerable.Empty<string>();
+    }
+}
+
+namespace GoF2Remake.Modding
+{
+    /// <summary>Remake: one races.json entry of a project (ModRaces: a race of the mod's own that owns systems, flies ships
+    /// and raids; Modding/README.md "Races"). Fields the builder doesn't edit stay.</summary>
+    public class ProjectRace : ProjectEntry
+    {
+        public ProjectRace(JObject o) : base(o) { }
+
+        /// <summary>The looks a mod race may borrow (the game race's hangar, bar, visitors, music, guns and gate) and their races.</summary>
+        public static readonly string[] Looks = { "terran", "vossk", "nivelian", "midorian", "pirates", "void" };
+        public static readonly int[] LookRaces = { 0, 1, 2, 3, 8, 9 };
+        /// <summary>A relation's words, ModRaces.Friend / Neutral / Enemy.</summary>
+        public static readonly string[] RelationWords = { "friend", "neutral", "enemy" };
+
+        public string Id => S("id");
+        public string Ref => "id:" + Id;
+        public string Name { get => Text("name"); set => SetText("name", value); }
+        public string Description { get => Text("description"); set => SetText("description", value); }
+
+        /// <summary>"look" as an index of Looks (unknown or missing: Terran's, and the field stays until a pick).</summary>
+        public int Look
+        {
+            get { int i = Array.IndexOf(LookRaces, ModRaces.GameRace(json["look"])); return i < 0 ? 0 : i; }
+            set => json["look"] = Looks[Mathf.Clamp(value, 0, Looks.Length - 1)];
+        }
+        public int LookRace => LookRaces[Look];
+
+        /// <summary>Its emblem (a PNG in the project), null = its look race's.</summary>
+        public string Icon { get => S("icon"); set => SetS("icon", value); }
+
+        public Color? Colour
+        {
+            get => json["color"] is JArray a && a.Count >= 3 ? new Color((float)a[0], (float)a[1], (float)a[2]) : (Color?)null;
+            set
+            {
+                if (value == null) { json.Remove("color"); return; }
+                float r(float f) => Mathf.Round(Mathf.Clamp01(f) * 1000f) / 1000f;
+                json["color"] = new JArray(r(value.Value.r), r(value.Value.g), r(value.Value.b));
+            }
+        }
+
+        /// <summary>The player's standing at the start, -100..100 (0 = not written).</summary>
+        public int Standing { get => Mathf.Clamp(N("standing") ?? 0, -100, 100); set => SetN("standing", value == 0 ? (int?)null : Mathf.Clamp(value, -100, 100)); }
+        public bool Hostile { get => B("hostile", false); set => SetB("hostile", value, false); }
+        /// <summary>Lounge diplomats restore it (default: unless it is hostile).</summary>
+        public bool Diplomats { get => B("diplomats", !Hostile); set => SetB("diplomats", value, !Hostile); }
+        /// <summary>The item whose look and sound its NPC fighters' guns have (a number or a key), null = its look race's.</summary>
+        public string Gun { get => R("gun"); set => SetR("gun", value); }
+
+        /// <summary>"relations" as written: (a mod race's or game race's reference, "friend" / "neutral" / "enemy"), in order.</summary>
+        public List<(string other, string relation)> Relations =>
+            json["relations"] is JObject o
+                ? o.Properties().Select(p => (p.Name, p.Value is JValue v ? v.ToString().Trim().ToLowerInvariant() : "")).ToList()
+                : new List<(string, string)>();
+
+        /// <summary>Sets one relation (null = removed: the other side's, or the default); the object goes when it is empty.</summary>
+        public void SetRelation(string other, string relation)
+        {
+            if (string.IsNullOrEmpty(other)) return;
+            if (!(json["relations"] is JObject o))
+            {
+                if (relation == null) return;
+                json["relations"] = o = new JObject();
+            }
+            if (relation == null) o.Remove(other); else o[other] = relation;
+            if (!o.HasValues) json.Remove("relations");
+        }
     }
 }

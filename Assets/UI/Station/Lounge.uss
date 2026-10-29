@@ -65,7 +65,55 @@
     position: absolute;
     right: 40px;
     top: 228px;   /* under the credits and the cargo below them (.station-funds) */
+    /* Modified: a drawer (LoungePanel.SetDrawer): the arrow tab, then the rows; closed, it slides right by the rows' width
+       and only the tab stays on screen (the rows' first 40 px beside it, faded out: SetDrawer turns their picking off). */
+    flex-direction: row;
+    align-items: flex-start;
+    translate: 0 0;
+    transition-property: translate;
+    transition-duration: 0.25s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.lounge-list--closed {
+    translate: 420px 0;
+}
+
+.lounge-rows {
     width: 420px;
+}
+
+.lounge-list--closed .lounge-rows {
+    opacity: 0;
+}
+
+.lounge-drawer-tab {
+    width: 44px;
+    height: 88px;
+    margin: 3px 6px 0 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(4, 10, 18, 0.85);
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: var(--gof-amber);
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.can-hover .lounge-drawer-tab:hover {
+    background-color: var(--gof-cyan-faint);
+}
+
+.lounge-drawer-arrow {
+    font-size: var(--text-heading);
+    color: #FFFFFF;
+    -unity-text-align: middle-center;
+    margin: 0;
+    padding: 0 0 4px 0;
 }
 
 .lounge-open .lounge-list {

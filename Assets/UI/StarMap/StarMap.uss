@@ -129,9 +129,38 @@
     flex-direction: row;
     align-items: center;
     padding: 32px 40px 0 48px;
-    /* Modified: as tall as the station's top bar with its Menu button (StationMenu.uss .station-menu-button: 20 px text,
-       12 px padding, 2 px border), so the title sits at the same height as the station's name. */
-    min-height: 87px;
+}
+
+/* Modified: an invisible copy of the station's Menu button (StationMenu.uss .station-menu-button: padding, border, text
+   size and font) so the header is exactly as tall as the station's top bar and the title sits at the station name's
+   height whatever the UI font (a fixed min-height broke when the font changed). Shown only where the station shows its
+   Menu button (touch, keys and mouse). */
+.map-header-spacer {
+    display: none;
+    width: 0;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 12px 0;
+    border-top-width: var(--button-border);
+    border-bottom-width: var(--button-border);
+    border-color: rgba(0, 0, 0, 0);
+    font-size: var(--text-body);
+    letter-spacing: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    visibility: hidden;
+}
+
+.input-touch .map-header-spacer,
+.input-keyboard .map-header-spacer {
+    display: flex;
+}
+
+/* Modified: on a phone as tall as the station's Menu button there (GoF2Common.uss ".layout-phone .station-menu-button":
+   touch targets of at least 64 units); without it the map's title sat higher than the station's name. With a controller
+   both stay hidden (the station shows no Menu button then), so the two bars match there too. */
+.layout-phone .map-header-spacer {
+    min-height: 64px;
 }
 
 .map-title {
@@ -266,7 +295,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 12px 3px 12px;
+    padding: 4px 8px 2px 8px;   /* Modified: smaller boxes for the smaller keys and labels below (was 8 12 3 12) */
     margin: 0 4px;   /* no top margin (GoF2InputGlyphs' 6 px): the row centres on the boxes themselves */
 }
 
@@ -411,4 +440,69 @@
     font-size: var(--text-body);
     color: #FFFFFF;
     white-space: normal;
+}
+
+/* Modified: the footer's hints at the story step label's size (StoryStepLabel: UiLayout.Type(12) = --text-caption), the
+   keys and controller buttons cut down to match (the --glyph-sm-* tokens, GoF2Common.uss: they grow with "Text size"
+   like the caption), as the station's (StationMenu.uss .station-root). */
+.map-hints .hint .hint-label {
+    font-size: var(--text-caption);
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+.map-hints .hint .keycap {
+    min-width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
+    padding: 0 5px;
+    margin: 0 1px;
+    font-size: var(--text-caption);
+    border-width: 1px;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+}
+
+.map-hints .hint .keycap--wide {
+    min-width: 60px;
+}
+
+.map-hints .hint .pad-face {
+    width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
+    margin: 0 1px;
+    border-radius: var(--glyph-sm-key-r);
+    font-size: var(--text-caption);
+}
+
+.map-hints .hint .pad-stick {
+    width: var(--glyph-sm-stick);
+    height: var(--glyph-sm-stick);
+    margin: 0 1px;
+    border-radius: var(--glyph-sm-stick-r);
+    border-width: 2px;
+    font-size: var(--text-caption);
+}
+
+.map-hints .hint .pad-trigger {
+    min-width: 28px;
+    height: var(--glyph-sm-key);
+    padding: 0 5px;
+    margin: 0 1px;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+}
+
+.map-hints .hint .pad-bumper {
+    min-width: 30px;
+    height: var(--glyph-sm-bumper);
+    padding: 0 5px;
+    margin: 0 1px;
+    border-radius: var(--glyph-sm-bumper-r);
+}
+
+.map-hints .hint .pad-menu {
+    height: var(--glyph-sm-bumper);
+    padding: 0 5px;
+    margin: 0 1px;
+    border-radius: var(--glyph-sm-bumper-r);
 }

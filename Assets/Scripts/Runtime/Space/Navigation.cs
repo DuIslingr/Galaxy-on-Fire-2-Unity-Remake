@@ -77,6 +77,9 @@ namespace GoF2Remake.Flight
         public const float AboutToReachUnits = 20000f;   // PlayerEgo+0x330
         const float FastForwardScale = 5f;
         const float PlanetJumpMs = 3000f, PlanetJumpSpeed = 8f;   // dockToPlanet: 8 u/ms for 3 s
+        // Remake: the planet jump's rumble comes as its sound (5 Jump_to_planets) swells, not as it starts: no flash to go by,
+        // the sound climbs from 0.5 s, holds above 60 % from 1.25 s and peaks at 1.5 s.
+        const float PlanetJumpRumbleMs = 1250f;
 
         public string spaceScene = "Space";
 
@@ -707,7 +710,6 @@ namespace GoF2Remake.Flight
             if (weapons != null) weapons.Blocked = true;
             if (chase != null) chase.enabled = false;
             Play(sounds?.jumpToPlanet);
-            Haptics.Play(Haptics.Jump);   // remake
         }
 
         void UpdateJump(float dtMs)
@@ -717,6 +719,7 @@ namespace GoF2Remake.Flight
             ship.transform.position += ship.transform.forward * step;
             ship.ExternalSpeedMetersPerSecond = Time.deltaTime > 0f ? step / Time.deltaTime : 0f;
             jumpMs += dtMs;
+            if (jumpMs >= PlanetJumpRumbleMs && jumpMs - dtMs < PlanetJumpRumbleMs) Haptics.Play(Haptics.Jump);   // remake
             if (jumpMs <= PlanetJumpMs) return;
             // MGame::OnUpdate: departStation(planet's station), stream-out arrival, reload the level in that orbit.
             weapons?.StoreAmmo();

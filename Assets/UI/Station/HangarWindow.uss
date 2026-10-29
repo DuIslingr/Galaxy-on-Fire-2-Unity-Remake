@@ -268,35 +268,6 @@
     border-left-color: var(--gof-amber);
 }
 
-/* Remake: Autocomplete as a button centred in the list (no row look of its own): after the rows' hover / selected
-   backgrounds, which drew the grey box around it. */
-.list-row--autocomplete,
-.list-row--autocomplete.list-row--selected,
-.can-hover .list-row--autocomplete:hover,
-.can-hover .list-row--autocomplete.list-row--selected:hover {
-    height: auto;
-    padding: 8px 0;
-    justify-content: center;
-    background-color: rgba(0, 0, 0, 0);
-    border-left-color: rgba(0, 0, 0, 0);
-}
-
-.list-row--autocomplete .row-autocomplete {
-    margin: 0;
-    padding: 12px 28px;
-    white-space: normal;
-    -unity-text-align: middle-center;
-}
-
-.list-row--selected .row-autocomplete {
-    background-color: rgba(255, 166, 48, 0.38);
-}
-
-.list-row--autocomplete .row-autocomplete--expensive {
-    color: #FF6B5E;
-}
-
-
 .row-icon {
     width: 148px;
     height: 72px;
@@ -408,6 +379,44 @@
 .row-qty--ship {
     margin-left: var(--space-s);
     -unity-text-align: middle-right;
+}
+
+/* Remake (Blueprints > Shop): the recipe's total amount of the good, left of the hold's amount. */
+.row-qty-group {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: var(--space-s);
+}
+
+/* The hold's amount sized to its text beside the recipe's (its fixed width left a gap before the number). */
+.row-qty-group .row-qty--ship {
+    width: auto;
+    margin-left: 0;
+}
+
+/* The recipe's amount: secondary to the hold's. */
+.row-qty--blueprint-required {
+    flex-shrink: 0;
+    margin-right: var(--space-s);
+    font-size: var(--text-label);
+    color: var(--gof-text-dim);
+    -unity-text-align: middle-right;
+}
+
+/* The shop's goods of the blueprint it was opened from: the cyan edge; hover and selection as on any row. */
+.list-row--blueprint-material {
+    border-left-color: var(--gof-cyan);
+}
+
+.list-row--blueprint-material.list-row--selected {
+    border-left-color: var(--gof-amber);
+}
+
+/* Remake: an ingredient's units staged for another production station: FREIGHT ships them now (288). */
+.row-badge--freight {
+    background-color: var(--gof-amber);
+    margin-right: var(--space-s);
 }
 
 /* Remake: an ingredient's SOLD HERE | amount badge opens the shop on it. */
@@ -638,6 +647,22 @@
     flex-grow: 1;
     font-size: var(--text-heading);
     color: #FFFFFF;
+    -unity-text-align: middle-center;
+}
+
+.trade-price-column {
+    /* Modified: the price with the mounted count under it (it sat under the ship's amount on the right) */
+    flex-grow: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.trade-price-column .trade-price {
+    flex-grow: 0;
+}
+
+.trade-mounted-note {
     -unity-text-align: middle-center;
 }
 
@@ -1164,4 +1189,75 @@
 
 .layout-compact .detail-preview-side {
     width: 44%;
+}
+
+/* Modified: the item and ship icons at about the same size on screen when the whole UI is drawn larger (UiLayout's
+   ui-scale-up / ui-scale-up2: the scale S at least 1.15 / 1.4), so they don't crowd the lists. */
+.ui-scale-up .row-icon {
+    width: 124px;
+    height: 60px;
+}
+
+.ui-scale-up .detail-icon {
+    width: 180px;
+    height: 88px;
+}
+
+.ui-scale-up .info-icon {
+    width: 150px;
+    height: 73px;
+}
+
+.ui-scale-up2 .row-icon {
+    width: 104px;
+    height: 50px;
+}
+
+.ui-scale-up2 .detail-icon {
+    width: 152px;
+    height: 74px;
+}
+
+.ui-scale-up2 .info-icon {
+    width: 124px;
+    height: 60px;
+}
+
+/* Remake (Blueprints): the ingredients view's actions under the list, centred: Shop and Autocomplete as secondary buttons,
+   Complete as the primary one (.detail-action). Each is a list row (up / down, Enter / A): the selected one looks focused. */
+.manufacturing-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: var(--space-m) 0;
+}
+
+.manufacturing-action {
+    margin: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-xs);
+    padding: var(--space-m) var(--space-l);
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+}
+
+.manufacturing-shop,
+.manufacturing-autocomplete {
+    color: var(--gof-text);
+    background-color: var(--button-fill);
+    border-color: var(--button-line);
+}
+
+.can-hover .manufacturing-shop:hover,
+.can-hover .manufacturing-autocomplete:hover,
+.manufacturing-action.list-row--selected {
+    color: #FFFFFF;
+    background-color: var(--button-focus-fill);
+    border-color: var(--button-focus-line);
+}
+
+.manufacturing-complete.list-row--selected {
+    background-color: var(--button-primary-focus-fill);
+}
+
+.manufacturing-autocomplete.row-autocomplete--expensive {
+    color: #FF6B5E;
 }

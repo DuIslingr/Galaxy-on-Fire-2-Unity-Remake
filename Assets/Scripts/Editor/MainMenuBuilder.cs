@@ -49,7 +49,7 @@ namespace GoF2Remake.EditorTools
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             BuildImages();
-            ConfigureSplashScreen();
+            MakeSplashScene();   // (the menu scene below replaces it as the open scene)
             BuildAppIcons();
             BuildFonts();
             var panelSettings = BuildPanelSettings();
@@ -95,7 +95,7 @@ namespace GoF2Remake.EditorTools
                 ti.textureCompression = TextureImporterCompression.Uncompressed;
                 if (Path.GetFileName(f).StartsWith("logo_"))
                 {
-                    ti.textureType = TextureImporterType.Sprite;   // also used by the Unity splash screen
+                    ti.textureType = TextureImporterType.Sprite;   // also used by the Splash scene
                     ti.spriteImportMode = SpriteImportMode.Single;
                 }
                 ti.SaveAndReimport();
@@ -138,25 +138,43 @@ namespace GoF2Remake.EditorTools
 
         static void Save(Texture2D t, string name) => File.WriteAllBytes($"{ImageDir}/{name}.png", t.EncodeToPNG());
 
+        const string SplashScenePath = "Assets/Scenes/Splash.unity";
+
         /// <summary>
-        /// Startup logos (MTitle): FISHLABS, then "Made with Unity" where the original showed ABYSS ENGINE.
-        /// Unity's splash screen plays them in builds; the menu scene only shows them in the editor.
+        /// Startup logos (MTitle): FISHLABS, then "Made with Unity" where the original showed ABYSS ENGINE. Unity's own
+        /// splash screen is off: the Splash scene (build index 0, StartupSplash) shows them, so the menu theme plays from
+        /// the first logo and the mods and the menu scene load meanwhile.
         /// </summary>
-        public static void ConfigureSplashScreen()
+        [MenuItem("GoF2/Scenes/Splash Scene", priority = 99)]
+        public static void BuildSplashScene()
         {
-            var fishlabs = AssetDatabase.LoadAssetAtPath<Sprite>($"{ImageDir}/logo_fishlabs.png");
-            PlayerSettings.SplashScreen.show = true;
-            PlayerSettings.SplashScreen.showUnityLogo = true;
-            PlayerSettings.SplashScreen.drawMode = PlayerSettings.SplashScreen.DrawMode.AllSequential;
-            PlayerSettings.SplashScreen.unityLogoStyle = PlayerSettings.SplashScreen.UnityLogoStyle.LightOnDark;
-            PlayerSettings.SplashScreen.animationMode = PlayerSettings.SplashScreen.AnimationMode.Dolly;
-            PlayerSettings.SplashScreen.backgroundColor = Color.black;
-            PlayerSettings.SplashScreen.logos = fishlabs != null
-                ? new[] { PlayerSettings.SplashScreenLogo.Create(2f, fishlabs), PlayerSettings.SplashScreenLogo.CreateWithUnityLogo(2f) }
-                : new[] { PlayerSettings.SplashScreenLogo.CreateWithUnityLogo(2f) };
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            MakeSplashScene();
+        }
+
+        static void MakeSplashScene()
+        {
+            PlayerSettings.SplashScreen.show = false;
+            PlayerSettings.SplashScreen.logos = new PlayerSettings.SplashScreenLogo[0];
             EditorUtility.SetDirty(Unsupported.GetSerializedAssetInterfaceSingleton("PlayerSettings"));
+
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var go = new GameObject("Splash");
+            var panel = go.AddComponent<PanelRenderer>();
+            panel.panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>($"{UiDir}/GoF2PanelSettings.asset");
+            var splash = go.AddComponent<StartupSplash>();
+            splash.logos = SplashLogos();
+            Directory.CreateDirectory("Assets/Scenes");
+            EditorSceneManager.SaveScene(scene, SplashScenePath);
+            AddToBuildSettings(SplashScenePath, 0);
             AssetDatabase.SaveAssets();
         }
+
+        static Texture2D[] SplashLogos() => new[]
+        {
+            AssetDatabase.LoadAssetAtPath<Texture2D>($"{ImageDir}/logo_fishlabs.png"),
+            AssetDatabase.LoadAssetAtPath<Texture2D>($"{ImageDir}/made_with_unity_glow_3x.png"),
+        };
 
         /// <summary>
         /// App icon: the remake's icon art (AppIcon/icon_source.png, a square with rounded corners) as it is for the flat
@@ -517,7 +535,7 @@ namespace GoF2Remake.EditorTools
             menu.buttonPush = Clip("SFX_GENERAL/Button_Push_v06.ogg");
             menu.buttonRelease = Clip("SFX_GENERAL/Button_Release_V06.ogg");
             menu.infoSound = Clip("SFX_GENERAL/Message_Info_Screen_v04.ogg");
-            menu.editorSplashLogos = new[] { AssetDatabase.LoadAssetAtPath<Texture2D>($"{ImageDir}/logo_fishlabs.png") };
+            menu.editorSplashLogos = SplashLogos();
             menu.languageCodes = Languages.Select(l => l.code).ToArray();
             menu.languageNames = Languages.Select(l => l.name).ToArray();
             menu.languageTables = Languages.Select(l => AssetDatabase.LoadAssetAtPath<UnityEngine.TextAsset>($"{ImportSettings.Root}/Localization/text_{l.code}.json")).ToArray();
@@ -528,9 +546,10 @@ namespace GoF2Remake.EditorTools
             es.AddComponent<InputSystemUIInputModule>();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
-            AddToBuildSettings(ScenePath, 0);
-            AddToBuildSettings(SpaceSceneBuilder.ScenePath, 1);
-            AddToBuildSettings(StationSceneBuilder.ScenePath, 2);
+            AddToBuildSettings(SplashScenePath, 0);
+            AddToBuildSettings(ScenePath, 1);
+            AddToBuildSettings(SpaceSceneBuilder.ScenePath, 2);
+            AddToBuildSettings(StationSceneBuilder.ScenePath, 3);
             Debug.Log($"GoF2: main menu scene created at {ScenePath}. Press Play.");
         }
 

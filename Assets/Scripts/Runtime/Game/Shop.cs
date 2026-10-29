@@ -94,7 +94,8 @@ namespace GoF2Remake.Data
             foreach (var it in db.Items)
                 if (it.modded && it.techLevel > TopTech && it.TypeId <= 3 && it.maxPrice > 0 && it.occurrence > 0 && it.blueprint.Count == 0
                     && Hangar.IsSaleable(it.index) && !Modding.ModContent.IsMissingItem(it.index)
-                    && Modding.ModUnlocks.ItemAvailable(it.index) && Modding.ModCampaigns.ItemAllowed(db, it.index))
+                    && Modding.ModUnlocks.ItemAvailable(it.index) && Modding.ModCampaigns.ItemAllowed(db, it.index)
+                    && !NotInSession(db, it.index))
                     list.Add(it);
             return list;
         }
@@ -326,9 +327,21 @@ namespace GoF2Remake.Data
         public static List<ItemStack> GenerateItems(Database db, int station)
         {
             var list = GenerateItemsOriginal(db, station);
-            list.RemoveAll(s => !Modding.ModCampaigns.ItemAllowed(db, s.item) || !Modding.ModUnlocks.ItemAvailable(s.item));
+            list.RemoveAll(s => !Modding.ModCampaigns.ItemAllowed(db, s.item) || !Modding.ModUnlocks.ItemAvailable(s.item)
+                                || NotInSession(db, s.item));
             return list;
         }
+
+        /// <summary>Remake, multiplayer (the user's request): the time extender (category 26, the Rhoda Vortex 184 and a
+        /// mod's) does nothing in a session (TimeExtender.Attach: the shared world can't slow down for one player), so while a
+        /// session runs no shop stocks it (GenerateItems, the host's shared lists NetStock.HostItem: a pilot's sold one is
+        /// paid for and not put on sale), no loot, capital ship crate or armory has it (NpcTables.RollLoot,
+        /// CapitalShips), no bar agent sells it and no Purchase mission asks for it (AgentGenerator), and no tier-5 loot
+        /// draws it (AboveTopTech). One a pilot already has stays theirs (it can be sold).</summary>
+        public static bool NotInSession(Database db, int item) =>
+            NetSession.Active && db?.Item(item) is ItemData it && it.categoryId == TimeExtenderCategory;
+
+        public const int TimeExtenderCategory = 26;
 
         static List<ItemStack> GenerateItemsOriginal(Database db, int station)
         {

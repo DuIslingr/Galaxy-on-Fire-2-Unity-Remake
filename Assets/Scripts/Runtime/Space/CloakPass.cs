@@ -50,7 +50,45 @@ namespace GoF2Remake.Visuals
             var data = cam.GetUniversalAdditionalCameraData();
             if (data == null || data.scriptableRenderer == null) return;
             instance ??= new CloakPass();
+            depth ??= new DepthPass();
+            data.scriptableRenderer.EnqueuePass(depth);
             data.scriptableRenderer.EnqueuePass(instance);
+        }
+
+        static DepthPass depth;
+
+        /// <summary>Modified: the cloaked hulls' depth (LightMode "GoF2CloakDepth") before URP's transparents, so the ship's
+        /// own lights and engine glow behind the hull stay hidden as on an uncloaked ship (the wing tips' light strips showed
+        /// through the wings); after the skybox and the backdrop, which the hull's depth would otherwise hide. Only where
+        /// the hull hasn't dissolved yet (GoF2/Cloak clips by the dissolve map against _AnimValue): a fully cloaked ship
+        /// writes none, so the transparents behind it (shots, explosions, smoke, flames) are drawn into the copy it
+        /// refracts as in the original, which draws the hull last with no depth before it, instead of a hole.</summary>
+        sealed class DepthPass : ScriptableRenderPass
+        {
+            static readonly ShaderTagId DepthTag = new ShaderTagId("GoF2CloakDepth");
+
+            public DepthPass() => renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
+
+            class Data { public RendererListHandle list; }
+
+            public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+            {
+                var resources = frameData.Get<UniversalResourceData>();
+                var rendering = frameData.Get<UniversalRenderingData>();
+                var camera = frameData.Get<UniversalCameraData>();
+                var lights = frameData.Get<UniversalLightData>();
+                if (resources.isActiveTargetBackBuffer) return;
+                var drawing = RenderingUtils.CreateDrawingSettings(DepthTag, rendering, camera, lights, SortingCriteria.CommonOpaque);
+                var list = renderGraph.CreateRendererList(new RendererListParams(rendering.cullResults, drawing, new FilteringSettings(RenderQueueRange.all)));
+                using (var builder = renderGraph.AddRasterRenderPass<Data>("GoF2 Cloak Depth", out var data))
+                {
+                    data.list = list;
+                    builder.UseRendererList(list);
+                    builder.SetRenderAttachment(resources.activeColorTexture, 0);
+                    builder.SetRenderAttachmentDepth(resources.activeDepthTexture, AccessFlags.ReadWrite);
+                    builder.SetRenderFunc((Data d, RasterGraphContext ctx) => ctx.cmd.DrawRendererList(d.list));
+                }
+            }
         }
 
         CloakPass() => renderPassEvent = RenderPassEvent.AfterRenderingTransparents;

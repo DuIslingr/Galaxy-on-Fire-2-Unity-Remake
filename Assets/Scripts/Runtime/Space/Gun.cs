@@ -111,6 +111,7 @@ namespace GoF2Remake.Flight
         public float BeamLengthUnits { get; private set; }
         /// <summary>The target the last beam locked, null = none (straight ahead).</summary>
         public Transform BeamTarget { get; private set; }
+        Target beamAim;   // BeamTarget's Target: what the beam's first pass hits whatever its hull (AimedBeamHit)
 
         /// <summary>Raised when a bullet hits: (bullet index, target, hit point). Rockets on asteroids: the bullet lives on.</summary>
         public event Action<int, Target, Vector3> Hit;
@@ -281,6 +282,7 @@ namespace GoF2Remake.Flight
                     BeamDir = d.normalized;
                     BeamLengthUnits = d.magnitude / MetersPerUnit;
                     BeamTarget = target.transform;
+                    beamAim = target;
                     bb.position = target.transform.position;
                 }
                 else
@@ -288,6 +290,7 @@ namespace GoF2Remake.Flight
                     BeamDir = fwd;
                     BeamLengthUnits = BeamRangeUnits;
                     BeamTarget = null;
+                    beamAim = null;
                     bb.position = from + fwd * BeamRangeUnits * MetersPerUnit;
                 }
                 bb.velocity = fwd * MetersPerUnit;   // a unit vector (1 u/ms): hits the target centre on the next pass
@@ -477,6 +480,7 @@ namespace GoF2Remake.Flight
                 {
                     if (kind == Kind.Mine) TestMine(i, ref b, targets, dtMs);
                     else TestHits(i, ref b, targets, from);
+                    if (isBeam && fresh && b.timer > limit && (object)beamAim != null) AimedBeamHit(i, ref b, targets, from);
                 }
             }
             if (shaken) LockShaken?.Invoke(this, dropShaken ? previousLock : lockTarget);
@@ -579,6 +583,29 @@ namespace GoF2Remake.Flight
             }
         }
 
+        /// <summary>Remake (#192): an aimed beam whose first pass met nothing still hits its target. Its sweep ends at the
+        /// target's centre, which isn't always inside the hull: the Midorian freighter's lies between its four parts, so
+        /// from about 6 % of the angles the beam went through the gap and did nothing. The original parks the beam at the
+        /// centre, in its target's cube (Gun::shootAt): it hits there. The hit point is on the hull, swept on past the
+        /// centre to its far side, else the centre.</summary>
+        void AimedBeamHit(int i, ref Bullet b, IReadOnlyList<Target> targets, Vector3 from)
+        {
+            var aimed = beamAim;
+            if (aimed == null || !MayHit(aimed, targets)) return;
+            var at = aimed.transform.position;
+            if (aimed.HasHull)
+            {
+                float reach = 0f;
+                foreach (var c in aimed.hull.colliders)
+                    if (c != null) reach = Mathf.Max(reach, Vector3.Distance(c.bounds.center, at) + c.bounds.extents.magnitude);
+                aimedOnlyFn ??= t => t == beamAim;
+                if (HullCollision.Cast(from, at + BeamDir * reach, HullShotRadius, aimedOnlyFn, out _, out var p)) at = p;
+            }
+            b.timer = -1e9f;   // gone
+            Hit?.Invoke(i, aimed, at);
+            Struck(at);
+        }
+
         /// <summary>The first target of 'targets' after index 'after' the shot at 'probe' strikes, and its index; null = none.</summary>
         Target FirstStruck(IReadOnlyList<Target> targets, Vector3 probe, int frame, bool hulls, bool scatter, int after, out int index)
         {
@@ -643,7 +670,7 @@ namespace GoF2Remake.Flight
         /// original's cube around a ship was +-1000 units, 50 m, whatever its shape).</summary>
         const float HullShotRadius = 3f;
         IReadOnlyList<Target> castTargets;
-        System.Func<Target, bool> mayHitFn, mayHitBigFn;
+        System.Func<Target, bool> mayHitFn, mayHitBigFn, aimedOnlyFn;
         /// <summary>A big object with a mesh hull: hit boxes (capital ships, freighters) or a hit radius past 2000 units (the
         /// story's static objects: 102's carrier is +-6000, its fuse cube up to 900 m across).</summary>
         static bool BigTarget(Target t) => t.HasHull && ((t.boxes != null && t.boxes.Length > 0) || t.radius > 2000f * MetersPerUnit);

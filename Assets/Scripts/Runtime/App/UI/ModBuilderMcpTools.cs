@@ -9,7 +9,7 @@
 //   compile_quest / validate / get_quest_schema   the game's own checks: QuestFile, EventRunner, the mod loaders
 //   play_test / end_play_test   ModBuilderPlay; get_log, screenshot; undo / redo; show_kind
 //   (seeing and driving the builder: ModBuilderMcpVision; the game's sounds and voice lines, .aem models, optimize,
-//   import_mod, replace_game_character: ModBuilderMcpContent)
+//   import_mod, replace_game_character: ModBuilderMcpContent; the mod's own races: ModBuilderMcpRaces)
 
 using System;
 using System.Collections.Generic;
@@ -38,6 +38,7 @@ namespace GoF2Remake.UI
             ("characters", "characters.json", "id", ModBuilder.Kind.Characters),
             ("systems", "systems.json", "id or override", ModBuilder.Kind.Systems),
             ("stations", "stations.json", "id or override", ModBuilder.Kind.Stations),
+            ("races", "races.json", "id (a race of the mod's own; list_races / put_race / set_race / delete_race work on them too)", ModBuilder.Kind.Races),
             ("interiors", "interiors.json", "id", ModBuilder.Kind.Interiors),
             ("blueprints", "blueprints.json", "id", ModBuilder.Kind.Blueprints),
             ("kits", "shipkits.json", "id (a kit of ship parts; a ships.json ship flies it with kit / kitType / build)", ModBuilder.Kind.Kits),
@@ -48,7 +49,8 @@ namespace GoF2Remake.UI
         };
 
         static readonly string[] KindNames = Kinds.Select(k => k.kind).ToArray();
-        static readonly string[] RefKinds = { "item", "ship", "system", "station", "character", "mission", "music", "interior" };
+        /// <summary>search_content's kinds, in RefKind's order (the index is the RefKind).</summary>
+        static readonly string[] RefKinds = { "item", "ship", "system", "station", "character", "mission", "music", "interior", "race" };
         static readonly string[] FileFolders = { "models", "textures", "icons", "portraits", "fx", "sky", "cards", "music", "sounds", "voices", "text", "events", "templates" };
         static readonly string[] FileExtensions = { ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".dds", ".aei", ".glb", ".aem", ".ogg", ".wav", ".mp3", ".json", ".gof2event", ".gof2mission", ".gof2quest", ".txt", ".md" };
         static readonly string[] TextExtensions = { ".json", ".gof2event", ".gof2mission", ".gof2quest", ".txt", ".md" };
@@ -73,7 +75,7 @@ namespace GoF2Remake.UI
         // ---- the table ------------------------------------------------------------------------------------------
 
         static List<Tool> tools;
-        static List<Tool> Tools => tools ??= MakeTools().Concat(VisionTools()).Concat(ContentTools()).ToList();
+        static List<Tool> Tools => tools ??= MakeTools().Concat(VisionTools()).Concat(ContentTools()).Concat(RaceTools()).ToList();
 
         static List<Tool> MakeTools() => new List<Tool>
         {
@@ -86,7 +88,7 @@ namespace GoF2Remake.UI
             new Tool
             {
                 name = "search_content", title = "Search the game's and the mods' content", readOnly = true,
-                description = "Finds content to refer to: the game's, this project's own and every other installed mod's (using another mod's makes it a dependency when the project is validated). 'value' is what the mod files and missions use (a game number, or a key \"mod_id:id\"). Kinds: item, ship, system, station, character (speakers too), mission, music (the game's tracks a music/<name> replaces, and new ones), interior, sound (the game's sound effects a sounds/<name> replaces, and the project's new ones a mission's Sound step plays) and voice (the game's voice lines with their speaker and English line: voices/<clip> or voices/<language>/<clip> named like one replaces it, the story's included; and the project's own lines).",
+                description = "Finds content to refer to: the game's, this project's own and every other installed mod's (using another mod's makes it a dependency when the project is validated). 'value' is what the mod files and missions use (a game number, or a key \"mod_id:id\"). Kinds: item, ship, system, station, character (speakers too), mission, music (the game's tracks a music/<name> replaces, and new ones), interior, race (the game's races by word and the mods' own by key), sound (the game's sound effects a sounds/<name> replaces, and the project's new ones a mission's Sound step plays) and voice (the game's voice lines with their speaker and English line: voices/<clip> or voices/<language>/<clip> named like one replaces it, the story's included; and the project's own lines).",
                 input = Input(("kind", Enum(RefKinds.Concat(AudioRefKinds).ToArray()), "what to search", true), ("query", "string", "words that must all appear (empty: all)", false),
                               ("limit", "integer", "at most this many (default 40)", false)),
                 run = SearchContent,
@@ -108,7 +110,7 @@ namespace GoF2Remake.UI
             new Tool
             {
                 name = "put_entry", title = "Write an entry",
-                description = "Adds an entry or replaces the one with the same identity, in the mod files' own JSON (Modding guide; missions: mission.schema.json). ships / items / systems / stations: \"id\" for new content, \"override\" for a change to the game's (or another mod's); characters, interiors, blueprints, gameOptions: \"id\"; missions: give 'name' and the .gof2mission object; campaign: the campaign.json object; manifest: mod.json's fields (the id stays). It becomes an undo step; the answer lists the problems the game finds.",
+                description = "Adds an entry or replaces the one with the same identity, in the mod files' own JSON (Modding guide; missions: mission.schema.json). ships / items / systems / stations: \"id\" for new content, \"override\" for a change to the game's (or another mod's); characters, interiors, races, blueprints, gameOptions: \"id\"; missions: give 'name' and the .gof2mission object; campaign: the campaign.json object; manifest: mod.json's fields (the id stays). It becomes an undo step; the answer lists the problems the game finds.",
                 input = Input(("kind", Enum(KindNames), "the kind of entry", true), ("entry", new JObject { ["type"] = "object" }, "the entry's JSON", true),
                               ("name", "string", "missions only: its name (the file name)", false)),
                 run = PutEntry, timeoutSeconds = 60f, ask = a =>
@@ -241,7 +243,7 @@ namespace GoF2Remake.UI
                     ["entries"] = new JObject
                     {
                         ["ships"] = p.Ships.Count, ["items"] = p.Items.Count, ["characters"] = p.Characters.Count, ["systems"] = p.Systems.Count,
-                        ["stations"] = p.Stations.Count, ["interiors"] = p.Interiors.Count, ["blueprints"] = p.Blueprints.Count, ["kits"] = p.Kits.Count,
+                        ["stations"] = p.Stations.Count, ["interiors"] = p.Interiors.Count, ["races"] = p.Races.Count, ["blueprints"] = p.Blueprints.Count, ["kits"] = p.Kits.Count,
                         ["gameOptions"] = p.GameOptions.Count, ["missions"] = p.Quests.Count, ["campaign"] = p.Campaign != null,
                     },
                     ["dependencies"] = new JArray(p.Dependencies),

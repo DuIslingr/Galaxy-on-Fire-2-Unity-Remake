@@ -1106,6 +1106,18 @@
    "materialId": 20075
   },
   {
+   "id": 99004,
+   "model": "Models/main/hangars/hangar_terran_bot_e_anim.fbx",
+   "source": "remake: the Terran hangar's fifth service bot (no original resource id)",
+   "materialId": 24070
+  },
+  {
+   "id": 99005,
+   "model": "Models/main/hangars/hangar_terran_bot_e_anim_add.fbx",
+   "source": "remake: the Terran hangar's fifth service bot's glow layer (no original resource id)",
+   "materialId": 20078
+  },
+  {
    "id": 14380,
    "model": "Models/main/hangars/hangar_terran_x1.fbx",
    "source": "data/assets/main/3d/meshes/hangars/hangar_terran_x1.aem",

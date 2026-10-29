@@ -1,7 +1,7 @@
 // ShuttleRoutes.cs
 // NPC shuttles on a docking route (Route(..., 9), PlayerFighter states 7-9, case 9): station -> waypoint -> drop-off and
 // back, docking on an object's pads (SpacePoints) for the route's stay. Used by the Supernova levels 94 / 102 / 154
-// (SupernovaLevels) and the Supernova Challenge's Rhinos (ChallengeOrbit). Plain C# driven by its owner's frame.
+// (SupernovaLevels). Plain C# driven by its owner's frame.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;

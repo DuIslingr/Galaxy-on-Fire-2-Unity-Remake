@@ -18,9 +18,12 @@
 // mission's ships look like any other ship to players outside the mission's team: no mission name on the lock plate
 // (the Hijacker, the Wanted target, the Challenge rival); their kills still help the team (NetMissions). A mission ship
 // also carries its part in the mission (FreelanceOrbit.RoleFlags) and its hull, so a squadmate taking the mission orbit
-// over adopts it with its role (FreelanceOrbit.Promote). Its creator (the player whose game has the ship) stays known
-// after an owner change: the host holding a disconnected player's proxies shows them like anyone else (viewer mode) until
-// they are taken over or swept. Its owner drops a proxy whose ship is gone before it spawned.
+// over adopts it with its role (FreelanceOrbit.Promote). When its game leaves the orbit the server hands a traffic ship
+// (HandOverable) to the orbit's runner (NetState.HandOver: the ownership changes, the proxy stays): the runner rebuilds
+// the ship where it flies and drives this proxy from then on (Bind), so the others see no change; the old owner keeps it
+// as a copy (OnLostOwnership). Its creator (the player whose game first had the ship) stays known after an owner change;
+// the host holding a disconnected player's proxies shows them like anyone else (viewer mode) until they are handed on or
+// swept. Its owner drops a proxy whose ship is gone before it spawned.
 // Hits, EMP, shots and kill credits go through the server's checks (DamageUpRpc, ShotUpRpc, KillCreditUpRpc: the shooter
 // flies in this ship's orbit, sane values, a credit only for a player who hit it a moment ago, once).
 
@@ -83,6 +86,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<int> eventFlags = new NetworkVariable<int>(0, Read, Owner);   // an event's batch tag << 1 | spawned as an enemy (EventRunner)
         readonly NetworkVariable<ulong> killer = new NetworkVariable<ulong>(ulong.MaxValue, Read, Owner);   // the player who destroyed it (EventRunner' kills)
         readonly NetworkVariable<ulong> creator = new NetworkVariable<ulong>(ulong.MaxValue);  // server-written at spawn: whose ship
+        readonly NetworkVariable<bool> handedOver = new NetworkVariable<bool>(false);   // server-written: handed to an orbit's runner (NetState.HandOver)
         // Remake (generic turrets): the turret items on its turret mounts, "ship:item,item" (NpcMountedTurrets.Pack), shown
         // still on the copy (TurretCore.DisplayAll, like another player's turret).
         readonly NetworkVariable<FixedString64Bytes> turrets = new NetworkVariable<FixedString64Bytes>(default, Read, Owner);
@@ -129,8 +133,13 @@ namespace GoF2Remake.Multiplayer
         public bool IsFlying => life.Value == Flying;
         public string Label => label.Value.ToString();
         bool OtherGame => creator.Value != NetworkManager.LocalClientId;
-        /// <summary>A flying traffic ship another player's game ran, to take over (NetOrbit): its spec, pose (Unity) and hull.</summary>
-        public bool Adoptable => specShip.Value >= 0 && !missionShip.Value && life.Value == Flying && !Adopted && OtherGame;
+        /// <summary>A flying traffic ship the orbit's runner can rebuild from its spec, pose and hull (NetState.HandOver): not
+        /// junk, a mission ship, a fixed object, a turret, a convoy or Most Wanted ship, a wingman (specShip -1).</summary>
+        public bool HandOverable => !IsJunk && specShip.Value >= 0 && !missionShip.Value && life.Value == Flying;
+        /// <summary>The server handed it to this orbit's runner: its new owner rebuilds the ship (NetOrbit.AdoptHandedOver).</summary>
+        public bool HandedOver => handedOver.Value;
+        /// <summary>Server: before the ownership change (HandOver).</summary>
+        public void MarkHandedOver() { if (IsServer) handedOver.Value = true; }
         /// <summary>A flying mission ship (or the mining plant, junk) of another game, for a squadmate's takeover (FreelanceOrbit).</summary>
         public bool MissionAdoptable => (missionShip.Value || IsJunk) && life.Value == Flying && !Adopted && OtherGame;
         public SpawnSpec AdoptSpec(Vector3 gamePosition)
@@ -264,16 +273,62 @@ namespace GoF2Remake.Multiplayer
             target.RemoteDamage = (amount, hitVector, byNpc, _) => DamageUpRpc(amount, hitVector, byNpc);   // NPCs have no shield
             target.RemoteEmp = emp => EmpUpRpc(emp);
             target.RemoteSteal = (item, amount) => StealUpRpc(item, amount);
+            target.RemoteHeal = points => HealUpRpc(points);   // another player's repair beam (RepairBeam)
             // Space junk is lockable after the ships and a far dot, like the owner's own junk (Target.RadarObjects).
             if (IsJunk) { Target.RadarObjects.Add(target); target.plateNameOnly = target.plateNoIcon = true; }
             else Target.NetShips.Add(target);
             SetShown(false);
         }
 
-        /// <summary>The host took it over from a player who left: no ship behind it here, so it shows like anyone else's.</summary>
+        /// <summary>The host took it over from a player who left, or the server handed it to this orbit's runner: no ship
+        /// behind it here yet, so it shows like anyone else's until the runner rebuilds it (Bind).</summary>
         public override void OnGainedOwnership()
         {
             if (IsSpawned && ship == null && junk == null) InitViewer();
+        }
+
+        /// <summary>The server handed it to another orbit's runner (this game left the orbit): a copy here from now on. A ship
+        /// still here (a place that flickered) goes: another game runs it now.</summary>
+        public override void OnLostOwnership()
+        {
+            if (!IsSpawned) return;
+            if (ship != null && !ship.Gone) ship.Vanish();
+            ship = null;
+            junk = null;
+            sender?.Unhook();
+            sender = null;
+            InitViewer();
+        }
+
+        /// <summary>This orbit's runner rebuilt the ship it was handed (NetOrbit.AdoptHandedOver): the copy here goes and this
+        /// proxy follows the new ship, so the others keep seeing the same one.</summary>
+        public void Bind(NpcShip rebuilt)
+        {
+            if (viewer)
+            {
+                viewer = false;
+                if (target != null)
+                {
+                    Target.NetShips.Remove(target);
+                    Target.RadarObjects.Remove(target);
+                    HullCollision.Detach(target);
+                    Destroy(target);
+                    target = null;
+                }
+                mirror?.Clear();
+                mirror = null;
+                sparks?.Clear();
+                sparks = null;
+                cloakLook?.Dispose();
+                cloakLook = null;
+                if (visual != null) { Destroy(visual); visual = null; }
+                shown = false;
+            }
+            ship = rebuilt;
+            NetOrbit.Current?.Register(this, rebuilt);
+            lastAggressors = -1;   // written again from the new ship
+            sender ??= new NetShotSender(ShotUpRpc, BlastUpRpc, () => ship != null ? ship.CurrentTarget : null);
+            sender.Hook(rebuilt.Guns);
         }
 
         /// <summary>The owner has no ship for it (gone before the spawn, a scene change): it goes.</summary>
@@ -403,6 +458,27 @@ namespace GoF2Remake.Multiplayer
         void StealRpc(int item, int amount)
         {
             if (ship != null) ship.StealFrom(item, amount);
+        }
+
+        /// <summary>Remake: another player's repair beam healed this ship 'points' of hull (RepairBeam: a ship friendly to
+        /// them; before, the beams only saw the ships of the player's own game), through the server like a hit: only from
+        /// that orbit, a sane amount, at its rate.</summary>
+        [Rpc(SendTo.Server)]
+        void HealUpRpc(int points, RpcParams rpc = default)
+        {
+            ulong healer = rpc.Receive.SenderClientId;
+            if (healer == OwnerClientId || !NetRateLimit.Allow(healer, NetRateLimit.Kind.Hit)) return;
+            if (!NetGuard.Damage(points)) { NetRateLimit.Reject(healer, $"a repair of {points}"); return; }
+            if (NetGuard.InOrbit(healer, station.Value)) HealRpc(points);
+        }
+
+        /// <summary>The checked repair: the owner's ship gets the hull back (Player::heal: hull only, up to its maximum).</summary>
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
+        void HealRpc(int points)
+        {
+            if (ship == null || ship.Gone || ship.Hp == null || ship.Target == null || !ship.Target.Alive || ship.Current != NpcShip.State.Fly) return;
+            ship.Hp.hull = Mathf.Min(ship.Hp.maxHull, ship.Hp.hull + points);
+            ship.Target.hp = ship.Hp.hull;
         }
 
         bool credited;   // the server: this ship's kill credit went out (one per proxy: a relaunched ship gets a new one)
@@ -574,6 +650,7 @@ namespace GoF2Remake.Multiplayer
             }
             // Dying / dead (a tumble, a wreck, destroyed junk): not alive here either, so shots pass it like on the owner's.
             target.hp = life.Value == Flying ? Mathf.Max(0.001f, hull.Value) * target.maxHp : 0f;
+            target.netMaxHull = specHull.Value;   // the repair / transfusion beams' pick (RepairBeam)
             target.radius = radius.Value;
             if (boxesFor != hitVolume.Value)
             {

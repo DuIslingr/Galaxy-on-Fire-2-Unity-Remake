@@ -67,7 +67,7 @@ namespace GoF2Remake.Data
         /// Midorians pick Terran or Nivelian lists (two independent 50 % picks).</summary>
         public static string RandomName(int race, bool male)
         {
-            race = Standing.Look(race);   // remake mods: a faction's names are its look race's
+            race = Standing.Look(race);   // remake mods: a mod race's names are its look race's
             string first, last;
             switch (race)
             {
@@ -91,7 +91,7 @@ namespace GoF2Remake.Data
         /// Terran, female Terran 10), parts[1..4] random within the set's counts.</summary>
         public static int[] CreatePortrait(bool male, int race)
         {
-            race = Standing.Look(race);   // remake mods: a faction's faces are its look race's
+            race = Standing.Look(race);   // remake mods: a mod race's faces are its look race's
             int set = race;
             if (race == 3) set = R(100) < 75 ? 2 : 0;
             else if (race == 5) set = 0;
@@ -152,7 +152,7 @@ namespace GoF2Remake.Data
                     agents[i] = new Agent { name = RandomName(race, true), race = race, station = station, offer = AgentOffer.Diplomat,
                                                 portrait = CreatePortrait(true, race), costs = DiplomatCosts(race) };
                 }
-            AddFactionDiplomats(db, station, agents);
+            AddModRaceDiplomats(db, station, agents);
 
             // Campaign 23 at station 10, or 1 %: the first mission under 50 000 pays 10x (max 50 000).
             if ((campaign == 23 && station == 10) || R(100) == 1)
@@ -254,23 +254,23 @@ namespace GoF2Remake.Data
             }
         }
 
-        /// <summary>SpaceLounge::startChat, diplomat: int(|standing axis| / 100 * 16000) (a mod faction: its own standing).</summary>
+        /// <summary>SpaceLounge::startChat, diplomat: int(|standing axis| / 100 * 16000) (a mod race: its own standing).</summary>
         public static int DiplomatCosts(int race) =>
-            (int)(Math.Abs(Modding.ModFactions.Is(race) ? Modding.ModFactions.Standing(race) : Session.Standing[race <= 1 ? 0 : 1]) / 100f * 16000f);
+            (int)(Math.Abs(Modding.ModRaces.Is(race) ? Modding.ModRaces.Standing(race) : Session.Standing[race <= 1 ? 0 : 1]) / 100f * 16000f);
 
-        /// <summary>Remake mods: in the lounges of a mod faction's system, like the game's diplomats (35 %, replacing the first
-        /// generic visitor), one for each faction of that mod the player is hostile with whose "diplomats" allow it: talking
-        /// to them restores the faction's standing to neutral (LoungeChat). The visitor looks like the faction's look race.</summary>
-        static void AddFactionDiplomats(Database db, int station, List<Agent> agents)
+        /// <summary>Remake mods: in the lounges of a mod race's system, like the game's diplomats (35 %, replacing the first
+        /// generic visitor), one for each mod race of that mod the player is hostile with whose "diplomats" allow it: talking
+        /// to them restores the mod race's standing to neutral (LoungeChat). The visitor looks like the mod race's look race.</summary>
+        static void AddModRaceDiplomats(Database db, int station, List<Agent> agents)
         {
-            var owner = Modding.ModFactions.Get(Sys(db, SystemOf(db, station))?.raceId ?? -1);
+            var owner = Modding.ModRaces.Get(Sys(db, SystemOf(db, station))?.raceId ?? -1);
             if (owner == null || R(100) >= 35) return;
-            foreach (var f in Modding.ModFactions.All)
+            foreach (var f in Modding.ModRaces.All)
             {
                 if (f.mod != owner.mod || !f.diplomats || f.hostile || !Standing.IsEnemy(f.race)) continue;
                 int i = agents.FindIndex(x => !x.IsStory && x.offer != AgentOffer.Diplomat);
                 if (i < 0) return;
-                agents[i] = new Agent { name = RandomName(f.look, true), race = f.look, faction = f.race, station = station, offer = AgentOffer.Diplomat,
+                agents[i] = new Agent { name = RandomName(f.look, true), race = f.look, modRace = f.race, station = station, offer = AgentOffer.Diplomat,
                                         portrait = CreatePortrait(true, f.look), costs = DiplomatCosts(f.race) };
             }
         }
@@ -316,7 +316,7 @@ namespace GoF2Remake.Data
         public static Agent CreateAgent(Database db, int station)
         {
             int campaign = Session.CampaignMission;
-            int race = Standing.Look(Sys(db, SystemOf(db, station))?.raceId ?? 0);   // (a mod faction's system: its look race's visitors)
+            int race = Standing.Look(Sys(db, SystemOf(db, station))?.raceId ?? 0);   // (a mod race's system: its look race's visitors)
             if (R(100) < 20) race = R(8);
             int offer;
             do offer = R(7); while ((race == 1 && offer == AgentOffer.Wingmen) || offer == 3 || offer == 4);   // Vossk never offer wingmen
@@ -339,7 +339,8 @@ namespace GoF2Remake.Data
                 int tries = 0;
                 do it = db.Items[R(db.Items.Count)];
                 while ((NotForSale.Contains(it.index) || it.blueprint.Count > 0 || SinglePrice(it) == 0 || it.occurrence == 0
-                        || !Modding.ModCampaigns.ItemAllowed(db, it.index) || !Modding.ModUnlocks.ItemAvailable(it.index)) && ++tries < 5000);
+                        || !Modding.ModCampaigns.ItemAllowed(db, it.index) || !Modding.ModUnlocks.ItemAvailable(it.index)
+                        || Shop.NotInSession(db, it.index)) && ++tries < 5000);
                 // remake mods: a campaign's own items, and a mod item only once its "available" condition holds
                 a.sellItem = it.index;
                 a.sellQuantity = it.TypeId <= 3 && it.TypeId != 1 ? 1 : R(15) + 5;   // primary, turret, equipment: 1
@@ -431,7 +432,8 @@ namespace GoF2Remake.Data
                 ItemData it;
                 do it = db.Items[97 + R(db.Items.Count - 97)];
                 while (it.occurrence == 0 || SinglePrice(it) == 0 || NotForPurchase.Contains(it.index) || it.blueprint.Count > 0
-                       || !Modding.ModUnlocks.ItemAvailable(it.index));   // remake mods: not a mod item no shop may stock yet
+                       || !Modding.ModUnlocks.ItemAvailable(it.index)    // remake mods: not a mod item no shop may stock yet
+                       || Shop.NotInSession(db, it.index));             // remake: nor the time extender in multiplayer
                 m.good = it.index;
                 m.amount = R(15) + 5;
                 diff = it.techLevel;

@@ -340,6 +340,15 @@
     color: rgba(216, 236, 247, 0.8);
 }
 
+/* Modified: a friendly docking object's bracket (NavigationView), the friend's green; colour-blind: blue. */
+.nav-bracket--friend {
+    -unity-background-image-tint-color: #3BE86A;
+}
+
+.ui-colorblind .nav-bracket--friend {
+    -unity-background-image-tint-color: #4FB2FF;
+}
+
 /* Multiplayer: a neighbouring station the player's faction holds, an orb on its planet (NavigationView); red while it is
    besieged (declared or running). */
 .nav-faction {
@@ -586,6 +595,81 @@
 .input-keyboard .hints,
 .input-gamepad .hints {
     display: flex;
+}
+
+/* Modified: in flight each hint is its keys and its label on one line, on the box's dark background without its border,
+   small: the label at the story step label's size (StoryStepLabel: UiLayout.Type(12) = --text-caption), the keys and
+   controller buttons cut down to match (the --glyph-sm-* tokens, GoF2Common.uss: they grow with "Text size" like the
+   caption; fixed px clipped the text at ui-text-200). */
+.hints .hint {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-width: 0;
+}
+
+.hints .hint-label {
+    margin: 0 0 0 6px;
+    font-size: var(--text-caption);
+    letter-spacing: 1px;
+    -unity-text-align: middle-left;
+}
+
+.hints .keycap {
+    min-width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
+    padding: 0 5px;
+    margin: 0 1px;
+    font-size: var(--text-caption);
+    border-width: 1px;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+}
+
+.hints .keycap--wide {
+    min-width: 60px;
+}
+
+.hints .pad-face {
+    width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
+    margin: 0 1px;
+    border-radius: var(--glyph-sm-key-r);
+    font-size: var(--text-caption);
+}
+
+.hints .pad-stick {
+    width: var(--glyph-sm-stick);
+    height: var(--glyph-sm-stick);
+    margin: 0 1px;
+    border-radius: var(--glyph-sm-stick-r);
+    border-width: 2px;
+    font-size: var(--text-caption);
+}
+
+.hints .pad-trigger {
+    min-width: 28px;
+    height: var(--glyph-sm-key);
+    padding: 0 5px;
+    margin: 0 1px;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+}
+
+.hints .pad-bumper {
+    min-width: 30px;
+    height: var(--glyph-sm-bumper);
+    padding: 0 5px;
+    margin: 0 1px;
+    border-radius: var(--glyph-sm-bumper-r);
+}
+
+.hints .pad-menu {
+    height: var(--glyph-sm-bumper);
+    padding: 0 5px;
+    margin: 0 1px;
+    border-radius: var(--glyph-sm-bumper-r);
 }
 
 /* The PC cursor mode: its buttons are the controls (the bottom left holds the autopilot pill and the boost). */

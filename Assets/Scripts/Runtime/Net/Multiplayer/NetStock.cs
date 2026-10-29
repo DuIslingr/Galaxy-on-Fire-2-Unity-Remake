@@ -338,6 +338,7 @@ namespace GoF2Remake.Multiplayer
                 vatUnits = granted - fromResale;
                 return granted;
             }
+            if (Shop.NotInSession(db, item)) return delta;   // a time extender sold: paid for, not on sale (Shop.NotInSession)
             e.resale.TryGetValue(item, out int sold);
             e.resale[item] = (int)Math.Min((long)sold + delta, MaxRowAmount);
             if (row != null) row.amount = Math.Min(row.amount + delta, MaxRowAmount);   // a seller can't grow a row without end

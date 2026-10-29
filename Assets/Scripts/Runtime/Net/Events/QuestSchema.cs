@@ -205,7 +205,7 @@ namespace GoF2Remake.Events
                                              ["description"] = "quest: a story mission, starts by itself when startsWhen holds; mission: a bar mission offered in the Space Lounges; event: started by /event or another's startevent step" },
                     ["startsWhen"] = Str("a story mission's start: \"\" at once, \"never\" only by a startquest step, else a condition (visited(78), quest(other) == 2, campaign >= 20...)"),
                     ["reward"] = new JObject { ["type"] = "integer", ["minimum"] = 0, ["description"] = "credits paid at complete" },
-                    ["repeat"] = new JObject { ["type"] = "number", ["minimum"] = 0, ["description"] = "a story mission that comes again: this many minutes of playing time after it was done, once its startsWhen has been false (the player left) and holds again (0 / left out: once)" },
+                    ["repeat"] = new JObject { ["type"] = "number", ["minimum"] = 0, ["description"] = "a story mission that comes again: this many minutes of playing time after it was done, as soon as its startsWhen holds then (add a chance to it, random(1, 300) == 1, for a random moment; 0 / left out: once)" },
                     ["offer"] = Text("a bar mission: what the visitor says"),
                     ["client"] = Str("a bar mission's client: a story character, \"mod_id:character\", \"vossk K'ekki\"; empty: someone of the station's race"),
                     ["stations"] = new JObject { ["type"] = "array", ["items"] = Ref("a station"), ["description"] = "a bar mission is offered at (empty: everywhere)" },

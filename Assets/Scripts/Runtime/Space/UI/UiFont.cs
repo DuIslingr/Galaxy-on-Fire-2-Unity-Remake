@@ -51,13 +51,29 @@ namespace GoF2Remake.UI
 
         public struct Choice { public string key, name; }
 
+        /// <summary>Modified: Play mode runs without a domain reload, and the font assets of the last session are gone
+        /// (destroyed with it), so the caches start over.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            loadedKey = null;
+            loaded = null;
+            themeFont = null;
+            assets.Clear();
+            choices = null;
+            Problem = null;
+        }
+
         /// <summary>The font in use, null for the theme's. Loaded once per choice.</summary>
         public static FontAsset Current
         {
             get
             {
                 string key = Settings.UiFont ?? "";
-                if (key == loadedKey) return loaded;
+                // Modified: a font made in an earlier Play session is destroyed when Play mode ends, but the statics
+                // live on (no domain reload): the dead asset compared as null and the theme's font showed while the
+                // option still named the chosen one. Loaded again then.
+                if (key == loadedKey && (key.Length == 0 || loaded != null || Problem != null)) return loaded;
                 loadedKey = key;
                 loaded = null;
                 if (key.Length == 0) { Problem = null; return null; }

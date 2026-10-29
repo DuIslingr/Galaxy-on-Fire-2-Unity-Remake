@@ -99,7 +99,9 @@ namespace GoF2Remake.UI
             var mission = level.Campaign != null && !Session.FreePlay ? Story.Mission : null;
             if (left > 0f || challenge)
             {
-                int sec = Mathf.CeilToInt(left / 1000f);
+                // Modified: the Supernova Challenge's clock drops its hidden milliseconds (floor), as the original's: it shows
+                // 0:00 for the round's last second and the Khador jump comes when that runs out, not as 0:00 appears.
+                int sec = challenge ? Mathf.FloorToInt(left / 1000f) : Mathf.CeilToInt(left / 1000f);
                 image = "hud_timer";
                 line = Line("{0}:{1:00}", sec / 60, sec % 60);
             }

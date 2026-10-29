@@ -309,10 +309,10 @@ namespace GoF2Remake.Data
                 {
                     if (!Standing.IsEnemy(a.Side)) return T(883);
                     a.costs = AgentGenerator.DiplomatCosts(a.Side);
-                    // remake mods: a faction's diplomat (ModFactions)
-                    if (a.faction >= 0)
-                        return string.Format(Localization.Extra("factionDiplomat", "I still have friends among the {0}. For #C they will forget what you did and treat you as neutral again."),
-                                             Standing.RaceName(a.faction)).Replace("#C", C(a.costs));
+                    // remake mods: a mod race's diplomat (ModRaces)
+                    if (a.modRace >= 0)
+                        return string.Format(Localization.Extra("modRaceDiplomat", "I still have friends among the {0}. For #C they will forget what you did and treat you as neutral again."),
+                                             Standing.RaceName(a.modRace)).Replace("#C", C(a.costs));
                     int id = a.race switch { 2 => 878, 3 => 880, 0 => 881, _ => 882 };
                     return T(id).Replace("#C", C(a.costs));
                 }
@@ -679,7 +679,7 @@ namespace GoF2Remake.Data
         /// <summary>Standing::rehabilitate 0x14289c: the race's axis just inside the neutral band (+-35).</summary>
         static void Rehabilitate(int race)
         {
-            if (Modding.ModFactions.Is(race)) { Modding.ModFactions.SetStanding(race, 0); return; }   // remake mods: a faction back to neutral
+            if (Modding.ModRaces.Is(race)) { Modding.ModRaces.SetStanding(race, 0); return; }   // remake mods: a mod race back to neutral
             if (race == 0) Session.Standing[0] = -35;
             else if (race == 1) Session.Standing[0] = 35;
             else if (race == 2) Session.Standing[1] = -35;

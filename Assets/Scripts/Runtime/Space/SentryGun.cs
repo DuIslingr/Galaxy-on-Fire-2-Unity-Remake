@@ -12,6 +12,8 @@
 //   death                             sound 22, a type-0 explosion with fire streaks, gone after 4500 ms, the slot freed
 // Hostile NPCs add it to their target list (it is a KIPlayer of the level).
 // Its aim, shots and pick are the shared turret's (TurretCore, TurretTargeting.Rule.Retarget).
+// Remake, multiplayer: the others in the orbit see it (NetPlayer: NetId, Item, Aim, the hull, Dead), its shots are mirrored,
+// and the NPCs another player's game runs attack it like its player's ship; their hits come back here (TakeRemoteHit).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -40,6 +42,17 @@ namespace GoF2Remake.Flight
         Transform fxRoot;
         WeaponFx lookFx;
         float ageMs, deadMs = -1f;
+        Transform aimNode;
+        static int nextNetId;
+
+        /// <summary>Multiplayer: this sentry among its player's (NetPlayer's list for the others).</summary>
+        public int NetId { get; private set; }
+        /// <summary>The sentry item (211-213 or a mod's).</summary>
+        public int Item { get; private set; }
+        /// <summary>The turning model's world rotation (its aim).</summary>
+        public Quaternion Aim => aimNode != null ? aimNode.rotation : transform.rotation;
+        /// <summary>Destroyed (its explosion; gone 4500 ms later).</summary>
+        public bool Dead => deadMs >= 0f;
 
         public static bool CanDeploy => ActiveCount < MaxActive;
         /// <summary>The deployed sentries (multiplayer: their shots are shown to the others, NetPlayer).</summary>
@@ -55,6 +68,8 @@ namespace GoF2Remake.Flight
             var go = new GameObject($"Sentry gun {item}");
             go.transform.SetPositionAndRotation(position, rotation);
             var s = go.AddComponent<SentryGun>();
+            s.NetId = ++nextNetId;
+            s.Item = item;
             s.Setup(db, it, fx, traffic);
             ActiveCount++;
             All.Add(s);
@@ -68,6 +83,7 @@ namespace GoF2Remake.Flight
             yawNode.SetParent(transform, false);
             var pitchNode = new GameObject("gun").transform;
             pitchNode.SetParent(yawNode, false);
+            aimNode = pitchNode;
             var anims = new Visuals.PartAnimation[0];
             if (fx != null && fx.sentry != null)
             {
@@ -135,6 +151,13 @@ namespace GoF2Remake.Flight
             if (target == null) return;
             if (core.StepToward(TurretTargeting.LeadPoint(target), dtMs) && core.Fire() >= 0
                 && lookFx != null && lookFx.shot != null) Sfx.PlayAt(lookFx.Shot, transform.position, 0.6f);
+        }
+
+        /// <summary>Multiplayer: another game's hit (an NPC that game runs, or a player where players may fight), checked by
+        /// the server and NetPlayer.</summary>
+        public void TakeRemoteHit(float amount, bool byNpc, Vector3 hitVector)
+        {
+            if (self != null && !Dead) self.Damage(amount, byNpc, hitVector);
         }
 
         void OnDied(Target t)

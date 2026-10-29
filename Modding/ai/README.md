@@ -43,12 +43,13 @@ shows the commands to connect, with Copy buttons:
 
 Give the assistant the skill as well (above): the server knows the game, the skill explains the formats. Its tools:
 `builder_status`, `search_content` (the game's, your project's and other mods' items, ships, systems, stations,
-characters, missions, music, rooms, and the game's sound effects and voice lines to replace), `list_entries` / `get_entries` / `put_entry` / `delete_entry` (the project's entries in
+characters, missions, music, rooms, races, and the game's sound effects and voice lines to replace), `list_entries` / `get_entries` / `put_entry` / `delete_entry` (the project's entries in
 the mod files' own JSON; `patch_entry` changes part of one, e.g. one line of a mission, leaving the rest and its graph layout
 as they are), `list_files` / `read_file` / `write_file` (portraits, textures, models, audio inside the project; a game
 `.aem` model is converted to `.glb`),
 `compile_mission`, `validate`, `get_mission_schema`, `play_test` / `end_play_test`, `get_log`, `screenshot`, `undo` / `redo`,
-`show_kind`. To see its work: `view_model` (any model, a game one, your ship with its hardpoints tagged, a station or a .glb,
+`show_kind`; for the mod's own races (races.json) `list_races`, `put_race`, `delete_race` (with every reference to it) and
+`set_race` (a system's owner, locals and raiders, a ship's race and traffic races). To see its work: `view_model` (any model, a game one, your ship with its hardpoints tagged, a station or a .glb,
 drawn from any side into one image without touching the screen), `view_texture` / `list_textures` (textures as images, normal
 maps decoded), `select_entry` and `view` (an entry on the builder's screen, its camera aimed from a side, with a screenshot,
 optionally without the panels). To work the builder: `hardpoint` (hardpoints placed onto the hull from a side, snapped,

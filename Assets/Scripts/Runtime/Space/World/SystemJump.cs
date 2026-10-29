@@ -35,6 +35,10 @@ namespace GoF2Remake.World
     {
         const float M = 0.05f;
         const float BaseSpeed = 2f, HiddenSpeed = 90f;   // u/ms
+        // Remake: a jump's rumble comes with its big flash, not as its animation starts: a gate's _jump_anim_add flash part
+        // shoots out 63x its length at 1300 ms (the same keys on all four gates; the ship is gone at 1000), the khador_jump
+        // fx's flash (part 21, ~38000 units, then part 20) shows at 1733 (the ship is gone at 1700).
+        const float GateFlashMs = 1300f, KhadorFlashMs = 1733f;
 
         public string spaceScene = "Space";
 
@@ -50,7 +54,7 @@ namespace GoF2Remake.World
         AudioSource sfx;
         State state;
         float chargeMs, animMs, animLength, speed;
-        bool activated, hidden;
+        bool activated, hidden, flashFelt;
         int targetStation;
         /// <summary>A Khador jump without the map (the Void in or out, Story.ForcedKhadorTarget): charging, then the jump, to
         /// this station (-1 = the Void), for jumpCells energy cells; a story-forced one is never refused for missing cells.</summary>
@@ -238,7 +242,7 @@ namespace GoF2Remake.World
             if (assets != null && assets.jumpgate != null && assets.jumpgate.Length > 0)
                 Play(assets.jumpgate[UnityEngine.Random.Range(0, assets.jumpgate.Length)]);
             JumpFxStarted?.Invoke(true, gate != null ? gate.transform.position : ship.transform.position, Quaternion.identity);
-            Haptics.Play(Haptics.Jump);   // remake
+            flashFelt = false;   // the rumble waits for the flash (GateFlashMs)
         }
 
         /// <summary>PlayerJumpgate::activate on a gate: its _anim_add layers off, the _jump_anim_add played once (the flash's
@@ -253,6 +257,10 @@ namespace GoF2Remake.World
                 else if (t.name.EndsWith("_anim_add")) t.gameObject.SetActive(false);
             }
             if (jump == null) return 0f;
+            // Remake (#167): the gate's made levels of detail (AutoLods) keep the idle layers but not the jump layer, so a
+            // gate shown at level 1 (a phone's lower LOD bias: from 0.4 s into the flash at Medium detail) lost the flash
+            // with the idle glow already off: the jump played unseen. Level 0 while it jumps; ResetGate lets it go.
+            foreach (var lg in gate.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
             jump.SetActive(true);
             GunRig.EnableFades(jump);
             return PartAnimation.PlayOnce(jump);
@@ -267,6 +275,7 @@ namespace GoF2Remake.World
                 if (t.name.EndsWith("_jump_anim_add")) t.gameObject.SetActive(false);
                 else if (t.name.EndsWith("_anim_add")) t.gameObject.SetActive(true);
             }
+            foreach (var lg in gate.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(-1);
         }
 
         /// <summary>The khador_jump fx (15026, scale 2) at 'position', played once; 'lengthMs' = its length (4000 without).</summary>
@@ -369,6 +378,25 @@ namespace GoF2Remake.World
             BeginScene(station);
             state = State.KhadorScene;
             if (advanceOnJump) { advanceOnJump = false; if (Story.Index == 78) Story.Advance(db); }
+            StartKhadorFx();
+        }
+
+        /// <summary>Modified: the Khador Drive's jump scene alone, no charge, cells or arrival (the Supernova Challenge's end:
+        /// the ship jumps out as the round's clock runs out); 'done' when the fx has played, the ship gone and the camera
+        /// where the scene left it.</summary>
+        public void PlayKhadorScene(Action done)
+        {
+            if (state != State.None) { done?.Invoke(); return; }
+            sceneDone = done;
+            BeginScene(-1);
+            state = State.KhadorScene;
+            StartKhadorFx();
+        }
+
+        Action sceneDone;
+
+        void StartKhadorFx()
+        {
             var fxPos = ship.transform.position + ship.transform.forward * 3000f * M;
             // MGame::startJumpScene: the fx's setDirection(ship direction, (0, 1, 0)), upright in the world. Remake: in the
             // ship's own frame (sceneFrame), as the camera, so the scene is the same from a ship flying inverted or rolled.
@@ -384,7 +412,7 @@ namespace GoF2Remake.World
             // game (-2000, 300, -2000), in the ship's frame
             if (cam != null) cam.transform.position = fxPos + sceneFrame * (new Vector3(2000f, 300f, -2000f) * M);
             Play(assets != null ? assets.khadorDrive : null);
-            Haptics.Play(Haptics.Jump);   // remake
+            flashFelt = false;   // the rumble waits for the flash (KhadorFlashMs)
         }
 
         // ---- the jump scene --------------------------------------------------------------------------------
@@ -418,6 +446,8 @@ namespace GoF2Remake.World
                 ActivateGate();
             if (!activated) return;
             animMs += dtMs;
+            // (at the latest at the end: a shorter mod animation)
+            if (!flashFelt && animMs >= Mathf.Min(gateScene ? GateFlashMs : KhadorFlashMs, animLength)) { flashFelt = true; Haptics.Play(Haptics.Jump); }   // remake
             if (!hidden && animMs > (gateScene ? 1000f : 1700f))
             {
                 hidden = true;
@@ -425,7 +455,19 @@ namespace GoF2Remake.World
                 ship.turnOnly = false;   // remake: the roll stops with the ship gone
                 if (ship.visualModel != null) ship.visualModel.gameObject.SetActive(false);
             }
-            if (animMs >= animLength) Arrive(gateScene);
+            if (animMs >= animLength)
+            {
+                if (sceneDone != null)   // Modified: a scene without a jump (PlayKhadorScene)
+                {
+                    var d = sceneDone;
+                    sceneDone = null;
+                    state = State.None;
+                    ship.turnOnly = false;
+                    d();
+                    return;
+                }
+                Arrive(gateScene);
+            }
         }
 
         /// <summary>Status::departStation(programmedStation), Level::setInitStreamOut, reload in the target orbit.</summary>

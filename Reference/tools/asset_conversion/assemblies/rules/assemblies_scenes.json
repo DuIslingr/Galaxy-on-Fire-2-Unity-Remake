@@ -3766,5 +3766,28 @@
   "scale": null,
   "related": {},
   "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "hangar_terran_bot_e",
+  "category": "hangars",
+  "origin": "remake: the Terran hangar's fifth service bot (remake mesh ids 99004 / 99005); spawned on the room's transform",
+  "root": 99004,
+  "rootModel": "Models/main/hangars/hangar_terran_bot_e_anim.fbx",
+  "children": [
+   {
+    "mesh": 99005,
+    "model": "Models/main/hangars/hangar_terran_bot_e_anim_add.fbx",
+    "role": "anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "remake: bot e's glow layer (no resource id; 99004 / 99005 are build_assemblies.py's MODEL_OVERRIDE); StationLevel.BuildHangar spawns the assembly on the room and TerranHangarBots plays it in turn with a to d"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {}
  }
 ]

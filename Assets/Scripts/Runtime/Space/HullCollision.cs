@@ -265,17 +265,19 @@ namespace GoF2Remake.Flight
 
         /// <summary>Remake (Flight.LineOfFire): a ray from 'from' along 'dir' (unit) meets 'body''s shown hull within 'reach'
         /// metres, past the colliders under 'ignore' (a turret's own meshes on its host's hull). The hull is built whatever the
-        /// ship collision mode takes for shots (Mixed leaves fighters' out of the shot tests, not out of this).</summary>
+        /// ship collision mode takes for shots (Mixed leaves fighters' out of the shot tests, not out of this). Modified (review
+        /// of #168): 'body''s own colliders are asked one by one (Collider.Raycast), not the scene's shared hit buffer, whose
+        /// 64 unsorted hits could all be other hulls in a crowded orbit.</summary>
         public static bool RayHits(Vector3 from, Vector3 dir, float reach, HullBody body, Transform ignore)
         {
             if (body == null || !body.Active) return false;
             Sync();
-            int n = Physics.RaycastNonAlloc(from, dir, hits, reach, HullMask, QueryTriggerInteraction.Ignore);
-            for (int i = 0; i < n; i++)
+            var ray = new Ray(from, dir);
+            foreach (var c in body.colliders)
             {
-                var c = hits[i].collider;
-                if (hits[i].distance <= 0.05f || BodyOf(c) != body || !Shown(c)) continue;
+                if (c == null || !c.enabled || !c.gameObject.activeInHierarchy) continue;
                 if (ignore != null && c.transform.IsChildOf(ignore)) continue;
+                if (!c.Raycast(ray, out var hit, reach) || hit.distance <= 0.05f || !Shown(c)) continue;
                 return true;
             }
             return false;

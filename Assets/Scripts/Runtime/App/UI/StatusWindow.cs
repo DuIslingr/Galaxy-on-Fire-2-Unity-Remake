@@ -143,15 +143,15 @@ namespace GoF2Remake.UI
             var rep = Row(left);
             Reputation(Box(rep, false), 0, 1, StandingShown(0));
             Reputation(Box(rep, true), 2, 3, StandingShown(1));
-            // Remake mods: the mods' factions (ModFactions), two to a row, each with its own standing; not the always hostile
+            // Remake mods: the mods' races (ModRaces), two to a row, each with its own standing; not the always hostile
             // ones (like the game's pirates and the Void, which have no reputation box either).
-            var factions = new List<Modding.ModFactions.Def>();
-            foreach (var f in Modding.ModFactions.All) if (!f.hostile) factions.Add(f);
-            for (int i = 0; i < factions.Count; i += 2)
+            var races = new List<Modding.ModRaces.Def>();
+            foreach (var f in Modding.ModRaces.All) if (!f.hostile) races.Add(f);
+            for (int i = 0; i < races.Count; i += 2)
             {
                 var frow = Row(left);
-                FactionReputation(Box(frow, false), factions[i]);
-                if (i + 1 < factions.Count) FactionReputation(Box(frow, true), factions[i + 1]);
+                ModRaceReputation(Box(frow, false), races[i]);
+                if (i + 1 < races.Count) ModRaceReputation(Box(frow, true), races[i + 1]);
                 else Box(frow, true).style.visibility = Visibility.Hidden;   // (an odd one keeps its half of the row)
             }
 
@@ -261,6 +261,8 @@ namespace GoF2Remake.UI
         public void SelectMedal(int medal)
         {
             if (medal < 0 || medal >= medalButtons.Count) return;
+            // Modified: on the Medals tab (the window opens on the Status page: the toast's tap landed there, the medal unseen).
+            if (statusTab != null && MedalsShown && !showMedals) ShowTab(true);
             ShowHint(medal);
             var button = medalButtons[medal];
             button.schedule.Execute(() =>
@@ -372,21 +374,21 @@ namespace GoF2Remake.UI
             parent.Add(row);
         }
 
-        /// <summary>Remake mods: one faction's standing in the game's reputation look (ReputationBar): its emblem in its
+        /// <summary>Remake mods: one mod race's standing in the game's reputation look (ReputationBar): its emblem in its
         /// standing's glow (green a friend, blue neutral, red hostile, like GoF2Races/<race>_allied / _neutral / _enemy) with
         /// its name under it, and the race status bar lit from the centre toward the emblem while liked, away from it while
-        /// disliked. The right end is left empty: a faction has no rival race on its bar.</summary>
-        static void FactionReputation(VisualElement box, Modding.ModFactions.Def f)
+        /// disliked. The right end is left empty: a mod race has no rival race on its bar.</summary>
+        static void ModRaceReputation(VisualElement box, Modding.ModRaces.Def f)
         {
-            float rate = Mathf.Clamp(Modding.ModFactions.Standing(f.race) / 100f, -1f, 1f);
+            float rate = Mathf.Clamp(Modding.ModRaces.Standing(f.race) / 100f, -1f, 1f);
             var bar = Resources.Load<Texture2D>("GoF2Races/race_status_bar");
             var row = new VisualElement { pickingMode = PickingMode.Ignore };
             row.AddToClassList("rep-row");
             row.AddToClassList("rep-row--bar");
             var side = new VisualElement { pickingMode = PickingMode.Ignore };
             side.AddToClassList("rep-side");
-            side.Add(FactionEmblem(f.race));
-            var name = new Label(Modding.ModFactions.Name(f.race)) { pickingMode = PickingMode.Ignore };
+            side.Add(RaceEmblem(f.race));
+            var name = new Label(Modding.ModRaces.Name(f.race)) { pickingMode = PickingMode.Ignore };
             name.AddToClassList("rep-name");
             name.AddToClassList("rep-side-name");
             side.Add(name);
@@ -396,7 +398,7 @@ namespace GoF2Remake.UI
             var empty = Resources.Load<Texture2D>("GoF2Races/race_status_bar_empty");
             if (empty != null || bar != null) track.style.backgroundImage = new StyleBackground(empty != null ? empty : bar);
             track.EnableInClassList("rep-bar--dimmed", empty == null);
-            float markerPct = 50f - rate * 50f;   // toward the faction's emblem (the left) while liked
+            float markerPct = 50f - rate * 50f;   // toward the mod race's emblem (the left) while liked
             float from = Mathf.Min(50f, markerPct), to = Mathf.Max(50f, markerPct);
             var lit = new VisualElement { pickingMode = PickingMode.Ignore };
             lit.AddToClassList("rep-bar-lit");
@@ -419,14 +421,14 @@ namespace GoF2Remake.UI
             box.Add(row);
         }
 
-        /// <summary>Remake mods: a faction's emblem (its icon, else its look race's radar emblem) over a glow in its standing's
+        /// <summary>Remake mods: a mod race's emblem (its icon, else its look race's radar emblem) over a glow in its standing's
         /// colour: three copies behind it, each larger and fainter, the game's _allied / _neutral / _enemy halo.</summary>
-        static VisualElement FactionEmblem(int race)
+        static VisualElement RaceEmblem(int race)
         {
             var e = new VisualElement { pickingMode = PickingMode.Ignore };
             e.AddToClassList("rep-emblem");
             int look = Standing.Look(race);
-            var tex = Modding.ModFactions.Icon(race) ?? Resources.Load<Texture2D>($"GoF2Hud/race_{(look <= 3 ? look : look == 9 ? 9 : 8)}");
+            var tex = Modding.ModRaces.Icon(race) ?? Resources.Load<Texture2D>($"GoF2Hud/race_{(look <= 3 ? look : look == 9 ? 9 : 8)}");
             if (tex == null) return e;
             Color glow = Standing.IsEnemy(race) ? new Color(0.95f, 0.28f, 0.16f) : Standing.IsFriend(race) ? new Color(0.1f, 0.8f, 0.1f)
                        : new Color(0.24f, 0.6f, 0.8f);

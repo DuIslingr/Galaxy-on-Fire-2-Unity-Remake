@@ -119,7 +119,12 @@ namespace GoF2Remake.EditorTools
             // Read/Write only where runtime code reads the mesh: Valkyrie 80 splits the deep science station's damaged
             // thruster flames per engine (ValkyrieLevels.MakeFlamePieces80, #70), and the hulls get MeshColliders
             // (HullCollision: a player build can't cook a collider from a mesh it can't read).
-            mi.isReadable = assetPath.EndsWith("/v_station_deep_science_damaged_emitters_anim_add.fbx") || IsHullModel(assetPath);
+            // Modified: and the supernova flares' sky sphere, which SkySphereSmoothing subdivides onto the sphere.
+            mi.isReadable = assetPath.EndsWith("/v_station_deep_science_damaged_emitters_anim_add.fbx") || IsHullModel(assetPath)
+                            // Modified: the hangar rooms (not their glow layers): Inspect ship's camera stops at their walls
+                            // (StationLevel.AddRoomColliders).
+                            || (assetPath.Replace('\\', '/').Contains("/hangars/") && !assetPath.Contains("_add") && !assetPath.Contains("_anim"))
+                            || (assetPath.Contains("/skyboxes/sn_skybox_") && assetPath.Contains("_flares_"));
         }
 
         /// <summary>A model whose meshes become collision hulls (HullCollision): ships, stations, jumpgates, turrets and the
@@ -165,7 +170,10 @@ namespace GoF2Remake.EditorTools
     /// </summary>
     public class ModelOrientationPostprocessor : AssetPostprocessor
     {
-        public override uint GetVersion() => 1;
+        // Modified: 2 = the hangar rooms imported readable (ImportPostprocessor.OnPreprocessModel, Inspect ship's room colliders):
+        // a Library imported before kept them unreadable, and StationLevel.AddRoomColliders skipped every one. Bumping this
+        // reimports the models only (the texture importer's version is ImportPostprocessor's).
+        public override uint GetVersion() => 2;
 
         void OnPostprocessModel(GameObject root)
         {
@@ -235,7 +243,19 @@ namespace GoF2Remake.EditorTools
         }
 
         [MenuItem("GoF2/Build/Materials And Prefabs", priority = 240)]
-        public static void BuildAll()
+        public static void BuildAll() => Build(false);
+
+        /// <summary>Modified: the per-mesh prefabs of resources.json's meshes that have none yet (a model added to the
+        /// project, e.g. the Terran hangar's bot e), and their materials if missing, leaving every existing prefab alone.
+        /// Then AssemblyBuilder.BuildMissing for the assemblies without a prefab.</summary>
+        [MenuItem("GoF2/Build/Missing Prefabs Only", priority = 242)]
+        public static void BuildMissing()
+        {
+            Build(true);
+            AssemblyBuilder.BuildMissing();
+        }
+
+        static void Build(bool onlyMissing)
         {
             var json = AssetDatabase.LoadAssetAtPath<TextAsset>(R("Resources/GoF2Data/resources.json"));
             if (json == null) { Debug.LogError("GoF2: resources.json not found"); return; }
@@ -263,6 +283,8 @@ namespace GoF2Remake.EditorTools
             foreach (var mesh in table.meshes)
             {
                 if (n++ % 10 == 0 && EditorUtility.DisplayCancelableProgressBar("GoF2", "Prefabs: " + mesh.model, (float)n / table.meshes.Length)) break;
+                var outPath = R("Prefabs/" + Path.ChangeExtension(mesh.model.Substring("Models/".Length), ".prefab"));
+                if (onlyMissing && AssetDatabase.LoadAssetAtPath<GameObject>(outPath) != null) continue;
                 var src = AssetDatabase.LoadAssetAtPath<GameObject>(R(mesh.model));
                 if (src == null) { missing++; continue; }
                 var inst = (GameObject)PrefabUtility.InstantiatePrefab(src);
@@ -287,7 +309,6 @@ namespace GoF2Remake.EditorTools
                 var info = inst.AddComponent<GoF2Remake.Visuals.ResourceInfo>();
                 info.meshId = mesh.id; info.materialId = mesh.materialId; info.originalPath = mesh.source;
 
-                var outPath = R("Prefabs/" + Path.ChangeExtension(mesh.model.Substring("Models/".Length), ".prefab"));
                 Directory.CreateDirectory(Path.GetDirectoryName(outPath));
                 PrefabUtility.SaveAsPrefabAsset(inst, outPath);
                 Object.DestroyImmediate(inst);
@@ -295,7 +316,7 @@ namespace GoF2Remake.EditorTools
             }
             EditorUtility.ClearProgressBar();
             AssetDatabase.SaveAssets();
-            PostProcessing.ApplyGlow();
+            if (!onlyMissing) PostProcessing.ApplyGlow();
             Debug.Log($"GoF2: {mats.Count} materials, {made} prefabs created ({missing} meshes referenced by the game were not shipped in the OBB). Pipeline: {(urp ? "URP" : "Built-in")}");
         }
 
@@ -338,7 +359,10 @@ namespace GoF2Remake.EditorTools
                         // GoF2/Hull: the original's reflection and rim (BumpRimCubeShader), on the ships, stations and objects,
                         // not the station interiors (hangar and bar rooms) or the sky props.
                         bool interior = nrmRel.Contains("/hangars/") || nrmRel.Contains("/bars/") || nrmRel.Contains("/skyboxes/");
-                        if (urp && !interior) { mat.shader = Shader.Find("GoF2/Hull") ?? mat.shader; mat.SetShaderPassEnabled("MotionVectors", false); }   // as Lit's material setup
+                        // The MotionVectors pass stays on: GoF2/Hull borrows URP's LitShader editor, whose ValidateMaterial
+                        // doesn't know the shader and turns the pass on whenever the Editor loads the material (Play mode,
+                        // batch runs, builds). Turned off here, every load rewrote the .mat files.
+                        if (urp && !interior) mat.shader = Shader.Find("GoF2/Hull") ?? mat.shader;
                         if (urp) { mat.EnableKeyword("_METALLICSPECGLOSSMAP"); mat.SetFloat("_Smoothness", 0.8f); }
                         else { mat.EnableKeyword("_METALLICGLOSSMAP"); mat.SetFloat("_GlossMapScale", 0.8f); }
                     }
