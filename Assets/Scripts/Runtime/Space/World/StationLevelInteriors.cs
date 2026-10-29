@@ -65,6 +65,7 @@ namespace GoF2Remake.World
         void BuildHangar()
         {
             hangarRoot = new GameObject("Hangar").transform;
+            hangarRoot.gameObject.AddComponent<GoF2Remake.Visuals.StationModelContext>();
             string room = StationTables.HangarRoom[HangarIndex];
             // Level::createScene: PlayerStatic + setRotation(0, pi, 0) = Unity identity. Remake mods: a custom room as it is.
             GameObject roomGo;
@@ -338,6 +339,7 @@ namespace GoF2Remake.World
         void BuildBar()
         {
             barRoot = new GameObject("Space Lounge").transform;
+            barRoot.gameObject.AddComponent<GoF2Remake.Visuals.StationModelContext>();
             // createScene branch 4: rooms with no rotation (game identity = Unity yaw 180).
             GameObject room;
             if (customBar != null) { room = Instantiate(customBar.template, Vector3.zero, Quaternion.identity, barRoot); room.name = "Room (" + customBar.def.key + ")"; }

@@ -405,6 +405,12 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   direction, alpha 0 -> 0.1 -> 0 x Amount; drawn by `GoF2/ModEs2Trail` kind 11 (Landing dust); interiors.json `"dust"`
   names the flipbook (the ES2 importer writes `textures/es2_landing_dust.png`). Seen at Okrot: a faint haze over the
   pad, as ES2's own values give. Not done: multiplayer (other players' view of a docked ship, NetHangar).
+  **Engine effects after ES2 launch** (2026-10-28): the hangar and lounge visual roots carry
+  `Visuals.StationModelContext`. `EngineDrive.IsStationModel` checks a model's ancestors; EngineFlame, Es2EngineVfx,
+  LateralThrusters, EngineFx and ThrottleGlow use it in OnEnable. Looking for any loaded StationLevel classified the
+  replacement flight model as a hangar ship while the additive Station scene was unloading, capping its drive and hiding
+  boost effects. Hangar models keep their context when carried under the orbit's station hull; other orbit ships retain
+  flight effects. Tests `EngineStationContextTests` cover flight inputs, hangar previews and all five effect components.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
