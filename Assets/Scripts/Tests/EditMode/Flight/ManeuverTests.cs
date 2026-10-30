@@ -1,7 +1,7 @@
 // ManeuverTests.cs
 // The dodge (CLAUDE.md "Recovered facts already implemented", the dodge; Maneuver.cs header from PlayerEgo::initManeuver /
 // updateManeuver). Expected numbers by hand from the decompiled formulas: per frame, k = 1 - t / 1200, slide
-// dt * 4 * k * H * 0.05 units toward the swipe, heading k * 0.006283186 rad per 30 fps frame away from it, yaw rate
+// dt * 4 * k * H * 0.05 units toward the swipe, heading k * 0.006283186 rad per original frame away from it, yaw rate
 // sin(pi t / 1200) * H * 0.05 * 750 * 0.4 (H 24 -> 360 at the middle), over at 1200 ms.
 
 using GoF2Remake.Flight;
@@ -31,7 +31,7 @@ namespace GoF2Remake.Tests
             m.Start(1);
             m.Step(10f, 24f, out float slide, out float heading, out float yaw);
             Assert.AreEqual(10f * 4f * 24f * 0.05f, slide, 1e-4f);                 // 48 units to the left
-            Assert.AreEqual(0.006283186f * 10f / (1000f / 30f), heading, 1e-7f);    // nose to the right
+            Assert.AreEqual(0.006283186f * 10f / OriginalFrame.Ms, heading, 1e-7f);    // nose to the right
             Assert.AreEqual(0f, yaw, 1e-5f);                                         // sin(0)
         }
 
