@@ -3010,5 +3010,7 @@
  "challengeRivalWon0": "Precisa de umas aulas de tiro, Sr. Maxwell? Eu cobro barato.",
  "challengeRivalWon1": "Valeu pelos créditos. Volte quando aprender a mirar.",
  "challengeRivalWon2": "Mais sorte da próxima vez, Sr. Maxwell. Quem sabe com uma arma maior.",
- "challengeRivalWon3": "Não fique triste, piloto. Nem todo mundo nasceu para isso."
+ "challengeRivalWon3": "Não fique triste, piloto. Nem todo mundo nasceu para isso.",
+ "mbPartTexture": "Textura…",
+ "mbPartTextureOff": "Sem textura"
 }

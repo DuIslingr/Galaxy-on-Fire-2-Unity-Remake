@@ -315,7 +315,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (`_lights_add` ... `CustomAddPart.Suffix`, which collision, shadows, LODs, aim spots and the icon skip), white vertex
   colours where missing (GoF2/Additive multiplies them), the game's material for the role (`GameAddMaterial`: that part
   on the overridden ship's own prefab, else on a game ship of its race: lights / NPC engine 3460x glow_<race>, player glow
-  34813), a copy with the part's `texture`; lights always on, `engineGlow` under the engine glow part in place of the
+  34813), a copy with the part's `texture`, else its model's own base colour texture (2026-10-30, a player's report: a
+  custom engine glow showed the race's glow sprite; `ModShipBuilder.OwnTexture`: the parts' glTF `_BaseMap`, empty for
+  the `.aem` imports' untextured parts, which keep the game's; never read off the mod Lit templates, whose first property
+  read in the Editor drops their `_EMISSION` and dirties them), set or cleared on the builder's Glowing parts row (Texture… /
+  No texture, `ProjectShip.SetPartTexture`); lights always on, `engineGlow` under the engine glow part in place of the
   generated discs, `engine` the NPC variant (`npcVariantParts`); `ModShips.LoadAddParts` loads them with the hull;
   checked: the Full HD Betty's parts come out with the game prefab's exact vertices, bounds and UVs): HD names
   `_lights_add` / `_engine_glow_add` / `_engine_add`, the first release's `ship_NN` + `_lights` / `_add` (its engine

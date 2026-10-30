@@ -3010,5 +3010,7 @@
  "challengeRivalWon0": "Może kilka lekcji strzelania, panie Maxwell? Biorę niewiele.",
  "challengeRivalWon1": "Dzięki za kredyty. Wróć, jak nauczysz się celować.",
  "challengeRivalWon2": "Więcej szczęścia następnym razem, panie Maxwell. Może z większą bronią.",
- "challengeRivalWon3": "Nie przejmuj się, pilocie. Nie każdy się do tego nadaje."
+ "challengeRivalWon3": "Nie przejmuj się, pilocie. Nie każdy się do tego nadaje.",
+ "mbPartTexture": "Tekstura…",
+ "mbPartTextureOff": "Bez tekstury"
 }

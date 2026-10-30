@@ -281,6 +281,13 @@ namespace GoF2Remake.Modding
             a.Add(o);
         }
 
+        /// <summary>The texture the add part at 'index' is drawn with (null: its model's own, else the game's for the role).</summary>
+        public void SetPartTexture(int index, string texture)
+        {
+            if (!(json["addParts"] is JArray a) || index < 0 || index >= a.Count || !(a[index] is JObject o)) return;
+            if (string.IsNullOrEmpty(texture)) o.Remove("texture"); else o["texture"] = texture;
+        }
+
         /// <summary>Removes the add part at 'index' (the list goes when it is empty).</summary>
         public void RemovePart(int index)
         {

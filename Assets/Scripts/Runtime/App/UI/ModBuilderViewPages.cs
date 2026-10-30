@@ -203,7 +203,8 @@ namespace GoF2Remake.UI
         }
         /// <summary>The ship's glowing parts (ships.json "addParts", CustomAddPart): the original's additive layers beside the
         /// hull, e.g. an original-game mod's lights and engine glows, made in the hull model's own frame and drawn with the
-        /// game's material for their role. Listed with a remove button; a new one picked as a .glb / .aem for each role.</summary>
+        /// game's material for their role. Listed with a texture (its model's own, else the game's glow; a chosen PNG
+        /// replaces either) and a remove button; a new one picked as a .glb / .aem for each role.</summary>
         void BuildAddParts(ProjectShip s)
         {
             Heading(ship, T("mbAddParts", "Glowing parts"));
@@ -217,6 +218,15 @@ namespace GoF2Remake.UI
                 string text = $"{PartRoleName(role)}: {System.IO.Path.GetFileName(model ?? "")}";
                 if (!string.IsNullOrEmpty(texture)) text += $" ({System.IO.Path.GetFileName(texture)})";
                 Add(row, new Label(text), "mbv-inline-label");
+                // A texture for the part (a player's report: a custom engine glow showed the game's glow sprite).
+                Act(row, T("mbPartTexture", "Texture…"), () => PickImage(T("mbPickTexture", "Choose a texture"), path =>
+                    {
+                        string id = s.IsOverride ? "ship_" + s.OverrideIndex : s.LocalId;
+                        s.SetPartTexture(index, Project.AddTexture(path, $"{id}_{role}"));
+                        RequestReload(false);
+                        BuildShipPage();
+                    }));
+                if (!string.IsNullOrEmpty(texture)) Act(row, T("mbPartTextureOff", "No texture"), () => { s.SetPartTexture(index, null); RequestReload(false); BuildShipPage(); });
                 Act(row, "×", () => { s.RemovePart(index); RequestReload(false); BuildShipPage(); }, "mbv-step");
             }
             if (!ModImport.Available) return;

@@ -3010,5 +3010,7 @@
  "challengeRivalWon0": "Besoin de quelques leçons de tir, Mr Maxwell ? Je fais des prix.",
  "challengeRivalWon1": "Merci pour les crédits. Revenez quand vous saurez viser.",
  "challengeRivalWon2": "Plus de chance la prochaine fois, Mr Maxwell. Peut-être avec un plus gros canon.",
- "challengeRivalWon3": "Ne vous en faites pas, pilote. Ce n'est pas donné à tout le monde."
+ "challengeRivalWon3": "Ne vous en faites pas, pilote. Ce n'est pas donné à tout le monde.",
+ "mbPartTexture": "Texture…",
+ "mbPartTextureOff": "Sans texture"
 }

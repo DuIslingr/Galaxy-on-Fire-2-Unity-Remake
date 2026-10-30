@@ -3010,5 +3010,7 @@
  "challengeRivalWon0": "Le servono lezioni di tiro, Signor Maxwell? Faccio prezzi bassi.",
  "challengeRivalWon1": "Grazie dei crediti. Torni quando avrà imparato a mirare.",
  "challengeRivalWon2": "Più fortuna la prossima volta, Signor Maxwell. Magari con un'arma più grossa.",
- "challengeRivalWon3": "Non se la prenda, pilota. Non tutti sono portati per questo."
+ "challengeRivalWon3": "Non se la prenda, pilota. Non tutti sono portati per questo.",
+ "mbPartTexture": "Texture…",
+ "mbPartTextureOff": "Nessuna texture"
 }

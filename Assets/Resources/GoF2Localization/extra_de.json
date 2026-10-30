@@ -3010,5 +3010,7 @@
  "challengeRivalWon0": "Brauchen Sie ein paar Schießstunden, Mr. Maxwell? Ich bin günstig.",
  "challengeRivalWon1": "Danke für die Credits. Kommen Sie wieder, wenn Sie zielen gelernt haben.",
  "challengeRivalWon2": "Mehr Glück beim nächsten Mal, Mr. Maxwell. Vielleicht mit einer größeren Kanone.",
- "challengeRivalWon3": "Nehmen Sie's nicht so schwer, Pilot. Nicht jeder ist dafür gemacht."
+ "challengeRivalWon3": "Nehmen Sie's nicht so schwer, Pilot. Nicht jeder ist dafür gemacht.",
+ "mbPartTexture": "Textur…",
+ "mbPartTextureOff": "Keine Textur"
 }

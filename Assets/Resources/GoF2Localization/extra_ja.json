@@ -3010,5 +3010,7 @@
  "challengeRivalWon0": "射撃のレッスンが必要かい、マックスウェルさん？安くしておくよ。",
  "challengeRivalWon1": "クレジットをありがとう。狙いの付け方を覚えたらまた来な。",
  "challengeRivalWon2": "次は頑張れよ、マックスウェルさん。もっと大きな銃でな。",
- "challengeRivalWon3": "気にするな、パイロット。誰にでも向いてるわけじゃない。"
+ "challengeRivalWon3": "気にするな、パイロット。誰にでも向いてるわけじゃない。",
+ "mbPartTexture": "テクスチャ…",
+ "mbPartTextureOff": "テクスチャなし"
 }

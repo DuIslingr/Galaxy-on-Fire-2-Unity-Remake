@@ -3010,5 +3010,7 @@
  "challengeRivalWon0": "要不要上几节射击课，Maxwell先生？我收费很便宜。",
  "challengeRivalWon1": "谢谢您的信用分。等您学会瞄准再来吧。",
  "challengeRivalWon2": "祝您下次好运，Maxwell先生。也许换把大点的枪。",
- "challengeRivalWon3": "别难过，飞行员。不是每个人都适合干这行。"
+ "challengeRivalWon3": "别难过，飞行员。不是每个人都适合干这行。",
+ "mbPartTexture": "贴图…",
+ "mbPartTextureOff": "不用贴图"
 }

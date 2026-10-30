@@ -179,7 +179,7 @@ namespace GoF2Remake.Modding
             scene.transform.localRotation = Quaternion.identity;
             scene.transform.localScale = Vector3.one;
             scene.name = name;
-            var mat = AddPartMaterial(c, mod, spec);
+            var mat = AddPartMaterial(c, mod, spec, OwnTexture(renderers));
             foreach (var r in renderers)
             {
                 r.gameObject.name = name;
@@ -200,17 +200,36 @@ namespace GoF2Remake.Modding
 
         /// <summary>The material an add part is drawn with: the game's for that role on the ship the model replaces, else on a
         /// game ship of its race (the lights and NPC engines: the race's glow, 3460x; the player's engine glow: 34813), else the
-        /// mods' engine glow; with the part's 'texture' a copy showing that instead.</summary>
-        static Material AddPartMaterial(CustomShipData c, ModInfo mod, CustomAddPart spec)
+        /// mods' engine glow; with the part's 'texture', else its model's own base colour texture ('own'), a copy showing that
+        /// instead (a player's report: a custom engine glow model with its own texture showed the race's glow sprite; the
+        /// original-game imports' parts, AemImport, have no texture and keep the game's).</summary>
+        internal static Material AddPartMaterial(CustomShipData c, ModInfo mod, CustomAddPart spec, (Texture tex, Vector2 scale, Vector2 offset) own = default)
         {
             var baseMat = GameAddMaterial(c, CustomAddPart.Suffix(spec.role)) ?? ModAssets.Get()?.engineGlow;
-            if (baseMat == null || string.IsNullOrEmpty(spec.texture)) return baseMat;
-            var tex = ModMaterials.Texture(mod, spec.texture, false);
+            if (baseMat == null) return null;
+            Texture tex = null;
+            Vector2 scale = Vector2.one, offset = Vector2.zero;
+            if (!string.IsNullOrEmpty(spec.texture)) tex = ModMaterials.Texture(mod, spec.texture, false);
+            if (tex == null && own.tex != null) (tex, scale, offset) = own;
             if (tex == null) return baseMat;
-            var copy = new Material(baseMat) { name = $"{c.assembly} {spec.role} {spec.texture}" };
-            if (copy.HasProperty("_MainTex")) copy.SetTexture("_MainTex", tex);
-            if (copy.HasProperty("_BaseMap")) copy.SetTexture("_BaseMap", tex);
+            var copy = new Material(baseMat) { name = $"{c.assembly} {spec.role} {tex.name}" };
+            foreach (var p in new[] { "_MainTex", "_BaseMap" })
+                if (copy.HasProperty(p)) { copy.SetTexture(p, tex); copy.SetTextureScale(p, scale); copy.SetTextureOffset(p, offset); }
             return copy;
+        }
+
+        /// <summary>The base colour texture the part's glTF materials bring (ModMaterials.FromGltf's _BaseMap, with its Y flip),
+        /// the first found; none = default (the Lit templates' base map is empty: a model without textures, or without any
+        /// material, ModMaterials.Default, has none). Never read off the templates themselves: in the Editor a template's
+        /// first property read re-checks its keywords, drops the faint emission's _EMISSION and marks it dirty
+        /// (ModAssetsGuard's case).</summary>
+        internal static (Texture tex, Vector2 scale, Vector2 offset) OwnTexture(IEnumerable<Renderer> renderers)
+        {
+            foreach (var r in renderers)
+                foreach (var m in r.sharedMaterials)
+                    if (m != null && m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") is Texture t)
+                        return (t, m.GetTextureScale("_BaseMap"), m.GetTextureOffset("_BaseMap"));
+            return default;
         }
 
         /// <summary>The game's material for the part ending 'suffix' ("_lights_add" ...): on the original ship 'c' overrides,

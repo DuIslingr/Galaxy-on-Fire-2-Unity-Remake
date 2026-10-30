@@ -3010,5 +3010,7 @@
  "challengeRivalWon0": "사격 강습이 좀 필요한가, 맥스웰? 싸게 해 주지.",
  "challengeRivalWon1": "크레딧 고마워. 조준하는 법 배우면 다시 와.",
  "challengeRivalWon2": "다음엔 운이 좋길 바라, 맥스웰. 더 큰 총을 들고 오든가.",
- "challengeRivalWon3": "너무 낙심하지 마, 파일럿. 누구나 이 일에 맞는 건 아니니까."
+ "challengeRivalWon3": "너무 낙심하지 마, 파일럿. 누구나 이 일에 맞는 건 아니니까.",
+ "mbPartTexture": "텍스처…",
+ "mbPartTextureOff": "텍스처 없음"
 }
