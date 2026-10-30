@@ -40,6 +40,7 @@ namespace GoF2Remake.Modding
         {
             if (revision == ModManager.Revision) return;
             revision = ModManager.Revision;
+            ModAudio.Sweep();   // the old revision's clips of changed files go
             clips.Clear();
             names.Clear();
             memo.Clear();

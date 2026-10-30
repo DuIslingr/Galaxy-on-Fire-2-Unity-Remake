@@ -189,6 +189,7 @@ namespace GoF2Remake.Modding
         {
             if (revision == ModManager.Revision) return;
             revision = ModManager.Revision;
+            ModAudio.Sweep();   // the old revision's clips of changed files go
             clips.Clear();
             loading = 0;
             ships = ModContent.ShipSounds().ToDictionary(kv => kv.Key, kv => (ShipSounds)kv.Value);

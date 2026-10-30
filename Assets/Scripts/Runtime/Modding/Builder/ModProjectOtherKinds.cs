@@ -176,7 +176,9 @@ namespace GoF2Remake.Modding
             Directory.CreateDirectory(dir);
             string ext = Path.GetExtension(sourceFile).ToLowerInvariant();
             if (!AudioExtensions.Contains(ext)) ext = ".ogg";
-            File.Copy(sourceFile, Path.Combine(dir, name + ext), true);
+            string dest = Path.Combine(dir, name + ext);
+            File.Copy(sourceFile, dest, true);
+            File.SetLastWriteTimeUtc(dest, DateTime.UtcNow);   // a copy keeps its source's date: the game's clip cache sees the change by it (ModAudio)
             return folder + "/" + name + ext;
         }
         public void RemoveAudio(string folder, string name)

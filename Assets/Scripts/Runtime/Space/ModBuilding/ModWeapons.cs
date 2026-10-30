@@ -473,7 +473,7 @@ namespace GoF2Remake.Modding
             }
             var clips = await Task.WhenAll(tasks);
             var list = new List<AudioClip>();
-            foreach (var c in clips) if (c != null) { list.Add(c); owned.Add(c); }
+            foreach (var c in clips) if (c != null) list.Add(c);   // the clips are ModAudio's (its cache), not owned here
             return list.ToArray();
         }
 

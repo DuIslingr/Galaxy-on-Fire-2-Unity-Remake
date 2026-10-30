@@ -50,6 +50,7 @@ namespace GoF2Remake.Modding
             var assets = StoryAssets.Load();
             if (assets == null) return;
             replacementsRevision = ModManager.Revision;
+            ModAudio.Sweep();   // the old revision's clips of changed files go
             replacements.Clear();
             replacing = 0;
             var files = new Dictionary<string, (ModInfo mod, string file)>(StringComparer.OrdinalIgnoreCase);
@@ -118,6 +119,7 @@ namespace GoF2Remake.Modding
         {
             if (revision == ModManager.Revision) return;
             revision = ModManager.Revision;
+            ModAudio.Sweep();   // the old revision's clips of changed files go
             clips.Clear();
             missing.Clear();
         }

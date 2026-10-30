@@ -26,7 +26,6 @@ namespace GoF2Remake.UI
         int audioGroup;
         AudioSource audioPreview;
         string playing;
-        bool previewOwnsClip;    // a project file's clip, made for the preview (destroyed after it); the game's clips are kept
         Button pickerPlaying;    // the audio picker's ▶ of the clip playing
 
         static readonly (string key, string english)[] AudioGroups = { ("mbMusic", "Music"), ("mbSounds", "Sound effects"), ("mbVoices", "Voice lines") };
@@ -201,7 +200,7 @@ namespace GoF2Remake.UI
             modal.AddToClassList("mbv-modal--shown");
         }
 
-        /// <summary>The audio picker's ▶: plays the game's clip (not destroyed afterwards), or stops it when it is playing.</summary>
+        /// <summary>The audio picker's ▶: plays the game's clip, or stops it when it is playing.</summary>
         void PlayGameClip(string key, Func<AudioClip> get, Button button, float volume)
         {
             bool same = playing == key;
@@ -211,7 +210,6 @@ namespace GoF2Remake.UI
             if (clip == null) { Status(T("mbNoPreview", "There is no recording of it to play."), true); return; }
             EnsurePreviewSource();
             playing = key;
-            previewOwnsClip = false;
             audioPreview.clip = clip;
             audioPreview.volume = volume;
             audioPreview.Play();
@@ -249,7 +247,7 @@ namespace GoF2Remake.UI
                 var row = Row(audioPage);
                 var play = Act(row, playing == p ? "■" : "▶", () => TogglePreview(p), "mbv-step");
                 Add(row, new Label($"{n}  ·  {sub(n)}"), "mbv-inline-label");
-                Act(row, T("mbReplaceFile", "Replace…"), () => PickAudio(T("mbPickAudio", "Choose the file"), src => { Project.SetAudio(folder, n, src); AudioChanged(); }), "mbv-step");
+                Act(row, T("mbReplaceFile", "Replace…"), () => PickAudio(T("mbPickAudio", "Choose the file"), src => { StopAudio(); Project.SetAudio(folder, n, src); AudioChanged(); }), "mbv-step");
                 Act(row, "×", () => Confirm(T("mbRemoveFile", "Remove file"), string.Format(T("mbRemoveText", "Remove \"{0}\" from the project?"), n), () =>
                 {
                     StopAudio();
@@ -281,7 +279,6 @@ namespace GoF2Remake.UI
             {
                 if (playing != path || clip == null) { if (clip == null) Status(T("mbAudioUnreadable", "The file couldn't be played."), true); return; }
                 EnsurePreviewSource();
-                previewOwnsClip = true;
                 level.MusicHeld = true;
                 audioPreview.clip = clip;
                 audioPreview.volume = path.StartsWith(ModProject.MusicFolder) ? Settings.MusicVolume : path.StartsWith(ModProject.VoicesFolder) ? Settings.VoiceVolume : Settings.SfxVolume;
@@ -296,7 +293,7 @@ namespace GoF2Remake.UI
         {
             if (playing == null || audioPreview == null) return;
             if (pickerPlaying != null && !ModalOpen) { StopAudio(); return; }
-            if (audioPreview.clip != null && !audioPreview.isPlaying)
+            if (!audioPreview.isPlaying)   // ended, or its clip went (the file replaced: ModAudio.Sweep)
             {
                 bool fromPicker = pickerPlaying != null;
                 StopAudio();
@@ -311,10 +308,7 @@ namespace GoF2Remake.UI
             if (pickerPlaying != null) { pickerPlaying.text = "▶"; pickerPlaying = null; }
             if (audioPreview == null) return;
             audioPreview.Stop();
-            var clip = audioPreview.clip;
             audioPreview.clip = null;
-            if (clip != null && previewOwnsClip) UnityEngine.Object.Destroy(clip);
-            previewOwnsClip = false;
             UnityEngine.Object.Destroy(audioPreview.gameObject);
             audioPreview = null;
         }

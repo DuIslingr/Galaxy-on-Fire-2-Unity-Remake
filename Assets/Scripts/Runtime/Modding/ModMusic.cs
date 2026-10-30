@@ -5,7 +5,8 @@
 //     wherever the game plays it (Replace, at every place that starts music);
 //   - any other name is a new track: the event graphs' Play Music / "/music <name>" play it, and a mod's systems.json /
 //     stations.json name it as a system's space or station music ("spaceMusic", "stationMusic") or a station's ("music").
-// A later mod in the load order wins. Every track loads in the background when the mods change (Preload; the main menu
+// A later mod in the load order wins. Every track loads in the background when the mods change (Preload, only the files
+// that changed: ModAudio keeps the rest; the main menu
 // waits for it before a game starts, MainMenu.Leave); Changed fires as tracks arrive (the menu swaps its theme then).
 
 using System;
@@ -40,6 +41,7 @@ namespace GoF2Remake.Modding
         {
             if (revision == ModManager.Revision) return;
             revision = ModManager.Revision;
+            ModAudio.Sweep();   // the old revision's clips of changed files go
             tracks.Clear();
             names.Clear();
             // The last mod in the load order with a name wins.

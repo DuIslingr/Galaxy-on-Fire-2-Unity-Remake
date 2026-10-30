@@ -139,3 +139,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   track, systems.json `spaceMusic` / `stationMusic` and stations.json `music` (`ModWorld.SpaceMusic` via
   `Traffic.RaceSpaceMusic`, `ModWorld.StationMusic`). All tracks load (kept compressed) when the mods change; the menu's
   Leave waits for `ModMusic.Ready` too.
+- **One clip per audio file** (`ModAudio.Load`'s cache, 2026-10-30): music, sounds, voices, ship and weapon sounds share it;
+  a new mod revision reads only files whose date / size changed (a zip mod: the zip's), and `ModAudio.Sweep` destroys the
+  clips of changed or gone files and of mods turned off; a load ending after its file changed is dropped. Nobody else
+  destroys these clips (ModWeapons doesn't own them, the builder's preview neither). Before, every reload (each Mod
+  Builder edit) loaded every track and sound again and kept the old copies: a Discord report's crashes after replacing
+  music. `ModProject.SetAudio` dates the copy now (File.Copy keeps the source's date). `ModAudioCacheTests`.
