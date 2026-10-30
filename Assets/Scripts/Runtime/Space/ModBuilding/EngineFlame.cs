@@ -106,7 +106,7 @@ namespace GoF2Remake.Modding
             drive?.Reset();
             hasLast = false;
             ship = null;
-            inStation = FindAnyObjectByType<World.StationLevel>() != null;
+            inStation = EngineDrive.IsStationModel(transform);
         }
 
         void Setup()

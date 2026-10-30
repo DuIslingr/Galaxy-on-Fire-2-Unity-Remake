@@ -339,7 +339,7 @@ namespace GoF2Remake.Modding
         void OnEnable()
         {
             drive?.Reset();
-            inStation = FindAnyObjectByType<World.StationLevel>() != null;
+            inStation = EngineDrive.IsStationModel(transform);
         }
 
         void OnDestroy()

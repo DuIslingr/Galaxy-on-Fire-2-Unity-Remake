@@ -124,7 +124,7 @@ namespace GoF2Remake.Modding
 
         void OnEnable()
         {
-            inStation = FindAnyObjectByType<World.StationLevel>() != null;
+            inStation = Visuals.EngineDrive.IsStationModel(transform);
             if (trails != null) foreach (var t in trails) { t.points.Clear(); t.hasLast = false; t.spawnDue = 0f; }
             if (custom != null) foreach (var c in custom) c?.Clear();
         }

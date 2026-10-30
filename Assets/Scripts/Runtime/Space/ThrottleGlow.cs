@@ -64,7 +64,7 @@ namespace GoF2Remake.Visuals
             renderers = GetComponent<Renderer>() != null ? new[] { GetComponent<Renderer>() } : new Renderer[0];
             block ??= new MaterialPropertyBlock();
             if (drive == null) drive = new EngineDrive(transform); else drive.Reset();
-            inStation = FindAnyObjectByType<World.StationLevel>() != null;
+            inStation = EngineDrive.IsStationModel(transform);
             spaceLevel = inStation ? null : FindAnyObjectByType<World.SpaceLevel>();
         }
 
