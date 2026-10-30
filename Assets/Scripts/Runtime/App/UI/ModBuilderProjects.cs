@@ -92,7 +92,12 @@ namespace GoF2Remake.UI
             newName = Add(newRow, new TextField { maxLength = 40 }, "mb-field", "mb-new-name");
             // One field for both: what is typed filters the list (every word must match the name, id, author or
             // description), and Create / Enter makes a new project of that name.
-            newName.textEdition.placeholder = T("mbNewPlaceholder", "Search, or name a new project");
+            // Modified: the placeholder is a label of its own that slides when longer than the field (TextMarquee), as the
+            // options' drop-downs: its length varies with the language and the field's own placeholder was cut off.
+            var hintClip = Add(newName, new VisualElement { pickingMode = PickingMode.Ignore }, "mb-placeholder-clip");
+            var hint = Add(hintClip, new Label(T("mbNewPlaceholder", "Search, or name a new project")) { pickingMode = PickingMode.Ignore }, "mb-placeholder");
+            TextMarquee.Attach(hintClip, hint, centre: false);
+            newName.RegisterValueChangedCallback(e => hintClip.style.display = string.IsNullOrEmpty(e.newValue) ? DisplayStyle.Flex : DisplayStyle.None);
             newName.RegisterValueChangedCallback(_ => RebuildRows());
             newName.RegisterCallback<KeyDownEvent>(e =>
             {

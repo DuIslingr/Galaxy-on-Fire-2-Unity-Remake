@@ -116,6 +116,7 @@ namespace GoF2Remake.UI
             Set("loadButton", T(29));
             Set("optionsButton", T(31));
             Set("modsButton", Localization.Extra("modsButton", "Mods").ToUpperInvariant());
+            if (modBrowser != null && modPanelsLanguage != Settings.Language) BuildModPanels();   // Modified: the mod panels in the new language
             Set("aboutButton", T(43));
             Set("exitButton", T(33));
             Set("debugButton", Localization.Extra("debugButton", "Debug").ToUpperInvariant());
