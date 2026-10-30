@@ -235,6 +235,13 @@ namespace GoF2Remake.UI
                 () => X("fpsPositionHelp", "Where the FPS counter sits."));
             fpsPosition.visible = () => Settings.ShowFps;
             list.Add(fpsPosition);
+            // Modified: the interface's own mouse cursor (GameCursor); desktop only, phones have none.
+            if (!Application.isMobilePlatform)
+            {
+                var gameCursor = Toggle("gameCursor", OptionPage.Graphics, () => X("gameCursor", "Game mouse cursor"), () => Settings.GameCursor, v => Settings.GameCursor = v);
+                gameCursor.description = () => X("gameCursorHelp", "A mouse cursor in the interface's style; off, the system's.");
+                list.Add(gameCursor);
+            }
         }
 
         /// <summary>All()'s Options > Controls and the key bindings rows.</summary>
