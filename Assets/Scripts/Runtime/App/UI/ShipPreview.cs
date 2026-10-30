@@ -139,6 +139,9 @@ namespace GoF2Remake.UI
             if (prefab == null) return;
             stage = new GameObject("Ship preview stage");
             stage.transform.position = stagePosition;
+            // A station model to its engine effects (EngineDrive.IsStationModel): no flight trails or glows on the turning
+            // ship. Before Instantiate: they take it in OnEnable.
+            stage.AddComponent<GoF2Remake.Visuals.StationModelContext>();
             var go = Object.Instantiate(prefab, stage.transform, false);
             go.GetComponent<AssembledObject>()?.SetPlayerVariant(true);
             GoF2Remake.Visuals.AutoLods.FullDetail(go);
