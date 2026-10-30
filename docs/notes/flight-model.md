@@ -67,6 +67,12 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   2026-10-11 the remake put the shift on the camera position (scaled to 0.25) and eased a rotation aimed from where the
   camera should be, so the ship slid out of the frame (players compared videos).
 
+- The original's frame (`Core/OriginalFrame.cs`, `OriginalFrame.Ms` = 1000 / 60): the rules the original ran once per frame
+  without a dt (the death spin, the dodge's nose turn, flings, missile steering, the crates' drift, the cutscene and
+  level-script per-frame factors, the camera's shake offsets) are converted with it. The iOS 1.1.19 build starts its
+  display link at frame interval 1 (60 Hz) and feeds MGame::OnUpdate the real elapsed ms (capped 150); the Android
+  build's cap was never determined. Until 2026-10-30 the remake used 30 fps (33.3 ms) for these, half the iPhone's rate.
+
 Useful field offsets in the decompiled code:
 
 - **PlayerEgo:** `0xb8` speed, `0xbc` throttle, `0x138` boost timer, `0x154` H, `0x278` pitch rate, `0x27c` yaw rate
