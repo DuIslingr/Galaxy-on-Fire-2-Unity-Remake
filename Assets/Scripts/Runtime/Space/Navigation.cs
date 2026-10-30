@@ -659,6 +659,11 @@ namespace GoF2Remake.Flight
             return true;
         }
 
+        /// <summary>MGame::OnTouchBegin 0x1a838c in the alien orbit: only the landmark block (autopilot to the Void station) is
+        /// skipped; a planet still jumps and a locked docking target (Radar+4) still docks (PlayerEgo::dockToDockingPoint),
+        /// as at 154's Valkyrie (a player's report: the DOCK prompt showed, and the action did nothing).</summary>
+        public static bool ActsInAlienOrbit(Kind kind) => kind == Kind.Planet || kind == Kind.DockingTarget;
+
         /// <summary>The action prompt / Enter / controller X; false when nothing happened (a refused jump, nothing locked),
         /// so the touch fire button shoots instead.</summary>
         public bool Interact()
@@ -672,7 +677,7 @@ namespace GoF2Remake.Flight
                 return true;
             }
             if (Locked == null) return false;
-            if (Locked.kind != Kind.Planet && layout.alienOrbit) return false;
+            if (layout.alienOrbit && !ActsInAlienOrbit(Locked.kind)) return false;
             if (Locked.kind == Kind.Planet && JumpsBlocked != null && JumpsBlocked()) { Say(Localization.Get(525)); return false; }
             if (Locked.kind == Kind.Planet && PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) return false;
             if (Locked.kind == Kind.Planet) StartJump(Locked);

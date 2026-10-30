@@ -31,7 +31,12 @@ against the FEV's LGCY data, see "Sound").
   `Level::initStreamOutPositionAfterCutscene`), else the undock point; Harval's shot stays the camera's target, hidden,
   through the array's explosion (destroyed, the camera turned to the station). 154: Hans' freighter flies his route onto
   Valkyrie's pad (docking set 7, 10 s, then back out; the shuttles' docking with a route that runs once), not into the
-  hull's centre. Remake pick: in 105's opening shot the player and the
+  hull's centre. 154 is in the alien orbit, where `MGame::OnTouchBegin` skips only the landmark block: the action still
+  docks at a locked docking target (`Navigation.ActsInAlienOrbit`; until 2026-10-30 it refused every lock but a planet
+  there, so the DOCK prompt showed and the action did nothing, a player's report). From state 9 the Valkyrie is race 8,
+  always enemy and on the radar, still in `Level+0xf8`, so the auto turret shoots it as in the original
+  (`handleAutoTurret` takes any active, enemy, not radar-hidden KIPlayer within 60 000; the state makes Hans vulnerable,
+  not the Valkyrie). Remake pick: in 105's opening shot the player and the
   escorts fly 2.5 u/ms, just ahead of the camera's dolly (at the launch speed they slid back at it tail first).
 - **89, Luur's supernova** (`StarSystem::switchSunForSupernovaIntro` and LevelScript states 1-4): the look-at helper
   starts 100 000 units sunward of Luur and 200 000 to its own right, drifting back so the view reaches the sun as it

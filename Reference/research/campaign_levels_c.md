@@ -460,7 +460,7 @@ fighters (race 9, `getRandomEnemyFighter(9)`), inactive, hostile, positioned (0,
 | 6 | radio 6 (Keith sends the freighter) over + 1000 | camera on the freighter + (200, 300, 1800) -> 7 |
 | 7 | freighter docked at Valkyrie | -> 8 |
 | 8 | 2000 ms | -> 9 (radio 7 0xbe6 Alice: terminate him) |
-| 9 | radio 7 over + 2000 | fighters active, visible, AI on; every third attacks the freighter, the others the player; Valkyrie becomes race 8, hostile, vulnerable, shown on radar; freighter enemy list cleared; control back -> 10 |
+| 9 | radio 7 over + 2000 | fighters active, visible, AI on; every third attacks the freighter, the others the player; Valkyrie becomes race 8, hostile (always enemy), shown on radar; the freighter vulnerable, its enemy list cleared; control back -> 10 |
 | 10 | radio 8 (0xbe7, ~90 s) over | time limit 91 000 ms and fail objective `Objective(3, 91000)` (time counted from here) |
 | 10 | player docked to Valkyrie and wins the hacking game | fail objective removed, time limit 0, fighters' enemy lists cleared -> 11 (radio 11 0xbea) |
 
