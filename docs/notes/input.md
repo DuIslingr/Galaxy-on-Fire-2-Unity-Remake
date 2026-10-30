@@ -295,7 +295,12 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   steering dead zone", `Settings.MouseDeadzone`, 0-30 % of the vertical range, default 8 %; the original has none) where
   the ship flies straight, the steering rescaled from 0 at its edge to full at the limit
   (`ShipController.ReadMouseSteer`, `MouseInDeadzone`); a small dot marks the offset once it leaves the dead zone (one
-  crosshair only). Turned off, the PC version's cursor mode (`Globals::mouseCursorActivated` 0, the manual's "Mouse
+  crosshair only). Remake: "Mouse sensitivity" (`Settings.MouseSensitivity`, 0.1-3, default 1, `Settings.MouseMove`)
+  scales the mouse's movement for the steering, free flight's virtual stick, the mining drill and free look. The
+  original's Sensitivity doesn't apply to the mouse (the fixed 2.7 above), and its PC cursor moved at the system's
+  pointer speed; the Input System reads the raw counts, so a high-DPI mouse reached full deflection on a flick and
+  Sensitivity 0.2 changed nothing (Discord "Mouse Sensitivity seems to do nothing", 2026-10-30; test
+  `SettingsTests.MouseSensitivityScalesTheMouseMovementOnly`). Turned off, the PC version's cursor mode (`Globals::mouseCursorActivated` 0, the manual's "Mouse
   control menu / ship"; `FlightHud.cursorMode`, `TouchControls.Frame.cursor`): `Hud::draw`'s buttons show and take
   clicks (the `Globals::iPad == 0` path and the Full HD manual's screenshot): no stick or gestures, the cluster from the
   bottom-right corner (0x6aa at (w − 397, h − 406)), the autopilot / fast-forward pill and the boost at the bottom left,

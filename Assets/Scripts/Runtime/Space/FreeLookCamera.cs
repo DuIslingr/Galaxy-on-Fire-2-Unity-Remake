@@ -298,7 +298,7 @@ namespace GoF2Remake.Flight
             var mouse = Mouse.current;
             if (mouse != null && (mouseLook || mouse.middleButton.isPressed))
             {
-                var d = mouse.delta.ReadValue() * scale;
+                var d = Settings.MouseMove(mouse.delta.ReadValue()) * scale;
                 delta += new Vector2(d.x, -d.y);
                 held = true;
             }

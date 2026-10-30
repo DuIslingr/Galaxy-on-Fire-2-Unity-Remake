@@ -253,14 +253,22 @@ namespace GoF2Remake.Data
         public static Vector2 OrbitTurn(Vector2 d) => new Vector2(InvertOrbitX ? -d.x : d.x, InvertOrbitY ? -d.y : d.y);
         /// <summary>Globals::mouseCursorActivated (the PC version): the mouse moves the crosshair and steers (desktop only).</summary>
         public static bool MouseSteering { get => GetBool("mouseSteering", true); set => SetBool("mouseSteering", value); }
-        /// <summary>Remake: mouse steering's dead zone, a fraction of the steering range around the centre (0 = none, the
-        /// original's: PlayerEgo::update steers by the raw offset).</summary>
         /// <summary>Remake: the controller hints' button icons (InputMode.Style): 0 Auto (the controller last used: Sony's
         /// PlayStation, any other Xbox), 1 always Xbox, 2 always PlayStation.</summary>
         public static int PadGlyphs { get => Mathf.Clamp(Mathf.RoundToInt(Get("padGlyphs", PadGlyphsAuto)), 0, 2); set => Set("padGlyphs", Mathf.Clamp(value, 0, 2)); }
         public const int PadGlyphsAuto = 0, PadGlyphsXbox = 1, PadGlyphsPlayStation = 2;
+        /// <summary>Remake: mouse steering's dead zone, a fraction of the steering range around the centre (0 = none, the
+        /// original's: PlayerEgo::update steers by the raw offset).</summary>
         public static float MouseDeadzone { get => Get("mouseDeadzone", DefaultMouseDeadzone); set => Set("mouseDeadzone", Mathf.Clamp(value, 0f, 0.3f)); }
         public const float DefaultMouseDeadzone = 0.08f;
+        /// <summary>Remake: the mouse's speed in flight (MouseMove: steering, the mining drill, free look), 1 = a pixel per
+        /// count. The original's PC cursor moved at the system's pointer speed and its sensitivity option didn't apply to the
+        /// mouse (PlayerEgo::up's fixed divisor 12); the Input System reads the raw counts, so a high-DPI mouse steered at
+        /// full deflection after a flick (Discord "Mouse Sensitivity seems to do nothing").</summary>
+        public static float MouseSensitivity { get => Get("mouseSensitivity", 1f); set => Set("mouseSensitivity", Mathf.Clamp(value, MouseSensitivityMin, MouseSensitivityMax)); }
+        public const float MouseSensitivityMin = 0.1f, MouseSensitivityMax = 3f;
+        /// <summary>A mouse movement (Mouse.delta) at the MouseSensitivity option.</summary>
+        public static Vector2 MouseMove(Vector2 delta) => delta * MouseSensitivity;
         /// <summary>Remake: how the player's ship flies (FlightStyles): the original's (a throttle, the ship always flying
         /// forward) or free flight after EVERSPACE 2 (thrust, strafe and up / down held, inertial dampeners, the mouse aiming
         /// through a virtual joystick; Flight.FlightModel's free mode). It also switches the key layout (GameControls).</summary>
@@ -562,7 +570,7 @@ namespace GoF2Remake.Data
         public static readonly string[] ControlsKeys =
         {
             "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "invertPitch", "invertYaw", "invertDrillY",
-            "invertDrillX", "invertOrbitY", "invertOrbitX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "vrGrabControls", "haptics", "stickDeadzone",
+            "invertDrillX", "invertOrbitY", "invertOrbitX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "mouseSensitivity", "vrGrabControls", "haptics", "stickDeadzone",
             "touchLeftHeight", "touchRightHeight", "floatingTouchStick", "flightStyle", "padGlyphs",
         };
         public static readonly string[] GameplayKeys =

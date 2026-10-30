@@ -372,6 +372,8 @@
  "modsTurnOn": "Activar",
  "mouseDeadzone": "Zona muerta del pilotaje con ratón",
  "mouseDeadzoneHelp": "Cuánto puede alejarse el ratón del centro antes de que la nave gire.",
+ "mouseSensitivity": "Sensibilidad del ratón",
+ "mouseSensitivityHelp": "Cuánto mueve el ratón la mira: pilotaje, taladro de minería y vista libre.",
  "mouseSteering": "Pilotaje con ratón",
  "mpAPilot": "Un piloto",
  "mpAccept": "Aceptar",

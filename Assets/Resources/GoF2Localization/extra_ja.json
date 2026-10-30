@@ -368,6 +368,8 @@
  "modsTurnOn": "有効にする",
  "mouseDeadzone": "マウス操縦のデッドゾーン",
  "mouseDeadzoneHelp": "船が旋回し始めるまでにマウスを中心から動かせる距離。",
+ "mouseSensitivity": "マウス感度",
+ "mouseSensitivityHelp": "マウスで照準がどれだけ動くか：操縦、採掘ドリル、フリールック。",
  "mouseSteering": "マウス操縦",
  "mpAPilot": "パイロット",
  "mpAccept": "承諾",

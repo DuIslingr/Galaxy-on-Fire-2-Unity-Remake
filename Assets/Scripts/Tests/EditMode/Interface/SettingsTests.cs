@@ -55,6 +55,7 @@ namespace GoF2Remake.Tests
             Assert.IsFalse(Settings.HangarDepthOfField, "off by default");
             Assert.AreEqual(1f, Settings.HapticsIntensity, "vibration 100 %");
             Assert.AreEqual(0.08f, Settings.MouseDeadzone, 1e-6f, "mouse dead zone 8 %");
+            Assert.AreEqual(1f, Settings.MouseSensitivity, "the mouse's own movement, as before the option");
             Assert.AreEqual(0.125f, Settings.StickDeadzone, 1e-6f, "the Input System's defaultDeadzoneMin");
             Assert.IsFalse(Settings.TutorialHints, "tutorials off by default");
             Assert.IsTrue(Settings.ShowStoryStep, "on by default since 2026-10-11");
@@ -196,6 +197,8 @@ namespace GoF2Remake.Tests
             Settings.Sensitivity = 5f; Assert.AreEqual(2.2f, Settings.Sensitivity, 1e-6f);
             Settings.Sensitivity = -1f; Assert.AreEqual(0f, Settings.Sensitivity);
             Settings.MouseDeadzone = 1f; Assert.AreEqual(0.3f, Settings.MouseDeadzone, 1e-6f);
+            Settings.MouseSensitivity = 0f; Assert.AreEqual(0.1f, Settings.MouseSensitivity, 1e-6f);
+            Settings.MouseSensitivity = 9f; Assert.AreEqual(3f, Settings.MouseSensitivity, 1e-6f);
             Settings.StickDeadzone = 0f; Assert.AreEqual(0.05f, Settings.StickDeadzone, 1e-6f);
             Settings.StickDeadzone = 1f; Assert.AreEqual(0.4f, Settings.StickDeadzone, 1e-6f);
             Settings.GyroSensitivity = 10f; Assert.AreEqual(3f, Settings.GyroSensitivity);
@@ -212,6 +215,18 @@ namespace GoF2Remake.Tests
             Settings.Upscaler = 99; Assert.AreEqual(Settings.UpscalerMetalFxTemporal, Settings.Upscaler);
             Settings.Upscaler = -2; Assert.AreEqual(Settings.UpscalerOff, Settings.Upscaler);
             Settings.UpscalerQuality = 9; Assert.AreEqual(4, Settings.UpscalerQuality);
+        }
+
+        [Test]
+        public void MouseSensitivityScalesTheMouseMovementOnly()
+        {
+            // Discord "Mouse Sensitivity seems to do nothing": Sensitivity (the ramp, not for the mouse) left a high-DPI mouse
+            // as fast as ever; the mouse's own option scales its movement.
+            Settings.Sensitivity = 0.2f;
+            Assert.AreEqual(new Vector2(100f, -40f), Settings.MouseMove(new Vector2(100f, -40f)), "Sensitivity leaves the mouse alone");
+            Settings.MouseSensitivity = 0.25f;
+            Assert.AreEqual(new Vector2(25f, -10f), Settings.MouseMove(new Vector2(100f, -40f)));
+            Assert.Contains("mouseSensitivity", Settings.ControlsKeys, "reset with the Controls page");
         }
 
         [Test]

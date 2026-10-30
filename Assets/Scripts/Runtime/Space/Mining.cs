@@ -471,7 +471,7 @@ namespace GoF2Remake.Flight
             {
                 // Clamped to +-0.7 of half the screen like the ship's mouse steering; screen down = +y.
                 var lim = new Vector2(Screen.width * 0.35f, Screen.height * 0.35f);
-                var o = mouseOffset + mouse.delta.ReadValue();
+                var o = mouseOffset + Settings.MouseMove(mouse.delta.ReadValue());
                 mouseOffset = new Vector2(Mathf.Clamp(o.x, -lim.x, lim.x), Mathf.Clamp(o.y, -lim.y, lim.y));
                 var m = new Vector2(mouseOffset.x / Mathf.Max(1f, lim.x), -mouseOffset.y / Mathf.Max(1f, lim.y));
                 if (m.sqrMagnitude > v.sqrMagnitude) v = m;

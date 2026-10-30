@@ -372,6 +372,8 @@
  "modsTurnOn": "Ativar",
  "mouseDeadzone": "Zona morta da pilotagem com mouse",
  "mouseDeadzoneHelp": "Quanto o mouse pode se afastar do centro antes de a nave virar.",
+ "mouseSensitivity": "Sensibilidade do mouse",
+ "mouseSensitivityHelp": "Quanto o mouse move a mira: pilotagem, broca de mineração e visão livre.",
  "mouseSteering": "Pilotagem com mouse",
  "mpAPilot": "Um piloto",
  "mpAccept": "Aceitar",

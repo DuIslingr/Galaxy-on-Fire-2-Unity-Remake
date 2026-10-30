@@ -372,6 +372,8 @@
  "modsTurnOn": "Activer",
  "mouseDeadzone": "Zone morte du pilotage à la souris",
  "mouseDeadzoneHelp": "Jusqu'où la souris peut s'éloigner du centre avant que le vaisseau tourne.",
+ "mouseSensitivity": "Sensibilité de la souris",
+ "mouseSensitivityHelp": "De combien la souris déplace le viseur : pilotage, foreuse minière et vue libre.",
  "mouseSteering": "Pilotage à la souris",
  "mpAPilot": "Un pilote",
  "mpAccept": "Accepter",

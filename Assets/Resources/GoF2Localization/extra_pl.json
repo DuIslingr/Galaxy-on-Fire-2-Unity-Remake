@@ -372,6 +372,8 @@
  "modsTurnOn": "Włącz",
  "mouseDeadzone": "Martwa strefa sterowania myszą",
  "mouseDeadzoneHelp": "Jak daleko mysz może odsunąć się od środka, zanim statek zacznie skręcać.",
+ "mouseSensitivity": "Czułość myszy",
+ "mouseSensitivityHelp": "Jak daleko mysz przesuwa celownik: sterowanie, wiertło górnicze i swobodne rozglądanie.",
  "mouseSteering": "Sterowanie myszą",
  "mpAPilot": "Pilot",
  "mpAccept": "Przyjmij",

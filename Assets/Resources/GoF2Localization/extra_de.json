@@ -372,6 +372,8 @@
  "modsTurnOn": "Einschalten",
  "mouseDeadzone": "Totzone der Maussteuerung",
  "mouseDeadzoneHelp": "Wie weit sich die Maus von der Mitte entfernen kann, bevor das Schiff dreht.",
+ "mouseSensitivity": "Mausempfindlichkeit",
+ "mouseSensitivityHelp": "Wie weit die Maus das Fadenkreuz bewegt: Steuerung, Bergbaubohrer und freie Sicht.",
  "mouseSteering": "Maussteuerung",
  "mpAPilot": "Ein Pilot",
  "mpAccept": "Annehmen",

@@ -150,7 +150,7 @@ namespace GoF2Remake.Flight
         /// <summary>PlayerEgo::update with Globals::mouseCursorActivated (FlightHud sets it: the option, the keyboard and mouse
         /// in use, nothing on screen): the mouse moves the crosshair, clamped to +-0.7 of half the screen, and the offset /
         /// that limit steers like a stick (left / right / up / down); the ramp divisor is a fixed 12 (the sensitivity option
-        /// doesn't apply).</summary>
+        /// doesn't apply). Remake: the mouse's movement at Settings.MouseSensitivity.</summary>
         [System.NonSerialized] public bool mouseSteering;
         /// <summary>The crosshair's offset from the screen centre (screen pixels, x right, y up).</summary>
         public Vector2 MouseOffset { get; private set; }
@@ -176,7 +176,7 @@ namespace GoF2Remake.Flight
             // report: a Liberator fired on the autopilot couldn't be steered with the mouse).
             if (autopilotTarget != null && !steeringLocked) { MouseOffset = Vector2.zero; MouseInDeadzone = true; return Vector2.zero; }
             var lim = new Vector2(Screen.width * 0.5f * 0.7f, Screen.height * 0.5f * 0.7f);
-            var o = MouseOffset + mouse.delta.ReadValue();
+            var o = MouseOffset + Data.Settings.MouseMove(mouse.delta.ReadValue());
             MouseOffset = new Vector2(Mathf.Clamp(o.x, -lim.x, lim.x), Mathf.Clamp(o.y, -lim.y, lim.y));
             var steer = new Vector2(MouseOffset.x / Mathf.Max(1f, lim.x), MouseOffset.y / Mathf.Max(1f, lim.y));
             // Remake: a round dead zone (in the same units as the screen's height, so it is a circle on screen), the rest
@@ -198,7 +198,7 @@ namespace GoF2Remake.Flight
             if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
             if (autopilotTarget != null && !steeringLocked) MouseOffset = Vector2.zero;
             else if (freeLook == null || !freeLook.FreeLookActive)
-                MouseOffset = Vector2.ClampMagnitude(MouseOffset + mouse.delta.ReadValue(), Screen.height * StickRadius);
+                MouseOffset = Vector2.ClampMagnitude(MouseOffset + Data.Settings.MouseMove(mouse.delta.ReadValue()), Screen.height * StickRadius);
             float m = MouseOffset.magnitude / Mathf.Max(1f, Screen.height * StickRadius), dz = Data.Settings.MouseDeadzone;
             MouseInDeadzone = m <= dz;
             if (MouseInDeadzone) return Vector2.zero;

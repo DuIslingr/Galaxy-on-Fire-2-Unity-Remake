@@ -314,6 +314,14 @@ namespace GoF2Remake.UI
                 mouseDeadzone.description = () => X("mouseDeadzoneHelp", "How far the mouse can move from the centre before the ship turns.");
                 mouseDeadzone.visible = hasMouse;
                 list.Add(mouseDeadzone);
+                // Remake (Discord "Mouse Sensitivity seems to do nothing"): Sensitivity doesn't apply to the mouse (the PC
+                // version's), and the raw counts of a high-DPI mouse were too fast.
+                var mouseSensitivity = Slider("mouseSensitivity", OptionPage.Controls, () => X("mouseSensitivity", "Mouse sensitivity"),
+                    Settings.MouseSensitivityMin, Settings.MouseSensitivityMax, () => Settings.MouseSensitivity, v => Settings.MouseSensitivity = v,
+                    v => v.ToString("0.00"));
+                mouseSensitivity.description = () => X("mouseSensitivityHelp", "How far the mouse moves the crosshair: steering, the mining drill and free look.");
+                mouseSensitivity.visible = hasMouse;
+                list.Add(mouseSensitivity);
             }
             // Remake (#61): the original's Configure screen (Options > Controls, 494 / 495) moved the touch controls' left
             // group and right cluster up and down; here as two sliders, shown when the touch controls are in use.

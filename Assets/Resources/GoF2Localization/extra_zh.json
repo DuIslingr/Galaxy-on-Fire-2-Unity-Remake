@@ -343,6 +343,8 @@
   "modsTurnOn": "开启",
   "mouseDeadzone": "鼠标操控死区",
   "mouseDeadzoneHelp": "鼠标离开中心多远之后飞船才开始转向。",
+  "mouseSensitivity": "鼠标灵敏度",
+  "mouseSensitivityHelp": "鼠标移动准星的幅度：操控、采矿钻头和自由视角。",
   "mouseSteering": "鼠标操控",
   "mpAccept": "接受",
   "mpAdmAlreadyDead": "{0}已经被摧毁了。",

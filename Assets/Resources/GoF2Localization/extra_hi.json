@@ -343,6 +343,8 @@
   "modsTurnOn": "चालू करें",
   "mouseDeadzone": "माउस स्टीयरिंग डेड ज़ोन",
   "mouseDeadzoneHelp": "जहाज़ के मुड़ने से पहले माउस केंद्र से कितनी दूर जा सकता है।",
+  "mouseSensitivity": "माउस संवेदनशीलता",
+  "mouseSensitivityHelp": "माउस क्रॉसहेयर को कितना हिलाता है: स्टीयरिंग, खनन ड्रिल और फ़्री लुक।",
   "mouseSteering": "माउस स्टीयरिंग",
   "mpAccept": "स्वीकार करें",
   "mpAdmAlreadyDead": "{0} पहले ही नष्ट हो चुका है।",

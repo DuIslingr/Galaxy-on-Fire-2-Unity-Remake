@@ -372,6 +372,8 @@
  "modsTurnOn": "Aanzetten",
  "mouseDeadzone": "Dode zone van de muisbesturing",
  "mouseDeadzoneHelp": "Hoe ver de muis van het midden kan bewegen voordat het schip draait.",
+ "mouseSensitivity": "Muisgevoeligheid",
+ "mouseSensitivityHelp": "Hoe ver de muis het vizier verplaatst: besturen, de mijnboor en vrij rondkijken.",
  "mouseSteering": "Muisbesturing",
  "mpAPilot": "Een piloot",
  "mpAccept": "Accepteren",

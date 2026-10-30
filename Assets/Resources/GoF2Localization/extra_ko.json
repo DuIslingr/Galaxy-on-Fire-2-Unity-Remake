@@ -368,6 +368,8 @@
  "modsTurnOn": "활성화",
  "mouseDeadzone": "마우스 조종 데드존",
  "mouseDeadzoneHelp": "함선이 회전하기 전에 마우스가 중앙에서 움직일 수 있는 거리.",
+ "mouseSensitivity": "마우스 감도",
+ "mouseSensitivityHelp": "마우스가 조준선을 움직이는 정도: 조종, 채굴 드릴, 자유 시점.",
  "mouseSteering": "마우스 조종",
  "mpAPilot": "파일럿",
  "mpAccept": "수락",
