@@ -73,9 +73,12 @@ namespace GoF2Remake.UI
                 if (sun == null) continue;
                 sun.name = "Sun " + s.name;
                 sun.transform.localPosition = U(GalaxyMap.SunPosition(s));
-                sunScale = sun.transform.localScale.x;
+                // Modified: one constant world size for every sun (SunSize), like the original's: they never change size with the zoom.
+                sunScale = sun.transform.localScale.x * SunSize;
+                sun.transform.localScale = Vector3.one * sunScale;
                 var mat = s.textureIndex >= 0 && s.textureIndex < assets.sunMaterials.Length ? assets.sunMaterials[s.textureIndex] : null;
                 if (s.index == SupernovaSystem && SupernovaContained) mat = ContainedSunMaterial(mat) ?? mat;   // remake
+                mat = GammaSun(mat);   // Modified: the glow's dim tail faded out like the original's
                 if (mat != null) foreach (var r in sun.GetComponentsInChildren<Renderer>()) r.sharedMaterial = mat;
                 suns[s.index] = sun.transform;
             }
