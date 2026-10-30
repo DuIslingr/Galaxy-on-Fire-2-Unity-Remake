@@ -584,8 +584,7 @@ namespace GoF2Remake.Data
                     break;
                 case AgentOffer.SellSystem:
                     Session.Credits -= a.sellPrice;
-                    var vis = GalaxyMap.Visibility(db);
-                    if (vis != null && a.sellSystem >= 0 && a.sellSystem < vis.Length) vis[a.sellSystem] = true;
+                    GalaxyMap.Reveal(db, a.sellSystem);   // Status::setSystemVisibility
                     RevealedSystem = a.sellSystem;
                     a.accepted = true;
                     break;

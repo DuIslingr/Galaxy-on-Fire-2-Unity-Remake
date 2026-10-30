@@ -63,6 +63,16 @@ namespace GoF2Remake.Data
             return Effective(Session.SystemVisible);
         }
 
+        /// <summary>Status::setSystemVisibility(system, true): the system revealed for good (bought coordinates, a story step).
+        /// Into Session.SystemVisible, never Visibility's result: that is a copy while an event, a mod's condition or a missing
+        /// mod system overrides the map, and a reveal written into it was lost (Discord report "Bug with buying a hidden
+        /// systems": Suteo's and Y'mirr's coordinates bought, the systems stayed hidden; the story's reveals still showed).</summary>
+        public static void Reveal(Database db, int system)
+        {
+            Visibility(db);
+            if (system >= 0 && system < Session.SystemVisible.Length) Session.SystemVisible[system] = true;
+        }
+
         static bool[] effective;
 
         /// <summary>Remake mods: the map as shown now: the revealed systems (Session.SystemVisible, what is saved), each system an

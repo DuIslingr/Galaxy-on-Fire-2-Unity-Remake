@@ -133,6 +133,17 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void APaidCoordinatesSellerRevealsItsSystemOnLoad()
+        {
+            // agents.json: story agents 12 (Ylook Pykku) sells Suteo (0), 14 (Cyphron) Y'mirr (10). Discord "Bug with buying a
+            // hidden systems": bought while the map was overridden, the reveal was lost and the seller had nothing left.
+            string hidden = "[" + string.Join(",", System.Linq.Enumerable.Repeat("false", 34)) + "]";
+            Load("{ 'version': 17, 'station': 78, 'ship': 10, 'campaignMission': 20, 'storyAgentsAccepted': [12, 14], 'systemVisible': " + hidden + " }");
+            Assert.IsTrue(Session.SystemVisible[0] && Session.SystemVisible[10]);
+            Assert.IsFalse(Session.SystemVisible[1], "Pan's seller wasn't paid");
+        }
+
+        [Test]
         public void TheLaterFieldsDefaultWhenAnOlderSaveLacksThem()
         {
             // Versions 13-17 add the quests, a mod campaign, hardcore, the mods' game options and the pirate board.

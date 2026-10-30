@@ -599,11 +599,7 @@ namespace GoF2Remake.Data
             if (stock != null && !stock.ships.Contains(ship)) stock.ships.Add(ship);
         }
 
-        static void RevealSystem(Database db, int system)
-        {
-            GalaxyMap.Visibility(db);
-            if (Session.SystemVisible != null && system >= 0 && system < Session.SystemVisible.Length) Session.SystemVisible[system] = true;
-        }
+        static void RevealSystem(Database db, int system) => GalaxyMap.Reveal(db, system);
 
         /// <summary>ModStation::OnInitialize's per-step station tweaks (campaign_flow.md 3.1 6), when docking.</summary>
         public static void OnDocked(Database db, int station, StationStock stock)

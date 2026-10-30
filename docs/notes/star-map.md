@@ -92,6 +92,13 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   A gateless start system (Mido) has no route, like the original.
 - **Reveal** (the lounge's bought coordinates, `revealSystem`): the camera on the new system, hidden (no label, lines or
   input) for 4000 ms while its sun grows (remake: to the normal size), then selected; view only.
+  The coordinates and the story's steps reveal through `GalaxyMap.Reveal` (`Status::setSystemVisibility`), which writes
+  `Session.SystemVisible`. `Visibility`'s result is a copy while something overrides the map (an event's "system show",
+  a mod's "available" condition, a missing mod system), so never write into it: the purchase did, and bought systems
+  stayed hidden while the story's showed (Discord "Bug with buying a hidden systems", 2026-10-30; test
+  `GalaxyMapTests.BoughtCoordinatesRevealTheSystemWhileTheMapIsOverridden`). A save from then had paid and the seller
+  out of stock: `SaveGame` reveals every paid coordinates seller's system on load
+  (`SaveVersionTests.APaidCoordinatesSellerRevealsItsSystemOnLoad`).
 - **Volatile goods** (`GalaxyMap.HasVolatileGoods`: 209 / 204 in the hold): the Khador menu entry and a map target
   outside the gate routes give 612; a gate neighbour picked on the Khador map goes by the jumpgate. Mission blocks: 525
   at the gate and on the Khador entry.

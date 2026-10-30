@@ -88,6 +88,29 @@ namespace GoF2Remake.Tests
                 Assert.IsTrue(v[s], $"system {s}");
         }
 
+        [Test]
+        public void BoughtCoordinatesRevealTheSystemWhileTheMapIsOverridden()
+        {
+            // Discord report "Bug with buying a hidden systems": Suteo (0) and Y'mirr (10) bought at a bar stayed hidden. An
+            // event's "system show" (or a mod's condition, a missing mod system) makes Visibility return a copy; the purchase
+            // wrote the reveal into that copy. GalaxyMap.Reveal writes the saved map.
+            GalaxyMap.SetShown(32, true);
+            try
+            {
+                Assert.AreNotSame(Session.SystemVisible, GalaxyMap.Visibility(Db), "the map is a copy while overridden");
+                GalaxyMap.Reveal(Db, 0);
+                GalaxyMap.Reveal(Db, 10);
+                Assert.IsTrue(Session.SystemVisible[0] && Session.SystemVisible[10], "saved");
+                Assert.IsTrue(GalaxyMap.IsVisible(Db, 0) && GalaxyMap.IsVisible(Db, 10), "on the map");
+                GalaxyMap.SetShown(32, null);
+                Assert.IsTrue(GalaxyMap.IsVisible(Db, 0), "kept after the override ends");
+                Assert.IsFalse(GalaxyMap.IsVisible(Db, 32), "the event's system goes back to hidden");
+                GalaxyMap.Reveal(Db, -1);
+                GalaxyMap.Reveal(Db, 1000);   // out of range: nothing
+            }
+            finally { Session.SystemShown.Clear(); }
+        }
+
         // ---- gate routes -------------------------------------------------------------------------------------------
 
         [Test]

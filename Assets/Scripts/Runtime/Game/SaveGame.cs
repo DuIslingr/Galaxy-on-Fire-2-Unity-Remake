@@ -611,6 +611,12 @@ namespace GoF2Remake.Data
                 if (s.version < 11)   // older saves: a blueprint seller whose blueprint is owned was bought from
                     foreach (var sa in AgentData.StoryAgents)
                         if (sa.sellBlueprint >= 0 && Session.UnlockedBlueprints.Contains(sa.sellBlueprint)) Session.StoryAgentsAccepted.Add(sa.index);
+                // Coordinates bought while the map was overridden were lost (GalaxyMap.Reveal) and the seller had nothing
+                // left: every paid coordinates seller's system is revealed.
+                foreach (var sa in AgentData.StoryAgents)
+                    if (sa.sellItemSystem >= 0 && Session.StoryAgentsAccepted.Contains(sa.index) && Session.SystemVisible != null
+                        && sa.sellItemSystem < Session.SystemVisible.Length)
+                        Session.SystemVisible[sa.sellItemSystem] = true;
                 Session.ShipMods = s.shipMods ?? new List<int>();
                 Session.Blueprints = s.blueprints ?? new List<BlueprintState>();
                 Session.PendingProducts = s.pendingProducts ?? new List<PendingProduct>();
