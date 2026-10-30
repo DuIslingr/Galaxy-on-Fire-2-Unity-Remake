@@ -1,0 +1,36 @@
+[
+    // A cruise drive, made from the Khador Drive (85): its icon and look, its own rules (Modding/README.md "Cruise drives").
+    // cruiseSpeed: the forward speed factor in hundredths; cruiseRange: the distance one leg of energy cells buys (game
+    // units, 20 a metre); cruiseChargeMs: the charge after the press; energyCells: the cells a leg costs (twice on Extreme).
+    {
+        "id": "slipstream",
+        "base": 85,
+        "name": { "en": "Khador Slipstream", "de": "Khador-Slipstream" },
+        "description": {
+            "en": "A cut-down Void crystal array on the Khador Drive's pattern. Too weak to fold space between the stars, it folds it a little: the ship slips through the orbit at several times its speed as long as the pilot holds the charge, paying in energy cells. Anything solid ahead, a locked destination close by or a fight breaks the slipstream.",
+            "de": "Eine abgespeckte Void-Kristallanordnung nach dem Muster des Khador-Antriebs. Zu schwach, um den Raum zwischen den Sternen zu falten, faltet sie ihn ein wenig: Das Schiff gleitet mit einem Vielfachen seiner Geschwindigkeit durch den Orbit, solange der Pilot die Ladung hält, bezahlt in Energiezellen. Alles Feste voraus, ein nahes erfasstes Ziel oder ein Kampf bricht den Slipstream."
+        },
+        "techLevel": 7,
+        "occurrence": 25,
+        "price": [148000, 162800],
+        "lowestPriceSystem": 4,
+        "highestPriceSystem": 21,
+        "stats": { "cruiseSpeed": 400, "cruiseRange": 60000, "cruiseChargeMs": 2000, "energyCells": 1 }
+    },
+    // The stronger one: faster, charges quicker, and a leg of cells carries it further.
+    {
+        "id": "slipstream_ii",
+        "base": 85,
+        "name": { "en": "Khador Slipstream II", "de": "Khador-Slipstream II" },
+        "description": {
+            "en": "The Slipstream with a second crystal array: a shorter charge, a faster slip and a longer way on every energy cell.",
+            "de": "Der Slipstream mit einer zweiten Kristallanordnung: kürzere Ladung, schnellerer Flug und ein längerer Weg mit jeder Energiezelle."
+        },
+        "techLevel": 9,
+        "occurrence": 12,
+        "price": [298000, 327800],
+        "lowestPriceSystem": 4,
+        "highestPriceSystem": 21,
+        "stats": { "cruiseSpeed": 600, "cruiseRange": 90000, "cruiseChargeMs": 1500, "energyCells": 1 }
+    }
+]

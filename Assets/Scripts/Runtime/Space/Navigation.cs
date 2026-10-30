@@ -47,7 +47,7 @@ using UnityEngine.SceneManagement;
 namespace GoF2Remake.Flight
 {
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
-    public class Navigation : MonoBehaviour
+    public partial class Navigation : MonoBehaviour
     {
         public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary, TimeExtender,
                            Distress, Assist,
@@ -269,9 +269,10 @@ namespace GoF2Remake.Flight
         /// autopilot, the asteroid approach, an object's approach); its turns, timers and the camera keep their pace.</summary>
         public bool Cruise { get; private set; }
         /// <summary>The player ship's forward speed factor (ShipController, Mining's approach): from 1 up to FastForwardScale
-        /// while cruising, eased in over CruiseRampUpMs (smoothstep) and back over CruiseRampDownMs.</summary>
+        /// while cruising, eased in over CruiseRampUpMs (smoothstep) and back over CruiseRampDownMs; or the mounted cruise
+        /// drive's factor (CruiseDrive.Factor, its own ramp) while that runs (NavigationCruiseDrive).</summary>
         public static float CruiseFactor { get; private set; } = 1f;
-        /// <summary>The cruise is held and allowed now (its boost look, FlightModel.CruiseVisual, follows this).</summary>
+        /// <summary>The cruise is held and allowed now, or the cruise drive runs (its boost look, FlightModel.CruiseVisual, follows this).</summary>
         public static bool Cruising { get; private set; }
         const float CruiseRampUpMs = 3000f, CruiseRampDownMs = 1200f;
         float cruiseLevel;
@@ -332,6 +333,7 @@ namespace GoF2Remake.Flight
             sfx.playOnAwake = false;
             var scanner = Shop.FirstMounted(database, 17);
             LockTimeMs = Cheats.LockMs(scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000);
+            SetupDrive(database);   // remake: a mounted cruise drive (NavigationCruiseDrive)
             gateRadiusUnits = layout.JumpgateRadius;
 
             // Level::getLandmarks: [0] station (none in empty orbits), [1] the visible jumpgate (gate orbit only).
@@ -525,6 +527,7 @@ namespace GoF2Remake.Flight
         {
             if (ship == null) return;
             float dtMs = Time.deltaTime * 1000f;
+            UpdateDrive(dtMs);
             UpdateCruise(dtMs);
             // PlayerEgo::update: whatever set the player route (a campaign level, a freelance mission's waypoints, a
             // Challenge's course, step 59's convoy point), Route::update advances it from the ship's position every frame;
@@ -745,9 +748,11 @@ namespace GoF2Remake.Flight
 
         void UpdateCruise(float dtMs)
         {
-            Cruising = Cruise && !halted && !Jumping;
-            cruiseLevel = Mathf.MoveTowards(cruiseLevel, Cruising ? 1f : 0f, Mathf.Max(0f, dtMs) / (Cruising ? CruiseRampUpMs : CruiseRampDownMs));
-            CruiseFactor = 1f + (FastForwardScale - 1f) * cruiseLevel * cruiseLevel * (3f - 2f * cruiseLevel);
+            bool cruise = Cruise && !halted && !Jumping;
+            Cruising = cruise || DriveCruising;
+            cruiseLevel = Mathf.MoveTowards(cruiseLevel, cruise ? 1f : 0f, Mathf.Max(0f, dtMs) / (cruise ? CruiseRampUpMs : CruiseRampDownMs));
+            float multiplayer = 1f + (FastForwardScale - 1f) * cruiseLevel * cruiseLevel * (3f - 2f * cruiseLevel);
+            CruiseFactor = Mathf.Max(multiplayer, Drive != null ? Drive.Factor : 1f);   // remake: the cruise drive's own ramp
         }
 
         void SetFastForward(bool on)

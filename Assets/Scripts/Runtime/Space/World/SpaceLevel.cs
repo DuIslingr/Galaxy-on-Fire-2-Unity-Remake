@@ -372,6 +372,7 @@ namespace GoF2Remake.World
             // Ship combat: the player's Player object, the orbit's NPC traffic, the ship / salvage locks.
             Health = Player.gameObject.AddComponent<PlayerHealth>();
             Health.Setup(db, Player, chase, Weapons);
+            if (Navigation != null) Health.Hit += Navigation.InterruptDrive;   // remake: a hit drops a cruise drive
             if (Player.visualModel != null)   // NPC shots hit its real shape (with Original ship collision its cube)
                 HullCollision.Attach(Player.visualModel.gameObject, Health.Target, null, HullCollision.FlyableShip(Session.ShipIndex));
             Collision = Player.gameObject.AddComponent<PlayerCollision>();
@@ -408,6 +409,11 @@ namespace GoF2Remake.World
             ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit || builderTest || challenge || (arena != null && !arena.voids);
             Traffic.LevelMissionActive = () => (storyOrbit && Story.IsLevelMission(station)) || (missionHere && Freelance.IsMissionOrbit(station));
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (GoF2Remake.Data.NetSession.Active && !NetAuthority), Wormhole);
+            // Remake: a cruise drive's encounters (NavigationCruiseDrive, CruiseEncounterSpawner): only where the traffic is this
+            // player's own and nothing scripted runs (a multiplayer orbit another player runs rolls none).
+            Navigation.EncountersAllowed = !ownPassive && !(GoF2Remake.Data.NetSession.Active && !NetAuthority) && !prologue
+                                           && CruiseEncounterRules.Allowed(db, station, Layout.systemIndex, Layout.alienOrbit);
+            Navigation.SpawnEncounter = (entry, at, forward) => CruiseEncounterSpawner.Spawn(this, entry, at, forward);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
             Traffic.RadarHidden = () => Cutscene;
             // No locks or lock sounds (the scanner off). Remake: also in the planet jump, the jumpgate / Khador Drive scenes and

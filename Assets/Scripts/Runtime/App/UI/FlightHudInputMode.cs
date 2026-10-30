@@ -152,6 +152,7 @@ namespace GoF2Remake.UI
                 Hint(T("hudHover", "UP / DOWN"), GameControls.Hover);
                 Hint(T("hudRoll", "ROLL"), GameControls.Roll);
                 Hint(T("hudBoost", "BOOST") + " (" + T("hudHold", "HOLD") + ")", GameControls.Boost);
+                if (nav != null && nav.Drive != null) Hint(T("hudCruiseDrive", "CRUISE") + " (" + T("hudHold", "HOLD") + ")", GameControls.FastForward);   // remake: a cruise drive
                 Hint(T("hudDampeners", "DAMPENERS"), GameControls.Dampeners);
                 Hint(fire, GameControls.FirePrimary);
                 Hint(T("hudMissile", "MISSILE"), GameControls.FireSecondary);
@@ -171,6 +172,7 @@ namespace GoF2Remake.UI
             Hint(throttle, GameControls.Throttle);
             Hint(T("hudBrake", "BRAKE"), GameControls.Brake);
             Hint(T("hudBoost", "BOOST"), GameControls.Boost);
+            if (nav != null && nav.Drive != null) Hint(T("hudCruiseDrive", "CRUISE") + " (" + T("hudHold", "HOLD") + ")", GameControls.FastForward);   // remake: a cruise drive
             Hint(fire, GameControls.FirePrimary);
             Hint(T("hudMissile", "MISSILE"), GameControls.FireSecondary);
             if (weapons != null && weapons.CanCycleSecondary) Hint(T("hudSwitchSecondary", "SWITCH"), GameControls.SwitchSecondary);
