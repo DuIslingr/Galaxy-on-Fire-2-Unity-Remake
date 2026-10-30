@@ -118,6 +118,10 @@ namespace GoF2Remake.Data
         public FreelanceMission mission = new FreelanceMission();
         /// <summary>Agent+0x20 / +0x24 and the stored mission string: the text ids of the offer as first said.</summary>
         public List<int> textIds = new List<int>();
+        /// <summary>Remake (Freelance.RecordChallenge): how this rival's Challenge ended, ChallengeNone / PlayerWon / RivalWon;
+        /// the bar chat says a line about it instead of 859.</summary>
+        public int challengeResult;
+        public const int ChallengeNone = 0, PlayerWon = 1, RivalWon = 2;
 
         public bool IsStory => storyIndex >= 0;
         public bool HasMission => mission != null && !mission.IsEmpty;

@@ -3002,5 +3002,13 @@
  "mbModRaceRelNeutral": "中立",
  "mbModRaceRelEnemy": "敵対",
  "raceSpecters": "Specter",
- "khadorWormholeEscape": "ここではカドーアドライブは使えない。貨物船を破壊し、ワームホールから脱出せよ。"
+ "khadorWormholeEscape": "ここではカドーアドライブは使えない。貨物船を破壊し、ワームホールから脱出せよ。",
+ "challengeRivalLost0": "大した腕前だな、マックスウェルさん。恐れ入ったよ。",
+ "challengeRivalLost1": "あそこで私に撃ち勝つ奴がいるとは思わなかった。報酬は一クレジット残らず君のものだ。",
+ "challengeRivalLost2": "どうやったのか、いまだに分からない。見事な操縦だったよ、パイロット。",
+ "challengeRivalLost3": "わかった、わかった、君の勝ちだ。次の一杯は私のおごりだ。",
+ "challengeRivalWon0": "射撃のレッスンが必要かい、マックスウェルさん？安くしておくよ。",
+ "challengeRivalWon1": "クレジットをありがとう。狙いの付け方を覚えたらまた来な。",
+ "challengeRivalWon2": "次は頑張れよ、マックスウェルさん。もっと大きな銃でな。",
+ "challengeRivalWon3": "気にするな、パイロット。誰にでも向いてるわけじゃない。"
 }

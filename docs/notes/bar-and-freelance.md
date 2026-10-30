@@ -47,7 +47,9 @@ generator).
   reads their name alone in red, like a Most Wanted criminal's, `Target.plateRed`, `Radar::drawCurrentLock`'s 0x64b /
   0x67f), Pirate hunting, Wanted, Junk removal (121 s, HUD countdown; gone once the mission is over, #46), Escort,
   Intercept, Challenge (score vs the rival; an odd number of pirates, i + 3 or i + 4, so the kills never tie: a tie is
-  the rival's); briefing, success / failure messages; remake waypoint to the enemies (lockable, its own marker on the
+  the rival's; remake, a player's suggestion 2026-10-30: the rival remembers the result, `Agent.challengeResult` set by
+  `Freelance.RecordChallenge`, and at the bar says one of four lines about it, `challengeRivalLost0-3` /
+  `challengeRivalWon0-3`, where the original repeats 859 "See you outside" after the contest too); briefing, success / failure messages; remake waypoint to the enemies (lockable, its own marker on the
   lock plate; it blocks no other lock). A mission orbit (the level mission Status+400) refuses docking, the gate, planet
   jumps (the autopilot's too) and the Khador Drive with 525 until the mission is won or failed, except Courier
   (`Freelance.BlocksTravel`, `MGame::dockEvent` / `Radar::draw` / `MGame::UseKhadorDrive`); the story's level missions

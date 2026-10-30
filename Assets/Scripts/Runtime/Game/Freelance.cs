@@ -247,6 +247,7 @@ namespace GoF2Remake.Data
             Standing.ApplyDelict(m.clientRace, -5);
             Session.FreelanceCompleted++;
             Session.Credits += pay;
+            RecordChallenge(true);
             Discard();
             return pay;
         }
@@ -258,7 +259,60 @@ namespace GoF2Remake.Data
             int wager = Mission.type == MissionType.Challenge ? Mission.reward : 0;
             if (GameHooks.MissionFailed != null) wager = GameHooks.MissionFailed(Mission, wager);
             Session.Credits -= wager;
+            RecordChallenge(false);
             Discard();
+        }
+
+        // ---- the rival afterwards (remake, a player's suggestion) ----------------------------------------------
+
+        /// <summary>The bar's rival of a Challenge: the accepted agent of that mission at its station (one of the last three
+        /// visited, Session.RecentStations), null when the bar has moved on.</summary>
+        public static Agent Rival(FreelanceMission m)
+        {
+            if (m == null || m.type != MissionType.Challenge) return null;
+            var stock = Session.RecentStations.Find(s => s.station == m.clientStation);
+            return stock?.agents?.Find(a => a != null && a.accepted && a.HasMission && a.mission.type == MissionType.Challenge
+                                            && a.name == m.clientName);
+        }
+
+        /// <summary>The Challenge ended ('won': the player's): its rival remembers (Agent.challengeResult).</summary>
+        static void RecordChallenge(bool won)
+        {
+            var rival = Rival(Mission);
+            if (rival != null) rival.challengeResult = won ? Agent.PlayerWon : Agent.RivalWon;
+        }
+
+        static readonly (string key, string english)[] RivalLostLines =
+        {
+            ("challengeRivalLost0", "That's some aim you've got, Mr. Maxwell. My compliments."),
+            ("challengeRivalLost1", "Didn't think anyone could outshoot me out there. You earned every credit."),
+            ("challengeRivalLost2", "Still trying to work out how you did that. Fine flying, pilot."),
+            ("challengeRivalLost3", "All right, all right, you won. Next round's on me."),
+        };
+
+        static readonly (string key, string english)[] RivalWonLines =
+        {
+            ("challengeRivalWon0", "Need a few shooting lessons, Mr. Maxwell? I'm cheap."),
+            ("challengeRivalWon1", "Thanks for the credits. Come back when you've learned to aim."),
+            ("challengeRivalWon2", "Better luck next time, Mr. Maxwell. Maybe with a bigger gun."),
+            ("challengeRivalWon3", "Don't feel bad, pilot. Not everyone's cut out for this."),
+        };
+
+        /// <summary>What the rival says at the bar after the contest (LoungeChat, in place of 859 "See you outside"): one
+        /// of four lines by 'result' (Agent.PlayerWon / RivalWon), null with no result.</summary>
+        public static string RivalLine(int result)
+        {
+            var lines = RivalLines(result);
+            return lines.Count > 0 ? lines[Random.Range(0, lines.Count)] : null;
+        }
+
+        /// <summary>The four lines RivalLine picks from for 'result', in the current language (none with no result).</summary>
+        public static List<string> RivalLines(int result)
+        {
+            var set = result == Agent.PlayerWon ? RivalLostLines : result == Agent.RivalWon ? RivalWonLines : null;
+            var lines = new List<string>();
+            if (set != null) foreach (var (key, english) in set) lines.Add(Localization.Extra(key, english));
+            return lines;
         }
     }
 }

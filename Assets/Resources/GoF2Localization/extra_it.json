@@ -3002,5 +3002,13 @@
  "mbModRaceRelNeutral": "Neutrale",
  "mbModRaceRelEnemy": "Nemico",
  "raceSpecters": "Specter",
- "khadorWormholeEscape": "Il Motore di Khador qui non funziona. Distruggi il cargo, poi fuggi attraverso il tunnel spaziale."
+ "khadorWormholeEscape": "Il Motore di Khador qui non funziona. Distruggi il cargo, poi fuggi attraverso il tunnel spaziale.",
+ "challengeRivalLost0": "Che mira, Signor Maxwell. I miei complimenti.",
+ "challengeRivalLost1": "Non pensavo che qualcuno potesse battermi là fuori. Si è guadagnato ogni credito.",
+ "challengeRivalLost2": "Sto ancora cercando di capire come ci sia riuscito. Bel volo, pilota.",
+ "challengeRivalLost3": "Va bene, va bene, ha vinto Lei. Il prossimo giro lo offro io.",
+ "challengeRivalWon0": "Le servono lezioni di tiro, Signor Maxwell? Faccio prezzi bassi.",
+ "challengeRivalWon1": "Grazie dei crediti. Torni quando avrà imparato a mirare.",
+ "challengeRivalWon2": "Più fortuna la prossima volta, Signor Maxwell. Magari con un'arma più grossa.",
+ "challengeRivalWon3": "Non se la prenda, pilota. Non tutti sono portati per questo."
 }

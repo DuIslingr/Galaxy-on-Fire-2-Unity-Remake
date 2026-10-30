@@ -3002,5 +3002,13 @@
  "mbModRaceRelNeutral": "Neutral",
  "mbModRaceRelEnemy": "Feind",
  "raceSpecters": "Specters",
- "khadorWormholeEscape": "Der Khador-Antrieb funktioniert hier nicht. Zerstöre den Frachter und flieg dann durch das Wurmloch."
+ "khadorWormholeEscape": "Der Khador-Antrieb funktioniert hier nicht. Zerstöre den Frachter und flieg dann durch das Wurmloch.",
+ "challengeRivalLost0": "Sie können wirklich zielen, Mr. Maxwell. Meine Hochachtung.",
+ "challengeRivalLost1": "Ich hätte nicht gedacht, dass mich da draußen jemand überbietet. Sie haben sich jeden Credit verdient.",
+ "challengeRivalLost2": "Ich frage mich immer noch, wie Sie das geschafft haben. Gut geflogen, Pilot.",
+ "challengeRivalLost3": "Schon gut, schon gut, Sie haben gewonnen. Die nächste Runde geht auf mich.",
+ "challengeRivalWon0": "Brauchen Sie ein paar Schießstunden, Mr. Maxwell? Ich bin günstig.",
+ "challengeRivalWon1": "Danke für die Credits. Kommen Sie wieder, wenn Sie zielen gelernt haben.",
+ "challengeRivalWon2": "Mehr Glück beim nächsten Mal, Mr. Maxwell. Vielleicht mit einer größeren Kanone.",
+ "challengeRivalWon3": "Nehmen Sie's nicht so schwer, Pilot. Nicht jeder ist dafür gemacht."
 }

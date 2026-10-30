@@ -3002,5 +3002,13 @@
  "mbModRaceRelNeutral": "तटस्थ",
  "mbModRaceRelEnemy": "शत्रु",
  "raceSpecters": "Specters",
- "khadorWormholeEscape": "Khador Drive यहाँ काम नहीं करता। मालवाहक जहाज़ को नष्ट करें, फिर वर्महोल से भाग निकलें।"
+ "khadorWormholeEscape": "Khador Drive यहाँ काम नहीं करता। मालवाहक जहाज़ को नष्ट करें, फिर वर्महोल से भाग निकलें।",
+ "challengeRivalLost0": "क्या निशाना है, Mr. Maxwell। मेरी ओर से बधाई।",
+ "challengeRivalLost1": "मैंने नहीं सोचा था कि वहाँ कोई मुझसे बेहतर निशाना लगा पाएगा। तुमने हर क्रेडिट कमाया है।",
+ "challengeRivalLost2": "अब तक समझने की कोशिश में हूँ कि तुमने वो कैसे किया। बढ़िया उड़ान, पायलट।",
+ "challengeRivalLost3": "ठीक है, ठीक है, तुम जीत गए। अगला जाम मेरी तरफ़ से।",
+ "challengeRivalWon0": "निशानेबाज़ी की कुछ क्लासें चाहिए, Mr. Maxwell? मेरी फ़ीस कम है।",
+ "challengeRivalWon1": "क्रेडिट्स के लिए शुक्रिया। जब निशाना लगाना सीख जाओ, तब लौटना।",
+ "challengeRivalWon2": "अगली बार किस्मत अच्छी हो, Mr. Maxwell। शायद किसी बड़ी बंदूक के साथ।",
+ "challengeRivalWon3": "बुरा मत मानो, पायलट। हर कोई इस काम के लिए नहीं बना होता।"
 }

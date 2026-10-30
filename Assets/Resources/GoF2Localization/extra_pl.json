@@ -3002,5 +3002,13 @@
  "mbModRaceRelNeutral": "Neutralny",
  "mbModRaceRelEnemy": "Wróg",
  "raceSpecters": "Specterzy",
- "khadorWormholeEscape": "Napęd Khadora tu nie działa. Zniszcz frachtowiec, a potem uciekaj przez czarną dziurę."
+ "khadorWormholeEscape": "Napęd Khadora tu nie działa. Zniszcz frachtowiec, a potem uciekaj przez czarną dziurę.",
+ "challengeRivalLost0": "Niezłe oko, panie Maxwell. Moje gratulacje.",
+ "challengeRivalLost1": "Kto by pomyślał, że ktoś mnie tam przebije. Zasłużyłeś na każdy kredyt.",
+ "challengeRivalLost2": "Wciąż nie rozumiem, jak to zrobiłeś. Świetne latanie, pilocie.",
+ "challengeRivalLost3": "Dobra, dobra, wygrałeś. Następna kolejka na mój koszt.",
+ "challengeRivalWon0": "Może kilka lekcji strzelania, panie Maxwell? Biorę niewiele.",
+ "challengeRivalWon1": "Dzięki za kredyty. Wróć, jak nauczysz się celować.",
+ "challengeRivalWon2": "Więcej szczęścia następnym razem, panie Maxwell. Może z większą bronią.",
+ "challengeRivalWon3": "Nie przejmuj się, pilocie. Nie każdy się do tego nadaje."
 }

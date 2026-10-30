@@ -116,8 +116,10 @@ namespace GoF2Remake.Data
             }
             else if (a.accepted || a.offer == AgentOffer.SmallTalk && a.textIds.Count == 0)
             {
-                Text = T(a.offer == AgentOffer.Purchase ? 857
-                         : a.offer == AgentOffer.Wingmen || a.HasMission && a.mission.type == MissionType.Challenge ? 859 : 858);
+                // Remake (a player's suggestion): a Challenge's rival says how the contest went (Freelance.RivalLine).
+                Text = Freelance.RivalLine(a.challengeResult)
+                       ?? T(a.offer == AgentOffer.Purchase ? 857
+                            : a.offer == AgentOffer.Wingmen || a.HasMission && a.mission.type == MissionType.Challenge ? 859 : 858);
                 closing = true;
                 offerSpent = true;
                 SetChoices();

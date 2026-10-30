@@ -3002,5 +3002,13 @@
  "mbModRaceRelNeutral": "Neutraal",
  "mbModRaceRelEnemy": "Vijand",
  "raceSpecters": "Specters",
- "khadorWormholeEscape": "De Khador-aandrijving werkt hier niet. Vernietig het vrachtschip en ontsnap dan door het wormgat."
+ "khadorWormholeEscape": "De Khador-aandrijving werkt hier niet. Vernietig het vrachtschip en ontsnap dan door het wormgat.",
+ "challengeRivalLost0": "Wat een vizier, meneer Maxwell. Mijn complimenten.",
+ "challengeRivalLost1": "Ik had niet gedacht dat iemand me daarbuiten zou overtreffen. U hebt elke credit verdiend.",
+ "challengeRivalLost2": "Ik snap nog steeds niet hoe u dat deed. Mooi gevlogen, piloot.",
+ "challengeRivalLost3": "Goed, goed, u hebt gewonnen. Het volgende rondje is van mij.",
+ "challengeRivalWon0": "Wat schietlessen nodig, meneer Maxwell? Ik ben niet duur.",
+ "challengeRivalWon1": "Bedankt voor de credits. Kom terug als u hebt leren richten.",
+ "challengeRivalWon2": "Meer geluk volgende keer, meneer Maxwell. Misschien met een groter kanon.",
+ "challengeRivalWon3": "Trek het u niet aan, piloot. Niet iedereen is hiervoor in de wieg gelegd."
 }

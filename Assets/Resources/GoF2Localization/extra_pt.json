@@ -3002,5 +3002,13 @@
  "mbModRaceRelNeutral": "Neutro",
  "mbModRaceRelEnemy": "Inimigo",
  "raceSpecters": "Specters",
- "khadorWormholeEscape": "O Khador Drive não funciona aqui. Destrua o cargueiro e depois fuja pelo buraco de minhoca."
+ "khadorWormholeEscape": "O Khador Drive não funciona aqui. Destrua o cargueiro e depois fuja pelo buraco de minhoca.",
+ "challengeRivalLost0": "Você tem uma mira e tanto, Sr. Maxwell. Meus parabéns.",
+ "challengeRivalLost1": "Não achei que alguém fosse me superar lá fora. Você mereceu cada crédito.",
+ "challengeRivalLost2": "Ainda estou tentando entender como você fez aquilo. Belo trabalho, piloto.",
+ "challengeRivalLost3": "Tudo bem, tudo bem, você venceu. Na próxima eu pago a bebida.",
+ "challengeRivalWon0": "Precisa de umas aulas de tiro, Sr. Maxwell? Eu cobro barato.",
+ "challengeRivalWon1": "Valeu pelos créditos. Volte quando aprender a mirar.",
+ "challengeRivalWon2": "Mais sorte da próxima vez, Sr. Maxwell. Quem sabe com uma arma maior.",
+ "challengeRivalWon3": "Não fique triste, piloto. Nem todo mundo nasceu para isso."
 }

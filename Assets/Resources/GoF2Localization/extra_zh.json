@@ -3002,5 +3002,13 @@
  "mbModRaceRelNeutral": "中立",
  "mbModRaceRelEnemy": "敌人",
  "raceSpecters": "Specter",
- "khadorWormholeEscape": "Khador驱动器在这里无法使用。摧毁货船，然后从虫洞逃离。"
+ "khadorWormholeEscape": "Khador驱动器在这里无法使用。摧毁货船，然后从虫洞逃离。",
+ "challengeRivalLost0": "好枪法，Maxwell先生。佩服佩服。",
+ "challengeRivalLost1": "没想到在外面竟有人能打得过我。这些信用分您每一分都受之无愧。",
+ "challengeRivalLost2": "我到现在还没弄明白您是怎么做到的。飞得漂亮，飞行员。",
+ "challengeRivalLost3": "好吧，好吧，您赢了。下一轮酒我请。",
+ "challengeRivalWon0": "要不要上几节射击课，Maxwell先生？我收费很便宜。",
+ "challengeRivalWon1": "谢谢您的信用分。等您学会瞄准再来吧。",
+ "challengeRivalWon2": "祝您下次好运，Maxwell先生。也许换把大点的枪。",
+ "challengeRivalWon3": "别难过，飞行员。不是每个人都适合干这行。"
 }
