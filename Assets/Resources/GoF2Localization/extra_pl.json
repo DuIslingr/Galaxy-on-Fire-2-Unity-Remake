@@ -1229,6 +1229,8 @@
   "shopTradeInNote": "Twój {0} zostaje przyjęty w rozliczeniu za {1}, więc płacisz {2}.",
   "shopTradeInRefund": "Twój {0} zostaje przyjęty w rozliczeniu za {1}, więc dostajesz {2} z powrotem.",
  "showFps": "Pokaż FPS",
+  "gameCursor": "Kursor gry",
+  "gameCursorHelp": "Kursor myszy w stylu interfejsu; wyłączony: systemowy.",
  "showStoryStep": "Pokaż krok fabuły",
  "showStoryStepHelp": "Bieżący krok fabuły w prawym dolnym rogu, do zgłoszeń błędów.",
  "slot": "Miejsce",

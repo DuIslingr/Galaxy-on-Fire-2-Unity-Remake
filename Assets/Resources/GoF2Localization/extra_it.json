@@ -1229,6 +1229,8 @@
   "shopTradeInNote": "La tua {0} viene ritirata per {1}, quindi paghi {2}.",
   "shopTradeInRefund": "La tua {0} viene ritirata per {1}, quindi ricevi {2}.",
  "showFps": "Mostra FPS",
+  "gameCursor": "Cursore del gioco",
+  "gameCursorHelp": "Un cursore del mouse nello stile dell'interfaccia; disattivato, quello di sistema.",
  "showStoryStep": "Mostra passo della storia",
  "showStoryStepHelp": "Il passo della storia in basso a destra, per le segnalazioni di bug.",
  "slot": "Slot",

@@ -1229,6 +1229,8 @@
   "shopTradeInNote": "Je {0} wordt ingeruild voor {1}, dus je betaalt {2}.",
   "shopTradeInRefund": "Je {0} wordt ingeruild voor {1}, dus je krijgt {2} terug.",
  "showFps": "FPS tonen",
+  "gameCursor": "Spelcursor",
+  "gameCursorHelp": "Een muisaanwijzer in de stijl van de interface; uit: die van het systeem.",
  "showStoryStep": "Verhaalstap tonen",
  "showStoryStepHelp": "De huidige verhaalstap rechtsonder, voor bugmeldingen.",
  "slot": "Plek",

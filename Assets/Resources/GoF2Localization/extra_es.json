@@ -1230,6 +1230,8 @@
   "shopTradeInNote": "Tu {0} se entrega por {1}, así que pagas {2}.",
   "shopTradeInRefund": "Tu {0} se entrega por {1}, así que recibes {2}.",
  "showFps": "Mostrar FPS",
+  "gameCursor": "Cursor del juego",
+  "gameCursorHelp": "Un cursor del ratón con el estilo de la interfaz; desactivado, el del sistema.",
  "showStoryStep": "Mostrar paso de la historia",
  "showStoryStepHelp": "El paso de la historia actual abajo a la derecha, para informes de errores.",
  "slot": "Ranura",

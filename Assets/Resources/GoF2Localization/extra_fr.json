@@ -1230,6 +1230,8 @@
   "shopTradeInNote": "Votre {0} est repris pour {1}, vous payez donc {2}.",
   "shopTradeInRefund": "Votre {0} est repris pour {1}, vous récupérez donc {2}.",
  "showFps": "Afficher les FPS",
+  "gameCursor": "Curseur du jeu",
+  "gameCursorHelp": "Un curseur de souris dans le style de l'interface ; désactivé, celui du système.",
  "showStoryStep": "Afficher l'étape de l'histoire",
  "showStoryStepHelp": "L'étape de l'histoire en bas à droite, pour les rapports de bug.",
  "slot": "Emplacement",

@@ -1230,6 +1230,8 @@
   "shopTradeInNote": "Deine {0} wird für {1} in Zahlung genommen, du zahlst also {2}.",
   "shopTradeInRefund": "Deine {0} wird für {1} in Zahlung genommen, du bekommst also {2} zurück.",
  "showFps": "FPS anzeigen",
+  "gameCursor": "Spiel-Mauszeiger",
+  "gameCursorHelp": "Ein Mauszeiger im Stil der Oberfläche; aus: der des Systems.",
  "showStoryStep": "Story-Schritt anzeigen",
  "showStoryStepHelp": "Der aktuelle Story-Schritt unten rechts, für Fehlerberichte.",
  "slot": "Platz",

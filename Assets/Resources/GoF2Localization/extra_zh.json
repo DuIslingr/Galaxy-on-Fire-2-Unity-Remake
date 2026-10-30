@@ -1155,6 +1155,8 @@
   "shopTradeInNote": "你的 {0} 以 {1} 折价换购，因此你需支付 {2}。",
   "shopTradeInRefund": "你的 {0} 以 {1} 折价换购，因此你将退回 {2}。",
   "showFps": "显示FPS",
+  "gameCursor": "游戏鼠标指针",
+  "gameCursorHelp": "界面风格的鼠标指针；关闭时使用系统指针。",
   "showStoryStep": "显示剧情步骤",
   "slot": "槽位",
   "slotDeleteHintKeys": "按住 Delete 键或按住存档即可删除",

@@ -1225,6 +1225,8 @@
   "shopTradeInNote": "あなたの{0}は{1}で下取りされるため、支払いは{2}です。",
   "shopTradeInRefund": "あなたの{0}は{1}で下取りされるため、{2}が戻ってきます。",
  "showFps": "FPSを表示",
+  "gameCursor": "ゲーム用マウスカーソル",
+  "gameCursorHelp": "インターフェースのスタイルのマウスカーソル。オフにするとシステムのカーソル。",
  "showStoryStep": "ストーリーのステップを表示",
  "showStoryStepHelp": "右下に現在のストーリーステップを表示（バグ報告用）。",
  "slot": "スロット",
