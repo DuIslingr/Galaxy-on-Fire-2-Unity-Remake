@@ -56,6 +56,7 @@ namespace GoF2Remake.World
                 GoF2Remake.World.SpaceHooks.SceneFog(false);
                 return;
             }
+            OrbitBuilder.SetSunGamma(0f);   // Modified: the hangar's key light stays URP's linear diffuse
             if (customHangar == null) SkyReflection.SetHangar(HangarIndex);   // Remake: the hangar's own (none in the Valkyrie's)
             if (keyLight != null)
             {
@@ -78,7 +79,7 @@ namespace GoF2Remake.World
         void ApplyLoungeLighting()
         {
             SkyReflection.SetSystem(Layout);
-            OrbitBuilder.SetupLights(Layout, keyLight, null, sunIntensityAt2, sunShadows: LightShadows.Soft);   // the room's own shadows
+            OrbitBuilder.SetupLights(Layout, keyLight, null, sunIntensityAt2, sunShadows: LightShadows.Soft, gammaSun: false);   // the room's own shadows
             RenderSettings.ambientMode = AmbientMode.Skybox;
             DynamicGI.UpdateEnvironment();
             if (customBar != null)

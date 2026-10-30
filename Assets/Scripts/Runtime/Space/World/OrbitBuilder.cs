@@ -113,8 +113,11 @@ namespace GoF2Remake.World
         /// 50 m shadow distance the player's own hull shaded itself as the camera came close, Action Freeze, a player's report
         /// 2026-10-17), the Space Lounge keeps its room's.</param>
         public static void SetupLights(OrbitLayout layout, Light sun, Light planet, float sunIntensityAt2 = 1.6f, float planetIntensity = 1f,
-                                       LightShadows sunShadows = LightShadows.None)
+                                       LightShadows sunShadows = LightShadows.None, bool gammaSun = true)
         {
+            // Modified: the hulls' sunlit side as the original's gamma-space LIGHT0 (GoF2/Hull, _GoF2SunGamma)
+            SetSunGamma(gammaSun && sun != null ? 2f / Mathf.Max(sunIntensityAt2, 1e-3f) : 0f);
+            Shader.SetGlobalVector("_GoF2SunAmbient", gammaSun && sun != null ? (Vector4)SceneAmbient(layout) : Vector4.zero);   // gamma values: not SetGlobalColor, which linearises
             if (planet != null) planet.shadows = LightShadows.None;
             if (sun != null)
             {
@@ -133,6 +136,41 @@ namespace GoF2Remake.World
                 planet.color = layout.planetLightColor;
                 planet.intensity = planetIntensity;
             }
+            // Modified: LIGHT1 in GoF2/Hull's gamma-space sum (see _GoF2PlanetLight)
+            bool gammaPlanet = gammaSun && sun != null && planet != null && planet.enabled;
+            Shader.SetGlobalVector("_GoF2PlanetLight", gammaPlanet ? (Vector4)Vector3.forward : Vector4.zero);
+            Shader.SetGlobalVector("_GoF2PlanetColor", gammaPlanet ? (Vector4)layout.planetLightColor : Vector4.zero);   // gamma values
+            Shader.SetGlobalVector("_GoF2PlanetLinear", gammaPlanet ? (Vector4)(planet.color.linear * planet.intensity) : Vector4.zero);
+        }
+
+        /// <summary>Modified: the sunlit side's HDR glow (_GoF2SunGlow), for the bloom; matched by eye to the original's
+        /// screenshots (Kaamo).</summary>
+        const float SunGlow = 1.1f;
+        /// <summary>Modified: the brightness (gamma, texture x LIGHT0) where that glow starts.</summary>
+        const float SunGlowFrom = 0.35f;
+
+        /// <summary>Modified: StarSystem::initLight's LightSetGlobalSceneColorAmbient, kA x the sun colour (gamma): kA 0.15, 0.7
+        /// in the supernova system (texture 15) but at mission 89 and from 158, where the sun colour is halved first.</summary>
+        public static Color SceneAmbient(OrbitLayout layout)
+        {
+            var c = layout.sunColor;
+            float k = 0.15f;
+            if (layout.systemTexture == 15)
+            {
+                int m = Session.WorldIndex;
+                if (m != 89 && m < 158) k = 0.7f;
+                else c *= 0.5f;
+            }
+            return new Color(c.r * k, c.g * k, c.b * k, 1f);
+        }
+
+        /// <summary>Modified: GoF2/Hull's gamma-space sunlight (_GoF2SunGamma): the original's LIGHT0 level per unit of the
+        /// main light's colour, 0 = URP's own linear diffuse (the hangars, the lounge).</summary>
+        public static void SetSunGamma(float level)
+        {
+            Shader.SetGlobalFloat("_GoF2SunGamma", level);
+            Shader.SetGlobalFloat("_GoF2SunGlow", level > 0f ? SunGlow : 0f);
+            Shader.SetGlobalFloat("_GoF2SunGlowFrom", SunGlowFrom);
         }
 
         // ---- objects -----------------------------------------------------------------------------------------
