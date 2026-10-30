@@ -350,6 +350,12 @@ namespace GoF2Remake.Data
             return t != 0x00 && t != 0x0b && t != 0x0d && t != 0xab && t != 0xac && t != 0xbd;
         }
 
+        /// <summary>Remake (#84): at 42 in the Void the way out is the wormhole, which shows the mother ship's explosion; its
+        /// 0xa0 mission isn't a level mission there (its target is that orbit), so the original's Khador Drive skipped the
+        /// ending. The drive is refused with a hint to the wormhole (a player's report took "Not possible on a mission." for
+        /// a bug).</summary>
+        public static bool EscapesByWormhole(int station) => !Session.FreePlay && Index == 42 && station == Session.VoidOrbit;
+
         /// <summary>ModStation::OnInitialize menu buttons: Hangar from 5, Map / Missions from 9 (not at 15), Lounge from 12
         /// (not at 15, never at stations 100 / 101).</summary>
         /// <summary>ModStation::OnKeyPress (the menu buttons, 528 "Not available." otherwise): no Hangar in a loaner (48, 49,

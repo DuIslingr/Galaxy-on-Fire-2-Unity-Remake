@@ -3001,5 +3001,6 @@
  "mbModRaceRelFriend": "朋友",
  "mbModRaceRelNeutral": "中立",
  "mbModRaceRelEnemy": "敌人",
- "raceSpecters": "Specter"
+ "raceSpecters": "Specter",
+ "khadorWormholeEscape": "Khador驱动器在这里无法使用。摧毁货船，然后从虫洞逃离。"
 }

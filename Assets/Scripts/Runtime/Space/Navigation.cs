@@ -241,6 +241,10 @@ namespace GoF2Remake.Flight
 
         /// <summary>Set by the level: planet jumps and the Khador Drive are refused (story, campaign_flow.md 7).</summary>
         public Func<bool> JumpsBlocked;
+        /// <summary>Set by the level: the HUD text for a jump JumpsBlocked refuses, null = 525 "Not possible on a mission."
+        /// (42 in the Void: the way out is the wormhole, Story.EscapesByWormhole).</summary>
+        public Func<string> JumpRefusalText;
+        string JumpRefusal => JumpRefusalText?.Invoke() ?? Localization.Get(525);
         /// <summary>Set by the level: a level's cutscene or the launch / arrival fly-in runs. MGame::OnRender2D skips
         /// Radar::draw then, so no lock completes and no lock sound plays (a player's report: the lock beep in step 160's cutscene).</summary>
         public Func<bool> RadarHidden;
@@ -486,7 +490,7 @@ namespace GoF2Remake.Flight
             }
             if (target.kind == Kind.KhadorDrive)
             {
-                if (JumpsBlocked != null && JumpsBlocked() && Story.ForcedKhadorTarget(Session.StationIndex) == null) { Say(Localization.Get(525)); return; }
+                if (JumpsBlocked != null && JumpsBlocked() && Story.ForcedKhadorTarget(Session.StationIndex) == null) { Say(JumpRefusal); return; }
                 if (GalaxyMap.HasVolatileGoods) { Say(Localization.Get(612)); return; }   // MGame::UseKhadorDrive: ChoiceWindow 612
                 KhadorRequested?.Invoke();
                 return;
@@ -634,7 +638,7 @@ namespace GoF2Remake.Flight
             if (Locked != null && Locked == AutopilotTarget && Locked.kind == Kind.Planet)
             {
                 if (PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) { SetAutopilot(null); return; }
-                if (JumpsBlocked != null && JumpsBlocked()) { Refuse(); return; }   // Radar::draw: 525 instead of the jump
+                if (JumpsBlocked != null && JumpsBlocked()) { Refuse(JumpRefusal); return; }   // Radar::draw: 525 instead of the jump
                 StartJump(Locked);
             }
         }
@@ -678,7 +682,7 @@ namespace GoF2Remake.Flight
             }
             if (Locked == null) return false;
             if (layout.alienOrbit && !ActsInAlienOrbit(Locked.kind)) return false;
-            if (Locked.kind == Kind.Planet && JumpsBlocked != null && JumpsBlocked()) { Say(Localization.Get(525)); return false; }
+            if (Locked.kind == Kind.Planet && JumpsBlocked != null && JumpsBlocked()) { Say(JumpRefusal); return false; }
             if (Locked.kind == Kind.Planet && PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) return false;
             if (Locked.kind == Kind.Planet) StartJump(Locked);
             else if (Locked.kind == Kind.DockingTarget) { var s = Locked.dockingShip; SetAutopilot(null); Docking?.Dock(s); }

@@ -3001,5 +3001,6 @@
  "mbModRaceRelFriend": "मित्र",
  "mbModRaceRelNeutral": "तटस्थ",
  "mbModRaceRelEnemy": "शत्रु",
- "raceSpecters": "Specters"
+ "raceSpecters": "Specters",
+ "khadorWormholeEscape": "Khador Drive यहाँ काम नहीं करता। मालवाहक जहाज़ को नष्ट करें, फिर वर्महोल से भाग निकलें।"
 }

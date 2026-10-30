@@ -3001,5 +3001,6 @@
  "mbModRaceRelFriend": "Amico",
  "mbModRaceRelNeutral": "Neutrale",
  "mbModRaceRelEnemy": "Nemico",
- "raceSpecters": "Specter"
+ "raceSpecters": "Specter",
+ "khadorWormholeEscape": "Il Motore di Khador qui non funziona. Distruggi il cargo, poi fuggi attraverso il tunnel spaziale."
 }

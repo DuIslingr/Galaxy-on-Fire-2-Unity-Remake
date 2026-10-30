@@ -64,6 +64,9 @@ namespace GoF2Remake.World
         /// ship, so a player near it when he called was dragged in the moment the scene gave the controls back; flying into
         /// it still kills (the original's rule).</summary>
         bool WormholeHeld => Campaign != null && Campaign.Cutscene && WormholeKills;
+        /// <summary>The Khador Drive's refusal at 42 in the Void (Story.EscapesByWormhole): the way out instead of 525.</summary>
+        static string WormholeEscapeHint => Localization.Extra("khadorWormholeEscape",
+            "The Khador Drive won't work here. Destroy the freighter, then escape through the wormhole.");
         bool WormholeNoPull => WormholeKills && Story.Index == 40;
         /// <summary>MGame::OnUpdate, PlayerEgo::isInWormhole (see the header).</summary>
         void UpdateWormholeRide()

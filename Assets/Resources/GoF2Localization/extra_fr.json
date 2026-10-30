@@ -3001,5 +3001,6 @@
  "mbModRaceRelFriend": "Ami",
  "mbModRaceRelNeutral": "Neutre",
  "mbModRaceRelEnemy": "Ennemi",
- "raceSpecters": "Specters"
+ "raceSpecters": "Specters",
+ "khadorWormholeEscape": "Le Moteur Khador ne fonctionne pas ici. Détruisez le cargo, puis fuyez par le trou de ver."
 }

@@ -3001,5 +3001,6 @@
  "mbModRaceRelFriend": "友好",
  "mbModRaceRelNeutral": "中立",
  "mbModRaceRelEnemy": "敵対",
- "raceSpecters": "Specter"
+ "raceSpecters": "Specter",
+ "khadorWormholeEscape": "ここではカドーアドライブは使えない。貨物船を破壊し、ワームホールから脱出せよ。"
 }

@@ -3001,5 +3001,6 @@
  "mbModRaceRelFriend": "친구",
  "mbModRaceRelNeutral": "중립",
  "mbModRaceRelEnemy": "적",
- "raceSpecters": "Specter"
+ "raceSpecters": "Specter",
+ "khadorWormholeEscape": "여기서는 Khador Drive를 사용할 수 없습니다. 화물선을 파괴한 뒤 웜홀로 탈출하세요."
 }

@@ -142,9 +142,10 @@ a space ("20,000个信用分"), all-caps words of item / ship / station / system
   the music (remake: from the freighter, 3D to 40000 units; the original has no position); its engines off
   (`AssembledObject.SetExhaust` turns the freighters' single `_engine_add` part off); the freighter drifts, then 100
   hull of its maximum, ~5 %; no friendly-fire rules on it from then on, `NpcShip.noFriendlyFire`), 42 finishing Errkt,
-  the mother ship's explosion (remake, #84: the Khador Drive answers 525 in the alien orbit at 42, so the
-way out is the wormhole and its explosion; 42's 0xa0 mission isn't a level mission there, so the original's drive
-skipped it; explosion meshes 14285-14287, sounds 153 / 154; remake: the wormhole closes behind the player, Errkt's
+  the mother ship's explosion (remake, #84: the Khador Drive is refused in the alien orbit at 42,
+`Story.EscapesByWormhole`, so the way out is the wormhole and its explosion; 42's 0xa0 mission isn't a level mission
+there, so the original's drive skipped it; since 2026-10-30 the refusal says "Destroy the freighter, then escape through
+the wormhole" (`khadorWormholeEscape`, `Navigation.JumpRefusalText`) instead of 525, which a player took for a bug; explosion meshes 14285-14287, sounds 153 / 154; remake: the wormhole closes behind the player, Errkt's
 freighter or wreck goes with the station) and the ride out. The level radio waits during a gate / Khador / planet jump's
 scene (#46: Cornelius' call over the jumpgate). Lost floats the remake picked are listed in the file header. Story
 orbits without a case stay empty (their radio still plays). A level script flies the player at its cutscene's speed

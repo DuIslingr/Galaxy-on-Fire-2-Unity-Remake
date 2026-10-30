@@ -3001,5 +3001,6 @@
  "mbModRaceRelFriend": "Amigo",
  "mbModRaceRelNeutral": "Neutral",
  "mbModRaceRelEnemy": "Enemigo",
- "raceSpecters": "Specters"
+ "raceSpecters": "Specters",
+ "khadorWormholeEscape": "El Conductor Khador no funciona aquí. Destruye el carguero y escapa por el agujero de gusano."
 }
