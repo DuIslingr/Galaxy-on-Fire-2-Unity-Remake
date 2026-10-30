@@ -231,6 +231,17 @@ namespace GoF2Remake.Tests
             // ships: the Phantom 966 667 / 1 450 000, the Night Owl's 3 / 2 secondary slots
             Assert.AreEqual(966667, android.Ship(10).price);
             Assert.AreEqual(1450000, pc.Ship(10).price);
+            // the retail (iOS 1.1.19) ships.bin: Betty 16 200 in both, the Bloodstar 13 500 000 (KiritoJPK's table had 12 prices
+            // at the in-game 0.99 race discount, 16 038 / 13 365 000, which Shop.ShipPrice then discounted again)
+            Assert.AreEqual(16200, pc.Ship(0).price);
+            Assert.AreEqual(13500000, pc.Ship(45).price);
+            // the iOS build's exhaust anchors (weapons_hd_default.json): the VoidX has 9 mounts instead of the Android table's 11,
+            // the H'Soc's first anchor sits at x -69 (Android -65); the primary mounts are the same
+            Assert.AreEqual(11, android.MountsOf(8, 0).Count + android.MountsOf(8, 1).Count + android.MountsOf(8, 2).Count + android.MountsOf(8, 3).Count);
+            Assert.AreEqual(9, pc.MountsOf(8, 0).Count + pc.MountsOf(8, 1).Count + pc.MountsOf(8, 2).Count + pc.MountsOf(8, 3).Count);
+            Assert.AreEqual(-65, android.MountsOf(9, 3)[0].position_engine[0]);
+            Assert.AreEqual(-69, pc.MountsOf(9, 3)[0].position_engine[0]);
+            Assert.AreEqual(android.MountsOf(8, 0).Count, pc.MountsOf(8, 0).Count);
             Assert.AreEqual(3, android.Ship(35).slots.secondary);
             Assert.AreEqual(2, pc.Ship(35).slots.secondary);
             Assert.AreEqual(pc.Ship(35).handling / 100f, pc.Ship(35).handlingMultiplier, 1e-6f);
