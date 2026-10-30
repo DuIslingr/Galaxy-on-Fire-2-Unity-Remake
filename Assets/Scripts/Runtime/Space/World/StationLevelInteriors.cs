@@ -97,8 +97,10 @@ namespace GoF2Remake.World
                     // full circles now, swung back they ran backwards on every other loop.
                     a.pingPongRotation = !a.gameObject.name.Contains("_bot_") && !a.gameObject.name.StartsWith("hangar_vossk");
                     // Remake: and the Nivelian hangar's flashing light (hangar_nivelian_add, PartAnimation.HasSignedExtra).
-                    // Modified: and the Terran hangar's blinking light (hangar_terran_add_part0, its `extra` 0..100).
-                    if (a.gameObject.name.Contains("_anim") || a.HasSignedExtra || a.gameObject.name.StartsWith("hangar_terran_add"))
+                    // Modified: and the Terran hangar's blinking light (hangar_terran_add_part0, its `extra` 0..100), and the
+                    // Midorian hangar's (hangar_midorian_add_part0: dark, up over 250 ms, lit 500 ms, down over 250 ms, a 2 s loop).
+                    if (a.gameObject.name.Contains("_anim") || a.HasSignedExtra || a.gameObject.name.StartsWith("hangar_terran_add")
+                        || a.gameObject.name.StartsWith("hangar_midorian_add"))
                         a.applyMaterialChannels = true;
                     // Modified: the Terran hangar's beta bots are keyed heading first (PartAnimation.headingFirst).
                     if (a.gameObject.name.StartsWith("hangar_terran_bot_")) a.headingFirst = true;
