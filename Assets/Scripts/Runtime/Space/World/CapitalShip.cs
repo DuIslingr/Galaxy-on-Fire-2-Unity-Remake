@@ -470,7 +470,7 @@ namespace GoF2Remake.World
             if (CapitalShips.Killable(ship.Spec))
             {
                 Standing.ApplyDelict(ship.Race, 20);
-                if (ship.Spec.capital == SpawnSpec.CapitalVossk) Session.BattleshipsDestroyed++;   // a battleship (1667) too
+                if (ship.Spec.capital == SpawnSpec.CapitalVossk) Achievements.Progress(39, ++Session.BattleshipsDestroyed);   // a battleship (1667) too
             }
             if (gearLoot) Session.CapitalLootReadyAt = Session.PlaySeconds + CapitalShips.LootCooldownSeconds;
         }

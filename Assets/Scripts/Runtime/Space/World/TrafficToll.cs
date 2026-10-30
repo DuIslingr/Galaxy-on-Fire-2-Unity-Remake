@@ -226,7 +226,11 @@ namespace GoF2Remake.World
             if (!blackMarket) Standing.ApplyKill(ship.Race, SystemRace);
             if (ship.Target.hostileToPlayer)
             {
-                if (PlayerHealth.EmergencyActive) Session.GraveRiserKills = Mathf.Max(Session.GraveRiserKills, ++emergencyKills);
+                if (PlayerHealth.EmergencyActive)
+                {
+                    Session.GraveRiserKills = Mathf.Max(Session.GraveRiserKills, ++emergencyKills);
+                    Achievements.Progress(43, Session.GraveRiserKills);   // Level::enemyDied: Status+0x13c
+                }
                 else emergencyKills = 0;
                 CountKill();
                 if (ship.Race == Standing.Pirate) Session.PirateKills++;

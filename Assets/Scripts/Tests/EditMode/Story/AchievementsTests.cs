@@ -310,6 +310,51 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void SupernovaMedalProgressShowsInFlightAsTheOriginalDoes()
+        {
+            // Hud::hudEventMedal "name: n%" at the points its callers pick (MiningGame::update, PlayerFixedObject::update,
+            // Level::enemyDied, Gun::calcCharacterCollision / ignite, Player::damageEmp).
+            string Name(int m) => Localization.Get(1507 + m);
+            Assert.IsNull(Achievements.ProgressText(38, 2), "Ore Athlete: not below 30 %");
+            Assert.AreEqual(Name(38) + ": 30%", Achievements.ProgressText(38, 3));
+            Assert.AreEqual(Name(38) + ": 100%", Achievements.ProgressText(38, 10));
+            Assert.AreEqual(Name(39) + ": 5%", Achievements.ProgressText(39, 1), "Destroyer Destroyer: every kill");
+            Assert.AreEqual(Name(39) + ": 100%", Achievements.ProgressText(39, 39), "kept at 100 % past the threshold");
+            Assert.IsNull(Achievements.ProgressText(39, 40));
+            Assert.IsNull(Achievements.ProgressText(40, 15), "Blindfolded Killer: at each 10 %");
+            Assert.AreEqual(Name(40) + ": 20%", Achievements.ProgressText(40, 20));
+            for (int m = 41; m <= 44; m++)
+            {
+                int t = Achievements.Threshold(m, 1);
+                Assert.IsNull(Achievements.ProgressText(m, t - 1), "medal " + m + ": only once reached");
+                Assert.AreEqual(Name(m) + ": 100%", Achievements.ProgressText(m, t));
+            }
+            Assert.IsNull(Achievements.ProgressText(36, 3000), "Space Saver Pro is counted on docking");
+            Assert.IsNull(Achievements.ProgressText(4, 250), "a base medal");
+
+            var shown = new List<string>();
+            var hook = GameHooks.FlightMessage;
+            GameHooks.FlightMessage = shown.Add;
+            try
+            {
+                Achievements.Elite(44, 8);
+                Assert.AreEqual(new[] { Name(44) + ": 100%" }, shown.ToArray(), "Hot Shot's line on the HUD");
+                Session.Medals[44] = 1;
+                shown.Clear();
+                Achievements.Progress(44, 9);
+                Assert.AreEqual(0, shown.Count, "nothing once the medal is earned");
+                NetSession.ActiveProvider = () => true;
+                Achievements.Progress(43, 5);
+                Assert.AreEqual(0, shown.Count, "nor in multiplayer");
+            }
+            finally
+            {
+                NetSession.ActiveProvider = null;
+                GameHooks.FlightMessage = hook;
+            }
+        }
+
+        [Test]
         public void HarumScarumCheck()
         {
             Session.CampaignMission = 7;

@@ -17,6 +17,7 @@ namespace GoF2Remake.Flight
             GameHooks.RepairLiveShip = PlayerHealth.RepairLive;
             GameHooks.ResetControls = GameControls.ResetToDefaults;
             GameHooks.ModsScanned = ids => { ShipShadowBaker.PruneCache(ids); Visuals.ModLodCache.PruneCache(ids); };
+            GameHooks.FlightMessage = text => UI.UiHooks.FlightMessage?.Invoke(text);
             // Remake mods (PR #87): the customizable ships' builds and the ships' own sounds, for GoF2.Game's rules and parsing.
             GameHooks.KitBuildEffect = Modding.ModShipKits.BuildEffect;
             GameHooks.KitMounts = Modding.ModShipKits.BuildMounts;

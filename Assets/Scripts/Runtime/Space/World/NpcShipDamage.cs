@@ -191,7 +191,7 @@ namespace GoF2Remake.World
                 if (bp >= 0 && !Crate.HoldsAny(bp)) Crate.Spawn(transform.position, new[] { new ItemStack(bp, 1) }, Race, Crate.LookJunk);
             }
             if (IsWingman) Wingmen.Died(Target.displayName);   // Level::wingmanDied: gone from the contract
-            if (Spec.ship == 14 && !Target.killedByNpc) Session.BattleshipsDestroyed++;   // Status+0x118
+            if (Spec.ship == 14 && !Target.killedByNpc) Achievements.Progress(39, ++Session.BattleshipsDestroyed);   // Status+0x118
             Current = State.Dying;
             sparks?.Clear();
             deathDir = transform.forward;

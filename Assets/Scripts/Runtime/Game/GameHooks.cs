@@ -91,5 +91,7 @@ namespace GoF2Remake.Data
         public static Action ResetControls;
         /// <summary>The mods found by a scan (every id, on or off): the caches of the others go (ShipShadowBaker.PruneCache).</summary>
         public static Action<IEnumerable<string>> ModsScanned;
+        /// <summary>A line on the flight HUD's message plate (Achievements.Progress, Hud::hudEventMedal); unset: not in flight.</summary>
+        public static Action<string> FlightMessage;
     }
 }

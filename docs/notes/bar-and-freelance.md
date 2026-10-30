@@ -134,4 +134,13 @@ generator).
   earned it, #46); the elite medals 38 / 40 / 41 / 42 / 44 (`Session.EliteFlags`, `Achievements.Elite`): the Ore Athlete
   streak (`Session.OreStreak`, reset on docking and a lost mining game), 40 kills without a scanner (`BlindKills`), 41
   asteroids by rockets in one flight, 44 asteroids by the Liberator; save v9 (also the Loma flags).
+- **Supernova medal progress in flight** (`Achievements.Progress`, `Hud::hudEventMedal` 0x18f36c; a player's report
+  2026-10-26): "name: n%" on the HUD message plate (`GameHooks.FlightMessage`) while the medal isn't earned, n = the
+  counter against the gold threshold (remake: at most 100), when the counter's caller shows it: 38 from 30 % at each
+  10 %, 39 at every kill below twice the threshold, 40 at each 10 %, 41-44 once reached; none in multiplayer. Test
+  `AchievementsTests.SupernovaMedalProgressShowsInFlightAsTheOriginalDoes`.
+- **The Supernova medals pay too**: `ModStation::checkMedals` pays `DAT_00251ff0[grade]` = {0, 5000, 2500, 1000} for
+  every new medal of the 45 (none on Hardcore), and the elite medals only have a gold grade (thresholds [t, -1, -1]), so
+  each pays 5000 in the original as well; its medal window just never shows the amount (`ChoiceWindow::setMedal`: the
+  name and the hint), the remake's toast does. Kept (a player's report 2026-10-25 thought they paid nothing).
 - Type 15 Ore Mining (unreachable in the original's generator) is only rolled in multiplayer sessions (see "Multiplayer").

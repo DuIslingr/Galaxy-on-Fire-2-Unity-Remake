@@ -100,7 +100,38 @@ namespace GoF2Remake.Data
         public static void Elite(int medal, int count)
         {
             if (NetSession.Active) return;   // no medals in multiplayer
+            Progress(medal, count);
             if (Grade(medal) == 0 && count >= Thresholds[medal, 0]) Session.EliteFlags.Add(medal);
+        }
+
+        /// <summary>Hud::hudEventMedal 0x18f36c: a Supernova medal's progress on the flight HUD, "name: n%" (n = the counter
+        /// against the gold threshold), while the medal isn't earned. When, as its counter's caller has it: 38 Ore Athlete
+        /// (MiningGame::update) from 30 % at each 10 %, 39 Destroyer Destroyer (PlayerFixedObject::update) at every kill
+        /// below twice the threshold, 40 Blindfolded Killer (Level::enemyDied) at each 10 %, 41-44 (Gun::calcCharacterCollision,
+        /// Player::damageEmp, Level::enemyDied, Gun::ignite) once the threshold is reached. Remake: n stops at 100.</summary>
+        public static void Progress(int medal, int count)
+        {
+            string text = ProgressText(medal, count);
+            if (text != null) GameHooks.FlightMessage?.Invoke(text);
+        }
+
+        /// <summary>Progress's line, or null when the original shows none for this count.</summary>
+        public static string ProgressText(int medal, int count)
+        {
+            if (NetSession.Active || medal < BaseCount || medal >= Count || Has(medal)) return null;
+            int max = Thresholds[medal, 0];
+            if (max <= 0 || count <= 0) return null;
+            int percent = (int)(count / (float)max * 100f);
+            bool show;
+            switch (medal)
+            {
+                case 38: show = percent % 10 == 0 && percent >= 30; break;
+                case 39: show = count / max < 2; break;
+                case 40: show = percent % 10 == 0; break;
+                case 41: case 42: case 43: case 44: show = count >= max; break;
+                default: show = false; break;   // 36 / 37: counted on docking
+            }
+            return show ? $"{Localization.Get(1507 + medal)}: {Mathf.Min(percent, 100)}%" : null;
         }
 
         /// <summary>Achievements::hasMedal(i, 1): the counters stop once the medal is earned.</summary>
