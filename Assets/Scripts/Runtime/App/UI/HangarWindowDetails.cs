@@ -118,10 +118,12 @@ namespace GoF2Remake.UI
             }
             else
             {
-                // Empty slot.
+                // Empty slot. Modified: nothing in the details panel (it repeated the row's "Empty slot" and type over an
+                // empty Description heading): the panel is hidden, as with nothing selected.
                 detailIcon.style.backgroundImage = StyleKeyword.None;
-                detailName.text = Localization.Extra("shopEmptySlot", "Empty slot");
-                detailSub.text = T(new[] { 265, 266, 267, 269 }[Mathf.Clamp(selected.type, 0, 3)]);
+                detailName.text = "";
+                detailSub.text = "";
+                details.style.visibility = Visibility.Hidden;
             }
             detailScroll.scrollOffset = Vector2.zero;
             if (selected.item >= 0) Session.SeenItems.Add(selected.item);   // the original marks inspected items
