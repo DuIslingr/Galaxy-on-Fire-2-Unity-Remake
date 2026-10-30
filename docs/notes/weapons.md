@@ -37,7 +37,11 @@ is generated from it by `Reference/tools/weapons/build_weapon_fx.py`; **GoF2 > B
   while its start rides on the mount, so through a turn it stays where it was shot; re-aimed every frame from 2026-10-01
   until players asked for the original back on 2026-10-11; an aimed beam hits its target even through a gap in the hull,
   `Gun.AimedBeamHit`, #192: its sweep ends at the target's centre, and the Midorian freighter's lies between its four
-  parts, so ~6 % of the angles did nothing, where the original's beam parked at the centre is in the cube), scatter guns (burst cube), EMP bombs and nukes (a second
+  parts, so ~6 % of the angles did nothing, where the original's beam parked at the centre is in the cube), scatter guns
+  (burst cube: a target's cube x1.5 / x2 / x3 by the shooter's distance; remake, `Gun.InScatterCube`, 2026-10-30: not a
+  big object's, a hit radius past 2000 units, which keeps its plain cube: the pirate outpost's +-7500 grown x3 reached
+  1.1 km out, so under Original collision every scatter shot near it burst at the ship's nose, a player's video; the
+  original grows it too, only stations, KIPlayer+0x6d, get x0.5), EMP bombs and nukes (a second
   press detonates, area damage with falloff, explosion types 7 / 11), mines (drift, proximity), cluster missiles
   (salvo), the Shock Blast (226: damage + EMP + push, `NpcShip.InitPush`), ionizing missiles, plasma collectors, weapon
   mods (sort 28 factors on primaries). Several secondaries: G / D-pad right (or tapping the HUD label) cycles

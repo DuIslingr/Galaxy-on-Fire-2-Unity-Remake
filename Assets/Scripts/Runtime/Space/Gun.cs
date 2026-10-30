@@ -673,7 +673,8 @@ namespace GoF2Remake.Flight
         System.Func<Target, bool> mayHitFn, mayHitBigFn, aimedOnlyFn;
         /// <summary>A big object with a mesh hull: hit boxes (capital ships, freighters) or a hit radius past 2000 units (the
         /// story's static objects: 102's carrier is +-6000, its fuse cube up to 900 m across).</summary>
-        static bool BigTarget(Target t) => t.HasHull && ((t.boxes != null && t.boxes.Length > 0) || t.radius > 2000f * MetersPerUnit);
+        static bool BigTarget(Target t) => t.HasHull && ((t.boxes != null && t.boxes.Length > 0) || BigCube(t));
+        static bool BigCube(Target t) => t.radius > 2000f * MetersPerUnit;
 
         /// <summary>A hull's target this gun's shots may hit: in its list, alive, not its own ship, not phased or ignored.</summary>
         bool MayHit(Target t, IReadOnlyList<Target> targets)
@@ -697,11 +698,15 @@ namespace GoF2Remake.Flight
             return hull;
         }
 
-        /// <summary>Scatter guns: the hit cube grows with the shooter's distance to the target (a proximity fuse).</summary>
+        /// <summary>Scatter guns: the hit cube grows with the shooter's distance to the target (a proximity fuse). Remake: not
+        /// a big object's (BigCube: the pirate outpost's +-7500, the story's static objects): Gun::calcCharacterCollision
+        /// grows it too (only a station, KIPlayer+0x6d, gets x0.5), and x1.5 / x2 / x3 the outpost's reached 560 m / 750 m /
+        /// 1.1 km out, past the shooter: every scatter shot near it burst at the ship's nose (a player's report with a
+        /// video, under Original collision, which has no hulls).</summary>
         bool InScatterCube(Target target, Vector3 p)
         {
             float distUnits = owner != null ? (target.transform.position - owner.transform.position).magnitude / MetersPerUnit : 0f;
-            float k = distUnits <= 10000f ? 1.5f : distUnits <= 20000f ? 2f : 3f;
+            float k = BigCube(target) ? 1f : distUnits <= 10000f ? 1.5f : distUnits <= 20000f ? 2f : 3f;
             var d = target.transform.position - p;
             float r = target.radius * k;
             if (target.boxes != null && target.boxes.Length > 0) return target.Contains(p);
