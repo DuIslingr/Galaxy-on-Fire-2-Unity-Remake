@@ -115,8 +115,6 @@ namespace GoF2Remake.World
         public static void SetupLights(OrbitLayout layout, Light sun, Light planet, float sunIntensityAt2 = 1.6f, float planetIntensity = 1f,
                                        LightShadows sunShadows = LightShadows.None, bool gammaSun = true)
         {
-            // Modified: the hulls' sunlit side as the original's gamma-space LIGHT0 (GoF2/Hull, _GoF2SunGamma)
-            SetSunGamma(gammaSun && sun != null ? 2f / Mathf.Max(sunIntensityAt2, 1e-3f) : 0f);
             Shader.SetGlobalVector("_GoF2SunAmbient", gammaSun && sun != null ? (Vector4)SceneAmbient(layout) : Vector4.zero);   // gamma values: not SetGlobalColor, which linearises
             if (planet != null) planet.shadows = LightShadows.None;
             if (sun != null)
@@ -129,6 +127,15 @@ namespace GoF2Remake.World
                 sun.color = c / max;
                 sun.intensity = sunIntensityAt2 * max / 2f;
             }
+            // Modified: the hulls' sunlit side as the original's gamma-space LIGHT0 (GoF2/Hull, _GoF2SunGamma): per channel,
+            // the gamma colour over URP's linear one (colour.linear x intensity), so a tinted sun keeps its tint.
+            if (gammaSun && sun != null)
+            {
+                Color c = layout.SunLightColor, lin = sun.color.linear * sun.intensity;
+                static float Ratio(float gamma, float linear) => linear > 1e-4f ? gamma / linear : 0f;
+                SetSunGamma(new Vector3(Ratio(c.r, lin.r), Ratio(c.g, lin.g), Ratio(c.b, lin.b)));
+            }
+            else SetSunGamma(Vector3.zero);
             if (planet != null)
             {
                 // LIGHT1 direction (0, 0, -1) game = toward the orbit planet (Unity +Z); light travels toward -Z.
@@ -164,12 +171,13 @@ namespace GoF2Remake.World
             return new Color(c.r * k, c.g * k, c.b * k, 1f);
         }
 
-        /// <summary>Modified: GoF2/Hull's gamma-space sunlight (_GoF2SunGamma): the original's LIGHT0 level per unit of the
-        /// main light's colour, 0 = URP's own linear diffuse (the hangars, the lounge).</summary>
-        public static void SetSunGamma(float level)
+        /// <summary>Modified: GoF2/Hull's gamma-space sunlight (_GoF2SunGamma): per channel, the original's LIGHT0 per unit of
+        /// the main light's (linear) colour; zero = URP's own linear diffuse (the hangars, the lounge).</summary>
+        public static void SetSunGamma(Vector3 level)
         {
-            Shader.SetGlobalFloat("_GoF2SunGamma", level);
-            Shader.SetGlobalFloat("_GoF2SunGlow", level > 0f ? SunGlow : 0f);
+            bool on = level.x > 0f || level.y > 0f || level.z > 0f;
+            Shader.SetGlobalVector("_GoF2SunGamma", level);
+            Shader.SetGlobalFloat("_GoF2SunGlow", on ? SunGlow : 0f);
             Shader.SetGlobalFloat("_GoF2SunGlowFrom", SunGlowFrom);
         }
 

@@ -22,9 +22,10 @@
 half _GoF2HullReflection;
 half3 _GoF2HullRimColor;
 // Modified: the original lights in gamma space (StarSystem::initLight: LIGHT0 diffuse 2.0, fixed-function), so a face
-// toward the sun is the texture x 2 clamped: nearly white. The level of the original's LIGHT0 per unit of the main light's
-// colour (2 / SpaceLevel.sunIntensityAt2; 0 = URP's linear diffuse as it is). OrbitBuilder.SetSunGamma.
-half _GoF2SunGamma;
+// toward the sun is the texture x 2 clamped: nearly white. Per channel, the original's LIGHT0 (gamma) per unit of the main
+// light's linear colour, so a tinted sun keeps the original's tint (0 = URP's linear diffuse as it is).
+// OrbitBuilder.SetSunGamma.
+half3 _GoF2SunGamma;
 // Modified: the sunlit side's glow: the part of texture x LIGHT0 above _GoF2SunGlowFrom (gamma) goes on x _GoF2SunGlow as
 // HDR light, so the bloom picks it up like the original's bright pass (about half brightness) did; 0 = none.
 // OrbitBuilder.SetSunGamma.
@@ -175,7 +176,7 @@ void HullPassFragment(
 #endif
 
 #if !defined(_GOF2_PBR)
-    if (_GoF2SunGamma > 0.0)
+    if (max(_GoF2SunGamma.r, max(_GoF2SunGamma.g, _GoF2SunGamma.b)) > 0.0)
     {
         // Modified: the main light's diffuse as the original's gamma-space sum: texture x (LIGHT0 . N), clamped, in place
         // of URP's linear one, which left the lit side at the texture x 1.24 (1.6 ^ (1 / 2.2)) instead of x 2.

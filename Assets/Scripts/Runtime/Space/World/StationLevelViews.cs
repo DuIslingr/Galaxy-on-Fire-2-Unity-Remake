@@ -56,7 +56,7 @@ namespace GoF2Remake.World
                 GoF2Remake.World.SpaceHooks.SceneFog(false);
                 return;
             }
-            OrbitBuilder.SetSunGamma(0f);   // Modified: the hangar's key light stays URP's linear diffuse
+            OrbitBuilder.SetSunGamma(Vector3.zero);   // Modified: the hangar's key light stays URP's linear diffuse
             if (customHangar == null) SkyReflection.SetHangar(HangarIndex);   // Remake: the hangar's own (none in the Valkyrie's)
             if (keyLight != null)
             {
