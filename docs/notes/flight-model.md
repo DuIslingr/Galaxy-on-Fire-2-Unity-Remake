@@ -47,7 +47,7 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   centre and the ship swinging to the side in a turn, as in the original's videos), which players found worse. Boosting
   widens the FOV by 0.35 rad × the boost percentage and rumbles (pct × clamp(speed, 2, 8) / 50). The hit / shot shake
   and the rumble (explosions, the boost, the Liberator, the cutscene camera's) take a new random offset once per
-  original frame (`ChaseCamera.HeldJitter`, 33 ms) and sit on top of the follow, taken off again the next frame
+  original frame (`ChaseCamera.HeldJitter`, `OriginalFrame.Ms`, 16.7 ms at the iOS build's 60 Hz) and sit on top of the follow, taken off again the next frame
   (`UndoJitter`); players' reports 2026-10-18 of extreme shaking: drawn anew every rendered frame and into the eased
   pose, a full rumble turned the view 2.8 deg per frame at 144 fps (0.56 now), and the Original follow turned every hit
   and shot into a flicker of the view.

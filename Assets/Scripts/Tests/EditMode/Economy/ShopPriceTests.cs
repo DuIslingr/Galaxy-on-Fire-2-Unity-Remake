@@ -54,15 +54,17 @@ namespace GoF2Remake.Tests
             {
                 foreach (int st in new[] { 105, 106, 107 })
                 {
+                    // (Db follows Session.Economy: each economy's maxima from its own tables)
                     Session.Economy = Economy.Android;
-                    var android = Shop.PriceList(Db, st, items);
+                    var dbAndroid = Db;
+                    var android = Shop.PriceList(dbAndroid, st, items);
                     Session.Economy = Economy.Default;
-                    var ios = Shop.PriceList(Db, st, items);
+                    var dbDefault = Db;
+                    var ios = Shop.PriceList(dbDefault, st, items);
                     for (int n = 0; n < items.Count; n++)
                     {
-                        int max = Db.Item(items[n]).maxPrice;
-                        Assert.AreEqual(max, android[n], $"item {items[n]} at station {st}, Android");
-                        Assert.AreEqual((int)(max * 1.05f), ios[n], $"item {items[n]} at station {st}, Default");
+                        Assert.AreEqual(dbAndroid.Item(items[n]).maxPrice, android[n], $"item {items[n]} at station {st}, Android");
+                        Assert.AreEqual((int)(dbDefault.Item(items[n]).maxPrice * 1.05f), ios[n], $"item {items[n]} at station {st}, Default");
                     }
                 }
             }

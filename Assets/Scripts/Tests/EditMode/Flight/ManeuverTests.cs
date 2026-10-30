@@ -78,7 +78,8 @@ namespace GoF2Remake.Tests
         [Test]
         public void TotalSlideAndTurn()
         {
-            // sum over 120 frames of 10 ms: slide 48 * sum(1 - i / 120) = 48 * 60.5 = 2904 units, heading 0.0018850 * 60.5
+            // sum over 120 frames of 10 ms: slide 48 * sum(1 - i / 120) = 48 * 60.5 = 2904 units, heading 0.006283186 per
+            // original frame (OriginalFrame.Ms) x 10 ms x 60.5
             var m = new Maneuver();
             m.Start(1);
             float slide = 0f, heading = 0f;
@@ -88,7 +89,7 @@ namespace GoF2Remake.Tests
                 slide += s; heading += h;
             }
             Assert.AreEqual(2904f, slide, 0.05f);
-            Assert.AreEqual(0.006283186f * 0.3f * 60.5f, heading, 1e-5f);
+            Assert.AreEqual(0.006283186f * 10f / OriginalFrame.Ms * 60.5f, heading, 1e-5f);
         }
 
         [Test]

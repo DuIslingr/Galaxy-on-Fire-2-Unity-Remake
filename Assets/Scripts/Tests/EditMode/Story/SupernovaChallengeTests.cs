@@ -108,16 +108,17 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(SupernovaChallenge.TimeUp);
             Assert.IsTrue(SupernovaChallenge.Finish());
             Assert.IsTrue(SupernovaChallenge.Over);
-            Assert.AreEqual(2000 + 2200, SupernovaChallenge.Score, "the combo still running at the end pays out");
-            Assert.AreEqual(4200, SupernovaChallenge.Highscore);
+            // 1000 (no timer) + 3000 (the second kill on a full timer) + the combo bonus 2200
+            Assert.AreEqual(4000 + 2200, SupernovaChallenge.Score, "the combo still running at the end pays out");
+            Assert.AreEqual(6200, SupernovaChallenge.Highscore);
             Assert.AreEqual(2, SupernovaChallenge.BestKills);
             SupernovaChallenge.OnKill();
-            Assert.AreEqual(4200, SupernovaChallenge.Score, "nothing counts after the end");
+            Assert.AreEqual(6200, SupernovaChallenge.Score, "nothing counts after the end");
 
             SupernovaChallenge.Start(true);
             SupernovaChallenge.OnKill();
             Assert.IsFalse(SupernovaChallenge.Finish(), "1000 is no new highscore");
-            Assert.AreEqual(4200, SupernovaChallenge.Highscore);
+            Assert.AreEqual(6200, SupernovaChallenge.Highscore);
         }
 
         [Test]
