@@ -198,13 +198,29 @@ namespace GoF2Remake.UI
                 name = tex.name + " (map glow)", useMipMap = true, autoGenerateMips = true,
                 wrapMode = tex.wrapMode, filterMode = tex.filterMode, anisoLevel = tex.anisoLevel,
             };
-            sunGammaBlit.SetFloat("_Power", SunGlowPower);
-            Graphics.Blit(tex, rt, sunGammaBlit);
+            BlitGammaSun(tex, rt);
+            gammaBlits.Add((rt, tex));
             var copy = new Material(from) { name = from.name + " (map glow)" };
             copy.mainTexture = rt;
             gammaMade.Add(rt);
             gammaMade.Add(copy);
             return gammaSuns[from] = copy;
+        }
+
+        /// <summary>The glow copies' render textures with their source, made again when their contents are lost (an Android
+        /// app sent to the background with the map open: RenderTexture.IsCreated false), else the suns showed blank.</summary>
+        readonly List<(RenderTexture rt, Texture source)> gammaBlits = new List<(RenderTexture, Texture)>();
+
+        void BlitGammaSun(Texture source, RenderTexture rt)
+        {
+            sunGammaBlit.SetFloat("_Power", SunGlowPower);
+            Graphics.Blit(source, rt, sunGammaBlit);
+        }
+
+        void RestoreGammaSuns()
+        {
+            foreach (var (rt, source) in gammaBlits)
+                if (rt != null && source != null && sunGammaBlit != null && !rt.IsCreated()) BlitGammaSun(source, rt);
         }
 
         Transform[] suns = new Transform[64];   // by system number (more with mods' systems: BuildGalaxy grows it)
@@ -374,6 +390,7 @@ namespace GoF2Remake.UI
         {
             if (root == null) return;
             UpdateSafeArea();
+            RestoreGammaSuns();
             if (pendingFocus >= 0 && cam != null) { int focus = pendingFocus; pendingFocus = -1; FocusSystem(focus); }
             float dtMs = Time.unscaledDeltaTime * 1000f;
             float f = dtMs / (1000f / 60f);   // the original's per-frame factors, at 60 fps
