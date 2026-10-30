@@ -50,6 +50,12 @@ namespace GoF2Remake.World
 
         // Remake mods: the star planets' streak: its length and height at full flare, in the star's own size.
         const float StarStreakLength = 8f, StarStreakHeight = 0.15f;
+
+        /// <summary>Modified: the sun's streak a third longer than renderSunStreak's, both ways from the sun (matched by eye
+        /// to the original's in a screenshot).</summary>
+        const float StreakLength = 1.35f;
+        /// <summary>Modified: and 25 % thicker (its height on screen).</summary>
+        const float StreakThickness = 1.25f;
         readonly List<Material> ownMaterials = new List<Material>();
         void OnDestroy() { foreach (var m in ownMaterials) if (m != null) Destroy(m); }
 
@@ -318,8 +324,8 @@ namespace GoF2Remake.World
             {
                 Place(sun, c, sunRot, new Vector3(s + e, s + e, 1f));
                 // renderSunStreak: the scaled sun matrix scaled again by (e * (s + e + 1), s / ((1 - e) * 6 + 6)).
-                float streakY = (s + e) * s / ((1f - e) * 6f + 6f);
-                float streakX = (s + e) * e * (s + e + 1f);
+                float streakY = (s + e) * s / ((1f - e) * 6f + 6f) * StreakThickness;
+                float streakX = (s + e) * e * (s + e + 1f) * StreakLength;
                 Place(streak, c, sunRot, new Vector3(streakX, streakY, 1f));
                 streak.t.gameObject.SetActive(e > 0f);
                 SunInStreak(streak, new Vector2(s + e, s + e), new Vector2(streakX, streakY));
@@ -333,7 +339,7 @@ namespace GoF2Remake.World
                 float baseScale = supernova.Count > 0 ? supernovaRing : s;
                 float v = 0.3f * baseScale;
                 var glowScale = new Vector3(v + e, v + e, v);
-                var streakScale = Vector3.Scale(glowScale, new Vector3(e * (v + e + 1f), v / ((1f - e) * 6f + 6f), v));
+                var streakScale = Vector3.Scale(glowScale, new Vector3(e * (v + e + 1f) * StreakLength, v / ((1f - e) * 6f + 6f) * StreakThickness, v));
                 if (supernova.Count == 0)
                 {
                     Place(sun, c, fixedRot, new Vector3(s, s, 1f));
