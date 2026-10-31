@@ -444,6 +444,24 @@ namespace GoF2Remake.World
         /// <summary>Game position to Unity: (x, y, -z) * 0.05.</summary>
         public static Vector3 ToUnity(Vector3 game) => new Vector3(game.x, game.y, -game.z) * MetersPerUnit;
 
+        /// <summary>Where a jump in puts the ship, and the way it faces: the station. 'previousStation': the one it came from.</summary>
+        public void ArrivalPose(int previousStation, out Vector3 position, out Quaternion facing)
+        {
+            position = ArrivalPoint(previousStation);
+            facing = Quaternion.LookRotation(-position.normalized, Vector3.up);
+            // Level::init: arriving in Loma's black market (system 25) puts the player 40 000 further along game +z.
+            if (systemIndex == 25) position += ToUnity(new Vector3(0f, 0f, 40000f));
+        }
+
+        Vector3 ArrivalPoint(int previousStation)
+        {
+            if (arrival.HasValue) return ToUnity(arrival.Value);   // remake mods: the orbit's own
+            if (hasJumpgate || alienOrbit) return ToUnity(hiddenJumpgate);
+            var from = planets.Find(p => p.station == previousStation);
+            if (from == null) return ToUnity(new Vector3(0f, 0f, 100000f));
+            return ToUnity(-4f * BackdropDistance * Direction(from.pitch, from.yaw));
+        }
+
         /// <summary>Game direction to Unity (unscaled).</summary>
         public static Vector3 DirToUnity(Vector3 game) => new Vector3(game.x, game.y, -game.z);
 

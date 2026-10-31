@@ -23,10 +23,11 @@ namespace GoF2Remake.Data
         public const float UnitsPerMapUnit = 240f;
         /// <summary>A leg of energy cells here: the average gate hop.</summary>
         public const float LegUnits = 600000f;
-        /// <summary>A system's edge (2 km): the ship comes out of the slipstream into its gate orbit.</summary>
-        public const float ArriveUnits = 40000f;
+        /// <summary>A system's edge (8 km): the level changes here, at full warp with nothing near and the sky already the
+        /// system's, and the ship flies the rest of the way in through the real orbit (CarryMeters).</summary>
+        public const float ArriveUnits = 160000f;
         /// <summary>How far outside the system it left the ship starts.</summary>
-        public const float StartUnits = 80000f;
+        public const float StartUnits = 240000f;
         /// <summary>Multiplayer: the orbit id everybody in this space shares (SpaceLevel.NetOrbitId), past every station and
         /// below NetArena.OrbitBase (an arena's are private and allow fights).</summary>
         public const int OrbitId = 90000;
@@ -91,6 +92,10 @@ namespace GoF2Remake.Data
             forward = forward.sqrMagnitude > 1f ? forward.normalized : Vector3.forward;
             position = from + forward * StartUnits;
         }
+
+        /// <summary>How far (metres) a ship carrying a cruise's speed flies while it eases to its own over 'ms' (the smoothstep's
+        /// average is half way), the ship's own 100 m/s under it: an arrival starts this far out to end where arrivals do.</summary>
+        public static float CarryMeters(int speedPercent, float ms) => (1f + (speedPercent / 100f - 1f) / 2f) * 100f * ms / 1000f;
 
         /// <summary>The cells a straight crossing takes: one per started leg, x2 on Extreme.</summary>
         public static int CellsFor(float units, bool extreme) => Mathf.CeilToInt(units / LegUnits) * (extreme ? 2 : 1);

@@ -17,9 +17,9 @@ namespace GoF2Remake.Tests
     {
         const string Mod = "slipstream_drive";
         const string Items = @"[
-            { 'id': 'slipstream', 'base': 85, 'name': 'Khador Slipstream', 'techLevel': 7, 'occurrence': 25, 'price': [148000, 162800],
+            { 'id': 'slipstream', 'base': 85, 'name': 'Slipstream', 'techLevel': 7, 'occurrence': 25, 'price': [148000, 162800],
               'stats': { 'cruiseSpeed': 400, 'cruiseRange': 60000, 'cruiseChargeMs': 2000, 'energyCells': 1 } },
-            { 'id': 'slipstream_ii', 'base': 85, 'name': 'Slipstream II', 'techLevel': 10, 'occurrence': 0, 'price': [1450000, 1595000],
+            { 'id': 'slipstream_ii', 'base': 85, 'name': 'Khador Slipstream', 'techLevel': 10, 'occurrence': 0, 'price': [1450000, 1595000],
               'stats': { 'cruiseSpeed': 800, 'cruiseRange': 90000, 'cruiseChargeMs': 1500, 'energyCells': 1, 'interstellar': 1 } } ]";
         List<ItemStack> savedEquipment;
 
@@ -47,7 +47,7 @@ namespace GoF2Remake.Tests
             Assert.GreaterOrEqual(ii, OriginalItems);
             var it = db.Item(i);
             Assert.IsNotNull(it);
-            Assert.AreEqual("Khador Slipstream", it.name);
+            Assert.AreEqual("Slipstream", it.name);
             Assert.AreEqual("equipment", it.type);
             Assert.AreEqual(18, it.categoryId, "the Khador Drive's category");
             Assert.AreEqual(85, it.Look, "the Khador Drive's icon");

@@ -4,7 +4,7 @@
 // Extreme, none with the cheat) or is refused, every leg's distance pays again and runs out of cells, the speed factor
 // ramps up over 800 ms and down over 1200 ms (smoothstep) and eases down from 40000 to 8000 units of a hull ahead, which
 // drops the cruise, as do the locked landmark within 20000 units, hostiles, a hit and the button released; a drop needs
-// a fresh press. Expected numbers from the class's constants and the ES2 importer's Khador Slipstream (x4, 60000 units a
+// a fresh press. Expected numbers from the class's constants and the ES2 importer's Slipstream (x4, 60000 units a
 // leg, 2000 ms, 1 cell).
 
 using GoF2Remake.Flight;
@@ -38,6 +38,20 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(CruiseDrive.Event.Engaged, Engage(d, 0));
             Assert.AreEqual(0, d.CellsDue, "flying the rest of a paid leg costs nothing, even with an empty hold");
             Assert.IsTrue(d.Cruising);
+        }
+
+        [Test]
+        public void AnArrivalAtSpeedRampsDownFromTheTop()
+        {
+            var d = new CruiseDrive(301, 800, 600000, 1500, 1, false);
+            d.CarrySpeed(2000f);
+            Assert.AreEqual(8f, d.Factor, 0.001f, "the speed the ship came in at");
+            Assert.AreEqual(CruiseDrive.Phase.Off, d.State, "nothing is paid or cruising");
+            d.Update(1000f, false, CruiseDrive.Stop.None, 0f, float.MaxValue, float.MaxValue, 0, false);
+            Assert.AreEqual(4.5f, d.Factor, 0.01f, "half way down the smoothstep");
+            d.Update(1000f, false, CruiseDrive.Stop.None, 0f, float.MaxValue, float.MaxValue, 0, false);
+            Assert.AreEqual(1f, d.Factor, 0.001f);
+            Assert.AreEqual(0f, d.Level);
         }
 
         [Test]
@@ -237,6 +251,21 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(CruiseDrive.Event.Stopped, Step(d, 500f, blocked: CruiseDrive.Stop.Blocked), "a block ends the charge too");
             Assert.AreEqual(CruiseDrive.Stop.Blocked, d.LastStop);
             Assert.AreEqual(CruiseDrive.Event.None, Step(d, 16f, blocked: CruiseDrive.Stop.Blocked), "no charge while blocked");
+        }
+
+        [Test]
+        public void TheCruiseLookCarriedOutOfALoadEasesOutOverTheCarry()
+        {
+            var m = new FlightModel();
+            m.CarryCruiseLook(7000f);
+            Assert.AreEqual(1f, m.CruiseVisual, "as it left the last level");
+            m.UpdateCruise(false, 3500f);
+            Assert.AreEqual(0.5f, m.CruiseVisual, 0.001f);
+            m.UpdateCruise(false, 3500f);
+            Assert.AreEqual(0f, m.CruiseVisual, 0.001f);
+            m.UpdateCruise(true, FlightModel.CruiseEaseMs);
+            m.UpdateCruise(false, FlightModel.CruiseEaseMs / 2f);
+            Assert.AreEqual(0.5f, m.CruiseVisual, 0.001f, "a cruise after it eases as ever");
         }
 
         [Test]

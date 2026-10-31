@@ -1,9 +1,10 @@
 // ModWarp.cs
-// Remake mods: the look and sound of the space between the systems (World.InterstellarField, Visuals.WarpTunnel). warp.json
+// Remake mods: the look and sound of the warp (Visuals.WarpSky). warp.json
 // (optional, the last mod in the load order that has one wins):
 //   { "tunnel": "warp/tunnel.png", "detail": "warp/detail.png", "streaks": "warp/streaks.png", "tint": "#8cd0ff",
 //     "loop": "warp/loop.ogg", "enter": "warp/enter.ogg" }
-// The images tile along the flight (a grey one reads its red channel); each is optional, the game makes its own without.
+// The sky itself is what stretches; the images shape it (their red channel, tiling): "tunnel" and "detail" break it into
+// bands, "streaks" are the thin lines over it, in "tint". Each is optional, the game makes its own without.
 
 using System;
 using GoF2Remake.Data;

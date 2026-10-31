@@ -45,6 +45,7 @@ using UnityEngine.SceneManagement;
 namespace GoF2Remake.World
 {
     [DefaultExecutionOrder(-100)]
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public partial class SpaceLevel : MonoBehaviour
     {
         const float M = OrbitLayout.MetersPerUnit;
@@ -201,6 +202,10 @@ namespace GoF2Remake.World
         public Database Database => db;
         ChaseCamera chase;
         float launchCameraMs;
+        /// <summary>This level is an arrival out of interstellar space (Session.WarpArrival): no fly-in camera, the flight goes on.</summary>
+        bool warpArrival;
+        /// <summary>... flown in, the orbit shown on the way (SystemApproach).</summary>
+        bool flownIn;
         bool leftDockRange, orbitInfo;
 
         void OnEnable()
@@ -238,15 +243,72 @@ namespace GoF2Remake.World
 
         float savedMaxDelta = -1f;
 
+        // ---- the seamless swap (into and out of interstellar space) ------------------------------------------------
+
+        static Scene replaced;
+        static Database prepared;
+        static int preparedField;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetSwap() { replaced = default; prepared = null; preparedField = 0; }
+
+        /// <summary>The next arrival's tables, read while the ship flies in (SystemApproach), not in the frame of the swap, and
+        /// the seed of the asteroids it has been shown.</summary>
+        public static void PrepareArrival(int asteroidSeed)
+        {
+            prepared = Database.Load();
+            preparedField = asteroidSeed;
+        }
+
+        /// <summary>Remake: this level for another with no stall to hide. A plain scene change also sweeps every unused asset,
+        /// which with a player's mods loaded held the frame for most of a second (measured 2026-10-31: ~600 ms of ~870, the level
+        /// itself ~170); an additive load has no sweep. The old level goes as the new one's Awake starts (ClearReplaced), so the
+        /// two never run together; a docking's plain scene change still sweeps.</summary>
+        public static void SwapScene(string scene)
+        {
+            replaced = SceneManager.GetActiveScene();
+            SceneManager.sceneLoaded += OnSwapped;
+            SceneManager.LoadScene(scene, LoadSceneMode.Additive);
+        }
+
+        static void ClearReplaced()
+        {
+            if (!replaced.IsValid() || !replaced.isLoaded) return;
+            foreach (var root in replaced.GetRootGameObjects()) DestroyImmediate(root);
+        }
+
+        /// <summary>The new scene takes over: RenderSettings are the active scene's, so its sky and lights are set again.</summary>
+        static void OnSwapped(Scene scene, LoadSceneMode mode)
+        {
+            SceneManager.sceneLoaded -= OnSwapped;
+            var old = replaced;
+            replaced = default;
+            SceneManager.SetActiveScene(scene);
+            if (old.IsValid() && old.isLoaded) SceneManager.UnloadSceneAsync(old);
+            FindAnyObjectByType<SpaceLevel>()?.ApplySkyAndLights();
+        }
+
+        void ApplySkyAndLights()
+        {
+            OrbitBuilder.SetupSky(Layout, ambientIntensity);
+            LightFor(Layout);
+        }
+
+        /// <summary>The scene's lights as this orbit has them.</summary>
+        public void LightFor(OrbitLayout orbit) => OrbitBuilder.SetupLights(orbit, sunLight, planetLight, sunIntensityAt2, planetLightIntensity);
+
         void Awake()
         {
+            ClearReplaced();
             Story.ReopenUnshownSuccess();   // #88
             HullCollision.Suppressed = false;   // the main menu's backdrop had them off (whichever scene's code runs first)
             Session.ArrivedByLoad = false;   // a load's no-fine docking is only the station it opened
             // Multiplayer: loaded after its session ended (a docking queued behind the menu): on to the menu (nothing is
             // saved, SaveGame.SessionGame).
             if (GoF2Remake.Data.NetSession.SessionLost) SceneManager.LoadScene("MainMenu");
-            db = Database.Load();
+            var ready = Session.WarpArrival ? prepared : null;
+            prepared = null;
+            db = ready ?? Database.Load();
             // MGame::OnUpdate: a frame's dt is capped at 150 ms (a hitch never jumps the game far ahead).
             savedMaxDelta = Time.maximumDeltaTime;
             if (Time.maximumDeltaTime > 0.15f) Time.maximumDeltaTime = 0.15f;
@@ -258,6 +320,9 @@ namespace GoF2Remake.World
             bool interstellar = Session.EnterInterstellar && arena == null;
             Session.EnterInterstellar = false;
             bool plainOrbit = arena == null && !interstellar;
+            warpArrival = Session.WarpArrival && plainOrbit;
+            flownIn = warpArrival && ready != null;
+            Session.WarpArrival = false;
             // Remake mods: launched from a mobile station (Modding.MobileStations): into the orbit it cruises through now.
             if (plainOrbit && stationOverride < 0 && Modding.ModWorld.IsMobile(station))
             {
@@ -310,7 +375,7 @@ namespace GoF2Remake.World
             // Remake mods: the mobile stations in this orbit now (not in an arena or the prologue).
             if (plainOrbit && !prologue) Mobiles.AddRange(MobileStation.SpawnAll(db, Layout));
             // Multiplayer (NetGame): the orbit's field from the world seed, the same for every player here (NetOrbit).
-            if (!GoF2Remake.Data.NetSession.Active) Asteroids = OrbitBuilder.SpawnAsteroids(db, Layout);
+            if (!GoF2Remake.Data.NetSession.Active) Asteroids = ready != null && warpArrival ? OrbitBuilder.SpawnAsteroids(db, Layout, preparedField, null) : OrbitBuilder.SpawnAsteroids(db, Layout);
             else SpawnNetworkAsteroids(GoF2Remake.Data.NetSession.OrbitSeed(NetOrbitId));
             if (prologue && Story.Index == 0)
             {
@@ -333,6 +398,8 @@ namespace GoF2Remake.World
             Navigation = Player.gameObject.AddComponent<Navigation>();
             Navigation.Setup(db, Layout, backdrop, Player, Mining, chase, Weapons);
             Navigation.StationObject = Station;
+            // the flight goes on across the load
+            if (warpArrival || interstellar) Navigation.Drive?.CarrySpeed(warpArrival ? WarpSky.ArrivalCarryMs : WarpSky.EntryCarryMs);
             foreach (var m in Mobiles) Navigation.AddMobileStation(m.transform, m.Station, m.Label, m.TechLevel);
             // Remake mods: a station docked EVERSPACE 2's way: its landmark and the autopilot are its dock; a launch from it
             // takes off from the pad (Es2Dock).
@@ -412,7 +479,8 @@ namespace GoF2Remake.World
             NetAuthority = GoF2Remake.Data.NetSession.Active && !interstellar && (arena == null || arena.voids) && GoF2Remake.World.SpaceHooks.IsOrbitEmpty(NetOrbitId);
             ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit || builderTest || challenge || interstellar || (arena != null && !arena.voids);
             Traffic.LevelMissionActive = () => (storyOrbit && Story.IsLevelMission(station)) || (missionHere && Freelance.IsMissionOrbit(station));
-            Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (GoF2Remake.Data.NetSession.Active && !NetAuthority), Wormhole);
+            Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (GoF2Remake.Data.NetSession.Active && !NetAuthority), Wormhole,
+                          flownIn && !missionHere && !GoF2Remake.Data.NetSession.Active);
             // Remake: a cruise drive's encounters (NavigationCruiseDrive, CruiseEncounterSpawner): only where the traffic is this
             // player's own and nothing scripted runs (a multiplayer orbit another player runs rolls none).
             Navigation.EncountersAllowed = !ownPassive && !(GoF2Remake.Data.NetSession.Active && !NetAuthority) && !prologue
@@ -530,6 +598,7 @@ namespace GoF2Remake.World
             SpaceHooks.LevelBuilt?.Invoke(this);   // multiplayer: the shared orbit (NetOrbit)
             if (arena != null) GoF2Remake.World.SpaceHooks.ArenaLevelReady?.Invoke();
             if (interstellar) gameObject.AddComponent<InterstellarField>().Setup(this);
+            if (interstellar || warpArrival || Navigation.Drive != null) gameObject.AddComponent<WarpSky>().Setup(this, warpArrival, !flownIn, SystemJump);
             if (Modding.ModBuilder.TestFlying) gameObject.AddComponent<ModBuilderRange>().Setup(this);
             if (Modding.ModBuilder.InSpace) HoldForBuilder();
         }

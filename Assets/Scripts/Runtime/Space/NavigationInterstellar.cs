@@ -100,6 +100,10 @@ namespace GoF2Remake.Flight
         {
             LeavingInterstellar = true;
             SetAutopilot(null);
+            var way = system.Position - ship.transform.position;
+            if (way.sqrMagnitude > 1f) Session.WarpHeading = Quaternion.Inverse(Quaternion.LookRotation(way, Vector3.up)) * ship.transform.rotation;
+            Session.WarpView = ship.transform.InverseTransformPoint(chase.transform.position);
+            Session.WarpViewTurn = Quaternion.Inverse(ship.transform.rotation) * chase.transform.rotation;
             SystemReached?.Invoke(system.station);
         }
 
