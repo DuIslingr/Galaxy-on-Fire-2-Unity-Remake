@@ -102,6 +102,24 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
 - **Volatile goods** (`GalaxyMap.HasVolatileGoods`: 209 / 204 in the hold): the Khador menu entry and a map target
   outside the gate routes give 612; a gate neighbour picked on the Khador map goes by the jumpgate. Mission blocks: 525
   at the gate and on the Khador entry.
+- **Interstellar space** (`InterstellarSpace`, 2026-10-31, the user's idea; no original behaviour): a mounted cruise drive
+  with attr 135 (`CruiseDrive.InterstellarAttr`, the ES2 importer's Slipstream II) adds a quick menu entry
+  (`Navigation.Kind.Slipstream`, `NavigationInterstellar`); no option, the item is the switch. The Khador charge and scene
+  play (`SystemJump.toInterstellar`), then `Session.EnterInterstellar` reloads Space, read once in `SpaceLevel.Awake`:
+  `InterstellarSpace.Clear` empties the orbit left (`OrbitLayout.interstellar`), which stays `Session.StationIndex`, so a
+  save or load is that orbit and the flag is never saved. No wingmen, traffic, story (`StorySpace`), encounters, wormholes;
+  `plainOrbit` in `Awake` marks what an arena and this space both leave out. Multiplayer: everyone here shares
+  `InterstellarSpace.OrbitId` (`SpaceLevel.NetOrbitId`). Each visible system is a `Kind.System` target and a sun
+  (`InterstellarField`: the map's sun material, kept inside the far plane); `GalaxyMap.Visibility` decides, every frame,
+  so bought coordinates, the story, an event's hide and a mod's `available` all hold here. Scale 240 units a map unit
+  (the average hop, 2510 on the map, is 30 km; the galaxy +-66 km around the origin, centred for floats' sake). A leg
+  is `LegUnits`, the average hop, so `InterstellarSpace.CellsFor` is about the Khador Drive's `GalaxyMap.EnergyCells`
+  (`InterstellarSpaceTests`: 0.5 to 1.25 x over every pair); `CruiseDrive.keepLeg` keeps a paid leg over a stop. The
+  autopilot holds the drive there (`Navigation.UpdateDrive`), `CanFastForward` is false. Within `ArriveUnits` (2 km):
+  `SystemJump.LeaveInterstellar`, the Khador scene into `ArrivalStation` (the gate orbit); a story refusal
+  (`PlanetJumpRefused`) holds until the ship is back outside 1.5 x that. No cells for the next leg: `FallOutOfSlipstream`
+  at the nearest system, nobody strands. The look: `Visuals.WarpTunnel` + `Resources/GoF2Warp/WarpTunnel.shader`, a mod's
+  `warp.json` (`ModWarp`) or noise made at runtime.
 - **Sounds** (the FEV's LGCY data): 31 Jumpgate = one of Jumpgate_3b / 4c / 1b / 2b at random, 32 KhadorDrive =
   Jumpgate_5c. 102 Map_Whoosh is a drag odometer (`StarMap.AddWhoosh`, StarMap+0x1c0: + min(|dx + dy|, 10) per galaxy
   drag move, + min(|yaw + pitch velocity| · 0.01, 10) per frame in the system view, 0 past 100): entering the parameter

@@ -320,6 +320,7 @@ energy cells.
 | `echoExplosion` | 130 | The explosion the echo shows: 0 ship, 8 to 10 scatter (8 the default), 11 shock blast, 13 fireworks; -1 none |
 | `missileDefense` | 131 | Missile defense: with this item mounted, the ship's automatic turrets shoot down the homing missiles flying at it within this reach (game units, 20 per metre), before turning to enemy ships. Any item can carry it; on a seatless cabin (`"base": 91`, `"cabinSize": 0`) it changes nothing else and the shop calls it "Missile defense". Another player's missiles in multiplayer are left alone |
 | `cruiseSpeed` | 133 | A cruise drive's speed factor in hundredths (400 = x4; > 0 makes an item based on the Khador Drive a cruise drive, see [Cruise drives](#cruise-drives)) |
+| `interstellar` | 135 | 1: the mounted cruise drive also flies the space between the systems ([Cruise drives](#cruise-drives)) |
 | `cruiseRange` | 134 | Cruise drive: the distance one leg of energy cells buys (game units, 20 per metre; default 60000 = 3 km) |
 | `cruiseChargeMs` | 37 | Cruise drive: the charge before it engages (ms; the Khador Drive's own charge attribute) |
 | `miningTime` | 132 | An ore's mining time in percent of the game's 6 seconds per layer (default 100; 200 = twice as long). The ore a whole asteroid gives stays the same: it comes slower. Counts for the drill's minigame and the mining beam |
@@ -408,8 +409,7 @@ its forward speed, looking and sounding like a boost; every `cruiseRange` units 
 the cells for the next leg it stops. Releasing the button, hostile ships, the autopilot, the time extender, a menu, a hit
 on the ship, a station, freighter or object within 400 m ahead (the speed already easing down from 2 km) or the locked
 landmark within 1 km (the fast-forward's own limit) drop it; a new press charges again. The HUD shows "<item> charging"
-on the Khador Drive's charge bar, "-N t Energy Cells" when a leg is paid and why it stopped. The example mod
-`Modding/Examples/slipstream_drive` has two.
+on the Khador Drive's charge bar, "-N t Energy Cells" when a leg is paid and why it stopped.
 
 ```json
 {
@@ -422,6 +422,31 @@ on the Khador Drive's charge bar, "-N t Energy Cells" when a leg is paid and why
     "stats": { "cruiseSpeed": 400, "cruiseRange": 60000, "cruiseChargeMs": 2000, "energyCells": 1 }
 }
 ```
+
+**Between the systems.** With `"interstellar": 1` as well, the mounted drive also flies the space between the systems.
+There is no option for it: mounting the item is the switch, and in the hold it does nothing. It adds an entry with the
+item's name to the quick menu (the Khador Drive's key reaches it on a ship without a Khador Drive), refused where a Khador
+jump is (a mission, volatile goods, the Void). The Khador Drive's charge and scene play, and instead of a destination the
+ship comes out in an empty space with every system of the star map as a sun at its place on the map. Only what the map
+shows is there: a system appears once it is revealed (the story, bought coordinates, an event, its `available`) and is
+gone while it is hidden. Fly by hand on the fast-forward button, or lock a system or pick it from the autopilot menu (the
+programmed destination's system, then the seven nearest): the autopilot holds the drive itself. Within 2 km of a system the
+Khador scene plays and the ship arrives in its gate orbit. A leg here is the average gate hop, 30 km, whatever `cruiseRange`
+says, so the crossing costs what the gate route's Khador jump would: `energyCells` a hop (twice on Extreme). What a leg paid
+for survives a stop. Out of cells, the ship falls out at the nearest system. No traffic, encounters or story happen here,
+and a save or a load is the orbit the ship left. `cruiseSpeed` is the time a crossing takes: x8 flies an average hop in 38
+seconds. The item is no jump drive: it doesn't replace the Khador Drive for the story's checks.
+
+`warp.json` (optional, the last mod in the load order that has one wins) gives that space its look and sound; each entry is
+optional, and without one the game makes its own:
+
+```json
+{ "tunnel": "warp/tunnel.png", "detail": "warp/detail.png", "streaks": "warp/streaks.png", "tint": "#8cd0ff",
+  "loop": "warp/loop.ogg", "enter": "warp/enter.ogg" }
+```
+
+The three images are tiling layers scrolled along a tube around the ship, of which the red channel is read; `loop` plays
+with the drive's strength and `enter` as it engages.
 
 **Encounters.** A cruise runs into things: after the first 6 seconds of a cruise, every 5 seconds there is a 10 % chance
 of an encounter (90 seconds apart at least, two per orbit visit at most), picked by weight from a table. The game's own

@@ -41,6 +41,8 @@ namespace GoF2Remake.World
         public bool stationObject;
         /// <summary>Status::inAlienOrbit: the Void's home orbit (Session.VoidOrbit): Void station, sky 010, Void asteroids.</summary>
         public bool alienOrbit;
+        /// <summary>Remake: the space between the systems, not this orbit (InterstellarSpace.Clear).</summary>
+        public bool interstellar;
         /// <summary>Status::inPlanetRingOrbit (stations 120 / 126 / 130 / 132): the orbit planet has no camera zoom.</summary>
         public bool ringOrbit;
 

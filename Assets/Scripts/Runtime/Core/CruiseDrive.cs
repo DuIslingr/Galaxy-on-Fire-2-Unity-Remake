@@ -1,7 +1,7 @@
 // CruiseDrive.cs
 // Remake: a cruise drive, in-system fast travel for a player flying by hand, as plain rules. The drive is a mod item
 // made from the Khador Drive (85) with the remake attributes cruiseSpeed 133 and cruiseRange 134 (Modding/README.md
-// "Cruise drives"; the example mod Modding/Examples/slipstream_drive): Shop.IsCruiseDrive, its own one-per-ship kind
+// "Cruise drives"; the ES2 importer's Khador Slipstream and Slipstream II): Shop.IsCruiseDrive, its own one-per-ship kind
 // (Shop.KindOf: Kind, so it sits beside a Khador Drive). Navigation runs it on the fast-forward button (NavigationCruiseDrive):
 //   charge   a fresh press held for attr 37 ms (the Khador Drive's charge attribute); released, blocked or something in
 //            the way: nothing happens. Charged: one leg's energy cells (item 122, attr 38; x2 on Extreme like a Khador
@@ -30,6 +30,8 @@ namespace GoF2Remake.Flight
         /// <summary>The remake attributes: 133 the speed factor x 100 (400 = x4; > 0 marks a cruise drive), 134 the units
         /// flown per leg of energy cells; the Khador Drive's 37 (charge ms) and 38 (cells) do the rest.</summary>
         public const int SpeedAttr = 133, RangeAttr = 134, ChargeAttr = 37, CellsAttr = 38;
+        /// <summary>The remake attribute 135 (> 0): the drive flies the space between the systems (Data.InterstellarSpace).</summary>
+        public const int InterstellarAttr = 135;
         /// <summary>Shop.KindOf: the cruise drives' own one-per-ship kind, past every item category.</summary>
         public const int Kind = 1000;
         /// <summary>A hull ahead within StopUnits (400 m) drops the cruise; from SlowUnits (2 km) the speed eases down to it.
@@ -39,6 +41,9 @@ namespace GoF2Remake.Flight
 
         public readonly int item, chargeMs, cellsPerLeg, legUnits;
         public readonly float speedFactor;
+        /// <summary>A paid leg survives a stop (interstellar space, where a crossing is priced by the distance flown): the next
+        /// engage flies it out and pays nothing.</summary>
+        public bool keepLeg;
 
         public Phase State { get; private set; } = Phase.Off;
         public Stop LastStop { get; private set; } = Stop.None;
@@ -101,11 +106,15 @@ namespace GoF2Remake.Flight
                     Timer += dtMs;
                     if (Timer >= chargeMs)
                     {
-                        if (free || cellsInCargo >= cellsPerLeg)
+                        bool paid = keepLeg && LegLeft > 0f;
+                        if (paid || free || cellsInCargo >= cellsPerLeg)
                         {
                             State = Phase.Cruising;
-                            LegLeft = legUnits;
-                            CellsDue = free ? 0 : cellsPerLeg;
+                            if (!paid)
+                            {
+                                LegLeft = legUnits;
+                                CellsDue = free ? 0 : cellsPerLeg;
+                            }
                             ev = Event.Engaged;
                         }
                         else { End(Stop.NoCells); ev = Event.Refused; }
@@ -150,7 +159,7 @@ namespace GoF2Remake.Flight
             State = Phase.Off;
             LastStop = reason;
             Timer = 0f;
-            LegLeft = 0f;
+            if (!keepLeg) LegLeft = 0f;
         }
     }
 }

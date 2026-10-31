@@ -355,6 +355,9 @@ namespace GoF2Remake.Data
         /// (another system) 5 s into the level, using that many energy cells.</summary>
         public static bool InstantJump;
         public static int EnergyCellsForNextJump;
+        /// <summary>Remake: the next Space scene is interstellar space (InterstellarSpace), not the orbit of StationIndex. Read
+        /// once by SpaceLevel, never saved: a load is always the orbit the ship left.</summary>
+        public static bool EnterInterstellar;
 
         /// <summary>Status+0x1dc (Status::jumpgateUsed).</summary>
         public static int JumpgatesUsed;
@@ -544,6 +547,7 @@ namespace GoF2Remake.Data
             ProgrammedStation = -1;
             InstantJump = false;
             EnergyCellsForNextJump = 0;
+            EnterInterstellar = false;
             JumpgatesUsed = 0;
             Standing = new[] { 30, 0 };
             ModRaceStanding = new Dictionary<string, int>(System.StringComparer.Ordinal);

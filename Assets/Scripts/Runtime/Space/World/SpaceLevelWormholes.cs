@@ -328,6 +328,16 @@ namespace GoF2Remake.World
                 var start = OrbitLayout.ToUnity(new Vector3(70000f, 0f, 100000f));
                 root.transform.SetPositionAndRotation(start, Quaternion.LookRotation(-start.normalized, Vector3.up));
             }
+            // Remake: outside the system it left, heading for the programmed destination (InterstellarSpace).
+            if (Layout.interstellar)
+            {
+                var from = InterstellarSpace.Position(db.Systems.Find(s => s.index == Layout.systemIndex) ?? db.Systems[0]);
+                var goal = db.Stations.Find(s => s.index == Session.ProgrammedStation) is StationData prog
+                           && db.Systems.Find(s => s.index == prog.system) is SystemData sys && sys.index != Layout.systemIndex && GalaxyMap.IsVisible(db, sys.index)
+                    ? InterstellarSpace.Position(sys) : Vector3.zero;
+                InterstellarSpace.Start(from, goal, out var at, out var forward);
+                root.transform.SetPositionAndRotation(OrbitLayout.ToUnity(at), Quaternion.LookRotation(OrbitLayout.DirToUnity(forward), Vector3.up));
+            }
             // Remake multiplayer: an admin's teleport into this orbit (NetTeleport) brings its own pose.
             if (SpaceHooks.TeleportPose != null && SpaceHooks.TeleportPose(out var tpPos, out var tpRot)) root.transform.SetPositionAndRotation(tpPos, tpRot);
             var ctrl = root.AddComponent<ShipController>();
@@ -387,7 +397,7 @@ namespace GoF2Remake.World
             // MGame::switchCamera: the camera button's modes (standard / turret / free look).
             FreeLook = FreeLookCamera.Attach(root, chase, Turret);
             // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).
-            GasClouds = GasCloudField.Spawn(db, Layout, ctrl, Turret);
+            if (!Layout.interstellar) GasClouds = GasCloudField.Spawn(db, Layout, ctrl, Turret);
             if (Radar != null) Radar.Clouds = GasClouds;   // the spectral filters' markers and lock
             Extender = TimeExtender.Attach(root, db);
 

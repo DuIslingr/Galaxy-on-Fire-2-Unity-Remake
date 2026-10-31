@@ -519,7 +519,7 @@ namespace GoF2Remake.UI
             if (menuKeys && GameControls.AutopilotMenu.WasPressedThisFrame()) OnAutopilotButton();
             else if (menuKeys && GameControls.ActionsMenu.WasPressedThisFrame()) OnActionsButton();
             else if (menuKeys && GameControls.Wingmen.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.Wingmen);
-            else if (menuKeys && GameControls.KhadorDrive.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.KhadorDrive);
+            else if (menuKeys && GameControls.KhadorDrive.WasPressedThisFrame()) OpenMenuEntry(nav != null && nav.MenuEntries(true).Exists(t => t.kind == Navigation.Kind.KhadorDrive) ? Navigation.Kind.KhadorDrive : Navigation.Kind.Slipstream);
             bool freeLookNow = level != null && level.FreeLook != null && level.FreeLook.FreeLookActive;
             if (GameControls.MouseSteering.WasPressedThisFrame()
                 && !(freeLookNow && GameControls.MouseSteering.activeControl?.device is Mouse))

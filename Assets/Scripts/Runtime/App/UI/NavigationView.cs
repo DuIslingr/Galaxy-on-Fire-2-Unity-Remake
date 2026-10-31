@@ -148,7 +148,7 @@ namespace GoF2Remake.UI
                     Image(m.bracket, Tex("bracket"));
                     layer.Add(m.bracket);
                 }
-                if (t.kind == Navigation.Kind.Jumpgate || t.kind == Navigation.Kind.Waypoint || wormhole || (t.kind == Navigation.Kind.Planet && t.station == gateStation))
+                if (t.kind == Navigation.Kind.Jumpgate || t.kind == Navigation.Kind.System || t.kind == Navigation.Kind.Waypoint || wormhole || (t.kind == Navigation.Kind.Planet && t.station == gateStation))
                 {
                     m.icon = new VisualElement { pickingMode = PickingMode.Ignore, usageHints = UsageHints.DynamicTransform };
                     m.icon.AddToClassList("nav-abs");

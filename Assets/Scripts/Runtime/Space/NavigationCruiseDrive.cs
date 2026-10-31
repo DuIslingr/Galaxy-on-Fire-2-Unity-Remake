@@ -1,6 +1,6 @@
 // NavigationCruiseDrive.cs
 // Remake: the mounted cruise drive (Flight.CruiseDrive, a mod item made from the Khador Drive with cruiseSpeed; the
-// example mod Modding/Examples/slipstream_drive) on the fast-forward button while the player flies by hand (the
+// ES2 importer's Khador Slipstream and Slipstream II) on the fast-forward button while the player flies by hand (the
 // original fast-forward keeps the button on the autopilot and the approaches, CanFastForward). Its forward speed factor
 // joins the multiplayer cruise's in CruiseFactor (ShipController's step), so it looks and sounds like a boost
 // (FlightModel.CruiseVisual). The energy cells go the Khador Drive's way (GalaxyMap.RemoveCells, "-1t Energy Cells";
@@ -51,8 +51,9 @@ namespace GoF2Remake.Flight
         {
             var it = Shop.MountedCruiseDrive(database);
             Drive = it == null ? null
-                : new CruiseDrive(it.index, it.Attr(CruiseDrive.SpeedAttr), it.Attr(CruiseDrive.RangeAttr, 60000),
-                                  it.Attr(CruiseDrive.ChargeAttr, 2000), it.Attr(CruiseDrive.CellsAttr, 1), Session.IsExtreme);
+                : new CruiseDrive(it.index, it.Attr(CruiseDrive.SpeedAttr),
+                                  layout.interstellar ? (int)InterstellarSpace.LegUnits : it.Attr(CruiseDrive.RangeAttr, 60000),
+                                  it.Attr(CruiseDrive.ChargeAttr, 2000), it.Attr(CruiseDrive.CellsAttr, 1), Session.IsExtreme) { keepLeg = layout.interstellar };
             driveName = it != null ? GameNames.Item(it.index) : null;
             driveMoved = false;
             encounters = Drive != null ? new CruiseEncounters(Modding.ModEncounters.All()) : null;
@@ -64,7 +65,7 @@ namespace GoF2Remake.Flight
         CruiseDrive.Stop DriveBlock =>
             Drive == null || ship == null ? CruiseDrive.Stop.Blocked
             : HostilesPresent ? CruiseDrive.Stop.Hostiles
-            : Jumping || halted || Autopilot || TimeExtender.Active || InputHalted
+            : Jumping || LeavingInterstellar || halted || (Autopilot && !Interstellar) || TimeExtender.Active || InputHalted
               || (mining != null && mining.State != Mining.Phase.Idle) || (Docking != null && Docking.Busy) ? CruiseDrive.Stop.Blocked
             : CruiseDrive.Stop.None;
 
@@ -77,7 +78,8 @@ namespace GoF2Remake.Flight
             lastDrivePos = p;
             driveMoved = true;
             // The button: the original fast-forward wins while it is allowed (the autopilot and the approaches).
-            bool held = fastForwardHeld && !CanFastForward;
+            // Between the systems the autopilot holds it too: a crossing is the drive's whole flight (NavigationInterstellar).
+            bool held = Interstellar ? fastForwardHeld || Autopilot : fastForwardHeld && !CanFastForward;
             bool free = Cheats.FreeJumps;
             var ev = Drive.Update(dtMs, held, DriveBlock, moved, Drive.State == CruiseDrive.Phase.Off && !held ? float.MaxValue : ObstacleAheadUnits(),
                                   LockedLandmarkUnits(), GalaxyMap.CellsInCargo(), free);
@@ -98,6 +100,7 @@ namespace GoF2Remake.Flight
                     SayDriveStop(Drive.LastStop);
                     break;
             }
+            if ((ev == CruiseDrive.Event.Refused || ev == CruiseDrive.Event.Stopped) && Drive.LastStop == CruiseDrive.Stop.NoCells) FallOutOfSlipstream();
             UpdateEncounters(dtMs);
         }
 

@@ -8,7 +8,7 @@ Player-made content as data (no code: the game is IL2CPP), in `Scripts/Runtime/M
 guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/gof2-modding/SKILL.md` with it: an Agent
 Skill / paste-in guide for Claude and ChatGPT, with `reference.md` from **GoF2 > Build > Modding AI Reference** and the
 how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (items), `frontier_systems`
-(systems / stations) and `slipstream_drive` (cruise drives, navigation.md "Cruise drive"; a mod's `encounters.json`,
+(systems / stations); cruise drives (navigation.md "Cruise drive"; a mod's `encounters.json`,
 `ModEncounters`, adds to the cruise encounter table). Items, ships, systems and stations, quests and bar missions (event graphs), voice-over, music.
 
 - **Unreadable mod files** (Android crash reports, 2026-10: "A local file header is corrupt" / "Corrupted data ReadInternal"
