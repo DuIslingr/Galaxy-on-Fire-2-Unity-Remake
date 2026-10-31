@@ -1,6 +1,6 @@
 // NavigationCruiseDrive.cs
 // Remake: the mounted cruise drive (Flight.CruiseDrive, a mod item made from the Khador Drive with cruiseSpeed; the
-// ES2 importer's Khador Slipstream and Slipstream II) on the fast-forward button while the player flies by hand (the
+// ES2 importer's Slipstream and Khador Slipstream) on the fast-forward button while the player flies by hand (the
 // original fast-forward keeps the button on the autopilot and the approaches, CanFastForward). Its forward speed factor
 // joins the multiplayer cruise's in CruiseFactor (ShipController's step), so it looks and sounds like a boost
 // (FlightModel.CruiseVisual). The energy cells go the Khador Drive's way (GalaxyMap.RemoveCells, "-1t Energy Cells";

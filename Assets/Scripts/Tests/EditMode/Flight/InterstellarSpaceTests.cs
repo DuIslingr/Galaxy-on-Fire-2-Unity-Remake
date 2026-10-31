@@ -149,6 +149,22 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AnArrivalsPoseIsAJumpsFacingTheStation()
+        {
+            var orbit = OrbitLayout.Build(db, db.Stations.Find(s => OrbitLayout.Build(db, s.index).hasJumpgate).index);
+            orbit.ArrivalPose(-1, out var at, out var facing);
+            Assert.AreEqual(0f, (OrbitLayout.ToUnity(orbit.hiddenJumpgate) - at).magnitude, 0.01f);
+            Assert.AreEqual(1f, Vector3.Dot(facing * Vector3.forward, -at.normalized), 0.001f, "the view opens on the station");
+        }
+
+        [Test]
+        public void AFlyInStartsAsFarOutAsItsSpeedCarriesIt()
+        {
+            Assert.AreEqual(100f, InterstellarSpace.CarryMeters(100, 1000f), 0.01f, "no cruise: the ship's own speed");
+            Assert.AreEqual(3150f, InterstellarSpace.CarryMeters(800, 7000f), 0.01f, "x8 easing to x1 averages x4.5");
+        }
+
+        [Test]
         public void TheNearestSystemIsWhereAnEmptyHoldFallsOut()
         {
             var points = new List<InterstellarSpace.Point>

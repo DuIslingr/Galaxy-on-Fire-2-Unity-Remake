@@ -1,7 +1,7 @@
 // CruiseDrive.cs
 // Remake: a cruise drive, in-system fast travel for a player flying by hand, as plain rules. The drive is a mod item
 // made from the Khador Drive (85) with the remake attributes cruiseSpeed 133 and cruiseRange 134 (Modding/README.md
-// "Cruise drives"; the ES2 importer's Khador Slipstream and Slipstream II): Shop.IsCruiseDrive, its own one-per-ship kind
+// "Cruise drives"; the ES2 importer's Slipstream and Khador Slipstream): Shop.IsCruiseDrive, its own one-per-ship kind
 // (Shop.KindOf: Kind, so it sits beside a Khador Drive). Navigation runs it on the fast-forward button (NavigationCruiseDrive):
 //   charge   a fresh press held for attr 37 ms (the Khador Drive's charge attribute); released, blocked or something in
 //            the way: nothing happens. Charged: one leg's energy cells (item 122, attr 38; x2 on Extreme like a Khador
@@ -58,6 +58,7 @@ namespace GoF2Remake.Flight
         /// <summary>With Event.Engaged / LegPaid: the energy cells the hold loses now (0 with the free-jumps cheat).</summary>
         public int CellsDue { get; private set; }
         bool wasHeld;
+        float carryMs;   // CarrySpeed's ramp down while it runs, then RampDownMs
 
         public CruiseDrive(int item, int speedPercent, int legUnits, int chargeMs, int cells, bool extreme)
         {
@@ -142,9 +143,14 @@ namespace GoF2Remake.Flight
                 Proximity = obstacleUnits >= SlowUnits ? 1f : Mathf.Clamp01((obstacleUnits - StopUnits) / (SlowUnits - StopUnits));
             // The ramp: up from the frame after the engage (the engaging frame's dt is the charge's), down at once.
             bool up = wasCruising && State == Phase.Cruising;
-            Level = Mathf.MoveTowards(Level, up ? 1f : State == Phase.Cruising ? Level : 0f, dtMs / (up ? RampUpMs : RampDownMs));
+            Level = Mathf.MoveTowards(Level, up ? 1f : State == Phase.Cruising ? Level : 0f, dtMs / (up ? RampUpMs : carryMs > 0f ? carryMs : RampDownMs));
+            if (Level <= 0f || State != Phase.Off) carryMs = 0f;
             return ev;
         }
+
+        /// <summary>The ship comes in at full speed (into or out of the space between the systems): no cruise, the ramp runs down
+        /// from the top over 'ms'.</summary>
+        public void CarrySpeed(float ms) { Level = 1f; carryMs = ms; }
 
         /// <summary>A hit on the ship (EVERSPACE 2's interruption): a charge or cruise ends; false = nothing ran.</summary>
         public bool Interrupt(Stop reason = Stop.Hit)

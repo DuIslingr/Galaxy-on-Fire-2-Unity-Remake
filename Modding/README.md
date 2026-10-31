@@ -415,7 +415,7 @@ on the Khador Drive's charge bar, "-N t Energy Cells" when a leg is paid and why
 {
     "id": "slipstream",
     "base": 85,
-    "name": "Khador Slipstream",
+    "name": "Slipstream",
     "techLevel": 7,
     "occurrence": 25,
     "price": [148000, 162800],
@@ -426,12 +426,12 @@ on the Khador Drive's charge bar, "-N t Energy Cells" when a leg is paid and why
 **Between the systems.** With `"interstellar": 1` as well, the mounted drive also flies the space between the systems.
 There is no option for it: mounting the item is the switch, and in the hold it does nothing. It adds an entry with the
 item's name to the quick menu (the Khador Drive's key reaches it on a ship without a Khador Drive), refused where a Khador
-jump is (a mission, volatile goods, the Void). The Khador Drive's charge and scene play, and instead of a destination the
+jump is (a mission, volatile goods, the Void). The Khador Drive's charge and scene play once, and instead of a destination the
 ship comes out in an empty space with every system of the star map as a sun at its place on the map. Only what the map
 shows is there: a system appears once it is revealed (the story, bought coordinates, an event, its `available`) and is
 gone while it is hidden. Fly by hand on the fast-forward button, or lock a system or pick it from the autopilot menu (the
-programmed destination's system, then the seven nearest): the autopilot holds the drive itself. Within 2 km of a system the
-Khador scene plays and the ship arrives in its gate orbit. A leg here is the average gate hop, 30 km, whatever `cruiseRange`
+programmed destination's system, then the seven nearest): the autopilot holds the drive itself. Within 8 km of a system the
+ship flies straight on into its gate orbit, the warp and its speed easing out over 7 seconds as the orbit grows ahead. A leg here is the average gate hop, 30 km, whatever `cruiseRange`
 says, so the crossing costs what the gate route's Khador jump would: `energyCells` a hop (twice on Extreme). What a leg paid
 for survives a stop. Out of cells, the ship falls out at the nearest system. No traffic, encounters or story happen here,
 and a save or a load is the orbit the ship left. `cruiseSpeed` is the time a crossing takes: x8 flies an average hop in 38
@@ -445,8 +445,11 @@ optional, and without one the game makes its own:
   "loop": "warp/loop.ogg", "enter": "warp/enter.ogg" }
 ```
 
-The three images are tiling layers scrolled along a tube around the ship, of which the red channel is read; `loop` plays
-with the drive's strength and `enter` as it engages.
+The warp stretches the sky itself into streaks, so its colours are always the sky's. It runs all the time between the
+systems and with any cruise drive in an orbit, fading in and out with the drive; between the systems it also carries the
+Khador Drive's blue vein web and ice blue. The three images tile and only shape it, of which the red channel is read: `tunnel` and `detail` break it into
+bands, `streaks` are thin lines over it in `tint`. `loop` plays with its strength and `enter` as the drive engages. A
+system's own sky blends in over the last 20 km, so the arrival matches.
 
 **Encounters.** A cruise runs into things: after the first 6 seconds of a cruise, every 5 seconds there is a 10 % chance
 of an encounter (90 seconds apart at least, two per orbit visit at most), picked by weight from a table. The game's own

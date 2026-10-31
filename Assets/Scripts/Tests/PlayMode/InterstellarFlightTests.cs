@@ -9,6 +9,7 @@ using System.Linq;
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
 using GoF2Remake.Modding;
+using GoF2Remake.Visuals;
 using GoF2Remake.World;
 using NUnit.Framework;
 using UnityEngine;
@@ -105,6 +106,41 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(station, Session.StationIndex);
             Assert.IsFalse(Find<SpaceLevel>().Layout.interstellar);
             Assert.AreEqual(78, Session.PreviousStationIndex);
+            Assert.IsTrue(Find<SpaceLevel>().LaunchCameraOver, "no fly-in: the flight goes on");
+            Assert.IsFalse(Session.WarpArrival, "read once");
+            Assert.IsNotNull(Find<WarpSky>(), "the warp eases out here");
+        }
+
+        [UnityTest]
+        public IEnumerator TheOrbitStandsAheadWhereTheArrivalPutsIt()
+        {
+            yield return EnterSpace(78, 5);
+            var space = Find<SpaceLevel>();
+            yield return Run(1f);
+            var target = space.Navigation.Targets.First(t => t.kind == Navigation.Kind.System && t.system != space.Layout.systemIndex);
+            var ship = space.Player.transform;
+            var way = (target.Position - ship.position).normalized;
+            float edge = InterstellarSpace.ArriveUnits * 0.05f;
+            space.Player.enabled = false;   // held just outside the edge
+            ship.SetPositionAndRotation(target.Position - way * (edge + 5f), Quaternion.LookRotation(way, Vector3.up));
+            yield return WaitFor(() => GameObject.Find("Approach") is GameObject a && a.transform.Find("Asteroids") != null, 10f, "the approach");
+            yield return Run(2f);
+            var approach = GameObject.Find("Approach").transform;
+            var station = approach.Find("Station");
+            var seen = station != null ? ship.InverseTransformPoint(station.position) : Vector3.zero;
+            var rocks = approach.Find("Asteroids");
+            var rock = rocks.childCount > 0 ? rocks.GetChild(0).localPosition : Vector3.zero;
+            int count = rocks.childCount;
+
+            ship.position += way * 10f;
+            yield return WaitFor(() => Find<SpaceLevel>() != space && Find<SpaceLevel>() != null && Find<SpaceLevel>().Layout != null, 30f, "the arrival");
+            var orbit = Find<SpaceLevel>();
+            yield return null;
+            Assert.AreEqual(count, orbit.Asteroids.childCount, "the same field");
+            if (count > 0) Assert.AreEqual(0f, (rock - orbit.Asteroids.GetChild(0).position).magnitude, 1f);
+            if (station != null || orbit.Station != null)
+                Assert.Less((seen - orbit.Player.transform.InverseTransformPoint(orbit.Station.transform.position)).magnitude, 300f, "the swap moved the station");
+            Assert.AreEqual(0f, Shader.GetGlobalFloat("_SkyBlend"), "the orbit's own sky now");
         }
 
         [UnityTest]
