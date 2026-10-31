@@ -132,6 +132,9 @@ namespace GoF2Remake.UI
                     case Flight.CruiseDrive.SpeedAttr:
                         rows.Add((Localization.Extra("statCruiseSpeed", "Cruise speed"), "x " + (v / 100f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)));
                         break;
+                    case Flight.CruiseDrive.InterstellarAttr:
+                        rows.Add((Localization.Extra("statInterstellar", "Interstellar flight"), Localization.Extra("statInterstellarOn", "Between the systems")));
+                        break;
                     case Flight.CruiseDrive.RangeAttr:
                         rows.Add((Localization.Extra("statCruiseRange", "Range per energy cell leg"), $"{Mathf.RoundToInt(v * Flight.Gun.MetersPerUnit)} m"));   // 20 units a metre
                         break;

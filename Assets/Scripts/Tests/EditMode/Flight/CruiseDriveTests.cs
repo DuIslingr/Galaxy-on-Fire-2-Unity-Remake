@@ -4,7 +4,7 @@
 // Extreme, none with the cheat) or is refused, every leg's distance pays again and runs out of cells, the speed factor
 // ramps up over 800 ms and down over 1200 ms (smoothstep) and eases down from 40000 to 8000 units of a hull ahead, which
 // drops the cruise, as do the locked landmark within 20000 units, hostiles, a hit and the button released; a drop needs
-// a fresh press. Expected numbers from the class's constants and the example mod's Khador Slipstream (x4, 60000 units a
+// a fresh press. Expected numbers from the class's constants and the ES2 importer's Khador Slipstream (x4, 60000 units a
 // leg, 2000 ms, 1 cell).
 
 using GoF2Remake.Flight;
@@ -17,6 +17,37 @@ namespace GoF2Remake.Tests
         const float None = float.MaxValue;
 
         static CruiseDrive Slipstream(bool extreme = false) => new CruiseDrive(300, 400, 60000, 2000, 1, extreme);
+
+        /// <summary>Held until it cruises (the 16 ms of the frame the charge ends in, then the leg counts).</summary>
+        static CruiseDrive.Event Engage(CruiseDrive d, int cells)
+        {
+            d.Update(16f, true, CruiseDrive.Stop.None, 0f, float.MaxValue, float.MaxValue, cells, false);
+            return d.Update(d.chargeMs, true, CruiseDrive.Stop.None, 0f, float.MaxValue, float.MaxValue, cells, false);
+        }
+
+        [Test]
+        public void AKeptLegSurvivesAStopAndIsNotPaidTwice()
+        {
+            var d = new CruiseDrive(301, 800, 600000, 1500, 1, false) { keepLeg = true };
+            Assert.AreEqual(CruiseDrive.Event.Engaged, Engage(d, 3));
+            Assert.AreEqual(1, d.CellsDue, "the first engage pays a leg");
+            d.Update(16f, true, CruiseDrive.Stop.None, 100000f, float.MaxValue, float.MaxValue, 2, false);
+            d.Update(16f, false, CruiseDrive.Stop.None, 0f, float.MaxValue, float.MaxValue, 2, false);
+            Assert.AreEqual(CruiseDrive.Phase.Off, d.State);
+            Assert.AreEqual(500000f, d.LegLeft, 0.01f, "what was paid for stays");
+            Assert.AreEqual(CruiseDrive.Event.Engaged, Engage(d, 0));
+            Assert.AreEqual(0, d.CellsDue, "flying the rest of a paid leg costs nothing, even with an empty hold");
+            Assert.IsTrue(d.Cruising);
+        }
+
+        [Test]
+        public void WithoutKeepLegAStopLosesTheLegAsBefore()
+        {
+            var d = Slipstream();
+            Engage(d, 3);
+            d.Update(16f, false, CruiseDrive.Stop.None, 0f, float.MaxValue, float.MaxValue, 2, false);
+            Assert.AreEqual(0f, d.LegLeft);
+        }
 
         /// <summary>One frame with the button held and nothing in the way.</summary>
         static CruiseDrive.Event Step(CruiseDrive d, float dtMs, bool held = true, float moved = 0f, int cells = 10,

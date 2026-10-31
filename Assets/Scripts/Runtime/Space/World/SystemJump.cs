@@ -105,6 +105,8 @@ namespace GoF2Remake.World
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
             nav.KhadorRequested += OpenKhadorMap;
+            nav.InterstellarRequested += RequestInterstellar;
+            nav.SystemReached += LeaveInterstellar;
         }
 
         PlayerHealth health;
@@ -114,7 +116,10 @@ namespace GoF2Remake.World
 
         void OnDestroy()
         {
-            if (nav != null) nav.KhadorRequested -= OpenKhadorMap;
+            if (nav == null) return;
+            nav.KhadorRequested -= OpenKhadorMap;
+            nav.InterstellarRequested -= RequestInterstellar;
+            nav.SystemReached -= LeaveInterstellar;
         }
 
         void Update()
@@ -128,6 +133,7 @@ namespace GoF2Remake.World
             if (health != null && health.Dead)
             {
                 if (state == State.Charging) state = State.None;
+                toInterstellar = false;
                 if (state == State.None) return;
             }
             switch (state)
@@ -138,7 +144,7 @@ namespace GoF2Remake.World
                         if (GateBlocked != null && GateBlocked()) nav.Refuse();   // MGame::dockEvent: 525 on a mission
                         else DockToStream();
                     }
-                    else if ((Session.InstantJump || storyTarget.HasValue) && Time.timeSinceLevelLoad * 1000f > 5000f && !nav.Jumping && !nav.Paused && !GoF2Remake.World.SpaceHooks.StarMapOpen)
+                    else if ((Session.InstantJump || storyTarget.HasValue || toInterstellar) && Time.timeSinceLevelLoad * 1000f > 5000f && !nav.Jumping && !nav.Paused && !GoF2Remake.World.SpaceHooks.StarMapOpen)
                         StartCharging();
                     break;
                 case State.AtGate:
@@ -334,8 +340,47 @@ namespace GoF2Remake.World
             if (!opened) { nav.Paused = false; if (weapons != null) weapons.Blocked = false; }
         }
 
+        // ---- interstellar space (InterstellarSpace) ------------------------------------------------------------
+
+        /// <summary>The Khador sequence goes to interstellar space, not to a station: the drive pays its legs there.</summary>
+        bool toInterstellar;
+
+        /// <summary>The mounted drive's quick menu entry: the Khador charge and scene, once at least a leg's cells are aboard.</summary>
+        void RequestInterstellar()
+        {
+            if (state != State.None || nav.Jumping || storyTarget.HasValue) return;
+            toInterstellar = true;
+        }
+
+        /// <summary>A system's edge reached: the Khador scene into its orbit (Arrive). The programmed destination survives when
+        /// it is in that system: the autopilot flies on to its planet, as after a gate hop.</summary>
+        void LeaveInterstellar(int station)
+        {
+            if (state != State.None) return;
+            int prog = Session.ProgrammedStation;
+            hopping = prog >= 0 && prog != station && db.Stations.Find(s => s.index == prog)?.system == db.Stations.Find(s => s.index == station)?.system;
+            BeginScene(station);
+            state = State.KhadorScene;
+            StartKhadorFx();
+        }
+
         void StartCharging()
         {
+            if (toInterstellar)
+            {
+                int leg = nav.Drive != null ? nav.Drive.cellsPerLeg : 1;
+                if (!Cheats.FreeJumps && GalaxyMap.CellsInCargo() < leg)
+                {
+                    Message?.Invoke(Localization.Get(579));
+                    toInterstellar = false;
+                    return;
+                }
+                Play(assets != null ? assets.jumpgateCharge : null);
+                chargeMs = 0f;
+                state = State.Charging;
+                ChargeStarted?.Invoke();
+                return;
+            }
             Session.InstantJump = false;
             // Remake: a Khador jump straight into the campaign target's orbit takes the planet jump's equipment checks (24 a
             // scanner and a tractor beam, the Supernova's 3213-3218); the original only gates the planet jump
@@ -373,7 +418,7 @@ namespace GoF2Remake.World
 
         void StartKhadorScene()
         {
-            int station = storyTarget ?? Session.ProgrammedStation;
+            int station = toInterstellar ? Session.StationIndex : storyTarget ?? Session.ProgrammedStation;
             if (station < 0 && !storyTarget.HasValue) { state = State.None; return; }
             BeginScene(station);
             state = State.KhadorScene;
@@ -474,6 +519,19 @@ namespace GoF2Remake.World
         void Arrive(bool viaGate)
         {
             weapons?.StoreAmmo();
+            if (toInterstellar)
+            {
+                // The station stays the one the ship left: a save or a load in there is this orbit.
+                toInterstellar = false;
+                Session.EnterInterstellar = true;
+                Session.ArrivedByTravel = Session.ArrivedBySystemJump = Session.LaunchedFromStation = false;
+                Session.InstantJump = false;
+                state = State.None;
+                ship.turnOnly = false;
+                enabled = false;
+                if (Application.CanStreamedLevelBeLoaded(spaceScene)) SceneManager.LoadScene(spaceScene);
+                return;
+            }
             if (targetStation == Session.VoidOrbit) Session.VoidReturnStation = Session.StationIndex;
             Session.PreviousStationIndex = Session.StationIndex;
             Session.StationIndex = targetStation;

@@ -61,7 +61,7 @@ the player ship) and `NavigationView` (flight HUD).
   goods) stays the real boost's.
 - **Cruise drive** (remake, `Flight.CruiseDrive` rules + `NavigationCruiseDrive`; a mod item based on the Khador Drive
   with `cruiseSpeed` 133 > 0, `Shop.IsCruiseDrive`, its own one-per-ship kind `Shop.KindOf` = `CruiseDrive.Kind` beside the
-  Khador Drive; the example mod `Modding/Examples/slipstream_drive`, Modding/README.md "Cruise drives"): the fast-forward
+  Khador Drive; the ES2 importer's `drives` part, Modding/README.md "Cruise drives"): the fast-forward
   button in manual flight (the original fast-forward keeps it on the autopilot and the approaches). A fresh press held for
   attr 37 ms charges (the Khador bar, Extra `hudCruiseDriveCharging`), then one leg's energy cells (attr 38, x2 Extreme, 0
   with free jumps; `GalaxyMap.RemoveCells`, "-1t Energy Cells", 583 + the cells when short) and the forward speed x attr

@@ -49,7 +49,7 @@ namespace GoF2Remake.Flight
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public partial class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary, TimeExtender,
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Slipstream, System, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary, TimeExtender,
                            Distress, Assist,
             /// <summary>Remake multiplayer: a named object (/spawn ... named, DebugSpawner.SpawnObject): its name and distance
             /// near the crosshair like a landmark's, never locked or flown to.</summary>
@@ -60,7 +60,8 @@ namespace GoF2Remake.Flight
             public Kind kind;
             public Transform transform;      // null for fixed positions
             public Vector3 fixedPosition;
-            public int station = -1;         // planets: the station it leads to
+            public int station = -1;         // planets: the station it leads to (interstellar systems: their arrival)
+            public int system = -1;          // interstellar systems: the system
             public bool disabled;            // drawn half-transparent, ignores taps (the cloak while not ready)
             public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
@@ -334,6 +335,7 @@ namespace GoF2Remake.Flight
             var scanner = Shop.FirstMounted(database, 17);
             LockTimeMs = Cheats.LockMs(scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000);
             SetupDrive(database);   // remake: a mounted cruise drive (NavigationCruiseDrive)
+            SetupInterstellar();   // remake: the suns of the space between the systems (NavigationInterstellar)
             gateRadiusUnits = layout.JumpgateRadius;
 
             // Level::getLandmarks: [0] station (none in empty orbits), [1] the visible jumpgate (gate orbit only).
@@ -378,6 +380,7 @@ namespace GoF2Remake.Flight
         {
             var list = new List<Target>();
             if (actions) return ActionEntries(list);
+            if (Interstellar) return SystemEntries(list);
             if (!layout.alienOrbit)
             {
                 if (AsteroidField != null) list.Add(AsteroidField);
@@ -409,7 +412,8 @@ namespace GoF2Remake.Flight
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
             if (Cloak != null) list.Add(new Target { kind = Kind.Cloak, name = Cloak.ItemName, disabled = !Cloak.Rules.Available });
             // Remake: not while docked at an object (it holds the ship: undock first).
-            if (GalaxyMap.HasJumpDrive(db) && (Docking == null || Docking.State == ObjectDocking.Phase.Idle || Docking.State == ObjectDocking.Phase.Approach)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
+            if (!Interstellar && GalaxyMap.HasJumpDrive(db) && (Docking == null || Docking.State == ObjectDocking.Phase.Idle || Docking.State == ObjectDocking.Phase.Approach)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
+            AddSlipstreamEntry(list);   // remake: the mounted drive that flies between the systems (NavigationInterstellar)
             // Remake: the time extender too (the original has it only on its own touch slot), so one menu holds every
             // device: secondaries, wingmen, cloak, Khador Drive and the time extender (half-transparent while recharging).
             if (Extender != null)
@@ -497,6 +501,7 @@ namespace GoF2Remake.Flight
                 KhadorRequested?.Invoke();
                 return;
             }
+            if (target.kind == Kind.Slipstream) { RequestInterstellar(); return; }
             Say($"{Localization.Get(546)}: {target.name}", HudMessageKind.Target);
             Play(sounds?.autopilotOn);
             SetAutopilot(target);
@@ -512,7 +517,7 @@ namespace GoF2Remake.Flight
         {
             get
             {
-                if (Jumping || HostilesPresent || TimeExtender.Active) return false;
+                if (Interstellar || Jumping || HostilesPresent || TimeExtender.Active) return false;   // (the drive has the button there)
                 if (Autopilot) return !AboutToReach;
                 if (mining != null && mining.Target != null && mining.State == Mining.Phase.Approaching)
                     return (mining.Target.transform.position - ship.transform.position).magnitude / M >= AboutToReachUnits;
@@ -544,6 +549,7 @@ namespace GoF2Remake.Flight
             if (Autopilot) AboutToReach = (AutopilotTarget.Position - ship.transform.position).magnitude / M < AboutToReachUnits;
             if (MenuOpen) return;   // paused
             UpdateLock(dtMs);
+            UpdateInterstellar();
             SetFastForward(fastForwardHeld && CanFastForward);
         }
 

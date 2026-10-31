@@ -254,8 +254,12 @@ namespace GoF2Remake.World
             // Multiplayer arena match (NetArenaClient): the template orbit's sky, sun and planets, its own orbit id.
             var arena = GoF2Remake.World.SpaceHooks.Arena;
             if (arena != null) { station = arena.template; Session.ArrivedByTravel = Session.ArrivedBySystemJump = false; }
+            // Remake: the space between the systems (InterstellarSpace): the orbit left, emptied; none of it is arrived in.
+            bool interstellar = Session.EnterInterstellar && arena == null;
+            Session.EnterInterstellar = false;
+            bool plainOrbit = arena == null && !interstellar;
             // Remake mods: launched from a mobile station (Modding.MobileStations): into the orbit it cruises through now.
-            if (arena == null && stationOverride < 0 && Modding.ModWorld.IsMobile(station))
+            if (plainOrbit && stationOverride < 0 && Modding.ModWorld.IsMobile(station))
             {
                 launchFromMobile = station;
                 int host = Modding.MobileStations.HostNow(station);
@@ -263,20 +267,21 @@ namespace GoF2Remake.World
             }
             ComingFromVoid = Session.ComingFromVoid;
             // Status::departStation: the Void-invasion re-roll counter (index 32-44).
-            Story.OnDepart(db, station);
+            if (!interstellar) Story.OnDepart(db, station);
             // Status::departStation's station stack: an attacked station's locals calm down 3 new orbits later (a player's report).
-            if (arena == null) Session.ArriveInOrbit(station);
+            if (plainOrbit) Session.ArriveInOrbit(station);
             // ... and the shops' stack: a station new to it gets its stock here, not only when docking (a player's report).
-            if (arena == null) Shop.ArriveInOrbit(db, station);
+            if (plainOrbit) Shop.ArriveInOrbit(db, station);
             // Modified: MGame::OnInitialize 0x1a76a8 visits the orbit's station in space for the orbits with no docking: Naneroh
             // (109), Valpatro (110), 132-134, the dropship orbits 102-104 and Luur (111) from step 0x5e (Station::visit); the
             // remake only marked a station visited on docking, so those systems never got the star map's tick (a player's report).
-            if (arena == null && VisitedInSpace(station)) Session.VisitedStations.Add(station);
+            if (plainOrbit && VisitedInSpace(station)) Session.VisitedStations.Add(station);
             // Status::moveWanted: a real orbit change (not a launch from the docked station, not to / from the Void) moves the
             // Most Wanted criminals one system along their routes.
             if ((Session.ArrivedByTravel || Session.ArrivedBySystemJump) && station != Session.VoidOrbit && Session.PreviousStationIndex != Session.VoidOrbit)
                 WantedBoard.Move(db, station, Session.ProgrammedStation);
             Layout = OrbitLayout.Build(db, station);
+            if (interstellar) InterstellarSpace.Clear(Layout);
             var st = db.Stations.Find(s => s.index == station);
             StationInfo = st;
             SystemJumpgateStation = db.Systems.Find(s => s.index == Layout.systemIndex)?.jumpgateStation ?? -1;
@@ -288,7 +293,7 @@ namespace GoF2Remake.World
             SetupCamera();
             // Status::inEmptyOrbit: Var Hastra (78) has no station while the index is 0 or 1 (the prologue and the rescue);
             // Level::init: the prologue's asteroid belt is centred on the origin, under its own sky (Level::createSpace).
-            bool prologue = station == 78 && !Session.FreePlay && Story.Index <= 1;
+            bool prologue = plainOrbit && station == 78 && !Session.FreePlay && Story.Index <= 1;
             if (prologue) Layout.hasStation = false;
             if (prologue && Story.Index == 0) Layout.asteroidCentre = Vector3.zero;
             // An arena (the Void's home orbit): no station or gate (no docking, no jumps); the asteroids around the centre.
@@ -301,10 +306,9 @@ namespace GoF2Remake.World
             if (snCentre.HasValue && Story.IsLevelMission(station)) Layout.asteroidCentre = snCentre.Value;
             Station = OrbitBuilder.SpawnStation(db, Layout);
             Jumpgate = OrbitBuilder.SpawnJumpgate(db, Layout);
-            SpawnWormhole();
-            AddObstacles();
+            if (!interstellar) { SpawnWormhole(); AddObstacles(); }
             // Remake mods: the mobile stations in this orbit now (not in an arena or the prologue).
-            if (arena == null && !prologue) Mobiles.AddRange(MobileStation.SpawnAll(db, Layout));
+            if (plainOrbit && !prologue) Mobiles.AddRange(MobileStation.SpawnAll(db, Layout));
             // Multiplayer (NetGame): the orbit's field from the world seed, the same for every player here (NetOrbit).
             if (!GoF2Remake.Data.NetSession.Active) Asteroids = OrbitBuilder.SpawnAsteroids(db, Layout);
             else SpawnNetworkAsteroids(GoF2Remake.Data.NetSession.OrbitSeed(NetOrbitId));
@@ -319,10 +323,10 @@ namespace GoF2Remake.World
             orbitInfo = Session.ArrivedBySystemJump;
             Session.ArrivedBySystemJump = false;
             SpawnPlayer();
-            PlaceArrivalWormhole();
+            if (!interstellar) PlaceArrivalWormhole();
             OrbitBuilder.SpawnDust(Layout);
             var backdrop = OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
-            SkyLayers.Spawn(Layout, mainCamera);   // ring sky, storms, supernova flares, asteroid belt
+            if (!interstellar) SkyLayers.Spawn(Layout, mainCamera);   // ring sky, storms, supernova flares, asteroid belt
             Backdrop = backdrop;
 
             // Locks on the station, the jumpgate and the other stations' planets; autopilot, planet jump, fast-forward.
@@ -332,7 +336,7 @@ namespace GoF2Remake.World
             foreach (var m in Mobiles) Navigation.AddMobileStation(m.transform, m.Station, m.Label, m.TechLevel);
             // Remake mods: a station docked EVERSPACE 2's way: its landmark and the autopilot are its dock; a launch from it
             // takes off from the pad (Es2Dock).
-            if (arena == null && !prologue && Layout.hasStation) Es2 = Es2Dock.Attach(Station, Layout.stationIndex, Player, chase);
+            if (plainOrbit && !prologue && Layout.hasStation) Es2 = Es2Dock.Attach(Station, Layout.stationIndex, Player, chase);
             if (Es2 != null && Navigation.Targets.Find(x => x.kind == Navigation.Kind.Station && x.transform == null) is Navigation.Target dockTarget)
                 dockTarget.fixedPosition = Es2.DockPoint;
             foreach (var m in Mobiles)
@@ -381,23 +385,23 @@ namespace GoF2Remake.World
             Collision.wormholeHeld = () => WormholeHeld;
             Collision.wormholeNoPull = () => WormholeNoPull;
             VolatileCargo.Attach(Player.gameObject, db, Player);   // PlayerEgo+0x398: volatile goods, sound 35
-            bool storyOrbit = !Session.FreePlay && Story.IsLevelMission(station);
+            bool storyOrbit = !interstellar && !Session.FreePlay && Story.IsLevelMission(station);
             IsStoryOrbit = storyOrbit;
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
             // Multiplayer: not when a squadmate here already runs this mission (their ships are shown here, NetMissions).
-            bool missionHere = !storyOrbit && arena == null && Freelance.IsMissionOrbit(station);
+            bool missionHere = !storyOrbit && plainOrbit && Freelance.IsMissionOrbit(station);
             freelanceMissionOrbit = missionHere;
             bool freelanceOrbit = missionHere && GoF2Remake.World.SpaceHooks.RunsMission(station);
             bool missionFollower = missionHere && !freelanceOrbit;   // a squadmate here runs it: its briefing, route, timer, score
             // Level::createMission: the Kaamo Club under siege (kaamo_club.md 3).
-            bool siege = !storyOrbit && !missionHere && arena == null && KaamoClub.SiegeAt(station);
+            bool siege = !storyOrbit && !missionHere && plainOrbit && KaamoClub.SiegeAt(station);
             // Remake: an event graph quest's orbit (questorbit): no normal traffic, like a story orbit (single player).
-            bool questOrbit = !storyOrbit && !missionHere && !siege && arena == null && !GoF2Remake.Data.NetSession.Active && GoF2Remake.World.SpaceHooks.IsQuietOrbit(station);
+            bool questOrbit = !storyOrbit && !missionHere && !siege && plainOrbit && !GoF2Remake.Data.NetSession.Active && GoF2Remake.World.SpaceHooks.IsQuietOrbit(station);
             // Remake: a Mod Builder test flight (Modding.ModBuilder): a quiet orbit with its own pirates (ModBuilderRange).
             // The builder's own work in space (Stations, Weapon fx: ModBuilder.InSpace) too, with nothing flying at all.
             bool builderTest = Modding.ModBuilder.TestFlying || Modding.ModBuilder.InSpace;
             // The Supernova Challenge (mission type 0xb7, SupernovaChallenge): its own Specters and scenery, no traffic.
-            bool challenge = SupernovaChallenge.Active && !storyOrbit && arena == null && !builderTest && !GoF2Remake.Data.NetSession.Active;
+            bool challenge = SupernovaChallenge.Active && !storyOrbit && plainOrbit && !builderTest && !GoF2Remake.Data.NetSession.Active;
             // Level::assignGuns reads the level mission (Status+400): a campaign level or a freelance mission's type.
             NpcTables.InCampaignLevel = storyOrbit;
             NpcTables.LevelFreelanceType = freelanceOrbit ? Freelance.Mission.type : -1;
@@ -405,8 +409,8 @@ namespace GoF2Remake.World
             // Multiplayer: only the first player in an empty orbit builds its traffic and runs it; the others show that player's
             // ships (NetOrbit) and take them over if it leaves, never building new ones.
             // An arena: no NPCs, or with the Void fighters the alien orbit's own (run by the first player in the match's orbit).
-            NetAuthority = GoF2Remake.Data.NetSession.Active && (arena == null || arena.voids) && GoF2Remake.World.SpaceHooks.IsOrbitEmpty(NetOrbitId);
-            ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit || builderTest || challenge || (arena != null && !arena.voids);
+            NetAuthority = GoF2Remake.Data.NetSession.Active && !interstellar && (arena == null || arena.voids) && GoF2Remake.World.SpaceHooks.IsOrbitEmpty(NetOrbitId);
+            ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit || builderTest || challenge || interstellar || (arena != null && !arena.voids);
             Traffic.LevelMissionActive = () => (storyOrbit && Story.IsLevelMission(station)) || (missionHere && Freelance.IsMissionOrbit(station));
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (GoF2Remake.Data.NetSession.Active && !NetAuthority), Wormhole);
             // Remake: a cruise drive's encounters (NavigationCruiseDrive, CruiseEncounterSpawner): only where the traffic is this
@@ -481,7 +485,7 @@ namespace GoF2Remake.World
             }
             // Multiplayer: an Informer mission's spy is this player's when another player built the orbit's traffic (theirs
             // has it only for their own mission) and no squadmate here has one already.
-            if (GoF2Remake.Data.NetSession.Active && !NetAuthority && !storyOrbit && arena == null && Freelance.Active && Freelance.Mission.type == MissionType.Informer
+            if (GoF2Remake.Data.NetSession.Active && !NetAuthority && !storyOrbit && plainOrbit && Freelance.Active && Freelance.Mission.type == MissionType.Informer
                 && Freelance.Mission.target == station && !Session.InformerKilled && !Session.InformerFailed && !GoF2Remake.World.SpaceHooks.TeamHere(station))
                 SpawnInformerSpy();
             // Step 59's arms convoy: its point is the player's route until the freighter is gone.
@@ -491,7 +495,7 @@ namespace GoF2Remake.World
                 Traffic.ConvoyDone += () => { Navigation.SetAutopilot(null); Navigation.SetRoute(null); };
             }
             // Level::createWingmen: after the mission's ships (Challenge: unarmed).
-            if (arena == null && !builderTest && !challenge) Traffic.SpawnWingmen(Player.transform, FreelanceOrbit != null && FreelanceOrbit.Type == MissionType.Challenge);
+            if (plainOrbit && !builderTest && !challenge) Traffic.SpawnWingmen(Player.transform, FreelanceOrbit != null && FreelanceOrbit.Type == MissionType.Challenge);
             Navigation.HasWingmen = () => Traffic != null && Traffic.LivingWingmen.Count > 0;
             StorySpace = gameObject.AddComponent<StorySpace>();
             StorySpace.Setup(this, Campaign);
@@ -525,6 +529,7 @@ namespace GoF2Remake.World
             Session.ComingFromVoid = false;   // Level::init / LevelScript have used it (the Void raid, the closing wormhole)
             SpaceHooks.LevelBuilt?.Invoke(this);   // multiplayer: the shared orbit (NetOrbit)
             if (arena != null) GoF2Remake.World.SpaceHooks.ArenaLevelReady?.Invoke();
+            if (interstellar) gameObject.AddComponent<InterstellarField>().Setup(this);
             if (Modding.ModBuilder.TestFlying) gameObject.AddComponent<ModBuilderRange>().Setup(this);
             if (Modding.ModBuilder.InSpace) HoldForBuilder();
         }
@@ -542,7 +547,8 @@ namespace GoF2Remake.World
 
         /// <summary>Multiplayer: the orbit as the other players see it: the station's index, or an arena match's own id
         /// (NetArena.OrbitBase + the match), so a match is a private copy of its template orbit.</summary>
-        public int NetOrbitId => GoF2Remake.World.SpaceHooks.Arena != null ? GoF2Remake.World.SpaceHooks.Arena.orbitId : (Layout != null ? Layout.stationIndex : -1);
+        public int NetOrbitId => GoF2Remake.World.SpaceHooks.Arena != null ? GoF2Remake.World.SpaceHooks.Arena.orbitId
+                               : Layout != null ? (Layout.interstellar ? InterstellarSpace.OrbitId : Layout.stationIndex) : -1;
 
         /// <summary>Multiplayer: this player runs the orbit's NPC traffic (the first one here), see NetOrbit.</summary>
         public bool NetAuthority { get; private set; }

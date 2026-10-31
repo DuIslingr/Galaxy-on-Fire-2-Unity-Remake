@@ -1,6 +1,6 @@
 // SlipstreamDriveModTests.cs
-// Feature: the example mod Modding/Examples/slipstream_drive (Modding/README.md "Cruise drives"): its two items load as
-// cruise drives made from the Khador Drive (its look, its category 18, their own numbers after the originals), with the
+// Feature: mod items as cruise drives (Modding/README.md "Cruise drives"; the ES2 importer's drives are these two, this
+// mod's a copy of them): they load as cruise drives made from the Khador Drive (its look, its category 18, their own numbers after the originals), with the
 // numbers of their stats, and a mounted one sits beside a Khador Drive (Shop.FirstMounted(18) stays the Khador Drive,
 // Shop.MountedCruiseDrive finds the Slipstream; Hangar: no swap between the two kinds).
 
@@ -16,6 +16,11 @@ namespace GoF2Remake.Tests
     public class SlipstreamDriveModTests : SavesModsTest
     {
         const string Mod = "slipstream_drive";
+        const string Items = @"[
+            { 'id': 'slipstream', 'base': 85, 'name': 'Khador Slipstream', 'techLevel': 7, 'occurrence': 25, 'price': [148000, 162800],
+              'stats': { 'cruiseSpeed': 400, 'cruiseRange': 60000, 'cruiseChargeMs': 2000, 'energyCells': 1 } },
+            { 'id': 'slipstream_ii', 'base': 85, 'name': 'Slipstream II', 'techLevel': 10, 'occurrence': 0, 'price': [1450000, 1595000],
+              'stats': { 'cruiseSpeed': 800, 'cruiseRange': 90000, 'cruiseChargeMs': 1500, 'energyCells': 1, 'interstellar': 1 } } ]";
         List<ItemStack> savedEquipment;
 
         [SetUp]
@@ -26,7 +31,7 @@ namespace GoF2Remake.Tests
 
         Database ModOn()
         {
-            CopyExample(Mod);
+            WriteMod(Mod, Mod, "1.0", "", ("items.json", Items));
             ScanAndEnable(Mod);
             Assert.IsFalse(Installed(Mod).Broken, AllMessages(Installed(Mod)));
             Assert.IsEmpty(Installed(Mod).Warnings, AllMessages(Installed(Mod)));
@@ -57,10 +62,11 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(148000, it.minPrice);
             Assert.AreEqual(162800, it.maxPrice);
             var two = db.Item(ii);
-            Assert.AreEqual(600, two.Attr(CruiseDrive.SpeedAttr));
+            Assert.AreEqual(800, two.Attr(CruiseDrive.SpeedAttr));
             Assert.AreEqual(90000, two.Attr(CruiseDrive.RangeAttr));
             Assert.AreEqual(1500, two.Attr(CruiseDrive.ChargeAttr));
-            Assert.AreEqual(9, two.techLevel);
+            Assert.AreEqual(1, two.Attr(CruiseDrive.InterstellarAttr), "flies between the systems");
+            Assert.AreEqual(0, it.Attr(CruiseDrive.InterstellarAttr), "the first model stays in the orbits");
         }
 
         [Test]
@@ -89,10 +95,43 @@ namespace GoF2Remake.Tests
             it = Shop.MountedCruiseDrive(db);
             var d = new CruiseDrive(it.index, it.Attr(CruiseDrive.SpeedAttr), it.Attr(CruiseDrive.RangeAttr, 60000),
                                     it.Attr(CruiseDrive.ChargeAttr, 2000), it.Attr(CruiseDrive.CellsAttr, 1), Session.IsExtreme);
-            Assert.AreEqual(6f, d.speedFactor);
+            Assert.AreEqual(8f, d.speedFactor);
             Assert.AreEqual(90000, d.legUnits);
             Assert.AreEqual(1500, d.chargeMs);
             Assert.AreEqual(1, d.cellsPerLeg);
+        }
+
+        [Test]
+        public void OnlyTheMountedSuccessorOpensInterstellarSpace()
+        {
+            var db = ModOn();
+            Assert.IsNull(InterstellarSpace.Drive(db), "nothing mounted: no entry, and no option needed");
+            Session.Equipment = new List<ItemStack> { new ItemStack(GalaxyMap.KhadorDriveItem, 1), new ItemStack(ModContent.ItemIndexOf(Mod + ":slipstream"), 1) };
+            Assert.IsNull(InterstellarSpace.Drive(db), "neither the Khador Drive nor the first model does");
+            int ii = ModContent.ItemIndexOf(Mod + ":slipstream_ii");
+            Session.Equipment = new List<ItemStack> { new ItemStack(ii, 1) };
+            Assert.AreEqual(ii, InterstellarSpace.Drive(db).index);
+            Assert.IsFalse(GalaxyMap.HasJumpDrive(db), "it opens no shortcut around the Khador Drive's story checks");
+            Session.Equipment = new List<ItemStack>();
+            Assert.IsNull(InterstellarSpace.Drive(db), "in the hold it does nothing");
+        }
+
+        [Test]
+        public void WarpJsonGivesTheLookTheLastModWins()
+        {
+            WriteMod("warp_a", "warp_a", "1.0", "", ("warp.json", "{ 'tunnel': 'warp/a.png', 'tint': '#8cd0ff', 'loop': 'warp/loop.ogg' }"));
+            WriteMod("warp_b", "warp_b", "1.0", "", ("warp.json", "{ 'streaks': 'warp/s.png', 'tint': 'nope' }"));
+            Assert.IsNull(ModWarp.Current, "none on");
+            ScanAndEnable("warp_a");
+            var a = ModWarp.Current;
+            Assert.IsNotNull(a);
+            Assert.AreEqual("warp/a.png", a.tunnel);
+            Assert.AreEqual("warp/loop.ogg", a.loop);
+            Assert.IsTrue(a.tint.HasValue);
+            ScanAndEnable("warp_a", "warp_b");
+            var b = ModWarp.Current;
+            Assert.AreEqual("warp/s.png", b.streaks);
+            Assert.IsFalse(b.tint.HasValue, "a bad colour is left out");
         }
     }
 }
