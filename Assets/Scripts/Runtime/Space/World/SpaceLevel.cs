@@ -360,6 +360,8 @@ namespace GoF2Remake.World
             if ((Session.ArrivedByTravel || Session.ArrivedBySystemJump) && station != Session.VoidOrbit && Session.PreviousStationIndex != Session.VoidOrbit)
                 WantedBoard.Move(db, station, Session.ProgrammedStation);
             Layout = OrbitLayout.Build(db, station);
+            if (warpArrival && Layout.alienOrbit && Session.WarpArrivalPoint is Vector3 shown) Layout.hiddenJumpgate = shown;   // where the approach was
+            Session.WarpArrivalPoint = null;
             if (interstellar) InterstellarSpace.Clear(Layout);
             var st = db.Stations.Find(s => s.index == station);
             StationInfo = st;
@@ -722,10 +724,10 @@ namespace GoF2Remake.World
             bool warpHolds = WarpHolds;
             if (Weapons != null) Weapons.WarpHeld = warpHolds;
             Navigation.ArrivalHeld = warpSky != null && warpSky.Arriving;
-            if (Traffic != null) Traffic.HoldFire = warpHolds;
+            if (Traffic != null) Traffic.HoldFire = warpHolds || Navigation.ConversationRuns;   // remake: a conversation the game runs on through
             Health.invulnerable = warpHolds || launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic) || Es2Busy || DockedInOrbit
-                                  || (Campaign != null && (Campaign.PlayerInvulnerable || Campaign.CoopHeld)) || (StorySpace != null && StorySpace.SuccessPending)
-                                  || GoF2Remake.World.SpaceHooks.Invulnerable;
+                                  || (Campaign != null && (Campaign.PlayerInvulnerable || Campaign.Held)) || (StorySpace != null && StorySpace.SuccessPending)
+                                  || GoF2Remake.World.SpaceHooks.Invulnerable || Navigation.ConversationRuns;
             Collision.off = warpHolds || launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic) || Es2Busy || DockedInOrbit
                             || (Campaign != null && Campaign.CollisionOff);   // PlayerEgo+0x144
             Collision.ignoreGate = Navigation.GoingToGate;

@@ -120,7 +120,27 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   `SystemJump.LeaveInterstellar` into `ArrivalStation` (the gate orbit; an orbit a script sets up on
   arrival, `Navigation.ScriptedArrival`, is loaded as after a jump with its arrival camera, not in the warp); a story refusal
   (`PlanetJumpRefused`) holds until the ship is back outside 1.5 x that. The leg that empties the hold says so (Extra `interstellarLastLeg`); no cells for the next leg: `FallOutOfSlipstream`
-  at the nearest system, nobody strands. The Khador scene plays going in only, drawn anew as a **hole in space** (every other Khador jump, other players' and a capital
+  at the nearest system, nobody strands. Under the autopilot only its own target's edge is an arrival, the others are flown
+  past (a flight off the galaxy's disc curved out of its start through Weymire's edge, 2026-11-01).
+  **The Void** (2026-11-01, the user: "make the Slipstream go to the alien void as well", then "void should not be one
+  point you go to, distance should also be unknown/hidden as its not a system in the universe we know", 10-15 s): no place
+  here, no marker, no distance. The autopilot menu's last entry, 415 "Void" (`Navigation.VoidDive`, a `Kind.System` target
+  kept out of `Targets`, so never drawn, locked or measured; offered in free play and past the wormhole ride,
+  `InterstellarSpace.VoidShown`, index > 24), is a dive: a new way each time, off the galaxy's disc (thin along game z) on
+  the ship's side leaning its heading (`DiveWay`), and a random 10-15 s of the drive (`DiveMinMs` / `DiveMaxMs`,
+  `VoidDiveMs`, counting only while it cruises; the autopilot off ends it). The target sits ahead at the edge plus what the
+  time left takes at the drive's speed (`DiveUnits`), so the Void's sky and orbit seep in (`InterstellarField`, no sun) and
+  every system's edge is flown past; at 0 the ship falls in (`LeaveAlong` to `Session.VoidOrbit`). One leg: a cell, under
+  the Khador Drive's two. The arrival point is random (`OrbitLayout` landmark 2), so the approach keeps the one it built
+  around (`Session.WarpArrivalPoint`, read once in `SpaceLevel.Awake`). The quick menu offers the drive in the Void too:
+  the space starts beside the system the Void was entered from (`InterstellarSpace.PositionOf`, `Session.VoidReturnStation`;
+  that system counts as the one left in `InterstellarField`), `Clear` drops `alienOrbit` (its no-autopilot rule held every
+  system target) and the station stays -1, so a save there is the Void. An arrival in the Void keeps `VoidReturnStation`
+  the orbit the crossing left (not -1). Story 78 / 80 refuse the drive as ever (`ForcedKhadorTarget`). Tests
+  `InterstellarSpaceTests` (the dive's), `InterstellarFlightTests.TheMenusDiveFallsIntoTheVoidUnseen`,
+  `TurningTheAutopilotOffEndsTheDive`, `TheDriveFliesOutOfTheVoid`; recording
+  `InterstellarRecording.FlyToTheVoidAndBackAndRecordIt`.
+  The Khador scene plays going in only, drawn anew as a **hole in space** (every other Khador jump, other players' and a capital
   ship's retreat keep the original fx, `SpawnKhadorFx`, the user's call; `KhadorFx.OpenRift`,
   `GoF2/KhadorRift`, `Core.KhadorTimeline`, the user, 2026-11-01, replacing the whiteout, the side view and the glide; some of it
   after a reference clip of theirs: the tear, the fire inside it, the arcs): the camera stays held where it was behind the ship
@@ -194,8 +214,8 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   system its sky blends in, `InterstellarField` loading it as the arrival orbit builds it (`OrbitBuilder.MakeSky`,
   `_SkyBlend`, runtime layer modes for a mod's images), so an arrival finds the same sky. **The sky shows the distance flown**
   (`InterstellarSpace.SkyShare`, the user, 2026-11-01): it opens on the sky of the system left and the next system's crossfades in over
-  the whole leg, edge to edge, what the autopilot flies to, else the nearest, and a system the flight passes within 20 km of on the
-  way (`NextSystem`). A system flown past stays (`TakeOver`: more than half in as the flight goes on to another, it finishes and its
+  the whole leg, edge to edge, what the autopilot flies to (a dive into the Void too, whose sky a dive called off doesn't keep), else the
+  nearest, and a system the flight passes within 20 km of on the way (`NextSystem`; under the autopilot only its sky, not its orbit). A system flown past stays (`TakeOver`: more than half in as the flight goes on to another, it finishes and its
   sky becomes the sky, turned as it was seen), less fades back. Past the closest point the blended sky holds still, as the way to
   the system swings round (`skyTurn`). The orbit comes with the old ramp, 20 km to 8 km (`approachBlend`). The traffic ahead goes by what a ship is, never its source, so a mod's are in it (`Traffic.Carried`; the arrival takes the
   approach's whole plan, as escorts name their hulls); what it can't build grows out of nothing (`ArrivalScale.Add` growIn), and

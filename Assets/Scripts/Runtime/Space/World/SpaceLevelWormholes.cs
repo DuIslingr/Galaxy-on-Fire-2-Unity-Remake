@@ -338,7 +338,7 @@ namespace GoF2Remake.World
                 root.transform.position -= root.transform.forward * InterstellarSpace.CarryMeters(warpDrive.Attr(CruiseDrive.SpeedAttr), WarpSky.ArrivalCarryMs);
                 root.transform.rotation *= Session.WarpHeading;   // still pointing the way it was, off its course or not
             }
-            // Remake: outside the system it left, heading for the programmed destination (InterstellarSpace).
+            // Remake: outside the system it left (or the Void), heading for the programmed destination (InterstellarSpace).
             if (Layout.interstellar)
             {
                 var forward = InterstellarSpace.StartPose(db, Layout, out var at);

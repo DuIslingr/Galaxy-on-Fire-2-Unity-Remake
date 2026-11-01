@@ -371,6 +371,9 @@ namespace GoF2Remake.Data
         /// <summary>Remake: and the chase view in the ship's frame, so the ship stays where it is on the screen.</summary>
         public static Vector3 WarpView;
         public static Quaternion WarpViewTurn = Quaternion.identity;
+        /// <summary>Remake: the alien orbit's arrival point (game units) its approach was built around (World.InterstellarField):
+        /// the orbit draws it at random (OrbitLayout landmark 2), so the arrival takes this one. Read once by SpaceLevel.</summary>
+        public static Vector3? WarpArrivalPoint;
 
         /// <summary>Status+0x1dc (Status::jumpgateUsed).</summary>
         public static int JumpgatesUsed;
@@ -565,6 +568,7 @@ namespace GoF2Remake.Data
             WarpHeading = WarpViewTurn = Quaternion.identity;
             RiftEntry = false;
             WarpView = Vector3.zero;
+            WarpArrivalPoint = null;
             JumpgatesUsed = 0;
             Standing = new[] { 30, 0 };
             ModRaceStanding = new Dictionary<string, int>(System.StringComparer.Ordinal);

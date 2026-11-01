@@ -162,7 +162,7 @@ namespace GoF2Remake.World
                         if (GateBlocked != null && GateBlocked()) nav.Refuse();   // MGame::dockEvent: 525 on a mission
                         else DockToStream();
                     }
-                    else if ((Session.InstantJump || storyTarget.HasValue || toInterstellar) && (Time.time - levelStart) * 1000f > 5000f && !nav.Jumping && !nav.Paused && !GoF2Remake.World.SpaceHooks.StarMapOpen)
+                    else if ((Session.InstantJump || storyTarget.HasValue || toInterstellar) && (Time.time - levelStart) * 1000f > 5000f && !nav.Jumping && !nav.Paused && !nav.Conversation && !GoF2Remake.World.SpaceHooks.StarMapOpen)
                         StartCharging();
                     break;
                 case State.AtGate:
@@ -531,7 +531,7 @@ namespace GoF2Remake.World
         void StartKhadorScene()
         {
             int station = toInterstellar ? Session.StationIndex : storyTarget ?? Session.ProgrammedStation;
-            if (station < 0 && !storyTarget.HasValue) { state = State.None; return; }
+            if (station < 0 && !storyTarget.HasValue && !toInterstellar) { state = State.None; return; }   // (out of the Void: -1)
             BeginScene(station);
             state = State.KhadorScene;
             if (advanceOnJump) { advanceOnJump = false; if (Story.Index == 78) Story.Advance(db); }
@@ -704,7 +704,8 @@ namespace GoF2Remake.World
                 if (Application.CanStreamedLevelBeLoaded(spaceScene)) SpaceLevel.SwapScene(spaceScene);
                 return;
             }
-            if (targetStation == Session.VoidOrbit) Session.VoidReturnStation = Session.StationIndex;
+            // (from between the systems: the orbit left, unless that was the Void itself; the return stays the last one)
+            if (targetStation == Session.VoidOrbit && Session.StationIndex != Session.VoidOrbit) Session.VoidReturnStation = Session.StationIndex;
             Session.PreviousStationIndex = Session.StationIndex;
             Session.StationIndex = targetStation;
             Session.ArrivedByTravel = true;
