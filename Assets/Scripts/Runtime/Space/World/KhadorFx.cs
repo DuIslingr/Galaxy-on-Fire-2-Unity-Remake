@@ -1,11 +1,11 @@
 // KhadorFx.cs
-// Remake: the Khador Drive's animation drawn anew, the original's beats and sheet with more in them (Core.KhadorTimeline has its
-// times, GoF2/KhadorFx its look): a beam lances out to a focus ahead of the ship, a star ignites there, the vein web unfurls round
-// it, a ring of lightning opens with sparks flying out, a flash ends it. It stands in for the khador_jump prefab wherever that
-// played, the player's jump, other players' and a capital ship's retreat, so it is built here and scaled like the prefab.
-// Into interstellar space the ring tears a real hole (OpenRift, GoF2/KhadorRift): inside it is the warp the next level opens on,
-// the ship flies through with the camera held behind it (SystemJump). No whiteout: when the hole fills the view
-// (RiftFilled) the frame is already the next level's, and SystemJump swaps. The focus' gathering during the charge is a small object of its own (Gathering).
+// Remake: the Khador Slipstream's way into interstellar space, the Khador Drive's animation drawn anew around a real hole: the
+// original's beats and sheet with more in them (Flight.KhadorTimeline has its times, GoF2/KhadorFx its look): a beam lances out to a
+// focus ahead of the ship, a star ignites there, the vein web unfurls round it, and the ring tears open with sparks flying out and
+// arcs thrown off it. Inside the tear is the warp the next level opens on (OpenRift, GoF2/KhadorRift): the ship flies through
+// with the camera held behind it (SystemJump). No whiteout: when the hole fills the view (RiftFilled) the frame is already the
+// next level's, and SystemJump swaps. Every other Khador jump keeps the original fx (SystemJump.SpawnKhadorFx). The focus'
+// gathering during the charge is a small object of its own (Gathering).
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -17,7 +17,7 @@ namespace GoF2Remake.World
     {
         const float M = 0.05f;
         /// <summary>The prefab's scale in SystemJump.SpawnKhadorFx: the original's sizes (game units) are at it.</summary>
-        const float BeamUnits = 44000f, BeamHalfWidthUnits = 340f, StarUnits = 1500f, FlashUnits = 12000f, BoltUnits = 3600f;
+        const float BeamUnits = 44000f, BeamHalfWidthUnits = 340f, StarUnits = 1500f, FlashUnits = 12000f;
         /// <summary>How far the sparks fly (game units): parts 22-34 reach 4000-8500 at the prefab's scale of 2.</summary>
         const float SparkMinUnits = 8000f, SparkMaxUnits = 16000f, SparkUnits = 130f;
         const int SparkCount = 40;
@@ -25,9 +25,8 @@ namespace GoF2Remake.World
         /// <summary>The ring's quad against its radius, room for the arcs; and how far in the tear's edge may stray (KhadorRim).</summary>
         const float RingSpan = 3.4f, RimMost = 1.3f, RimLeast = 0.78f;
 
-        // The sheet's tiles (u, v, width, height; v up): the four-point star, the glow, the big bolt.
-        static readonly Vector4 StarTile = new Vector4(0.285f, 0.285f, 0.18f, 0.18f), GlowTile = new Vector4(0.02f, 0.28f, 0.2f, 0.2f),
-                                BoltTile = new Vector4(0.752f, 0.253f, 0.245f, 0.245f);
+        // The sheet's tiles (u, v, width, height; v up): the four-point star, the glow.
+        static readonly Vector4 StarTile = new Vector4(0.285f, 0.285f, 0.18f, 0.18f), GlowTile = new Vector4(0.02f, 0.28f, 0.2f, 0.2f);
 
         static readonly int Level = Shader.PropertyToID("_Level"), Seconds = Shader.PropertyToID("_Seconds"), RadiusId = Shader.PropertyToID("_Radius"),
                             Width = Shader.PropertyToID("_Width"), Grow = Shader.PropertyToID("_Grow"), Hole = Shader.PropertyToID("_Hole"),
@@ -38,7 +37,7 @@ namespace GoF2Remake.World
                             RiftSeconds = Shader.PropertyToID("_RiftSeconds"), RiftTurn = Shader.PropertyToID("_RiftTurn"), RiftAxis = Shader.PropertyToID("_RiftAxis");
 
         readonly System.Collections.Generic.List<Object> owned = new System.Collections.Generic.List<Object>();
-        Material beam, web, ring, star, glow, sparks, flash, streak, bolt, riftLook;
+        Material beam, web, ring, star, glow, sparks, flash, streak, riftLook;
         Transform webPlane, ringPlane, riftPlane, flashPoint;
         float ms, rate = 1f;
 
@@ -81,7 +80,7 @@ namespace GoF2Remake.World
 
         // ---- building ------------------------------------------------------------------------------------------------
 
-        /// <summary>The animation at 'position', looking along 'rotation', played once; null without its shader.</summary>
+        /// <summary>The animation at 'position', looking along 'rotation', to be opened by OpenRift; null without its shader.</summary>
         public static KhadorFx Create(Vector3 position, Quaternion rotation, Texture sheet)
         {
             var shader = Resources.Load<Shader>("GoF2Sky/KhadorFx");
@@ -103,14 +102,12 @@ namespace GoF2Remake.World
             glow = Look(shader, sheet, "_SPRITE");
             flash = Look(shader, sheet, "_SPRITE");
             streak = Look(shader, sheet, "_SPRITE");
-            bolt = Look(shader, sheet, "_SPRITE");
             sparks = Look(shader, sheet, "_SPARKS");
             star.SetVector(Tile, StarTile);
             glow.SetVector(Tile, GlowTile);
             flash.SetVector(Tile, GlowTile);
             streak.SetVector(Tile, GlowTile);
             streak.SetFloat(Stretch, 7f);
-            bolt.SetVector(Tile, BoltTile);
             flash.SetFloat(Size, FlashUnits * Span);
             streak.SetFloat(Size, FlashUnits * 0.2f * Span);
             flash.renderQueue = streak.renderQueue = 3100;
@@ -125,8 +122,6 @@ namespace GoF2Remake.World
             Add("Sparks", SparkMesh(), sparks);
             flashPoint = Add("Flash", SpriteMesh(), flash).transform;
             Add("Streak", SpriteMesh(), streak);
-            Add("Bolt", SpriteMesh(), bolt);
-            Tick(0f);
         }
 
         Material Look(Shader shader, Texture sheet, string keyword)
@@ -248,12 +243,13 @@ namespace GoF2Remake.World
 
         void Update()
         {
+            if (!rift) return;
             ms += Time.deltaTime * 1000f * rate;
             Tick(ms);
             if (ms >= KhadorTimeline.LengthMs) Destroy(gameObject);
         }
 
-        void LateUpdate() { if (rift) UpdateRift(); }
+        void LateUpdate() => UpdateRift();
 
         void Tick(float at)
         {
@@ -261,57 +257,54 @@ namespace GoF2Remake.World
             foreach (var m in new[] { beam, web, ring, sparks }) m.SetFloat(Seconds, seconds);
 
             float beamLevel = KhadorTimeline.Beam(at);
-            if (rift) beamLevel *= Mathf.Clamp01((crossMs + 60f - at) / 160f);   // spent as the ship goes through: all its light with it
+            beamLevel *= Mathf.Clamp01((crossMs + 60f - at) / 160f);   // spent as the ship goes through: all its light with it
             beam.SetFloat(Level, beamLevel);
             beam.SetFloat(Thick, BeamHalfWidthUnits * Span * scale * KhadorTimeline.BeamWidth(at));
             beam.SetFloat(NearFade, 35f * scale);
 
             // Into the hole the web draws back as the ship is drawn in, so the warp starting on the sky shows (KhadorTimeline.RiftWarp).
-            float webBack = rift ? KhadorTimeline.RiftWarp(at / rate, crossMs / rate) : 0f;
+            float webBack = KhadorTimeline.RiftWarp(at / rate, crossMs / rate);
             web.SetFloat(Level, KhadorTimeline.Web(at) * (1f - 0.85f * webBack));
             web.SetFloat(Grow, KhadorTimeline.WebGrown(at));
             web.SetFloat(Twist, KhadorTimeline.WebTwist(at));
             webPlane.localScale = Vector3.one * KhadorTimeline.WebUnitsAcross * Span;
 
-            float ringUnits = rift ? KhadorTimeline.RiftUnits(at, crossMs, shipHalfSpan) : KhadorTimeline.RingUnits(at);
+            float ringUnits = KhadorTimeline.RiftUnits(at, crossMs, shipHalfSpan);
             ringPlane.localScale = Vector3.one * Mathf.Max(ringUnits, 1f) * RingSpan * Span;
             ring.SetFloat(RadiusId, 1f / RingSpan);
             ring.SetFloat(Width, Mathf.Clamp(0.06f * (1f - Mathf.InverseLerp(0f, 1f, ringUnits / 12000f) * 0.7f), 0.012f, 0.06f) * 1.5f / RingSpan);
-            ring.SetFloat(Level, KhadorTimeline.Ring(at) * (rift ? 1.15f : 1f));
-            ring.SetFloat(Arcs, rift ? Mathf.Max(0.2f, webBack) : 0.45f);
-            ring.SetFloat(Fire, rift ? 1f - Mathf.InverseLerp(crossMs - 60f, crossMs + 40f, at) : 1f);
-            riftUnits = rift ? ringUnits : 0f;
-            web.SetFloat(Hole, rift ? ringUnits / KhadorTimeline.WebUnitsAcross * 0.98f : 0f);
+            ring.SetFloat(Level, KhadorTimeline.Ring(at) * 1.15f);
+            ring.SetFloat(Arcs, Mathf.Max(0.2f, webBack));
+            ring.SetFloat(Fire, 1f - Mathf.InverseLerp(crossMs - 60f, crossMs + 40f, at));
+            riftUnits = ringUnits;
+            web.SetFloat(Hole, ringUnits / KhadorTimeline.WebUnitsAcross * 0.98f);
 
             float starLevel = KhadorTimeline.Star(at);
-            if (rift) starLevel *= Mathf.Clamp01((crossMs + 40f - at) / 260f);   // gone as the ship reaches it: it would fill the view
+            starLevel *= Mathf.Clamp01((crossMs + 40f - at) / 260f);   // gone as the ship reaches it: it would fill the view
             star.SetFloat(Level, starLevel * 1.5f);
             star.SetFloat(Size, StarUnits * Span * scale * (0.8f + 0.25f * Mathf.Sin(at * 0.031f) * Mathf.Sin(at * 0.017f)));
             glow.SetFloat(Level, starLevel * 0.55f);
             glow.SetFloat(Size, StarUnits * 2.4f * Span * scale);
-            sparks.SetFloat(Level, rift ? Mathf.Clamp01((crossMs + 80f - at) / 120f) : 1f);
+            sparks.SetFloat(Level, Mathf.Clamp01((crossMs + 80f - at) / 120f));
 
-            float flashLevel = KhadorTimeline.Flash(at, rift ? crossMs - 30f : KhadorTimeline.FlashMs);
-            if (rift) flashLevel *= Mathf.Clamp01((crossMs + 70f - at) / 90f);
-            flash.SetFloat(Level, flashLevel * (rift ? 0.9f : 4f));
+            float flashLevel = KhadorTimeline.Flash(at, crossMs - 30f) * Mathf.Clamp01((crossMs + 70f - at) / 90f);
+            flash.SetFloat(Level, flashLevel * 0.9f);
             flash.SetFloat(Size, FlashSize(FlashUnits * Span * scale * (0.4f + 0.6f * flashLevel)));
             streak.SetFloat(Level, flashLevel * 1.5f);
             streak.SetFloat(Size, FlashSize(FlashUnits * Span * scale) * 0.2f);
-
-            bolt.SetFloat(Level, rift ? 0f : KhadorTimeline.Bolt(at) * (Mathf.Sin(at * 0.09f) > -0.4f ? 2.5f : 0.6f));
-            bolt.SetFloat(Size, BoltUnits * Span * scale);
         }
 
-        /// <summary>The flash's half size: the original's, but into the hole never over a third of the camera's distance. Sized by
-        /// the world it filled the view as the camera reached it, a white screen by another name.</summary>
+        /// <summary>The flash's half size: never over a third of the camera's distance. Sized by the world it filled the view as
+        /// the camera reached it, a white screen by another name.</summary>
         float FlashSize(float size)
         {
-            var cam = rift ? Camera.main : null;
+            var cam = Camera.main;
             return cam != null ? Mathf.Min(size, Vector3.Distance(cam.transform.position, flashPoint.position) * 0.33f + 1f) : size;
         }
 
         void UpdateRift()
         {
+            if (!rift) return;
             var cam = Camera.main;
             var mesh = riftPlane.GetComponent<MeshRenderer>();
             mesh.enabled = riftUnits > 0f;

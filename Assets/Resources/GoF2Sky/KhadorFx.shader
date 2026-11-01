@@ -1,4 +1,4 @@
-// GoF2/KhadorFx: the Khador Drive's animation drawn anew (World.KhadorFx): each element of the original fx from the original's
+// GoF2/KhadorFx: the Khador Slipstream's way in (World.KhadorFx): each element of the original Khador fx from the original's
 // own sheet (khador_jump.png), its beam band and lightning strip, vein web, ring colour and star, with what a 2010 phone
 // couldn't: filaments that crawl, veins lit by a wave running out from the focus, a ring of live lightning, sparks with tails.
 // All additive and above 1, for the bloom. One keyword per element:
@@ -169,7 +169,7 @@ Shader "GoF2/KhadorFx"
                         if (abs(y) < 1.0) lightning += Sheet(float2(turn * (3.0 + k) + t * (0.4 - k * 0.5) + k * 0.37, BoltStrip.x + y * BoltStrip.y));
                     }
                     // the sheet's ring: thorns of lightning off a line, in its violet glow
-                    float cell = turn * 53.0, id = floor(cell), f = frac(cell) - 0.5;
+                    float cell = (turn + 0.5) * 53.0, id = fmod(floor(cell), 53.0), f = frac(cell) - 0.5;
                     float beat = floor(t * 22.0 + KhadorHash(float2(id, 2.0)) * 7.0);
                     float lives = step(0.62, KhadorHash(float2(id, beat)));
                     float reach = 0.7 + 3.2 * KhadorHash(float2(id, beat + 5.0));
@@ -187,8 +187,8 @@ Shader "GoF2/KhadorFx"
                     // The arcs: branching lightning thrown out from the rim, more and further as the ship is drawn in.
                     for (int k = 0; k < 2 && _Arcs > 0.001; k++)
                     {
-                        float place = turn * 7.0 + k * 0.37;
-                        float arc = floor(place), across = frac(place) - 0.5;
+                        float place = (turn + 0.5) * 7.0 + k * 0.37;   // from the seam of atan2, a whole number of arcs round it
+                        float arc = fmod(floor(place), 7.0), across = frac(place) - 0.5;
                         float now = floor(t * (8.0 + k * 5.0) + KhadorHash(float2(arc, k + 1.0)) * 5.0);
                         if (KhadorHash(float2(arc + k * 11.0, now)) < 1.0 - _Arcs * 0.72) continue;
                         float reach = _Radius * (0.5 + 1.7 * _Arcs * KhadorHash(float2(arc, now + 3.0)));
@@ -198,10 +198,11 @@ Shader "GoF2/KhadorFx"
                         float thin = 0.006 + 0.02 * (1.0 - along);
                         float main_ = exp(-pow((across - way) / thin, 2.0));
                         float side = KhadorHash(float2(arc, now + 7.0)) - 0.5;
-                        float fork = way + max(along - 0.35, 0.0) * side * 1.3;
+                        float fork = clamp(way + max(along - 0.35, 0.0) * side * 1.3, -0.4, 0.4);
                         float branch = exp(-pow((across - fork) / (thin * 0.6), 2.0)) * smoothstep(0.35, 0.45, along);
                         float glowing = exp(-abs(across - way) * 18.0);
-                        c += (half3(0.9, 0.95, 1.0) * (main_ * 3.2 + branch * 1.6) + Ice * glowing * 0.55) * (1.0 - along * along);
+                        float inCell = 1.0 - smoothstep(0.38, 0.5, abs(across));   // nothing reaches an arc's edge: it would end in a straight line
+                        c += (half3(0.9, 0.95, 1.0) * (main_ * 3.2 + branch * 1.6) + Ice * glowing * 0.55) * (1.0 - along * along) * inCell;
                     }
                 #elif defined(_SPRITE)
                     c = Sheet(_Tile.xy + i.uv * _Tile.zw);

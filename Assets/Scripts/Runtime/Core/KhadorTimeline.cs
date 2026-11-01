@@ -1,10 +1,9 @@
 // KhadorTimeline.cs
-// Remake: when each element of the Khador Drive's animation shows and how strongly, from the keys of the original fx
+// Remake: the Khador Slipstream's way in (World.KhadorFx): when each element of the animation shows and how strongly, from the keys of the original fx
 // (khador_jump.aem, mesh 15026, its parts' `extra` opacity): the beam 33-2266 ms (parts 1, 3, 10), the focus' star 33-2133 (2),
-// the web 500-3100 (4-9) and 700-3033 (11-16), the sparks 600-2000 (22-34), the ring 1066-2366 (18), the flash at 1733 (21,
-// the ship gone at 1700), a last bolt 1933-2333 (20), all over by 3333 of its 4000. Plain C#: World.KhadorFx draws them. The ring and the web
-// are the size the fx's parts reach at the fx's scale of 2 (game units). Into interstellar space the ring is the rim of a hole:
-// it opens slowly enough to frame the ship flying through, then runs out past the camera.
+// the web 500-3100 (4-9) and 700-3033 (11-16), the sparks 600-2000 (22-34), the ring 1066-2366 (18), the flash (21). Plain C#. The web is the
+// size the fx's parts reach at the fx's scale of 2 (game units). The ring is the rim of a hole: it opens slowly enough to frame the
+// ship flying through, then runs out past the camera. The original's own jump keeps its fx (SystemJump.SpawnKhadorFx).
 
 using UnityEngine;
 
@@ -17,10 +16,9 @@ namespace GoF2Remake.Flight
         public const float WebStartMs = 500f, WebEndMs = 3100f;
         public const float SparksStartMs = 600f, SparksEndMs = 2000f;
         public const float RingStartMs = 1066f, RingEndMs = 2366f;
-        public const float FlashMs = 1733f, BoltStartMs = 1933f, BoltEndMs = 2333f;
         /// <summary>How far the focus lies ahead of the ship (game units; MGame::startJumpScene).</summary>
         public const float FocusUnits = 3000f;
-        const float RingUnitsAt1400 = 5800f, WebUnits = 8000f;
+        const float WebUnits = 8000f;
 
         /// <summary>Into interstellar space the animation stands further ahead, seen from the chase camera as it opens, and runs
         /// slower (its clock at this rate of the scene's): the user, there being a hole to fly into, nothing needs the side view.
@@ -64,13 +62,6 @@ namespace GoF2Remake.Flight
         public static float WebTwist(float ms) => Mathf.Lerp(-1.57f, 3.71f, Mathf.Clamp01(ms / LengthMs));
 
         public static float Ring(float ms) => Pulse(ms, RingStartMs, 90f, RingEndMs, 800f);
-        /// <summary>The ring's radius in game units, plain: as the original's part 18.</summary>
-        public static float RingUnits(float ms)
-        {
-            float t = Mathf.Max(0f, ms - RingStartMs + 150f) / 400f;
-            return RingUnitsAt1400 * Mathf.Pow(t, 0.8f);
-        }
-
         /// <summary>The hole's radius in game units, into interstellar space: wide enough for the ship ('ship' its half span)
         /// as it flies through, at 'crossMs', and then running out past the camera.</summary>
         public static float RiftUnits(float ms, float crossMs, float ship)
@@ -82,13 +73,11 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>The flash: over in a blink, as in the original (a single key at 1733 ms), peaking at 1.</summary>
-        public static float Flash(float ms, float peakMs = FlashMs)
+        public static float Flash(float ms, float peakMs)
         {
             float d = ms - peakMs;
             return d < 0f ? Mathf.Exp(d / 25f) : Mathf.Exp(-d / 140f);
         }
-
-        public static float Bolt(float ms) => Pulse(ms, BoltStartMs, 34f, BoltEndMs, 280f);
 
         /// <summary>A circle of 'radius' on a plane 'distance' ahead fills a view with this vertical half-angle tangent and aspect.</summary>
         public static bool Fills(float radius, float distance, float tanHalfFov, float aspect) =>

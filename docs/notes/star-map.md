@@ -120,7 +120,8 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   `SystemJump.LeaveInterstellar` into `ArrivalStation` (the gate orbit; an orbit a script sets up on
   arrival, `Navigation.ScriptedArrival`, is loaded as after a jump with its arrival camera, not in the warp); a story refusal
   (`PlanetJumpRefused`) holds until the ship is back outside 1.5 x that. The leg that empties the hold says so (Extra `interstellarLastLeg`); no cells for the next leg: `FallOutOfSlipstream`
-  at the nearest system, nobody strands. The Khador scene plays going in only, as a **hole in space** (`KhadorFx.OpenRift`,
+  at the nearest system, nobody strands. The Khador scene plays going in only, drawn anew as a **hole in space** (every other Khador jump, other players' and a capital
+  ship's retreat keep the original fx, `SpawnKhadorFx`, the user's call; `KhadorFx.OpenRift`,
   `GoF2/KhadorRift`, `Core.KhadorTimeline`, the user, 2026-11-01, replacing the whiteout, the side view and the glide; some of it
   after a reference clip of theirs: the tear, the fire inside it, the arcs): the camera stays held where it was behind the ship
   (`SystemJump.heldView`: the chase camera's lag rubber-banded the ship on screen as its speed changed), the animation stands

@@ -1,5 +1,5 @@
 // KhadorTimelineTests.cs
-// Feature: the Khador Drive's animation and the hole it tears into interstellar space (Flight.KhadorTimeline, World.KhadorFx,
+// Feature: the hole the Khador Slipstream tears into interstellar space (Flight.KhadorTimeline, World.KhadorFx,
 // docs/notes/star-map.md "Interstellar space"), and the sky that crosses a leg with the ship (InterstellarSpace.SkyShare).
 
 using GoF2Remake.Data;
@@ -19,7 +19,7 @@ namespace GoF2Remake.Tests
             Assert.That(KhadorTimeline.Web(1000f), Is.GreaterThan(0.9f));
             Assert.That(KhadorTimeline.Ring(900f), Is.Zero, "the ring after the web");
             Assert.That(KhadorTimeline.Ring(1400f), Is.GreaterThan(0.9f));
-            Assert.That(KhadorTimeline.Flash(KhadorTimeline.FlashMs), Is.EqualTo(1f));
+            Assert.That(KhadorTimeline.Flash(1500f, 1500f), Is.EqualTo(1f));
             Assert.That(KhadorTimeline.Beam(KhadorTimeline.LengthMs), Is.Zero);
         }
 
