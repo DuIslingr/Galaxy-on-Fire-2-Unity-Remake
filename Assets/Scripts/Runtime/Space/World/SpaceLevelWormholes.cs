@@ -328,8 +328,13 @@ namespace GoF2Remake.World
                 root.transform.SetPositionAndRotation(start, Quaternion.LookRotation(-start.normalized, Vector3.up));
             }
             // Remake: a fly-in out of interstellar space starts as far out as its speed carries it, to end where arrivals do.
-            if (warpArrival && InterstellarSpace.Drive(db) is ItemData warpDrive)
+            if (warpArrival && Shop.MountedCruiseDrive(db) is ItemData warpDrive)
             {
+                if (LocalArrival)
+                {
+                    Layout.PlanetArrivalPose(Session.PreviousStationIndex, out var run, out var runFacing);
+                    root.transform.SetPositionAndRotation(run, runFacing);
+                }
                 root.transform.position -= root.transform.forward * InterstellarSpace.CarryMeters(warpDrive.Attr(CruiseDrive.SpeedAttr), WarpSky.ArrivalCarryMs);
                 root.transform.rotation *= Session.WarpHeading;   // still pointing the way it was, off its course or not
             }
@@ -417,7 +422,11 @@ namespace GoF2Remake.World
             // MGame::OnInitialize: the engine loop (PlayerEgo+0x1c) and the boost sound (+0xd4).
             PlayerEngine.Attach(root, db, ctrl);
             // Level::initParticleSystems: the exhaust particles (remake debug: none on a freighter / capital ship, PlayerHull).
-            if (PlayerHull.OwnEngines(db)) ShipExhaust.Attach(root, db, ctrl, Session.ShipIndex);
+            if (PlayerHull.OwnEngines(db))
+            {
+                var exhaust = ShipExhaust.Attach(root, db, ctrl, Session.ShipIndex);
+                if (warpArrival && Shop.MountedCruiseDrive(db) is ItemData arrivalDrive) exhaust.Prime(arrivalDrive.Attr(CruiseDrive.SpeedAttr) / 100f);
+            }
 
             // Modified: the Supernova Challenge's round opens with the arrival fly-in, as after a jump into a system, but
             // close (ChallengeFlyInLocal), gliding to the chase position in 2 s (the original's video, frame by frame);
