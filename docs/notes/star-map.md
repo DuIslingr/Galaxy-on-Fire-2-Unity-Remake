@@ -120,11 +120,22 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   `SystemJump.LeaveInterstellar` into `ArrivalStation` (the gate orbit; an orbit a script sets up on
   arrival, `Navigation.ScriptedArrival`, is loaded as after a jump with its arrival camera, not in the warp); a story refusal
   (`PlanetJumpRefused`) holds until the ship is back outside 1.5 x that. The leg that empties the hold says so (Extra `interstellarLastLeg`); no cells for the next leg: `FallOutOfSlipstream`
-  at the nearest system, nobody strands. The Khador scene plays going in only and cuts at its whiteout
-  (`SystemJump.KhadorWhiteoutMs`, 1860 ms, from a frame capture of the fx): the orbit stays plain through the charge and the
-  animation (the user's call: no warp before it), the camera gliding from its side view to the chase camera's place behind
-  the ship, which stays in view (`SystemJump.GlideBehindShip`), and the new level fades out of the same light, on the same
-  view (`WarpSky.OnGUI`). An arrival
+  at the nearest system, nobody strands. The Khador scene plays going in only, as a **hole in space** (`KhadorFx.OpenRift`,
+  `GoF2/KhadorRift`, `Core.KhadorTimeline`, the user, 2026-11-01, replacing the whiteout, the side view and the glide; some of it
+  after a reference clip of theirs: the tear, the fire inside it, the arcs): the camera stays held where it was behind the ship
+  (`SystemJump.heldView`: the chase camera's lag rubber-banded the ship on screen as its speed changed), the animation stands
+  7500 units ahead at 0.8 x its speed (`RiftFocusUnits`, `RiftRate`; half speed read as too slow), the ship eases back to 1.5 u/ms while
+  it forms and from 1.3 s is drawn in at up to 8 (`RiftSpeed`), the warp starting over the orbit's own sky as it goes (`RiftWarp`, `WarpSky`, the flow too), the web
+  drawing back so that shows. The ring is a tear (`KhadorRim`), its rim shared by the hole, the ring and the web's cut-out, with blue
+  fire inside it and arcs thrown out of it as the ship is drawn in. Inside it is already the next level: `Warp` and `WarpWeb` are the
+  same code as the level's (`SpaceSkyCore.hlsl`, `WarpWebCore.hlsl`), turned by `_RiftTurn` to the heading the level opens on
+  (`InterstellarSpace.StartRotation`). The hole draws first, before every opaque, with the depth of a plane past the ship
+  (`_RiftDepth`), so the orbit behind that plane fails the depth test and the ship still draws over it after flying through. When it
+  fills the view (`KhadorFx.RiftFilled`) the frame is the next level's and `SpaceLevel.SwapScene` goes (`Session.RiftEntry`: the view
+  carried, the plume primed, no light to fade); the HUD and the suns come back after it (`WarpSky.HudShown`). What would give it
+  away goes before the swap: the star, beam, sparks and flash by the crossing, the orbit's fog (it lies in front of the hole). The
+  jump's sound plays on over the swap at the slowed rate, its blast at the crossing (`SystemJump.PlayCarried`). VR, or a missing
+  shader, keeps the old way: the whiteout (`KhadorWhiteoutMs`), the glide and `WarpSky.OnGUI`. An arrival
   is `Session.WarpArrival`, at 8 km (`ArriveUnits`): the level changes at full warp, no scene, no fly-in camera, and the ship
   starts `CarryMeters` further out, flying in through the real orbit with the speed (`CruiseDrive.CarrySpeed`) and warp easing
   out over `WarpSky.ArrivalCarryMs`, to end at the normal arrival point. **Seamless by building the orbit on the way in**
@@ -179,9 +190,13 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   the game's own (`Data.WarpBands`, 2026-11-01: random phases through an inverse FFT, made once a run; the veins are field
   zero-crossings, as plain noise with ES2's spectrum came out clumpy), so the warp uses no ES2 art; a mod's `warp.json`
   (`ModWarp`) can replace them. The warp has no sound of its own, only a mod's. Nearing a
-  system (20 km) its sky blends in, `InterstellarField` loading it as the arrival orbit builds it (`OrbitBuilder.MakeSky`,
-  `_SkyBlend`, runtime layer modes for a mod's images), so an arrival finds the same sky; a new target fades the last out
-  first. The traffic ahead goes by what a ship is, never its source, so a mod's are in it (`Traffic.Carried`; the arrival takes the
+  system its sky blends in, `InterstellarField` loading it as the arrival orbit builds it (`OrbitBuilder.MakeSky`,
+  `_SkyBlend`, runtime layer modes for a mod's images), so an arrival finds the same sky. **The sky shows the distance flown**
+  (`InterstellarSpace.SkyShare`, the user, 2026-11-01): it opens on the sky of the system left and the next system's crossfades in over
+  the whole leg, edge to edge, what the autopilot flies to, else the nearest, and a system the flight passes within 20 km of on the
+  way (`NextSystem`). A system flown past stays (`TakeOver`: more than half in as the flight goes on to another, it finishes and its
+  sky becomes the sky, turned as it was seen), less fades back. Past the closest point the blended sky holds still, as the way to
+  the system swings round (`skyTurn`). The orbit comes with the old ramp, 20 km to 8 km (`approachBlend`). The traffic ahead goes by what a ship is, never its source, so a mod's are in it (`Traffic.Carried`; the arrival takes the
   approach's whole plan, as escorts name their hulls); what it can't build grows out of nothing (`ArrivalScale.Add` growIn), and
   LODGroups never cull what it scales (2026-11-01: they hid shrunk ships until they popped in). Stand-ins sleep
   (`SystemApproach.Sleep` / `Wake`: every MonoBehaviour, trail and particle system on them, a mod's or not): ES2's world-space

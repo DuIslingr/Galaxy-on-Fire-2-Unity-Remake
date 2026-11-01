@@ -152,6 +152,8 @@ namespace GoF2Remake.World
         public Backdrop Backdrop { get; private set; }
         WarpSky warpSky;
         /// <summary>The warp holds everything: between the systems and until an arrival's has ended nobody fires or is hurt.</summary>
+        /// <summary>How much of the HUD shows as the ship comes out of the Khador Slipstream's hole (Visuals.WarpSky).</summary>
+        public float HudShown => warpSky != null ? warpSky.HudShown : 1f;
         public bool WarpHolds => (Layout != null && Layout.interstellar) || (warpSky != null && warpSky.Arriving);
         /// <summary>The orbit's fog sprites; null between the systems.</summary>
         public SpaceDust Fog { get; private set; }

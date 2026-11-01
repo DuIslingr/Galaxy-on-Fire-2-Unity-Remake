@@ -42,6 +42,7 @@ namespace GoF2Remake.UI
         bool lastTurretView, lastTurretAuto, lastShipLocked;
         VisualElement lockPlate;
         VisualElement root, safeArea, hints;
+        bool hudFading;
         VisualElement crosshair, dockPrompt, dockGlyph;
         VisualElement lockRingElement, navMarkers;   // queried once: two root.Q per frame were a fifth of the HUD's update
 
@@ -710,7 +711,9 @@ namespace GoF2Remake.UI
             bool shipLocked = radar != null && radar.Locked != null;
             if (shipLocked != lastShipLocked) { lastShipLocked = shipLocked; BuildHints(InputMode.Current); }
             lockPlate.pickingMode = shipLocked && InputMode.Current == InputKind.Touch ? PickingMode.Position : PickingMode.Ignore;
-            root.EnableInClassList("hud-cinematic", (nav != null && nav.Jumping) || (jump != null && jump.Cinematic));   // jumps: no HUD
+            float hudShown = level != null ? level.HudShown : 1f;
+            root.EnableInClassList("hud-cinematic", (nav != null && nav.Jumping) || (jump != null && jump.Cinematic) || hudShown <= 0f);   // jumps: no HUD
+            if (hudShown < 1f != hudFading || hudFading) { hudFading = hudShown < 1f; safeArea.style.opacity = hudFading ? hudShown : StyleKeyword.Null; }
             // The Khador Drive's charge bar, shared with the cloak's "Cloak charging" (317, Hud::draw 0x1933f6).
             var cloak = level != null && level.Cloak != null ? level.Cloak.Rules : null;
             bool jumpCharging = jump != null && jump.Charging;
