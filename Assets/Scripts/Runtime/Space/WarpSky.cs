@@ -102,7 +102,8 @@ namespace GoF2Remake.Visuals
             Shader.SetGlobalTexture(Detail, Layer(warp, warp?.detail, ownDetail));
             Shader.SetGlobalTexture(Arcs, KhadorSheet() ?? Texture2D.blackTexture);
             MakeWeb();
-            Apply(Strength(0f, 0f));
+            // The level's first frame draws before its first LateUpdate: an arrival's sky is at full warp in that one too.
+            Apply(Strength(nav != null && nav.Drive != null ? nav.Drive.Level : 0f, arrivalMs / ArrivalCarryMs));
             if (warp == null) return;
             shot = gameObject.AddComponent<AudioSource>();
             shot.playOnAwake = false;

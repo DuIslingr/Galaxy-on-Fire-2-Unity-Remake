@@ -136,7 +136,9 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   to the orbit's. The ship's heading against its course and the chase view in the ship's frame carry over (`Session.WarpHeading`,
   `WarpView`, `ChaseCamera.CarryView`), the boost look too (`FlightModel.CarryCruiseLook`: it fell to 0, a 20 degree zoom at the
   swap), the warp's flow and its sound (`WarpSky.CarrySound`). So frames either side of the swap match but for the HUD and the
-  first frames of the flames (checked frame by frame, 2026-10-31). A fall out of the slipstream has no approach: the old ice-blue
+  first frames of the flames (checked frame by frame, 2026-10-31). A level's first frame draws before its first LateUpdate and
+  its Update: `WarpSky.Setup` writes the arrival's full warp itself and `ShipExhaust.Prime` seeds the plume along a frame's flight (the
+  particles come per distance), as the engines went dark for that frame; the plume is still a little smaller there (2026-11-01). A fall out of the slipstream has no approach: the old ice-blue
   dissolve (`WarpSky.Setup`, 'unseen'). Not carried: `SkyLayers` (ring skies, storms). The lens flare eases in over the arrival (`Backdrop.flareShown`): this space has none, so its glare greyed the screen in one frame at the swap.
   **The swap's stall** (`SpaceLevel.SwapScene`, Editor, with the player's mods): a plain `LoadScene` held ~870 ms, ~600 of it
   the unused-asset sweep after `Awake`, so it loads additively (no sweep), destroys the old roots first thing in `Awake`

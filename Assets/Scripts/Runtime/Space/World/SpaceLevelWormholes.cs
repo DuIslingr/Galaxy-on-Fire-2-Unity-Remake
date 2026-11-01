@@ -422,7 +422,11 @@ namespace GoF2Remake.World
             // MGame::OnInitialize: the engine loop (PlayerEgo+0x1c) and the boost sound (+0xd4).
             PlayerEngine.Attach(root, db, ctrl);
             // Level::initParticleSystems: the exhaust particles (remake debug: none on a freighter / capital ship, PlayerHull).
-            if (PlayerHull.OwnEngines(db)) ShipExhaust.Attach(root, db, ctrl, Session.ShipIndex);
+            if (PlayerHull.OwnEngines(db))
+            {
+                var exhaust = ShipExhaust.Attach(root, db, ctrl, Session.ShipIndex);
+                if (warpArrival && Shop.MountedCruiseDrive(db) is ItemData arrivalDrive) exhaust.Prime(arrivalDrive.Attr(CruiseDrive.SpeedAttr) / 100f);
+            }
 
             // Modified: the Supernova Challenge's round opens with the arrival fly-in, as after a jump into a system, but
             // close (ChallengeFlyInLocal), gliding to the chase position in 2 s (the original's video, frame by frame);
