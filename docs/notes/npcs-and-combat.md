@@ -67,6 +67,12 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   Left to the original: story and freelance mission orbits, a script's only enemy (`SetOnlyEnemy`), mission ships, a
   turned ship (it goes for the player who shot it), the Specters, the fleet battles' fighters (their own nearest pick),
   wingmen, turrets, the multiplayer remote players' pick. Off = the original exactly.
+- **Turned ships pick at any range** (`PlayerFighter::update` 0xf131e / 0xf1444, `NpcShip.TakesAtAnyRange`): a turned
+  ship (`turnedEnemy`, Player+0xe0) of any race but the pirates' takes the player outside its ±50 000 box when it picks
+  (not attacking, or the re-roll's random tries); the 5 s re-roll still drops a pick outside the box, and as it leaves
+  the attacking flag set, the ship flies its route (the default patrol) until a re-roll finds the player in the box.
+  `Player::setAlwaysEnemy` (0xaf206) sets +0xe0 too: a level script's call is `NpcShip.SetAlwaysEnemy`;
+  `SpawnSpec.alwaysEnemy` sets only the always-enemy flag (2026-11-01; see "Supernova add-on", 158).
 - **Relations**: standing axes Terran/Vossk and Nivelian/Midorian (new game 30 / 0), hostile beyond ±70, pirates / Void
   always. Kills: standing −5 with the race (a pirate: +1 toward the system race), kills stat for hostile ships. Friendly
   fire on system-race / attack-race ships: 33 % of their hull → "Hold your fire!", 50 % → that ship turns, 66 % → the
@@ -99,7 +105,10 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   Angel's); half the size cleared it but uncovered the glow rings in the chase view. Each particle's cell is copied out
   of particles.png into its own 128 px render texture (clamped, its own mipmaps, `ShipExhaust.CellMaterial`): the glows
   are the atlas's top row with the trail strips right under them, and with the fx atlases' mipmaps a UV inset only held
-  at full size, so lines showed under the plume. NPC engine trails don't exist in this build (the `Trail` class is never
+  at full size, so lines showed under the plume. Only the cell's middle is copied (`CellInset`: 10 texels off each side,
+  the quad shrunk to match): Android (OnePlus 7T report, 2026-10-24) still drew a thin line under each plume, as its Low
+  preset loads textures at half size and ASTC 6x6 blocks straddle the cell's edge, so the copy's bottom row took half the
+  strip (the png's row 127 already holds the strip's soft edge). NPC engine trails don't exist in this build (the `Trail` class is never
   constructed). Remake option (Graphics, "Other ships' engines like yours", `Settings.NpcPlayerEngines`, on by default):
   NPC ships use the player's engine system instead, the `*_engine_glow_add` mesh and these exhaust particles
   (`ShipExhaust.AttachRemote`); so do the hangar flights and the bar flybys (`StationLevel.SpawnShip` attaches the

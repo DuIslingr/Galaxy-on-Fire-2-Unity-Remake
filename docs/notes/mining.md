@@ -21,7 +21,12 @@ logic (plain C#); `MiningView` draws the lock ring, ore plate, HUD messages and 
   lock time (attr 29, 8000 ms without) - 200 ms. The action prompt then says Mine. Without a drill (`Radar::draw`
   0x157b00: hudEvent 0x14, the original keeps the ring full and repeats it every frame) the remake says 541 "No drill
   installed." once and drops the lock; that asteroid isn't tried again until it has left the crosshair box
-  (`Mining.refusedNoDrill`), so looking away and back starts a new lock.
+  (`Mining.refusedNoDrill`), so looking away and back starts a new lock. The original takes the nearest rock in 3D whose
+  centre is in the box; remake, with the Smart target lock (Options > Gameplay "Target lock", Discord report 2026-10-24:
+  it locked a rock beside the crosshair, not the one under it): a rock the line through the crosshair meets comes first,
+  the front-most (its centre may be outside the box: a big rock over the crosshair), else of those centred in the box the
+  one whose edge is nearest the crosshair in degrees, the rock already locking 0.5 deg ahead so two side by side don't
+  restart the ring by turns (`TargetLockRules.AsteroidScore`, the visible radius `Mining.SurfaceRadius`).
 - **Approach:** player steering off, full throttle, autopilot turn; last 2000 units: exhaust off, landing sound, chase
   camera frozen, the model pitches ~80 deg nose up; stops at `scale * 2500` units, asteroid spin off. The booster works
   on the way in and the landing (MGame::OnTouchBegin refuses it only while drilling: PlayerEgo::isMining is the
@@ -86,6 +91,13 @@ logic (plain C#); `MiningView` draws the lock ring, ore plate, HUD messages and 
   (`MiningGame.LayerDurationMs`) at a rate scaled down to match, so a whole asteroid's ore stays the same; the beam's
   layer time the same (`Mining`). The ES2 importer gives its crystals 200 (ES2's 10 s against 5 s). Test
   `MiningGameTests.AnOresMiningTimeStretchesTheLayersForTheSameOre`.
+- **Ore into cores at the Mido Mining Plant** (`MiningPlant`, 2026-11-01; players' report: the remake never had it): docked
+  at the Coromesk plant (103) with an empty campaign mission (steps 107, 128-130 and from 162 on), not in the alien orbit
+  (`PlayerEgo::isDockedToMiningPlant` 0xadcb8), the docking asks 290 ("#" = 30, Extreme 100) with every ore in the hold
+  (286 without; `MGame::OnUpdate` 0x1ac778, `Traffic.Ask` from `SpaceLevel`'s `Docking.Docked`). Yes
+  (`MGame::OnTouchEnd` 0x1a98d8): ores 154-164 -> core = ore + 11 (Void crystals -> Void essence), Novanium 217 -> 218,
+  each full 30 t (100) of one ore -> 1 t of its core, the rest stays ore; then 291 + the cores, or 292. A mod's ore is
+  listed but not converted (the original's table). Test `MiningPlantTests`.
 - **Remake-only:** Var Hastra (78) always stocks a drill (IMT Extract 1.3) while there is no campaign; releasing the
   stick stops the drill's player movement (the original keeps the last input). The mining plant at 103 is a docking
   target (see "Supernova add-on"). The drill sound (`DrillSound`, event 1's layers by drill_speed = (LAYER_SPEEDS[layer]

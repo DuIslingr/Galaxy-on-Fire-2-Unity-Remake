@@ -39,6 +39,20 @@ namespace GoF2Remake.World
             targetIdx = -1;
         }
 
+        /// <summary>Multiplayer: the waypoint of its route it flies to (NetProxy's status, for a handover).</summary>
+        public int RouteIndex => route != null ? route.index : 0;
+
+        /// <summary>Multiplayer (NetOrbit.AdoptHandedOver): a ship another game ran, rebuilt here as it was there: its speed
+        /// (u/ms), waypoint, sleep, whether it turned on the players, and an EMP's disabling with the recovery time it had run.</summary>
+        public void RestoreState(float unitsPerMs, int routeIndex, bool asleep, bool stillInactive, bool turned, bool empOff, float empElapsedMs)
+        {
+            if (!float.IsNaN(unitsPerMs) && unitsPerMs > 0f) speed = Mathf.Min(unitsPerMs, Mathf.Max(baseSpeed, 1f) * 3f);
+            if (route != null) route.index = Mathf.Clamp(routeIndex, 0, route.points.Count);
+            if (!asleep && !stillInactive && (Asleep || inactive)) Wake();
+            if (turned) turnedEnemy = true;
+            if (empOff && Hp != null) Hp.RestoreEmpDisabled(empElapsedMs);
+        }
+
         /// <summary>Player::setMaxHitpoints + setHitpoints.</summary>
         public void SetHull(int hull, bool alsoMax = true)
         {
@@ -114,6 +128,15 @@ namespace GoF2Remake.World
             attacking = false;
             targetIdx = -1;
             reselectTimer = 0f;
+        }
+
+        /// <summary>Player::setAlwaysEnemy 0xaf206: always hostile (+0xec) and turned on the player (+0xe0) as well, so a
+        /// fighter of any race but the pirates' takes the player at any range while it isn't attacking (TakesAtAnyRange). A
+        /// SpawnSpec's alwaysEnemy sets only the first; a level script's setAlwaysEnemy call comes here.</summary>
+        public void SetAlwaysEnemy()
+        {
+            alwaysEnemy = true;
+            turnedEnemy = true;
         }
 
         /// <summary>KIPlayer::setActive(false) + parked far away (index 40: the freighter after the wormhole).</summary>
