@@ -147,7 +147,14 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   (`ClearReplaced`; the two levels never run together) and sets the sky and lights again once the scene is active, as
   `RenderSettings` go by the active scene. Additive loads don't restart the level clock (`SystemJump.levelStart`). The
   tables are read on the way in (`SpaceLevel.PrepareArrival`) and traffic, 90-250 ms of `Awake`, comes in a ship a frame
-  (`Traffic.Setup` 'oneAFrame', not with a mission here or in multiplayer): 146 ms now, frames after it normal. The look (`Visuals.WarpSky`, the sky
+  (`Traffic.Setup` 'oneAFrame', not with a mission here or in multiplayer): 146 ms now, frames after it normal. The HUD
+  goes on across the swap (`FlightHud.KeepForSwap`, `SpaceHooks.KeepHud` / `DropNewHud` / `SettleHud`, not in a session or VR): a
+  new panel's first styling and layout was 54 ms of 621 elements, now ~9. It leaves the old scene before the load, the new scene's HUD
+  goes in `ClearReplaced` before it builds a panel (`SpaceLevel` runs first), it drops its level refs to real nulls so its Update
+  rebinds as a new HUD does, and it joins the new scene in `OnSwapped`, so a docking's scene change still takes it. Measured
+  2026-11-01, Editor, the player's mods: 127-200 ms before, 90-137 ms after; of that ~30 ms is the Editor loop, plus the Editor-only
+  `SinglePassBuildProcessScene`, so measure a build before cutting more. Destroying the old level is only ~16 ms (Traffic ~10). Other
+  stalls are the first use of a mod ship after the swap: `Traffic.Update`'s collision baking (~50 ms), a synchronous model load (~50). The look (`Visuals.WarpSky`, the sky
   shader `GoF2/SpaceSky`, 2026-10-31, from the shader data and the user's clip of the game): EVERSPACE 2's
   `M_TravelMode_WarpTunnel` uses distortion, its colours are the sky's, so no mesh: the sky is resampled in polar coordinates
   about the nose, squeezed into radial streaks in two crossfading phases, level 0 being the plain sky, so nothing cuts; ships,

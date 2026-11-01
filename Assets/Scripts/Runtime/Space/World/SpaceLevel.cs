@@ -274,6 +274,7 @@ namespace GoF2Remake.World
         public static void SwapScene(string scene)
         {
             replaced = SceneManager.GetActiveScene();
+            SpaceHooks.KeepHud?.Invoke();
             SceneManager.sceneLoaded += OnSwapped;
             SceneManager.LoadScene(scene, LoadSceneMode.Additive);
         }
@@ -282,6 +283,7 @@ namespace GoF2Remake.World
         {
             if (!replaced.IsValid() || !replaced.isLoaded) return;
             foreach (var root in replaced.GetRootGameObjects()) DestroyImmediate(root);
+            SpaceHooks.DropNewHud?.Invoke();
         }
 
         /// <summary>The new scene takes over: RenderSettings are the active scene's, so its sky and lights are set again.</summary>
@@ -291,6 +293,7 @@ namespace GoF2Remake.World
             var old = replaced;
             replaced = default;
             SceneManager.SetActiveScene(scene);
+            SpaceHooks.SettleHud?.Invoke(scene);
             if (old.IsValid() && old.isLoaded) SceneManager.UnloadSceneAsync(old);
             FindAnyObjectByType<SpaceLevel>()?.ApplySkyAndLights();
         }

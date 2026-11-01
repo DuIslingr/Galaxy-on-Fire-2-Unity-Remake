@@ -146,6 +146,57 @@ namespace GoF2Remake.UI
             if (runtimePanel != null) Destroy(runtimePanel);
         }
 
+        /// <summary>The HUD going on across a level swap (SpaceLevel.SwapScene). A new panel's first styling and layout took 54 ms
+        /// of the swap's frame, the largest part of its stall (621 elements, measured 2026-11-01), so the old HUD stays and takes
+        /// the new level the way a new one does, in Update. Not in a session or in VR: their views hang on a level's HUD.</summary>
+        static FlightHud kept;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetKept() => kept = null;
+
+        public static void KeepForSwap()
+        {
+            kept = null;
+            if (NetSession.Active || VrFlags.Enabled) return;
+            var hud = FindAnyObjectByType<FlightHud>();
+            if (hud == null || hud.root == null) return;
+            kept = hud;
+            DontDestroyOnLoad(hud.gameObject);
+        }
+
+        /// <summary>The old level is gone, the new one's Awake is starting: its scene's HUD goes before it builds a panel, and the kept
+        /// one lets go of the old level. Real nulls: a destroyed object passes a '?.'.</summary>
+        public static void DropSceneHud()
+        {
+            if (kept == null) return;
+            foreach (var hud in FindObjectsByType<FlightHud>(FindObjectsInactive.Include))
+                if (hud != kept) DestroyImmediate(hud.gameObject);
+            kept.level = null;
+            kept.ship = null;
+            kept.weapons = null;
+            kept.mining = null;
+            kept.docking = null;
+            kept.nav = null;
+            kept.jump = null;
+            kept.health = null;
+            kept.radar = null;
+            kept.traffic = null;
+            kept.story = null;
+            kept.freelance = null;
+            kept.chase = null;
+            kept.volatileCargo = null;
+            kept.orbitInfoFilled = false;
+            kept.radioShown = -1;
+            kept.shownChatter = null;
+        }
+
+        /// <summary>Back in a scene, so that leaving this level takes the HUD with it.</summary>
+        public static void SettleKept(Scene scene)
+        {
+            if (kept != null) SceneManager.MoveGameObjectToScene(kept.gameObject, scene);
+            kept = null;
+        }
+
         /// <summary>The Mod Builder's screen in space (ModBuilder.InSpace), null otherwise.</summary>
         ModBuilderSpaceView builderSpace;
 
