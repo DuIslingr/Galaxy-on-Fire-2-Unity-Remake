@@ -153,7 +153,7 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   goes in `ClearReplaced` before it builds a panel (`SpaceLevel` runs first), it drops its level refs to real nulls so its Update
   rebinds as a new HUD does, and it joins the new scene in `OnSwapped`, so a docking's scene change still takes it. Measured
   2026-11-01, Editor, the player's mods: 127-200 ms before, 90-137 ms after; of that ~30 ms is the Editor loop, plus the Editor-only
-  `SinglePassBuildProcessScene`, so measure a build before cutting more. Destroying the old level is only ~16 ms (Traffic ~10). Other
+  `SinglePassBuildProcessScene`. A Linux Vulkan player, no mods, 4K, 60 Hz: 21-27 ms on eight hops, cold ones too, no frame over 33 ms. Destroying the old level is only ~16 ms (Traffic ~10). Other
   stalls are the first use of a mod ship after the swap: `Traffic.Update`'s collision baking (~50 ms), a synchronous model load (~50). The look (`Visuals.WarpSky`, the sky
   shader `GoF2/SpaceSky`, 2026-10-31, from the shader data and the user's clip of the game): EVERSPACE 2's
   `M_TravelMode_WarpTunnel` uses distortion, its colours are the sky's, so no mesh: the sky is resampled in polar coordinates
