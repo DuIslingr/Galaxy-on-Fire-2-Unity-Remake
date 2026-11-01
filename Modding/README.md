@@ -61,7 +61,7 @@ Menu has **Mod details** (website, credits, the Mods screen's picture) and **Tra
 your items, ships, systems and stations in each language, `text/<lang>.json`); the Skins kind's **Other textures…** replaces
 any game texture (a station's, a planet's, a sun's, a ring's) and turns your retextured planets into stars (`backdrop.json`).
 **AI tools** in the top bar (Windows) is a switch for an MCP server: your own AI assistant (Claude Code, Claude Desktop,
-other MCP apps) can then look up content, write entries and files, check missions, play-test the open project, look at models
+other MCP apps) can then read the modding guide (`read_guide`), look up content, write entries and files, check missions, play-test the open project, look at models
 and textures, aim the builder's camera, place hardpoints and room markers, set the test loadout, test-fly, play a mission
 through by itself and export
 (`Modding/ai/README.md` says how to connect; off by default, this computer only, with a token). Its **Permissions** say
@@ -170,6 +170,7 @@ Every mod needs a `mod.json` at its top level:
 | `author`, `website` | Shown in the Mods screen. |
 | `description` | Shown in the Mods screen (a string, or one text per language). |
 | `credits` | Shown in the Mods screen under the description: who made the models, textures or sounds the mod uses, and their licenses. |
+| `tag` | A short tag shown smaller and half transparent after the names of everything the mod adds, so players tell content from different games or packs apart: `"GoF3"` shows "Veteran [GoF3]". Its new ships and items in the hangar, shop, cargo and Kaamo lists, their details, the item window and the status screen; its new systems and stations on the star map and in the docked station's title. A string, or one text per language. One tag per mod: what it only changes (an `override`) keeps its name as it is. |
 | `preview` | The image shown in the Mods screen, PNG or JPG. Default `preview.png`. 16:9 looks best, for example 640 × 360. |
 | `dependencies` | Ids of mods that must be on too, optionally with the lowest version: `["ship_pack", "frontier_systems>=1.2"]`. They are loaded first, turning this mod on turns them on as well, and turning one of them off turns this mod off. See [Building on other mods](#building-on-other-mods). |
 | `multiplayerIgnore` | Files multiplayer doesn't compare: what only changes how the mod looks, or what the game never reads. `"folder/"` means everything in that folder, `*` any characters: `["parts/", "maps/*.png", "icons/", "preview.png", "tools/"]`. With it a lighter phone build of the mod (smaller models and textures under the same names) plays with the PC build. The data always counts, whatever the list says: `mod.json`'s `id`, `version`, `dependencies` and this list, the `.json` files at the mod's root, and everything in `events/`. See [Multiplayer](#multiplayer). |
@@ -234,7 +235,7 @@ earlier). Only the fields you give change. Giving `name` or `description` rename
 | `stats` | The item's numbers, see below. |
 | `attributes` | The original game's attribute numbers directly: `{ "9": 14 }`. For anything `stats` has no name for. |
 | `defaultEconomy` | The same fields again, used when the player picked the Default Economy (the PC / Mac prices) for their game. |
-| `fx` | A weapon's own look and sound, see [Weapon effects](#weapon-effects). |
+| `fx` | A weapon's own look and sound; or a weapon effect's id from `weaponfx.json`, or a game weapon's number for its whole look. See [Weapon effects](#weapon-effects). |
 | `icon` | Its own shop icon: a PNG in the mod, 180 x 88 like the originals (frame and background included; copy one from `Assets/Resources/GoF2Icons` to start from), or one of the game's: `"gof2:item_046"`. Without it the item shows its base item's icon. An `override` with `icon` gives an original item a new one. |
 | `available` | A [condition](#conditions) that must hold before shops stock it or it turns up in loot (an `override` can hold back an original item too). |
 
@@ -557,7 +558,7 @@ the player's own ship, and no EMP for a turret or sentry.
 ### Weapon effects
 
 A weapon (a new one or an `override` of an original) can look and sound like its own thing with `fx`. Anything it leaves out
-stays its base item's. What the weapon *does* never changes: a beam stays a beam, a mine a mine, a homing missile homes.
+stays its base item's. Several weapons can share one look: see [Effects many weapons share](#effects-many-weapons-share-weaponfxjson). What the weapon *does* never changes: a beam stays a beam, a mine a mine, a homing missile homes.
 
 ```json
 {
@@ -636,6 +637,34 @@ beam's.
 The game loads them with the mod at the start (the loading screen waits). Every gun of that item uses them: the player's,
 NPC ships', turrets, sentry guns, and other players' in multiplayer.
 
+#### Effects many weapons share (weaponfx.json)
+
+A look made once can be given to several weapons. `weaponfx.json` lists the mod's own **weapon effects**: each has an
+`id`, a `name` (for you and the Mod Builder) and a `base`, the game weapon whose look and sounds it starts from; then any
+of the fields above. What an effect leaves out is its base weapon's, whatever weapon takes it.
+
+```json
+[
+    { "id": "violet_bolt", "name": "Violet bolt", "base": 0,
+      "projectile": { "color": [0.75, 0.45, 1.0] }, "impact": { "color": "#b070ff", "glow": 4 }, "shot": 46 }
+]
+```
+
+A weapon takes one with `"fx": "<id>"` in items.json instead of an object, or `"fx": "<mod id>:<id>"` for another mod's
+(list that mod in your `dependencies`). `"fx": <number>` takes a game weapon's whole look and sound, as an effect with
+only a `base` would:
+
+```json
+[
+    { "id": "violet_cannon", "base": 2, "name": "Violet Cannon", "fx": "violet_bolt" },
+    { "override": 5, "fx": 46 }
+]
+```
+
+The weapon still works like its own base item, and keeps its own turret model and blast; an effect's `turret`, `trail` and
+sounds apply to every weapon taking it. In the Mod Builder: **+ New weapon effect** in the Weapon fx kind, and a weapon's
+**Weapon effect** on its Items page (your effects first, then every game weapon's look).
+
 ## ships.json
 
 A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one.
@@ -679,9 +708,9 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `modelPitch`, `modelRoll` | More turns in degrees (about the side axis and the length axis), for a model lying nose up or on its side in its file. |
 | `modelOffset` | `[x, y, z]` in game units (like the mounts): the sized model moved off the ship's centre, the point it turns, docks and flies around. |
 | `icon` | The shop icon, a PNG of 180 x 88 like the originals (the ship on the plate), or one of the game's (`"gof2:ship_028"`). None = the Phantom's (on a game model: that ship's). |
-| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x toward the pilot's left, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"turretUp": [x, y, z]` is the way its base faces, in the same axes: `[0, 1, 0]` on top (the default), `[0, -1, 0]` under the hull (or `"upsideDown": true`), `[1, 0, 0]` / `[-1, 0, 0]` the left / right side, `[0, 0, 1]` the nose, or any slant; the Mod Builder sets it from the hull's surface where you place the turret), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle). |
+| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x toward the pilot's left, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"turretUp": [x, y, z]` is the way its base faces, in the same axes: `[0, 1, 0]` on top (the default), `[0, -1, 0]` under the hull (or `"upsideDown": true`), `[1, 0, 0]` / `[-1, 0, 0]` the left / right side, `[0, 0, 1]` the nose, or any slant; the Mod Builder sets it from the hull's surface where you place the turret), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; `"glowShape"` gives it another outline in that box: `"round"` (the default), `"rounded"` (a rectangle with rounded corners), `"square"` (a square or, with a different half width and half height, a rectangle), `"hexagon"`, `"diamond"` or `"triangle"`). |
 | `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). A customizable ship's is measured from its build instead. |
-| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point; a customizable ship's primary / secondary mounts may also carry `"rotation"`, see [Customizable ships](#customizable-ships)), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; with `engineFx`, `"fxScale"` sizes that exhaust's effect and `"rotation"` turns the way it blows, as a weapon mount's below;
+| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point; a customizable ship's primary / secondary mounts may also carry `"rotation"`, see [Customizable ships](#customizable-ships)), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; `"glowShape"` gives it another outline in that box: `"round"` (the default), `"rounded"` (a rectangle with rounded corners), `"square"` (a square or, with a different half width and half height, a rectangle), `"hexagon"`, `"diamond"` or `"triangle"`; with `engineFx`, `"fxScale"` sizes that exhaust's effect and `"rotation"` turns the way it blows, as a weapon mount's below;
 `"outline": [x0, y0, x1, y1, ...]` the nozzle's shape seen from behind, game units around the mount, for the [exhaust
 styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet fires whenever the ship strafes, rises, sinks or reverses against it, and with no input the jets blowing along the ship's drift fire to brake it, like EVERSPACE 2's lateral thrusters; only on the player's ship. Its colour is the hue of the `lateral thruster` colour slot, else of the flames' boost colour, at EVERSPACE 2's own brightness: a slot's `intensity` doesn't change it), 5 booster (a ship with engine flames: EVERSPACE 2's booster socket, its trail and light in `boostColor` while boosting; `"socketScale"` sizes them, as on an exhaust). |
 | `engineGlowRadius` | Size of the engine flame at each exhaust mount (game units, default 24); a mount's `glowSize` replaces it. |
@@ -2123,7 +2152,7 @@ named can use them: a **Dialog** page, a **Radio** call, an **Ask** / **Vote** q
 | `mirrored` | `true`: drawn mirrored (the game mirrors Keith's portrait). |
 | `frame` | `false`: without the faint scanlines the game draws over every portrait (a light screen look, about 10 % dark lines). |
 | `background` | `false`: without the dark, half-transparent backdrop behind the picture. It only shows through transparent parts of your PNG (a cut-out character), so a full picture looks the same either way. |
-| `replaces` | A story character (`"Gunant Breh"`, `"Keith"`, or a speaker number) whose portrait this one takes everywhere, the game's own story included, and whose name too when this character has a `name` (the dialogue and radio headers, `%player%` for Keith). Other characters' lines that mention the old name, and the voices, stay. The Mod Builder's **+ Replace a game character…** starts one from that character's own portrait and name. |
+| `replaces` | A story character (`"Gunant Breh"`, `"Keith"`, or a speaker number) whose portrait this one takes everywhere, the game's own story included, and whose name too when this character has a `name` (the dialogue and radio headers, `%player%` for Keith). Other characters' lines that mention the old name, and the voices, stay. The Mod Builder's **Replace a game character…** starts one from that character's own portrait and name. |
 
 Name the character in a speaker slot by `vega`, by `frontier_systems:vega` (always unique, also across mods) or by its name
 (`Captain Vega`). `vega as Harbour Master` shows another name over the same face, like the story characters. In typed
@@ -2147,7 +2176,7 @@ the player's **auto-advance** option on), like the story's own voices.
 
 **Replace one of the game's lines**: name a file in `voices` like the line (`voices/MSG_MISSION_24_NO_EQUIPMENT_INSTALLED.ogg`)
 and it is spoken instead, everywhere the game uses that line, the story included. `voices/` replaces it in every language,
-`voices/<language>/` in that language only (a French file there gives French players a French line). The Mod Builder's Audio page lists the lines (**+ Replace a
+`voices/<language>/` in that language only (a French file there gives French players a French line). The Mod Builder's Audio page lists the lines (**Replace a
 game line**).
 
 ## Music
@@ -2243,7 +2272,7 @@ custom_veteran/
         glow_terran.png                (its lights only)
 ```
 
-In the Mod Builder: **Its own textures…** on the ship's Ship tab, or **+ Skin a game ship** in the Skins tab, which lists your
+In the Mod Builder: **Its own textures…** on the ship's Ship tab, or **Skin a game ship** in the Skins tab, which lists your
 ships on a game model too. Their Replace buttons write to that ship's folder.
 
 ### Planets, suns and rings

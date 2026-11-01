@@ -341,7 +341,7 @@ namespace GoF2Remake.UI
                 {
                     var it = db.Item(row.item);
                     tex = ItemInfo.ItemIcon(row.item);
-                    name.text = ItemInfo.ItemName(row.item);
+                    name.text = ItemInfo.TaggedItemName(row.item);
                     if (!Session.SeenItems.Contains(row.item)) sub.Add(Badge(Localization.Extra("shopNew", "NEW"), "row-badge--new"));
                     else if (hangar.IsMounted(row.item)) sub.Add(Badge(Localization.Extra("shopMounted", "MOUNTED"), "row-badge--mounted"));
                     // Remake (#62): what the player has in the hold is marked like the Ship tab's cargo rows (amber edge, IN CARGO),
@@ -366,7 +366,7 @@ namespace GoF2Remake.UI
                 {
                     var stored = Session.KaamoShips[row.equipment];
                     tex = ItemInfo.ShipIcon(row.ship);
-                    name.text = ItemInfo.ShipName(row.ship);
+                    name.text = ItemInfo.TaggedShipName(row.ship);
                     subText.text = ItemInfo.ShipRaceText(row.ship) + (stored.mods.Count > 0 ? "  (+)" : "");
                     int gear = stored.equipment?.Count ?? 0;   // remake: the items left on it (Settings.KaamoKeepsEquipment)
                     if (gear > 0) subText.text += "  ·  " + string.Format(Localization.Extra("kaamoGearCount", "{0} mounted"), gear);
@@ -376,7 +376,7 @@ namespace GoF2Remake.UI
                 case RowKind.ShopShip:
                 {
                     tex = ItemInfo.ShipIcon(row.ship);
-                    name.text = ItemInfo.ShipName(row.ship);
+                    name.text = ItemInfo.TaggedShipName(row.ship);
                     subText.text = ItemInfo.ShipRaceText(row.ship) + (hangar.Stock.ModsOf(row.ship).Count > 0 ? "  (+)" : "");
                     int delta = hangar.BuyShipPrice(row.ship) - hangar.ShipPrice(Session.ShipIndex);   // trade-in difference
                     // Remake: the ship's own price on the row (the buy button still shows what it costs after the trade-in);
@@ -389,7 +389,7 @@ namespace GoF2Remake.UI
                 {
                     var s = db.Ship(row.ship);
                     tex = ItemInfo.ShipIcon(row.ship);
-                    name.text = ItemInfo.ShipName(row.ship);
+                    name.text = ItemInfo.TaggedShipName(row.ship);
                     subText.text = s != null ? $"{Localization.Get(165)} {Shop.BaseHp(db)}   {Localization.Get(166)} {hangar.Load} / {hangar.MaxLoad} t" : "";   // with the +40 hull mod
                     break;
                 }
@@ -397,7 +397,7 @@ namespace GoF2Remake.UI
                 {
                     var stack = Session.Equipment[row.equipment];
                     tex = ItemInfo.ItemIcon(stack.item);
-                    name.text = ItemInfo.ItemName(stack.item) + (stack.amount > 1 ? $" ({stack.amount})" : "");
+                    name.text = ItemInfo.WithTag(ItemInfo.ItemName(stack.item) + (stack.amount > 1 ? $" ({stack.amount})" : ""), GameNames.ItemTag(stack.item));
                     subText.text = ItemInfo.Category(db.Item(stack.item));
                     sub.Insert(0, stack.builtIn ? Badge(Localization.Extra("shopBuiltIn", "BUILT IN"), "row-badge--mounted")
                                                 : Badge(Localization.Extra("shopMounted", "MOUNTED"), "row-badge--mounted"));
@@ -414,7 +414,7 @@ namespace GoF2Remake.UI
                 case RowKind.CargoItem:
                 {
                     tex = ItemInfo.ItemIcon(row.item);
-                    name.text = ItemInfo.ItemName(row.item);   // Remake: the amount at the row's right edge (was "(n)" here)
+                    name.text = ItemInfo.TaggedItemName(row.item);   // Remake: the amount at the row's right edge (was "(n)" here)
                     subText.text = ItemInfo.Category(db.Item(row.item));   // the sub-header says "Available in cargo"
                     sub.Insert(0, Badge(Localization.Extra("shopInCargo", "IN CARGO"), "row-badge--cargo"));
                     break;
@@ -422,7 +422,7 @@ namespace GoF2Remake.UI
                 case RowKind.Blueprint:
                 {
                     tex = ItemInfo.ItemIcon(row.item);
-                    name.text = ItemInfo.ItemName(row.item);
+                    name.text = ItemInfo.TaggedItemName(row.item);
                     var st = Blueprints.State(db, row.item);
                     float rate = Blueprints.CompletionRate(db, st);
                     if (rate > 0f)
@@ -445,14 +445,14 @@ namespace GoF2Remake.UI
                 {
                     var pp = Session.PendingProducts[row.equipment];
                     tex = ItemInfo.ItemIcon(pp.item);
-                    name.text = (pp.quantity >= 2 ? $"{pp.quantity}x " : "") + ItemInfo.ItemName(pp.item);
+                    name.text = (pp.quantity >= 2 ? $"{pp.quantity}x " : "") + ItemInfo.TaggedItemName(pp.item);
                     subText.text = $"{Localization.Get(275)} {db.Stations.Find(s => s.index == pp.station)?.name}";
                     break;
                 }
                 case RowKind.Ingredient:
                 {
                     tex = ItemInfo.ItemIcon(row.item);
-                    name.text = ItemInfo.ItemName(row.item);
+                    name.text = ItemInfo.TaggedItemName(row.item);
                     var st = Blueprints.State(db, editing);
                     int total = Blueprints.Total(db, editing, row.type);
                     int invested = Blueprints.Invested(db, st, row.type) + Pending(row.item);

@@ -39,7 +39,7 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   along, every change re-measures the hangar height), hangar height + Auto, hull textures: one
   `materials` entry for all meshes, for GLBs without their own), Hardpoints (add by clicking the hull, list, X / Y / Z, mirror,
   centre, delete, slot counts following the points, a turret's facing (see "Missile turrets and salvos"), engine flame
-  radius / length / particles), Loadout
+  shape / half width / half height / length / particles: `glowShape`, see mods-models.md "engine glow discs"), Loadout
   (per-slot item pickers, Auto-fill, god mode / infinite ammo). The 3D editor is `World.ModBuilderGizmo` (balls drawn over the
   hull by `Hidden/GoF2/BuilderGizmo`, Unity-style move arrows along the ship's axes (X = game +x = the pilot's left), a drag on
   a ball slides it over the hull (MeshColliders on layer 22), a flat arrow on the floor toward the nose); the camera is
@@ -266,7 +266,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `SafeArea.EdgeClass` (`KeepClear` gave them margins every 500 ms: they sat off their places on wide windows); a button
   text starting "+ " (or a lone + / − stepper) gets its sign drawn by Painter2D (`ModBuilderScreen.DrawSign`: the font's
   + snapped to unequal 1 / 2 px bars at the UI's non-integer scale; cyan for adding, white on hover, the rest of the text in
-  `mbv-button-label`); `ScrollBars` puts the bar at the viewport's edge and `.gof-scroll-bar` centres itself with
+  `mbv-button-label`); since 2026-11-01 only buttons that add carry the + ("+ Import an event graph…", the dependencies'
+  "+ Add" too) and those changing what the game or the mod already has (class `mbv-change`: Change a game ship / item /
+  station / system / weapon's look, Replace a game track / sound / line / character, Skin a game ship, the other
+  textures, Make this mod a campaign, Change it) a filled pencil (`DrawPencil`), their texts without "+ " in every
+  language; Weapon fx gained "+ New weapon effect" (2026-11-01: a weapon effect of weaponfx.json, `ProjectWeaponEffect`,
+  `ModProject.WeaponEffects`, based on a game weapon picked; its page: name, base, the weapons using it, then the same
+  parts / trail / sounds editor through `Fx(make)` / `FxBase` / `FxFileId`; the range fires it on its base weapon,
+  `ModWeapons.Effect`; Remove effect clears the items' links, `RemoveWeaponEffect`). A weapon taking an effect or a game
+  look (`ProjectItem.EffectId` / `GameLook` / `TakesLook`) shows which, with "Edit the effect" / "Its own look instead";
+  the Items page's "Weapon effect" picks one of the project's effects or any game weapon's look (`EffectChoices`; a
+  turret taking one hides its turret model section: the effect's applies). AI tools: entry kind `weaponEffects`,
+  select_entry `weaponEffects`, the range's item `effect:<id>`; `ScrollBars` puts the bar at the viewport's edge and `.gof-scroll-bar` centres itself with
   `translate: -50%` (subtracting the snapped half width each layout fed back into the next: the bar's width flickered by a
   pixel twice a second).
 - **The builder translated** (2026-10-22): its 875 `Localization.Extra` texts in all 13 `extra_<lang>.json` (the kinds,

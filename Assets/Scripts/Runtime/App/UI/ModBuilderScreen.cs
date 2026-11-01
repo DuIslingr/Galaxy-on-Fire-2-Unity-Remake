@@ -201,15 +201,17 @@ namespace GoF2Remake.UI
         /// bars made of elements snapped to whole pixels unevenly at the interface's scale (a 1 px across, 2 px upright
         /// at 1.19 units a pixel). The sign is a Label still holding its character, kept invisible, so the button's text
         /// reads the same to the AI tools (McpInput.TextOf); the rest of the label moves into a child Label, since a Button
-        /// measures its own text only while it has no children.</summary>
+        /// measures its own text only while it has no children. A button that changes something already there rather
+        /// than adding (class mbv-change: "Change a game ship", "Replace a game track") gets a pencil instead, its text
+        /// without the "+ ".</summary>
         static void DrawSign(Button b)
         {
             string t = b.text ?? "";
-            bool lone = t == "+" || t == "−" || t == "-";
-            if (!lone && !t.StartsWith("+ ")) return;
+            bool lone = t == "+" || t == "−" || t == "-", change = b.ClassListContains("mbv-change");
+            if (!lone && !change && !t.StartsWith("+ ")) return;
             b.text = "";
             b.AddToClassList(lone ? "mbv-sign-only" : "mbv-with-sign");
-            var sign = new Label(lone ? t : "+") { pickingMode = PickingMode.Ignore };
+            var sign = new Label(lone ? t : change ? "" : "+") { pickingMode = PickingMode.Ignore };
             sign.AddToClassList("mbv-sign");
             bool plus = t != "−" && t != "-", hot = false;
             sign.generateVisualContent += ctx =>
@@ -217,6 +219,11 @@ namespace GoF2Remake.UI
                 var r = sign.contentRect;
                 if (r.width <= 0f || r.height <= 0f) return;
                 var p = ctx.painter2D;
+                if (change)
+                {
+                    DrawPencil(p, r.size, hot ? Color.white : SignCyan);
+                    return;
+                }
                 p.lineWidth = Mathf.Max(1.5f, r.height / 6f);
                 p.lineCap = LineCap.Butt;
                 p.strokeColor = hot ? Color.white : lone ? SignText : SignCyan;
@@ -234,9 +241,31 @@ namespace GoF2Remake.UI
             b.RegisterCallback<PointerLeaveEvent>(_ => { hot = false; sign.MarkDirtyRepaint(); });
             b.Add(sign);
             if (lone) return;
-            var label = new Label(t.Substring(2).TrimStart()) { pickingMode = PickingMode.Ignore };
+            var label = new Label(change ? t : t.Substring(2).TrimStart()) { pickingMode = PickingMode.Ignore };
             label.AddToClassList("mbv-button-label");
             b.Add(label);
+        }
+
+        /// <summary>The change buttons' pencil, filled: its tip at the bottom left, a gap, the body up to the top right.</summary>
+        static void DrawPencil(Painter2D p, Vector2 size, Color color)
+        {
+            // Points along the bottom-left to top-right diagonal (t 0..1), offset across it by +-h.
+            const float h = 0.13f;
+            Vector2 At(float t, float across) => new Vector2((t + across) * size.x, (1f - t + across) * size.y);
+            p.fillColor = color;
+            p.BeginPath();
+            p.MoveTo(At(0.02f, 0f));
+            p.LineTo(At(0.26f, -h));
+            p.LineTo(At(0.26f, h));
+            p.ClosePath();
+            p.Fill();
+            p.BeginPath();
+            p.MoveTo(At(0.34f, -h));
+            p.LineTo(At(0.86f, -h));
+            p.LineTo(At(0.86f, h));
+            p.LineTo(At(0.34f, h));
+            p.ClosePath();
+            p.Fill();
         }
 
         protected Button TopButton(VisualElement parent, string text, Action onClick, string extra = null)
@@ -842,6 +871,7 @@ namespace GoF2Remake.UI
             Text(scroll, T("mbVersion", "Version"), Project.Version, 20, v => { if (v.Trim().Length > 0) { Project.Version = v.Trim(); MarkDirty(); } });
             Text(scroll, T("mbDescription", "Description"), Project.Description, 600, v => { Project.Description = v; MarkDirty(); }, true);
             Text(scroll, T("mbWebsite", "Website"), Project.Website, 200, v => { Project.Website = v; MarkDirty(); });
+            Text(scroll, T("mbModTag", "Tag (dim after the names of what it adds: GoF3, HD...)"), Project.Tag, 24, v => { Project.Tag = v; MarkDirty(); });
             Text(scroll, T("mbCredits", "Credits (who made what)"), Project.Credits, 2000, v => { Project.Credits = v; MarkDirty(); }, true);
             var row = Row(scroll);
             Add(row, new Label($"{T("mbPreview", "Picture")}: {Project.PreviewImage ?? T("mbNone", "none")}"), "mbv-inline-label");
@@ -909,7 +939,7 @@ namespace GoF2Remake.UI
                 var row = Row(box);
                 Add(row, new Label(string.Format(T("mbDepNamed", "The files name \"{0}\", which isn't a dependency"), m?.Name ?? d)), "mbv-inline-label");
                 string id = d;
-                Act(row, T("mbAdd", "Add"), () =>
+                Act(row, "+ " + T("mbAdd", "Add"), () =>
                 {
                     Project.AddDependency(id, ModManager.Find(id)?.Version);
                     RequestReload(false);

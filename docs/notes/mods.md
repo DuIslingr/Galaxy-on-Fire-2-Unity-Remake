@@ -138,6 +138,14 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   *behaviour* should use `Look`; story / rule checks keep the real index.
 - **Names** (`GameNames`): every item / ship name and description goes through it (the original's text blocks 1274 / 1041 /
   913 / 977 + index sit back to back: item 233's name would be the first medal's); never `Localization.Get(1274 + i)`.
+- **Mod tags** (remake, TorchOP's request 2026-10-23: tell SH / HD / Alliances / GoF3 content apart; the user: one tag
+  per mod, for everything, not just ships): mod.json `"tag"` (`ModContent.TagOf`, a string or per language) on all a mod
+  adds, never on what it only overrides: `GameNames.ShipTag` / `ItemTag` (a ship blueprint's item: its ship's) /
+  `SystemTag` / `StationTag` (`ModWorld`). `ItemInfo.WithTag` adds it as rich text (`<alpha=#80><size=80%>`, the tag in
+  `<noparse>`; `TaggedShipName`, `TaggedItemName`): the hangar / shop / cargo / Kaamo / pending rows, the hangar details,
+  the carrier shop, the item window, the status screen, the star map's system and planet names, its system panel and
+  planet lore title, the docked station's title and system line (after `ToUpperInvariant`). Everywhere else (toasts,
+  dialogs, selectors, chat, saves) keeps the plain name. Mod Builder: Mod details' "Tag". Tests `ModTagTests`.
 - **Numbers** (`ModRegistry`, `persistentDataPath/mod_registry.json`, outside the Mods folder): single player gives each "mod:id" key the next free
   number after the original table (233+) for good; a key whose mod is off gets a placeholder (`ModContent.IsMissingItem`:
   commodity 22, no price, never stocked) so the table stays 0..N-1 and saves keep their numbers. Sessions number afresh in the
@@ -436,7 +444,9 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   to the player: `UserMods` is `Active` without it for the browser, a save's `mods`, a session's list and `ActiveSignature`; a mod
   can't take the id. `item.modded` stays true on it: that flag means "not in the original tables", which is what the original
   save export and the Mod Builder's base list need. A session numbers its mods first (`EnsureMapping`), so they keep the
-  numbers persistent hosts saw before. `BaseContentTests`; texts are English until they get `extra_<lang>` keys.
+  numbers persistent hosts saw before. `BaseContentTests`; texts are English until they get `extra_<lang>` keys. A
+  manifest that can't be read yet (Resources not ready in a fresh Editor) leaves it out instead of throwing out of
+  `Active`: `BaseContent` is null, `Active` isn't kept, and the read that finds it bumps `Revision` (review, 2026-11-01).
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
