@@ -333,7 +333,7 @@ namespace GoF2Remake.UI
             {
                 var st = WantedBoard.State(db, w.index);
                 int index = w.index;
-                var b = new Button { text = w.name };
+                var b = new Button { text = ItemInfo.TaggedWantedName(w) };   // (a mod's: its tag, dim)
                 b.AddToClassList("wanted-row");
                 b.AddToClassList("gof-semibold");
                 b.EnableInClassList("wanted-row--active", st != null && st.active);
@@ -366,7 +366,7 @@ namespace GoF2Remake.UI
             var face = w.character != null ? Modding.ModCharacters.Find(w.character) : null;   // remake mods: a character's portrait
             if (face != null) Portrait.ShowCharacter(wantedPortrait, face, false);
             else Portrait.Show(wantedPortrait, w.portraitParts, false);
-            wantedName.text = w.name.ToUpperInvariant();
+            wantedName.text = ItemInfo.TaggedWantedName(w, true);
             bool dead = st != null && st.terminated;
             wantedStatus.text = $"{T(3226)} {(dead ? T(3227) : T(3228))}";
             wantedBounty.text = $"{T(3225)} {ItemInfo.Credits(w.reward)}";

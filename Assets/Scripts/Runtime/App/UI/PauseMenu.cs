@@ -670,7 +670,7 @@ namespace GoF2Remake.UI
             {
                 var state = WantedBoard.State(db, w.index);
                 if (state == null || !state.active || state.terminated) continue;
-                Text($"{w.name} · {T(3225)} {ItemInfo.Credits(w.reward)}", "pause-subheading");
+                Text($"{ItemInfo.TaggedWantedName(w)} · {T(3225)} {ItemInfo.Credits(w.reward)}", "pause-subheading");
                 Text($"{T(3223)} {Place(state.lastSeen)}\n{T(3224)} {Place(state.travelsTo)}");
                 shown++;
             }
