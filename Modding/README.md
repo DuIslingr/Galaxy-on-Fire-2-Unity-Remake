@@ -1958,6 +1958,56 @@ A blueprint is obtained once: once the player knows it, every source stops offer
 has nothing left ("I don't have anything left, sorry."), a derelict hacked afterwards is empty, and no second data container
 is dropped while one with it still floats in the orbit. It can be built from as often as the player likes.
 
+## Most Wanted
+
+`wanted.json` adds criminals to the Most Wanted boards (the Missions window's **Most Wanted** tab in a station of the
+board's race). Each one travels between stations like the game's own; in the orbit where it is, it waits with its escorts
+until locked, and its death pays the bounty.
+
+```json
+[
+    {
+        "id": "snotch",
+        "name": "Snotch",
+        "description": "A smuggler king who never sells what he can steal.",
+        "board": "terran",
+        "race": "pirate",
+        "ship": "my_mod:snotch_hull",
+        "weapon": "my_mod:boss_laser",
+        "secondary": 36,
+        "hitpoints": 6000,
+        "reward": 180000,
+        "loot": 113, "lootAmount": 4,
+        "wingmen": 3,
+        "requiredBounties": 1,
+        "systems": [ "my_mod:sector_9", 12 ],
+        "route": [ 1, 3 ],
+        "character": "my_mod:snotch",
+        "available": "systemsvisited >= 2"
+    }
+]
+```
+
+| Field | |
+|---|---|
+| `id`, `name` | **Required.** Its id within your mod and its name (translate both `name` and `description` with `wanted.<id>.name` / `wanted.<id>.description` in `text/<lang>.json`). |
+| `description` | What the board says about it. |
+| `ship` | **Required.** Its ship: a number, a name or `"mod_id:id"` (a capital ship works too). |
+| `race` | The pilot's and its escorts' race: `terran`, `vossk`, `nivelian`, `midorian`, `pirate` (default), `void` or a mod's [race](#races). |
+| `board` | The board that lists it: `terran`, `vossk`, `nivelian` or `midorian` (default: its race's, else terran). It shows in that race's stations, or with `systems` in those systems' stations instead. |
+| `weapon`, `secondary` | Its gun (default the game's first) and missiles (default none): items by number or `"mod_id:id"`. |
+| `hitpoints`, `reward` | Its hull on top of the game's criminal bonus (default 1000) and the bounty (default 50,000). |
+| `loot`, `lootAmount` | What it drops and how many (default nothing). |
+| `wingmen` | Escorts flying with it (0 to 12, default 0). |
+| `requiredBounties` | How many of this board's mod criminals must be dead first (default 0). The game's criminals count apart. |
+| `systems` | The systems it travels in (numbers or `"mod_id:id"`), else any the player can see. |
+| `route` | `[ least, most ]` systems a trip crosses (default `[ 2, 4 ]`; `[ 1, 1 ]` keeps it in one system). |
+| `character` | A [character](#characters) whose face the board shows; else a face of its race (`portraitParts` `[ race, head, gender, hair, extra ]` picks one, `gender` `"female"`). Its radio lines take that character's face too. |
+| `available` | A [condition](#conditions) before it appears. |
+
+A mod's criminals appear in free play as well as in the campaign (the game's own, from the Supernova add-on's story, stay in
+the campaign). A save keeps each one's state by its key, so adding or removing other mods doesn't move it.
+
 ## Hangars and bars
 
 A station can have its own hangar (where your ship stands when docked) and its own Space Lounge bar. Each room is a glTF /

@@ -147,7 +147,7 @@ namespace GoF2Remake.World
         {
             var c = new Chatter { text = Localization.Get(text), voice = GenericVoice.For(text) };   // voice_table.json (WANTED_*)
             if (wantedSpeaker < 0) { c.speakerId = 0; c.speaker = Localization.Get(1597); }
-            else { c.portrait = w.portraitParts; c.speaker = w.name; }
+            else { c.portrait = w.portraitParts; c.speaker = w.name; c.character = w.character; }   // (a mod's: its character's portrait)
             chatterQueue.Enqueue(c);
         }
         /// <summary>Step 0: the player within 50 000 of the freighter -> the freighter, its escorts and turrets always-enemy,

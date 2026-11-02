@@ -363,7 +363,9 @@ namespace GoF2Remake.UI
                 Show(wantedMap, false);
                 return;
             }
-            Portrait.Show(wantedPortrait, w.portraitParts, false);
+            var face = w.character != null ? Modding.ModCharacters.Find(w.character) : null;   // remake mods: a character's portrait
+            if (face != null) Portrait.ShowCharacter(wantedPortrait, face, false);
+            else Portrait.Show(wantedPortrait, w.portraitParts, false);
             wantedName.text = w.name.ToUpperInvariant();
             bool dead = st != null && st.terminated;
             wantedStatus.text = $"{T(3226)} {(dead ? T(3227) : T(3228))}";
@@ -375,7 +377,7 @@ namespace GoF2Remake.UI
             }
             string from = dead ? " --" : st != null && st.active ? Place(st.lastSeen) : T(3229);
             string to = dead ? " --" : st != null && st.active ? Place(st.travelsTo) : T(3229);
-            wantedText.text = $"{T(3223)}\n{from}\n\n{T(3224)}\n{to}\n\n{T(3174 + w.index)}";
+            wantedText.text = $"{T(3223)}\n{from}\n\n{T(3224)}\n{to}\n\n{(w.IsMod ? w.description ?? "" : T(3174 + w.index))}";
             wantedScroll.scrollOffset = Vector2.zero;
             Show(wantedMap, st != null && st.active && !dead && st.travelsTo >= 0);
         }

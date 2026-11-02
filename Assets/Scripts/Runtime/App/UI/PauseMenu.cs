@@ -652,7 +652,7 @@ namespace GoF2Remake.UI
                 Text(MissionsWindow.FreelanceText(db, m));
             }
             else Text(Localization.Extra("missionsNoFreelance", "No mission taken. The visitors in a Space Lounge offer work."));
-            if (!Session.FreePlay && Session.CampaignMission >= WantedBoard.StorylineFirst && db != null) BuildWanted(db);
+            if (db != null && ((!Session.FreePlay && Session.CampaignMission >= WantedBoard.StorylineFirst) || db.Wanted.Exists(w => w.IsMod))) BuildWanted(db);
         }
 
         /// <summary>Remake: the Most Wanted criminals on the move (the board itself is only in the stations' Missions window,

@@ -460,6 +460,14 @@ namespace GoF2Remake.Data
         public bool male;
         public int ship, weapon, hitpoints, loot, lootAmount, reward, requiredBounties, requiredMission, numWingmen;
         public int[] portraitParts;
+        // Remake mods (Modding.ModWanted, a mod's wanted.json): its key ("mod_id:id"; null = the game's), its own texts and
+        // face (a mod character), the systems it roams (null = anywhere), its trips' length in systems, a rocket launcher, and
+        // when it is on its board ("available", a condition).
+        [System.NonSerialized] public string key, description, character, available, availableWhere;
+        [System.NonSerialized] public int[] systems;
+        [System.NonSerialized] public int routeMin = 2, routeMax = 4, secondary = -1;
+        [System.NonSerialized] public Modding.ModInfo mod;
+        public bool IsMod => key != null;
     }
 
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]

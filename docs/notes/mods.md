@@ -509,6 +509,16 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   numbers persistent hosts saw before. `BaseContentTests`; texts are English until they get `extra_<lang>` keys. A
   manifest that can't be read yet (Resources not ready in a fresh Editor) leaves it out instead of throwing out of
   `Active`: `BaseContent` is null, `Active` isn't kept, and the read that finds it bumps `Revision` (review, 2026-11-01).
+- **Mod Most Wanted** (`ModWanted`, a mod's `wanted.json`, applied in `ModContent.Apply` after `ModWorld`; 2026-11-02, the
+  user's request): each entry is a `WantedData` appended after the game's 25 with `key` "mod_id:id" (`IsMod`), its index
+  numbered afresh each load, so `WantedBoard.State` keeps its state by key (`Session.ModWanted`, saved as `modWanted`) and
+  its kills count apart (`Session.ModBounties`, `modBounties`; `requiredBounties` reads those). `WantedBoard.ModListed`:
+  in its `systems`' stations, else its board race's, while `available` holds, in free play too, where the game's criminals
+  (`OriginalsOn`) stay off. `route` replaces `PathBounds`; trips pick among visible usable systems, the mods' included
+  (`RandomModStation`). Spawn as the game's (`TrafficPlan.AddWanted`: a mod race kept, `secondary` its own),
+  `character` for the board's face (`MissionsWindow.ShowWantedDetails`) and the radio (`TrafficSpecials.WantedLine`);
+  `StationMenuDockingChecks.CheckWanted` runs its trips in free play but the Quineros hints stay campaign-only. The
+  original save export stops at the first mod entry. `ModWantedTests`.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
