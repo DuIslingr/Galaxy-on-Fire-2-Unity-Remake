@@ -165,7 +165,8 @@ namespace GoF2Remake.Flight
             string n = m.name.ToLowerInvariant();
             if (n.Contains("_add") || n.Contains("_lights") || LowerLodName(n) || n.Contains("glow")) return false;
             var mat = r.sharedMaterial;
-            if (mat != null && mat.shader != null && mat.shader.name.IndexOf("Additive", StringComparison.OrdinalIgnoreCase) >= 0) return false;
+            if (mat != null && mat.shader != null && (mat.shader.name.IndexOf("Additive", StringComparison.OrdinalIgnoreCase) >= 0
+                || mat.shader.name.StartsWith("GoF2/Mod", StringComparison.Ordinal))) return false;   // a mod model's glow, hologram, shimmer, flame
             return true;
         }
 

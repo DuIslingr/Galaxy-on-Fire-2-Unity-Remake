@@ -83,6 +83,8 @@ namespace GoF2Remake.World
         public float asteroidSpread = 100000f;
         /// <summary>Remake mods: the field's ores (item, chance weight), null: the system's (OreProbabilities).</summary>
         public List<(int item, int chance)> modOres;
+        /// <summary>Remake mods: the orbit's own sky turn (stations.json orbit "skyRotation", Unity degrees), null: the system's.</summary>
+        public Vector3? modSkyRotation;
 
         // Level::initParticleSystems
         public Color dustFogTint;
@@ -220,6 +222,7 @@ namespace GoF2Remake.World
             if (m.asteroidSpread.HasValue) asteroidSpread = m.asteroidSpread.Value;
             if (m.asteroidType >= 0) asteroidType = m.asteroidType;
             if (m.ores != null) modOres = m.ores;
+            if (m.skyRotation.HasValue) modSkyRotation = m.skyRotation;
             if (m.fog == false) fog = false;
             else if (m.fog == true)
             {

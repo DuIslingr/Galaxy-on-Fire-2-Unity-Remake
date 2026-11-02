@@ -314,7 +314,7 @@ namespace GoF2Remake.Tests
             WriteMod("w", "t_world", "1.0", "", ("stations.json", "[ { 'override': 78, 'mapPlace': { 'angle': 90, 'distance': 30000 }, 'orbit': { " +
                 "'station': 'nodock', 'jumpgate': true, 'jumpgatePosition': [1000, 2000, 3000], 'arrival': [0, 5000, -80000], " +
                 "'asteroids': { 'count': 20, 'centre': [-40000, 0, 50000], 'spread': 50000, 'type': 'ice', 'ores': [154, { 'item': 155, 'chance': 3 }, 'nope:x'] }, " +
-                "'fog': { 'color': [0.2, 0.4, 0.6], 'end': 70000 }, 'sun': [0, 30], 'planet': { 'size': 2, 'yaw': 45, 'pitch': 10 } } } ]"));
+                "'fog': { 'color': [0.2, 0.4, 0.6], 'end': 70000 }, 'sun': [0, 30], 'planet': { 'size': 2, 'yaw': 45, 'pitch': 10 }, 'skyRotation': [10, 20, 30] } } ]"));
             ScanAndEnable("t_world");
             var db = Database.Load();
             var l = GoF2Remake.World.OrbitLayout.Build(db, 78);
@@ -335,6 +335,8 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(70000f, l.fogEnd);
             Assert.Greater(l.lightDirection.y, 0.49f, "the sun 30 degrees up");
             Assert.AreEqual(0f, l.lightDirection.x, 1e-5f);
+            Assert.AreEqual(new Vector3(10, 20, 30), l.modSkyRotation.Value, "the orbit's own sky turn");
+            Assert.IsFalse(GoF2Remake.World.OrbitLayout.Build(db, 79).modSkyRotation.HasValue, "another orbit keeps the system's");
             var own = l.planets.Find(p => p.isOrbitPlanet);
             var placed = -GoF2Remake.World.OrbitLayout.Direction(own.pitch, own.yaw);   // where the backdrop puts it
             Assert.Less(Vector3.Angle(placed, GoF2Remake.World.OrbitLayout.ModDirection(45f, 10f)), 0.01f);

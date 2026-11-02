@@ -66,6 +66,7 @@ namespace GoF2Remake.EditorTools
             a.engineFlame = flame;
             a.hologram = Template("GoF2/ModHologram", Dir + "/ModHologram.mat");
             a.nozzleShimmer = Template("GoF2/ModNozzleShimmer", Dir + "/ModNozzleShimmer.mat");
+            a.glow = Template("GoF2/ModGlow", Dir + "/ModGlow.mat");
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();
             Debug.Log("GoF2: Resources/GoF2Mods/ModAssets built.");

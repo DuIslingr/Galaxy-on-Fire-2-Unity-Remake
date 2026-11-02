@@ -65,6 +65,27 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AnAdditiveEntryIsAGlowLayer()
+        {
+            // Galaxy on Fire 3's gate electricity: DiffuseColor x Opacity, UVAnim scrolling, no vertex colours.
+            var m = ModMaterials.FromSpec(null, new CustomShipMaterial { additive = true, emissionColor = new[] { 0.1f, 0.5f, 1f },
+                emissionIntensity = 4f, scroll = new[] { 0.6f, -2f }, ignoreVertexColors = true }, "glow test");
+            try
+            {
+                Assert.AreEqual("GoF2/ModGlow", m.shader.name);
+                var c = m.GetColor("_EmissionColor");
+                Assert.AreEqual(0.4f, c.r, 1e-4f); Assert.AreEqual(2f, c.g, 1e-4f); Assert.AreEqual(4f, c.b, 1e-4f);
+                Assert.AreEqual(new Vector4(0.6f, -2f, 0f, 0f), m.GetVector("_Scroll"));
+                Assert.AreEqual(0f, m.GetFloat("_UseVertexColor"));
+                var plain = ModMaterials.FromSpec(null, new CustomShipMaterial { additive = true }, "plain glow");
+                Assert.AreEqual(1f, plain.GetFloat("_UseVertexColor"), "the vertex colours by default");
+                Assert.AreEqual(Color.white, plain.GetColor("_EmissionColor"));
+                Object.DestroyImmediate(plain);
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
         public void AModRoomKeepsItsGlowOnPlainLit()
         {
             var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);

@@ -32,3 +32,4 @@ MonoBehaviour:
   engineFlame: {fileID: 2100000, guid: 63bae1d8e788890eeb7334d717fec200, type: 2}
   hologram: {fileID: 2100000, guid: ca75aa8b594b832f7ae07a4fd48829c6, type: 2}
   nozzleShimmer: {fileID: 2100000, guid: 507e9ed552b99259fa2de9e05d834d14, type: 2}
+  glow: {fileID: 2100000, guid: 24be6639afd00003f845680ecda1a9df, type: 2}

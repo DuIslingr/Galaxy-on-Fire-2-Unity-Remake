@@ -237,6 +237,9 @@ namespace GoF2Remake.Modding
             public Vector2? sun;
             /// <summary>The orbit's own planet: its size (x the game's), yaw / pitch (degrees, 0 = straight ahead as the game's).</summary>
             public float? planetSize, planetYaw, planetPitch;
+            /// <summary>The sky's turn in this orbit ([x, y, z] Unity degrees, as the system's skybox "rotation"), over the
+            /// system's "rotation" / "sunAligned" and the game's per-station turn; null: those.</summary>
+            public Vector3? skyRotation;
         }
 
         /// <summary>A planet's place in the star map's system view (stations.json "mapPlace").</summary>
@@ -252,7 +255,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };

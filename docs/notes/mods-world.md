@@ -87,7 +87,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `SpaceLevel.ArrivalPosition`), the asteroid field (`asteroidCount` 0 = none, also no autopilot entry; centre;
   `asteroidSpread` for `SpawnAsteroids`' cubes; type; `modOres` with weights: `OrbitBuilder.PickWeighted`, not the original's
   `PickOre`, which needs six entries), fog, the sun (`lightDirection` = -Direction(pitch, yaw), so the backdrop, light, flare,
-  skybox `sunAligned` follow) and the orbit planet's size / yaw / pitch. The station stays the origin (everything around it
+  skybox `sunAligned` follow), the orbit planet's size / yaw / pitch and `skyRotation` (`OrbitLayout.modSkyRotation`, Unity
+  degrees, over the system's `rotation` / `sunAligned` in `OrbitBuilder`'s sky: 2026-11-02, the GoF3 Systems mod's sky as each
+  GoF3 level turns it). The station stays the origin (everything around it
   assumes so); directions: yaw 0 behind a launching ship (the orbit planet's default), + to its right. `"mapPlace"`
   (`ModWorld.MapPlaceOf`) sets the planet's angle / radius in `GalaxyMap.SystemLayout` after its draws, so the other planets
   keep theirs. The builder's Stations page: Its own place on the star map, Its orbit (every field). The example's Rho

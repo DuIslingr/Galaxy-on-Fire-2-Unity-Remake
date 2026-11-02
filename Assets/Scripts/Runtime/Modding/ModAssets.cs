@@ -9,7 +9,8 @@
 // stripped). metallicRoughness converts a glTF metallic-roughness texture (B metal, G roughness) into URP's metallic (R) /
 // smoothness (A) map. fxAdditive / fxAlpha: the GoF2 Shader Graph materials a mod weapon's sprites and textured models
 // are copied from (ModWeapons). engineFlame: GoF2/ModEngineFlame, the template of the "flame" materials (EngineFlame); hologram: GoF2/ModHologram, the
-// template of the "hologram" materials; nozzleShimmer: GoF2/ModNozzleShimmer, of the "shimmer" materials.
+// template of the "hologram" materials; nozzleShimmer: GoF2/ModNozzleShimmer, of the "shimmer" materials; glow:
+// GoF2/ModGlow, of the "additive" materials.
 
 using UnityEngine;
 
@@ -38,6 +39,8 @@ namespace GoF2Remake.Modding
         public Material hologram;
         [Tooltip("GoF2/ModNozzleShimmer: the template of mod ships' nozzle shimmer (materials with \"shimmer\").")]
         public Material nozzleShimmer;
+        [Tooltip("GoF2/ModGlow: the template of mod models' additive glow layers (materials with \"additive\").")]
+        public Material glow;
 
         static ModAssets loaded;
 

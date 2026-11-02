@@ -219,6 +219,12 @@ namespace GoF2Remake.Modding
                 if (!(sun is JArray sa) || sa.Count != 2) throw new ModJsonException($"{where}: orbit \"sun\" must be [yaw, pitch] (degrees)");
                 s.sun = new Vector2((float)sa[0], Mathf.Clamp((float)sa[1], -89f, 89f));
             }
+            if (ModJson.Get(o, "skyRotation") is JToken sr)
+            {
+                if (!(sr is JArray ra) || ra.Count != 3 || ra.Any(v => v.Type != JTokenType.Integer && v.Type != JTokenType.Float))
+                    throw new ModJsonException($"{where}: orbit \"skyRotation\" must be [x, y, z] (degrees)");
+                s.skyRotation = new Vector3((float)ra[0], (float)ra[1], (float)ra[2]);
+            }
             if (ModJson.Get(o, "planet") is JToken pl)
             {
                 if (!(pl is JObject po)) throw new ModJsonException($"{where}: orbit \"planet\" must be {{ \"size\", \"yaw\", \"pitch\" }}");

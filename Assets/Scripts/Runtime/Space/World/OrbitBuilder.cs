@@ -73,6 +73,9 @@ namespace GoF2Remake.World
                 if (mod.sunAligned) rotation = SunAlignedSky(layout) * (mod.rotation.HasValue ? Quaternion.Euler(mod.rotation.Value) : Quaternion.identity);
                 else if (mod.rotation.HasValue) rotation = Quaternion.Euler(mod.rotation.Value);
             }
+            // Remake mods: the orbit's own turn (stations.json orbit "skyRotation": the GoF3 Systems mod's sky as each GoF3 level
+            // turns it, so it lines up with the orbit's sun).
+            if (layout.modSkyRotation.HasValue) rotation = Quaternion.Euler(layout.modSkyRotation.Value);
             // The shader maps world directions into the baked cube: the inverse of the sky's Unity rotation.
             sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(rotation)));
             return sky;

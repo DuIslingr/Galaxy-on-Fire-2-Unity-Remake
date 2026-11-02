@@ -45,6 +45,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `Specular_Multiplier`, gloss in A; ships: their `specular_gloss` map), no metal; as metallic 0 the GoF3 Systems mod's
   stations, gates and capital ships had a flat 4 % and looked matte, and the ships lost their panel masks and the gold
   schemes' gold. GoF3's values are gamma-space shader values, so the maps are read as sRGB (0.4 -> a reflectance of 0.13).
+  An `additive` entry (2026-11-02) is a glow layer: `GoF2/ModGlow` (`ModAssets.glow`, `ModMaterials.Glow`), unlit, `Blend One
+  One`, texture rgb x alpha x `_EmissionColor` (colour x intensity) x vertex colours (`_UseVertexColor`, off with
+  `ignoreVertexColors`), `_Scroll` UV units a second; no shadow pass, and `HullCollision` skips every `GoF2/Mod*` effect
+  shader. The GoF3 Systems mod's gates use it for GoF3's BlendMode 2 layers (`_add`, `_glow`, `_electricity`): DiffuseColor x
+  Opacity, `UVAnim_Speed` x `UVAnim_SpeedMultiplier` unless `UVAnim_FlowOnly` (the flow map isn't drawn).
   Textures load from the mod's PNGs,
   compressed with mipmaps. Normal maps (ships / stations / rooms `normal` / `detailNormal`, glTF normal textures, `*_normal`
   texture replacements) are loaded with `normal: true`: Android's normal map encoding is "DXT5nm-style" (Player settings),

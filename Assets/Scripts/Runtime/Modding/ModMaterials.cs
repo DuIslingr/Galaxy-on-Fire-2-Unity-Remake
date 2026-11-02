@@ -455,6 +455,7 @@ namespace GoF2Remake.Modding
             if (e.flame) return Flame(mod, e, name, a);
             if (e.hologram) return Hologram(mod, e, name, a);
             if (e.shimmer) return Shimmer(mod, e, name, a);
+            if (e.additive) return Glow(mod, e, name, a);
             bool clip = e.alphaClip > 0f, glass = e.opacity > 0f && e.opacity < 1f;
             var dAlb = Texture(mod, e.detailAlbedo, true);
             var dNrm = Texture(mod, e.detailNormal, true, normal: true);
@@ -573,6 +574,22 @@ namespace GoF2Remake.Modding
             m.SetColor("_EmissionColor", c);
             var pattern = Texture(mod, e.emission, false);
             if (pattern != null) m.SetTexture("_EmissionMap", pattern);
+            return m;
+        }
+
+        /// <summary>An "additive" entry: a copy of GoF2/ModGlow, its texture (emission, else diffuse) x emissionColor (else
+        /// color, else white) x emissionIntensity x the vertex colours, scrolling by "scroll".</summary>
+        static Material Glow(ModInfo mod, CustomShipMaterial e, string name, ModAssets a)
+        {
+            if (a.glow == null) { Debug.LogWarning("Mods: no glow template (GoF2 > Build > Mod Assets)"); return null; }
+            var m = Copy(a.glow, name);
+            float k = e.emissionIntensity > 0f ? e.emissionIntensity : 1f;
+            var c = Rgb(e.emissionColor, Rgb(e.color, Color.white)) * k; c.a = 1f;
+            m.SetColor("_EmissionColor", c);
+            var tex = Texture(mod, e.emission ?? e.diffuse, false);
+            if (tex != null) { tex.wrapMode = TextureWrapMode.Repeat; m.SetTexture("_EmissionMap", tex); }
+            if (e.scroll != null && e.scroll.Length >= 2) m.SetVector("_Scroll", new Vector4(e.scroll[0], e.scroll[1], 0f, 0f));
+            m.SetFloat("_UseVertexColor", e.ignoreVertexColors ? 0f : 1f);
             return m;
         }
 

@@ -358,6 +358,12 @@ namespace GoF2Remake.Data
         // A nozzle shimmer (GoF2/ModNozzleShimmer): an additive layer over the nozzle's glowing faces, the glow pattern
         // (emission) times flameNoise scrolling along it; with "engine" it follows the engines like the glow.
         public bool shimmer;
+        // An additive glow layer (GoF2/ModGlow): its emission (or diffuse) texture x emissionColor x emissionIntensity x the
+        // mesh's vertex colours (not with ignoreVertexColors), added to what is behind it, scrolling by scroll [u, v] a second
+        // (Galaxy on Fire 3's gate glows and electricity).
+        public bool additive;
+        public float[] scroll;
+        public bool ignoreVertexColors;
         // Battle damage embers: a mask (PNG) set as this material's emission when it has none, glowing ember-orange with the
         // ship's hull damage (DamageEmbers: from a third of the hull lost, flickering).
         public string damageEmission;
