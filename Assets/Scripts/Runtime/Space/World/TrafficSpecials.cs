@@ -99,6 +99,7 @@ namespace GoF2Remake.World
             if (w.index == 0) { WantedLine(3134, -1, w); WantedLine(3135, w.index, w); }
             else if (w.index == 1) { WantedLine(3139, -1, w); WantedLine(3140, w.index, w); }
             else WantedLine(3141 + UnityEngine.Random.Range(0, 5), -1, w);
+            if (!string.IsNullOrEmpty(w.taunt)) chatterQueue.Enqueue(CriminalSays(w, w.taunt, null));   // (a mod's "taunt")
         }
         /// <summary>Level::attackWanted 0xd642c: the player's first hit (instead of the friendly-fire rules).</summary>
         public void AttackWanted(NpcShip s, int dmg)
@@ -147,9 +148,12 @@ namespace GoF2Remake.World
         {
             var c = new Chatter { text = Localization.Get(text), voice = GenericVoice.For(text) };   // voice_table.json (WANTED_*)
             if (wantedSpeaker < 0) { c.speakerId = 0; c.speaker = Localization.Get(1597); }
-            else { c.portrait = w.portraitParts; c.speaker = w.name; c.character = w.character; }   // (a mod's: its character's portrait)
+            else c = CriminalSays(w, c.text, c.voice);
             chatterQueue.Enqueue(c);
         }
+        /// <summary>A line in the criminal's name, with its face (a mod's: its character's portrait).</summary>
+        static Chatter CriminalSays(WantedData w, string text, string voice) =>
+            new Chatter { text = text, voice = voice, portrait = w.portraitParts, speaker = w.name, character = w.character };
         /// <summary>Step 0: the player within 50 000 of the freighter -> the freighter, its escorts and turrets always-enemy,
         /// radio 0xe. Then the freighter dead -> its turrets destroyed, this station done in Status+0x90 (-1), radio 0xf.</summary>
         void UpdateConvoy()
@@ -316,7 +320,7 @@ namespace GoF2Remake.World
                     // In the alien orbit, at a Void-attacked station and at campaign 0x10 every fight is 136 Space_Combat_Void.
                     bool voidBattle = VoidAttack || (!Session.FreePlay && Session.CampaignMission == 0x10);
                     var clip = musicCategory == 0 ? CalmClip()
-                             : musicCategory == 4 ? sn?.wantedMusic
+                             : musicCategory == 4 ? Modding.ModMusic.Track(WantedOf(wantedShip)?.music) ?? sn?.wantedMusic   // (a mod's "music")
                              : voidBattle ? story?.voidBattle
                              : musicCategory == 5 ? sn?.stealthMusic1
                              : musicCategory == 6 ? sn?.stealthMusic2

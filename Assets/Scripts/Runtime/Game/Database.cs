@@ -462,9 +462,10 @@ namespace GoF2Remake.Data
         public int[] portraitParts;
         // Remake mods (Modding.ModWanted, a mod's wanted.json): its key ("mod_id:id"; null = the game's), its own texts and
         // face (a mod character), the systems it roams (null = anywhere), its trips' length in systems, a rocket launcher, and
-        // when it is on its board ("available", a condition).
-        [System.NonSerialized] public string key, description, character, available, availableWhere;
-        [System.NonSerialized] public int[] systems;
+        // when it is on its board ("available", a condition); its escorts' ships (null = the race's fighters), its own fight
+        // music (a mod track) and what it says when uncovered.
+        [System.NonSerialized] public string key, description, character, available, availableWhere, music, taunt;
+        [System.NonSerialized] public int[] systems, escorts;
         [System.NonSerialized] public int routeMin = 2, routeMax = 4, secondary = -1;
         [System.NonSerialized] public Modding.ModInfo mod;
         public bool IsMod => key != null;

@@ -26,8 +26,9 @@ namespace GoF2Remake.Flight
                 // Level::assignGuns: the wanted's flying ships 45-48 add a rocket gun (item 31 G'liissk, 4 x damage).
                 secondaryItem = w.IsMod ? w.secondary : w.ship >= 45 && w.ship <= 48 ? 31 : -1, secondaryFactor = 4f,   // (a mod's: its "secondary")
             });
-            for (int i = 0; i < w.numWingmen; i++)
-                list.Add(new SpawnSpec { group = NpcGroup.Escort, race = race, ship = NpcTables.RandomFighter(race), position = wpLocal + Jitter(),
+            for (int i = 0; i < w.numWingmen; i++)   // (a mod's "escorts": its ships in turn)
+                list.Add(new SpawnSpec { group = NpcGroup.Escort, race = race, position = wpLocal + Jitter(),
+                                         ship = w.escorts != null ? w.escorts[i % w.escorts.Length] : NpcTables.RandomFighter(race),
                                          hitpoints = hull / 2, wantedEscortOf = w.index });
         }
         /// <summary>[0] the freighter "Arms delivery" (1664) parked at C = (+-(80000..109999), -6000..-3001, 120000..169999),

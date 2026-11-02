@@ -1999,6 +1999,9 @@ until locked, and its death pays the bounty.
 | `hitpoints`, `reward` | Its hull on top of the game's criminal bonus (default 1000) and the bounty (default 50,000). |
 | `loot`, `lootAmount` | What it drops and how many (default nothing). |
 | `wingmen` | Escorts flying with it (0 to 12, default 0). |
+| `escorts` | Their ships: one ship or a list the escorts take in turn (default: fighters of its race). |
+| `taunt` | What it says over the radio, with its face, when it is uncovered (translate with `wanted.<id>.taunt`). |
+| `music` | A track of a mod's [music](#music) folder that plays while it fights (default: the game's Most Wanted music). |
 | `requiredBounties` | How many of this board's mod criminals must be dead first (default 0). The game's criminals count apart. |
 | `systems` | The systems it travels in (numbers or `"mod_id:id"`), else any the player can see. |
 | `route` | `[ least, most ]` systems a trip crosses (default `[ 2, 4 ]`; `[ 1, 1 ]` keeps it in one system). |

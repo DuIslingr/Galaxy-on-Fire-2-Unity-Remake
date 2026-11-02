@@ -17,7 +17,7 @@ namespace GoF2Remake.Tests
             WriteMod("w", "t_wanted", "1.0", "", ("wanted.json",
                 "[ { 'id': 'khador', 'name': 'Khador', 'description': 'The Void prophet.', 'board': 'terran', 'race': 'nivelian', " +
                 "'ship': 5, 'weapon': 2, 'secondary': 36, 'hitpoints': 8000, 'reward': 250000, 'loot': 113, 'lootAmount': 3, " +
-                "'wingmen': 3, 'route': [1, 20] }, " +
+                "'wingmen': 3, 'route': [1, 20], 'escorts': [7, 8, 'nope:y'], 'taunt': 'You will not leave.', 'music': 'nope' }, " +
                 "{ 'id': 'later', 'name': 'Later', 'ship': 5, 'requiredBounties': 1, 'board': 'terran' }, " +
                 "{ 'id': 'broken', 'name': 'Broken', 'ship': 'nope:x' } ]"));
             ScanAndEnable("t_wanted");
@@ -42,6 +42,10 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(36, w.secondary);
             Assert.AreEqual(3, w.numWingmen);
             Assert.AreEqual("The Void prophet.", w.description);
+            CollectionAssert.AreEqual(new[] { 7, 8 }, w.escorts, "a ship that isn't: left out of the escorts");
+            Assert.AreEqual("You will not leave.", w.taunt);
+            Assert.IsNull(w.music, "no such track: the game's wanted music");
+            Assert.IsNull(db.Wanted.Find(x => x.key == "t_wanted:later").escorts);
             Assert.IsNull(db.Wanted.Find(x => x.key == "t_wanted:broken"), "a ship that isn't: left out");
             StringAssert.Contains("is no ship", AllMessages(Installed("t_wanted")));
         }

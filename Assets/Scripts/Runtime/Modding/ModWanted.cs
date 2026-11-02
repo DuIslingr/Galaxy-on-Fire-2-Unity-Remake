@@ -23,6 +23,7 @@ namespace GoF2Remake.Modding
         {
             "id", "name", "description", "board", "race", "ship", "weapon", "secondary", "hitpoints", "reward", "loot", "lootAmount",
             "wingmen", "requiredBounties", "available", "systems", "route", "character", "portraitParts", "gender",
+            "escorts", "music", "taunt",
         };
 
         /// <summary>Database.Load (ModContent.Apply, after the ships, items and systems are numbered): every active mod's
@@ -101,6 +102,24 @@ namespace GoF2Remake.Modding
                 w.routeMin = Mathf.Clamp((int)ra[0], 1, 20);
                 w.routeMax = Mathf.Clamp((int)ra[1], w.routeMin, 20);
             }
+            // its escorts' ships (one ship, or a list the wingmen take in turn), its fight music and its line when uncovered
+            if (ModJson.Get(o, "escorts") is JToken es)
+            {
+                var list = new List<int>();
+                foreach (var s in es is JArray ea ? (IEnumerable<JToken>)ea : new[] { es })
+                {
+                    if (ModContent.TryResolveShip(s.ToString(), out int si) && db.Ship(si) != null) list.Add(si);
+                    else Warn(mod, $"{ModJson.Where(s, File)}: \"escorts\" {s} is no ship (left out)");
+                }
+                if (list.Count > 0) w.escorts = list.ToArray();
+            }
+            w.music = ModJson.Str(o, "music");
+            if (w.music != null && !ModMusic.Has(w.music))
+            {
+                Warn(mod, $"{where}: \"music\" {w.music} is no track in a mod's music folder (the game's wanted music instead)");
+                w.music = null;
+            }
+            w.taunt = ModContent.TranslatedText(mod, $"wanted.{id}.taunt", ModJson.Text(o, "taunt"));
             if (ModJson.Get(o, "portraitParts") is JArray pp && pp.Count == 5) w.portraitParts = new[] { (int)pp[0], (int)pp[1], (int)pp[2], (int)pp[3], (int)pp[4] };
             else w.portraitParts = new[] { Mathf.Clamp(w.race, 0, 3), 0, w.male ? 0 : 1, 0, 0 };
             if (w.character != null && ModCharacters.Find(w.character) == null)

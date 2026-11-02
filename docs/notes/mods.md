@@ -518,7 +518,9 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   (`RandomModStation`). Spawn as the game's (`TrafficPlan.AddWanted`: a mod race kept, `secondary` its own),
   `character` for the board's face (`MissionsWindow.ShowWantedDetails`) and the radio (`TrafficSpecials.WantedLine`);
   `StationMenuDockingChecks.CheckWanted` runs its trips in free play but the Quineros hints stay campaign-only. The
-  original save export stops at the first mod entry. `ModWantedTests`.
+  original save export stops at the first mod entry. "escorts" (ships the wingmen take in turn, `TrafficPlan.AddWanted`),
+  "taunt" (said in its name after the uncover line, `Traffic.CriminalSays`), "music" (a mod track for the wanted
+  category 4, `UpdateMusic`; an unknown track warns). `ModWantedTests`.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
