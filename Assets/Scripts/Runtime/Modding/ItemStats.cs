@@ -42,6 +42,9 @@ namespace GoF2Remake.Modding
             // A tractor beam (sort 13) with tractorTargets 2+ pulls that many crates at once, by itself, within tractorRange
             // game units, without the salvage lock (Flight.CombatRadar's extra beams; like the transfusion beams' attr 55).
             ["tractorTargets"] = 122, ["tractorRange"] = 123,
+            // tractorNoLock 1: the scanner never locks a crate, every beam picks crates by itself (an EMP'd ship is still
+            // locked for a steal). Attribute 136 is items.json's "tractorColor" (0x1000000 | rgb), set as a colour, not here.
+            ["tractorNoLock"] = 137,
             // A weapon's damage to a shield in percent (Flight.Gun.ShieldFactor; default 100, the Disruptor Laser and items
             // based on it 200): the part the shield doesn't absorb hits the armor and hull at its plain value.
             ["shieldDamage"] = 124,
@@ -63,11 +66,11 @@ namespace GoF2Remake.Modding
             // An active device (Flight.Device; Modding/README.md "Devices"): device is its type (1 area EMP, 2 EMP shot, 3
             // shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector), the rest its numbers
             // (radius in game units, slow = the speed left in percent, shield cost in percent of the maximum shield).
-            ["device"] = 136, ["deviceCooldownMs"] = 137, ["deviceDurationMs"] = 138, ["deviceRadius"] = 139, ["deviceGrowMs"] = 140,
-            ["deviceSlowPercent"] = 141, ["deviceShieldCost"] = 142, ["deviceDamagePercent"] = 143, ["deviceCharge"] = 144,
-            ["deviceConeDeg"] = 145,
+            ["device"] = 150, ["deviceCooldownMs"] = 151, ["deviceDurationMs"] = 152, ["deviceRadius"] = 153, ["deviceGrowMs"] = 154,
+            ["deviceSlowPercent"] = 155, ["deviceShieldCost"] = 156, ["deviceDamagePercent"] = 157, ["deviceCharge"] = 158,
+            ["deviceConeDeg"] = 159,
             // A cloak's cooldown in ms in place of the difficulty's 5-12 s (Flight.Cloak; GoF3's Hiroto Cloak 60 s).
-            ["cloakCooldownMs"] = 146,
+            ["cloakCooldownMs"] = 160,
             // items.json's statList names
             ["steerable"] = 15, ["handling"] = 17,
             ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,

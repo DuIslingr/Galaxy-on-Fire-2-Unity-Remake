@@ -97,7 +97,7 @@ namespace GoF2Remake.UI
         Label jumpChargeLabel;
         bool lastCloakCharging, lastDriveCharging;
         bool orbitInfoFilled;
-        bool lastAutopilot;
+        bool lastAutopilot, lastLockFastForward;
         VisualElement autopilotMenu, autopilotMenuItems;
         readonly System.Collections.Generic.List<(Button button, Navigation.Target target)> menuButtons = new System.Collections.Generic.List<(Button, Navigation.Target)>();
         int menuIndex, lastMenuMove, menuOpenedFrame;
@@ -214,6 +214,8 @@ namespace GoF2Remake.UI
             if (jump != null) jump.Message -= OnMiningMessage;
             if (traffic != null) traffic.Message -= OnMiningMessage;
             if (traffic != null) traffic.ChoiceRequested -= OnChoiceRequested;
+            if (traffic != null) traffic.WasteSorted -= OnWasteSorted;
+            if (traffic != null) traffic.MenuRequested -= OnMenuRequested;
             if (radar != null) radar.Message -= OnRadarMessage;
             if (health != null) health.GameOverStarted -= OnGameOver;
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
@@ -315,6 +317,8 @@ namespace GoF2Remake.UI
             pauseMenu.InfoSound = () => PlayUi(CombatAudio.Load()?.messageInfo);
             pauseMenu.HoverSound = PlayHover;   // Modified: the menus' hover / arrow sound
             pauseMenu.ButtonSound = PlayButton;
+            pauseMenu.SortingSound = PlaySortingSound;
+            pauseMenu.LotSound = PlayLotTone;
             pauseMenu.Photo = new PhotoMode(root, this) { ButtonSound = PlayButton };
             radioBox = root.Q("radio");
             screenFade = root.Q("screenFade");
@@ -613,6 +617,8 @@ namespace GoF2Remake.UI
                 traffic = level.Traffic;
                 if (traffic != null) traffic.Message += OnMiningMessage;
                 if (traffic != null) traffic.ChoiceRequested += OnChoiceRequested;
+                if (traffic != null) traffic.WasteSorted += OnWasteSorted;
+                if (traffic != null) traffic.MenuRequested += OnMenuRequested;
                 if (level.Hints != null) level.Hints.HintRequested += text => OnChoiceRequested(text, null, null, null, null);
                 if (level.Hints != null) level.Hints.Message += text => OnCombatMessage(text, 1);
                 if (level.FreeLook != null) level.FreeLook.Message += OnMiningMessage;
@@ -712,6 +718,8 @@ namespace GoF2Remake.UI
             if (radar != null && !Navigation.PressesBlocked && GameControls.UnlockTarget.WasPressedThisFrame()) UnlockTarget();
             bool shipLocked = radar != null && radar.Locked != null;
             if (shipLocked != lastShipLocked) { lastShipLocked = shipLocked; BuildHints(InputMode.Current); }
+            bool lockFf = nav != null && !autopilot && nav.CanFastForward;   // remake: fast-forward to a stationary lock (its hint)
+            if (lockFf != lastLockFastForward) { lastLockFastForward = lockFf; BuildHints(InputMode.Current); }
             lockPlate.pickingMode = shipLocked && InputMode.Current == InputKind.Touch ? PickingMode.Position : PickingMode.Ignore;
             float hudShown = level != null ? level.HudShown : 1f;
             root.EnableInClassList("hud-cinematic", (nav != null && nav.Jumping) || (jump != null && jump.Cinematic) || hudShown <= 0f);   // jumps: no HUD
@@ -862,6 +870,8 @@ namespace GoF2Remake.UI
             // ---- button sounds (TouchButton::OnTouchBegin 124 Button_Push / OnTouchEnd 123 Button_Release) -------------
 
         AudioSource uiSource;
+        /// <summary>The waste sorting page's lot tones by tier, made on first use (LotTones).</summary>
+        readonly System.Collections.Generic.Dictionary<WasteProcessing.FindTier, AudioClip> lotTones = new System.Collections.Generic.Dictionary<WasteProcessing.FindTier, AudioClip>();
 
         /// <summary>Modified: a click sounds as in the main menu: only the release, on the click (a pointer press's push is left
         /// out, but in the carrier's shop window), once per frame.</summary>

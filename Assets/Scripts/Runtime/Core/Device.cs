@@ -1,7 +1,7 @@
 // Device.cs
 // Remake: an active device, an equipment item fired from the quick menu or its key, with its own cooldown and ready state,
 // as plain rules (Modding/README.md "Devices"). The devices are Galaxy on Fire 3's (its DeviceConfiguration records, the
-// gof3_ships importer's items): a mod item with the remake attribute device (136, the type below) on a seatless cabin
+// gof3_ships importer's items): a mod item with the remake attribute device (150, the type below) on a seatless cabin
 // (base 91, cabinSize 0), its own one-per-ship kind per type (Shop.KindOf: KindBase + type). PlayerDevices runs them.
 //   Ready     fired (TryFire) -> Active for deviceDurationMs (0 = an instant device: straight to the cooldown)
 //   Active    the effect runs (a slow, a damage boost, the deflector); its end starts the cooldown
@@ -44,8 +44,8 @@ namespace GoF2Remake.Flight
 
         public const int TypeCount = 7;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
-        public const int TypeAttr = 136, CooldownAttr = 137, DurationAttr = 138, RadiusAttr = 139, GrowAttr = 140,
-                         SlowAttr = 141, ShieldCostAttr = 142, DamagePercentAttr = 143, ChargeAttr = 144, ConeAttr = 145;
+        public const int TypeAttr = 150, CooldownAttr = 151, DurationAttr = 152, RadiusAttr = 153, GrowAttr = 154,
+                         SlowAttr = 155, ShieldCostAttr = 156, DamagePercentAttr = 157, ChargeAttr = 158, ConeAttr = 159;
         /// <summary>Shop.KindOf: the devices' one-per-ship kinds, KindBase + type (past the cruise drive's 1000).</summary>
         public const int KindBase = 1100;
         /// <summary>GoF3's cooldown for every player device (DeviceConfiguration cooldown 60).</summary>
@@ -109,9 +109,12 @@ namespace GoF2Remake.Flight
             return true;
         }
 
-        public Event Update(float dtMs)
+        /// <summary>'skipCooldown' (remake debug, Cheats.NoEquipmentCooldown): a cooldown ends at once and the strike charge
+        /// is full.</summary>
+        public Event Update(float dtMs, bool skipCooldown = false)
         {
             if (dtMs <= 0f) return Event.None;
+            if (skipCooldown && State != Phase.Active) Charge = chargeMax;
             switch (State)
             {
                 case Phase.Active:
@@ -119,7 +122,7 @@ namespace GoF2Remake.Flight
                     if (Timer >= durationMs) { State = Phase.Cooldown; Timer = 0f; return Event.Ended; }
                     break;
                 case Phase.Cooldown:
-                    Timer += dtMs;
+                    Timer += skipCooldown ? cooldownMs : dtMs;
                     if (Timer >= cooldownMs) { State = Phase.Ready; Timer = 0f; return Event.Ready; }
                     break;
             }

@@ -78,6 +78,20 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheDebugOptionSkipsTheCooldownAndTheCharge()
+        {
+            var d = new Device(302, Device.Type.StrikeCharge, 5000, 60000, 875);
+            d.Update(16f, true);
+            Assert.IsTrue(d.Available, "charged at once");
+            d.TryFire();
+            d.Update(16f, true);
+            Assert.IsTrue(d.Active, "a run still runs its time");
+            d.Update(5000f, true);
+            Assert.AreEqual(Device.Event.Ready, d.Update(16f, true));
+            Assert.IsTrue(d.Available);
+        }
+
+        [Test]
         public void CancelEndsARunAndStartsTheCooldown()
         {
             var d = new Device(300, Device.Type.AreaEmp, 8000, 60000);

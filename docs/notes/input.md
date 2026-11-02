@@ -84,6 +84,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 - **D-pad taps** (`DpadTapNavigation`): UI Toolkit's runtime input samples UI/Navigate once a frame and drops a D-pad
   press released within the frame (the Steam controller's trackpad D-pad); the main and station menus send those taps
   (`wasPressedThisFrame` and already up) to the panel as NavigationMoveEvents.
+- **Space confirms** (remake, a player's request on Discord, 2026-10-25; `MenuConfirm`, Space/UI): Space and the numpad's
+  Enter confirm in every menu, like Enter. The scenes' `InputSystemUIInputModule` uses the package's DefaultInputActions,
+  whose UI/Submit is `*/{Submit}`: on the keyboard only Enter has that usage. `MenuConfirm` gives each module a copy of
+  its actions (on every scene load, one copy per asset) with `<Keyboard>/space` and `<Keyboard>/numpadEnter` added to
+  UI/Submit; the screens that read their keys themselves take `MenuConfirm.Pressed` / `Held` (hangar window, carrier
+  shop, ship customizing; the pause menu, dialogues, star map, event screens and settings confirm had Space already).
+  Left out on purpose, as Space fires there: the flight's autopilot menu, the action prompt and the chat key. A typed
+  space stays in its field: the main menu, station and Mod Builder roots drop a submit while `TextFieldKeys.IsTyping`.
 - **Right stick scrolls the texts** (remake, #169, `StickScroll`): in the main and station menus the right stick, up and
   down, scrolls the shown scroll view that overflows and doesn't hold the focus (the lounge's dialogue, the shop's and
   the item window's descriptions; a focused list scrolls to its focus); of several, the last in the document. Pushed
@@ -133,9 +141,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   rows are `OptionControl`s): orbit / free, field of view (from the camera's own at each entry), roll (-180..180,
   holding level and the quarter turns, `PhotoTools.SnapRoll`), the free camera's speed, depth of field (Default = the
   game's / Off / On the ship = Gaussian sharp over the hull / Manual = Bokeh at a focus distance, 1 m-3 km, Gaussian on
-  phones) with its blur, bloom (Default = the game's option / Off / Custom with an amount x0..3: a URP Bloom override of
-  the
-  intensity only, so the threshold and scatter stay the game's; anything but Default also holds the original bloom pass back,
+  phones) with its blur (0-500 %, a player's request 2026-11: URP caps its Gaussian radius at 1.5 and its Bokeh at 14 px,
+  both reached at 100 %; past it `Visuals.PhotoBlurPass` (shader `GoF2PostFx/PhotoBlur`, before the post-processing,
+  on the photo camera only) blurs what lies past the focus again at a quarter size, weighted by depth so the sharp ship
+  adds no halo, wider and more rounds up to 500 %), bloom (Default = the game's option / Off / Custom with an amount
+  x0..3: a URP Bloom override of the intensity only, so the threshold and scatter stay the game's; anything but Default also holds the original bloom pass back,
   `Visuals.ClassicBloomPass.Suppressed`, which no volume reaches), the sun's lens flare (Action Freeze only: Default = the
   Graphics option / Off / On, `PhotoSettings.FlareShown` read by `FlightHud`; players' request 2026-10-22: the flare stayed
   over the photos, `.hud-photo` hides the HUD but not the flare's layer), exposure (over `Settings.BrightnessExposure`),

@@ -12,20 +12,22 @@ namespace GoF2Remake.Modding
 {
     public static partial class ModContent
     {
+        // Modified: true while EnsureMapping loads the tables for the original counts.
+        static bool loadingForCounts;
+
         /// <summary>The numbers of the active mods' content (again after ModManager.Revision changes).</summary>
         static void EnsureMapping()
         {
             if (mappedRevision == ModManager.Revision && originalItems >= 0 && originalShips >= 0) return;
             if (originalItems < 0 || originalShips < 0)
             {
-                // Load sets them. Once: without the tables (an asset import before Resources load, the Editor's event graph
-                // importer) Load's own Apply came back here and loaded again without end, a deeper "missing" warning each
-                // time (a 65 GB Editor.log, 2026-11-02).
-                if (loadingOriginals) return;
-                loadingOriginals = true;
-                try { Database.Load(); }
-                finally { loadingOriginals = false; }
-                if (originalItems < 0 || originalShips < 0) return;
+                // Modified: Load applies the mods, which calls this again; with the tables not readable yet (an asset import
+                // before Resources/GoF2Data is imported, e.g. a rebuilt Library) the counts stay unset and the two recursed
+                // until the Editor crashed with a stack overflow. Load once at a time.
+                if (loadingForCounts) return;
+                loadingForCounts = true;
+                try { Database.Load(); } finally { loadingForCounts = false; }
+                if (originalItems < 0 || originalShips < 0) return;   // Load sets them
             }
             _ = ModManager.Active;   // read first: the first read may scan the mods, a new revision, and map all this again inside the loops
             mappedRevision = ModManager.Revision;

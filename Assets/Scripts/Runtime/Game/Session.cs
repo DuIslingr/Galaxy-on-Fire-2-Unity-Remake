@@ -245,6 +245,10 @@ namespace GoF2Remake.Data
         public static bool Hardcore;
         /// <summary>This game's identity (a new one at every new game; saved), so a hardcore death finds every slot of the run.</summary>
         public static string RunId = "";
+        /// <summary>Remake: the Space Waste tons the Mining Plant has sorted in this game (WasteProcessing: the next ton's
+        /// roll), the empty ones in a row since the last find and the tons since the last rare find (its bad-luck caps;
+        /// all saved).</summary>
+        public static int WasteTons, WasteDry, WasteSinceRare;
         /// <summary>Remake mods: the mods' new-game options switched on for this game ("mod_id:option_id",
         /// Modding.ModGameOptions; saved).</summary>
         public static HashSet<string> ModGameOptions = new HashSet<string>();
@@ -346,6 +350,13 @@ namespace GoF2Remake.Data
 
         /// <summary>Galaxy::getVisited: stations the player has docked at (the star map's "Already visited" tick).</summary>
         public static HashSet<int> VisitedStations = new HashSet<int> { 78 };
+
+        /// <summary>Remake mods (the conditions' bought(ship)): the ships the player has bought or built in this game, by
+        /// reference ("12", a mod's "mod:id": the same whatever number the mod's ship has now). Saved.</summary>
+        public static HashSet<string> ShipsBought = new HashSet<string>();
+
+        /// <summary>A ship's reference in ShipsBought.</summary>
+        public static string ShipRef(int ship) => Modding.ModContent.ShipKey(ship) ?? ship.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         /// <summary>Level::programmedStation: the destination picked on the star map, -1 = none. The autopilot routes to it
         /// after the launch / arrival camera (LevelScript::setAutoPilotToProgrammedStation).</summary>
@@ -495,6 +506,7 @@ namespace GoF2Remake.Data
             ModCampaign = "";
             Hardcore = false;
             RunId = System.Guid.NewGuid().ToString("N");
+            WasteTons = WasteDry = WasteSinceRare = 0;
             ModGameOptions = new HashSet<string>();
             ShipBuilds = new Dictionary<string, string>();
             GraphQuestsDone = new HashSet<string>();
@@ -566,6 +578,7 @@ namespace GoF2Remake.Data
             SystemVisible = null;
             SystemShown = new Dictionary<int, bool>();
             VisitedStations = new HashSet<int> { 78 };
+            ShipsBought = new HashSet<string>();
             ProgrammedStation = -1;
             RouteDestination = -1;
             RouteSafest = false;

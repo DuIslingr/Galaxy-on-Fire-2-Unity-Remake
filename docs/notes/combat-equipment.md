@@ -94,7 +94,7 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   down in a minute. Not tested in multiplayer.
 - **Devices** (remake, for mods: Galaxy on Fire 3's player devices, the GoF3 Ships importer's items; `Flight.Device` plain
   C# + `Flight.Slow`, `PlayerDevices` / `PlayerDevicesEffects`; Modding/README.md "Devices"): a mounted item with
-  `device` (attr 136, 1-7) on a seatless cabin, its own one-per-ship kind per type (`Shop.KindOf` = `Device.KindBase`
+  `device` (attr 150, 1-7; 150-160, past the tractor beam's 136 / 137) on a seatless cabin, its own one-per-ship kind per type (`Shop.KindOf` = `Device.KindBase`
   1100 + type, past the cruise drive's 1000). Fired from the quick menu (`Navigation.Kind.Device`, after the time
   extender, half-transparent while not ready) or 4 / 5 / 6 (`GameControls.Device1-3`, the first three in mount order; no
   pad default, every button is taken: D-pad left's quick menu), refused while `ExtenderBlocked` or the guns are blocked;
@@ -112,7 +112,7 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   look (a beam is only stopped), credited through `WeaponSystem.DeviceHit` (kill credit, standing, hit flash). Re-attached with a new hull
   (`SpaceLevel.AttachDevices`, `DevicesChanged` for the HUD's messages). Not yet: the shots / beams / waves seen by the
   other players, the deflector against other players, NPC devices (GoF3's bosses), translations of the texts.
-  `cloakCooldownMs` (attr 146) gives a cloak its own cooldown (`Cloak` constructor; GoF3's Hiroto Cloak 60 s, no cells).
+  `cloakCooldownMs` (attr 160) gives a cloak its own cooldown (`Cloak` constructor; GoF3's Hiroto Cloak 60 s, no cells).
 - **Shield injector** (227): an empty shield takes 30 t Blue Plasma (202, "-30t Blue Plasma") and refills at 0.15 per ms; sounds 2258 / 2257 / 2259.
 - **Gamma** (supernova stations 109-113, `PlayerHealth`): a 0..100 pool drains at the station's rate by campaign
   progress (gamma shields 205 / 206 cut it by attr 52 %), "Warning: Gamma shield low" (3201) below 15, death at 0,

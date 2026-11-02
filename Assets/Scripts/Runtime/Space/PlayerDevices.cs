@@ -1,6 +1,6 @@
 // PlayerDevices.cs
 // Remake: the player ship's active devices (Flight.Device; Modding/README.md "Devices"), Galaxy on Fire 3's: every mounted
-// item with the device attribute (136), in mount order. Each is fired from the quick menu (Navigation's Device entries,
+// item with the device attribute (150), in mount order. Each is fired from the quick menu (Navigation's Device entries,
 // half-transparent while not ready) or its key (GameControls.Device1-3: the first three), runs for deviceDurationMs, then
 // cools down (GoF3: 60 s) and says "{0} ready". CooldownView shows each beside the cloak's.
 // The effects (PlayerDevicesEffects): the EMP wave and shots (Target.SlowBy), the overcharger's shield spent as damage,
@@ -152,7 +152,7 @@ namespace GoF2Remake.Flight
             }
             foreach (var e in devices)
             {
-                if (e.rules.Update(dtMs) == Device.Event.Ended) End(e);
+                if (e.rules.Update(dtMs, Cheats.NoEquipmentCooldown) == Device.Event.Ended) End(e);   // remake debug: no cooldown
                 bool available = e.rules.Available;
                 if (available && !e.wasAvailable) Message?.Invoke(string.Format(Localization.Extra("deviceReady", "{0} ready"), e.name));
                 e.wasAvailable = available;

@@ -1,8 +1,8 @@
 // DeviceItemTests.cs
 // Feature: docs/notes/combat-equipment.md "Devices", Modding/README.md "Devices": an equipment item with device (attribute
-// 136) 1..7 is an active device (Shop.IsDevice) of its own one-per-ship kind per type (Shop.KindOf = Device.KindBase +
+// 150) 1..7 is an active device (Shop.IsDevice) of its own one-per-ship kind per type (Shop.KindOf = Device.KindBase +
 // type), whatever its base (a seatless cabin); the stat names (ItemStats); the item window's category and rows (ItemInfo);
-// a cloak's own cooldown (cloakCooldownMs, attribute 146).
+// a cloak's own cooldown (cloakCooldownMs, attribute 160).
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;

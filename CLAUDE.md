@@ -24,7 +24,7 @@ This file holds only what every task needs. Everything about one area of the gam
 | [supernova.md](docs/notes/supernova.md) | Steps 84-162, object docking, hacking, gas clouds, Most Wanted, Specters, the Supernova Challenge |
 | [bar-and-freelance.md](docs/notes/bar-and-freelance.md) | Agents, lounge chat, freelance missions, Missions window, blueprints, wingmen, medals |
 | [kaamo-club.md](docs/notes/kaamo-club.md) | The siege, purchase, storage and stored hulls |
-| [mining.md](docs/notes/mining.md) | Asteroids, the lock, approach, minigame, payout, the mining beam |
+| [mining.md](docs/notes/mining.md) | Asteroids, the lock, approach, minigame, payout, the mining beam, the Mining Plant and its waste sorting |
 | [station-scene.md](docs/notes/station-scene.md) | Hangar, lounge, station menu, Inspect ship, hangar flights, parking heights, ship shadows, the remodelled hangars |
 | [shop.md](docs/notes/shop.md) | Economies, prices, stock, cargo, mounting, ships, held trades, item details |
 | [weapons.md](docs/notes/weapons.md) | Guns, special weapons, turrets, homing, smoke trails, explosions, pooling |
@@ -33,6 +33,7 @@ This file holds only what every task needs. Everything about one area of the gam
 | [ui.md](docs/notes/ui.md) | UI Toolkit, the design document, scaling, accessibility, aspect ratios |
 | [input.md](docs/notes/input.md) | Keyboard, key bindings, controllers, input modes, pause menu, Action Freeze and photo tools, touch controls, hints, cameras, cockpit view, gyro, haptics, mouse steering |
 | [free-flight.md](docs/notes/free-flight.md) | The EVERSPACE 2-style flight option and its key layout |
+| [speedrun.md](docs/notes/speedrun.md) | The speedrun timer, splits, routes, the runs folder (.lss), comparisons, the LiveSplit link |
 | [saves.md](docs/notes/saves.md) | Difficulty, save slots, original-game saves, deleting, export / import, save folder, Hardcore, New Game+ |
 | [options.md](docs/notes/options.md) | Text tables and languages, the story step label, every option, bloom, frame rate, graphics presets, texture quality, upscalers |
 | [platforms.md](docs/notes/platforms.md) | Discord, app icon, Android, iOS, UWP, Vulkan pre-transform, version, update check, hitch logger |

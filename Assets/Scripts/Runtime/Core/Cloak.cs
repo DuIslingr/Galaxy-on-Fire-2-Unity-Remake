@@ -9,7 +9,7 @@
 //   getCloakingPercentage 0xa81a0       0..100 over the first / last 2000 ms, 100 between
 // Nothing ends the cloak early (firing, hits, boosting and locks don't touch it). Every level starts ready.
 // Remake option (Settings.EmpBreaksCloak, on by default): an EMP hit does (Break).
-// Remake mods: cloakCooldownMs (attribute 146) gives an item its own cooldown (GoF3's Hiroto Cloak: 60 s).
+// Remake mods: cloakCooldownMs (attribute 160) gives an item its own cooldown (GoF3's Hiroto Cloak: 60 s).
 
 using UnityEngine;
 
@@ -30,10 +30,10 @@ namespace GoF2Remake.Flight
         /// <summary>PlayerEgo+0x20c: cooldown left (ms).</summary>
         public float CooldownLeft { get; private set; }
 
-        /// <summary>Remake attribute 146 (Modding.ItemStats "cloakCooldownMs"): the item's own cooldown.</summary>
-        public const int CooldownAttr = 146;
+        /// <summary>Remake attribute 160 (Modding.ItemStats "cloakCooldownMs"): the item's own cooldown.</summary>
+        public const int CooldownAttr = 160;
 
-        /// <summary>'cooldownOverrideMs' > 0: the item's own cooldown (attribute 146) in place of the difficulty's.</summary>
+        /// <summary>'cooldownOverrideMs' > 0: the item's own cooldown (attribute 160) in place of the difficulty's.</summary>
         public Cloak(int item, int durationMs, int chargeMs, int cells, float difficulty, int cooldownOverrideMs = 0)
         {
             this.item = item;
@@ -87,7 +87,8 @@ namespace GoF2Remake.Flight
 
         public enum Event { None, Engaged, Ended, Ready }
 
-        public Event Update(float dtMs)
+        /// <summary>'skipCooldown' (remake debug, Cheats.NoEquipmentCooldown): a cooldown ends at once.</summary>
+        public Event Update(float dtMs, bool skipCooldown = false)
         {
             switch (State)
             {
@@ -100,7 +101,7 @@ namespace GoF2Remake.Flight
                     if (Timer > durationMs) { State = Phase.Cooldown; Timer = 0f; CooldownLeft = cooldownMs; return Event.Ended; }
                     break;
                 case Phase.Cooldown:
-                    CooldownLeft -= dtMs;
+                    CooldownLeft -= skipCooldown ? CooldownLeft : dtMs;
                     if (CooldownLeft <= 0f) { CooldownLeft = 0f; State = Phase.Ready; return Event.Ready; }
                     break;
             }
