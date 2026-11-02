@@ -250,11 +250,19 @@ namespace GoF2Remake.UI
             systemHeader.style.opacity = systemAlpha;
             int energySystem = inSystem ? zoomSystem : selected;
             bool energy = jumpDrive && energySystem >= 0 && energySystem != currentSystem && cells > 0;
-            energyLine.style.display = energy ? DisplayStyle.Flex : DisplayStyle.None;
+            // Remake (jumpgate route planning): without a drive the line counts the gate jumps of the planned route.
+            bool route = !energy && PlansRoute && routePath != null && energySystem == selected;
+            energyLine.style.display = energy || route ? DisplayStyle.Flex : DisplayStyle.None;
             if (energy)
             {
                 energyLine.text = $"{T(578)} {cells} / {cellsInCargo}";
                 energyLine.EnableInClassList("energy-line--short", cellsInCargo < cells);
+            }
+            else if (route)
+            {
+                energyLine.text = safeRoutePath == null ? RouteJumpsText(routePath.Count - 1)
+                    : $"{RouteJumpsText(routePath.Count - 1)}  ·  {RouteSafestText}: {JumpCountText(safeRoutePath.Count - 1)}";
+                energyLine.EnableInClassList("energy-line--short", false);
             }
             touch.MarkDirtyRepaint();
         }
@@ -332,7 +340,8 @@ namespace GoF2Remake.UI
                 DrawSegment(p2d, suns[currentSystem].position, target + t * (suns[currentSystem].position - target));
             }
         }
-        /// <summary>StarMap::draw, mission mode: the route segment by segment on the pulse's cycle (+0xe8 advances when t wraps).</summary>
+        /// <summary>StarMap::draw, mission mode: the route segment by segment on the pulse's cycle (+0xe8 advances when t wraps).
+        /// Remake: also the planned gate route to the selection on the station's and the gate's maps (PlanRoute).</summary>
         void DrawMissionRoute(Painter2D p2d, float t)
         {
             if (routePath == null || routePath.Count < 2) return;
@@ -340,6 +349,16 @@ namespace GoF2Remake.UI
             lastRouteT = t;
             float a = fade / 255f;
             p2d.lineWidth = 3f;
+            // Remake: the safest route, where it differs, steady in the Secure colour under the fastest one.
+            if (safeRoutePath != null)
+            {
+                p2d.strokeColor = new Color(0f, 237f / 255f, 0f, a * 0.8f);
+                for (int i = 0; i + 1 < safeRoutePath.Count; i++)
+                {
+                    var from = suns[safeRoutePath[i]]; var to = suns[safeRoutePath[i + 1]];
+                    if (from != null && to != null) DrawSegment(p2d, from.position, to.position);
+                }
+            }
             p2d.strokeColor = new Color(1f, 1f, 0f, a);
             for (int i = 0; i < routeSegment; i++)
             {

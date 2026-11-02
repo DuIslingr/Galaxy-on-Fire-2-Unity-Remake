@@ -31,7 +31,20 @@ namespace GoF2Remake.UI
             noGate = false;
             if (system >= 0) cells = GalaxyMap.EnergyCells(db, currentSystem, system, out noGate);
             cellsInCargo = GalaxyMap.CellsInCargo();
+            PlanRoute(system);
         }
+        /// <summary>Remake (jumpgate route planning): the yellow route to a selected system past the gate neighbours (the
+        /// neighbours keep the original's pulse), drawn as the Mission map's, and the safest route in green where it differs.</summary>
+        void PlanRoute(int system)
+        {
+            if (!PlansRoute) return;
+            routePath = system >= 0 && !GalaxyMap.IsInRoutes(current, system) ? GalaxyMap.SystemPath(db, currentSystem, system) : null;
+            safeRoutePath = SafeAlternative(currentSystem, system, routePath);
+            routeSegment = 0;
+        }
+        /// <summary>The gates reach the system from here: a gate neighbour, or (GateRoutes) any system on a gate route.</summary>
+        bool GateReachable(int system) =>
+            GalaxyMap.IsInRoutes(current, system) || (GateRoutes && GalaxyMap.SystemPath(db, currentSystem, system) != null);
         int SystemAt(Vector2 p)
         {
             foreach (var s in db.Systems)
@@ -52,11 +65,12 @@ namespace GoF2Remake.UI
             return -1;
         }
         /// <summary>The second tap on the centred system: allowed for the current system and its gate neighbours, or any
-        /// visible system with a drive (SolarSystem::systemIsInSystemRoutes), else 420.</summary>
+        /// visible system with a drive (SolarSystem::systemIsInSystemRoutes), else 420. Remake: the station's and the gate's maps
+        /// any system on a gate route too (GateRoutes).</summary>
         void TryZoomIn()
         {
             if (selected < 0) return;
-            if (!jumpDrive && mode != StarMapMode.Mission && !GalaxyMap.IsInRoutes(current, selected)) { ShowDialog(T(420), null, null, true); return; }
+            if (!jumpDrive && mode != StarMapMode.Mission && !GateReachable(selected)) { ShowDialog(T(420), null, null, true); return; }
             Play(assets.zoomIn);
             zoomSystem = selected;
             BuildSystem(selected);
@@ -104,7 +118,7 @@ namespace GoF2Remake.UI
         }
         void Back()
         {
-            if (DialogOpen) { AnswerDialog(false); return; }
+            if (DialogOpen) { if (dialogBackCancels) CloseDialog(); else AnswerDialog(false); return; }
             whooshOn = false;   // StarMap::OnTouchEnd: the back button stops 0x66
             if (zoomDir != 0) return;
             if (overview) { SetOverview(false); return; }
@@ -127,27 +141,81 @@ namespace GoF2Remake.UI
             // tractor beam (0x11), else 532 (only the planet jump had it, StorySpace.RefusePlanetJump).
             if (!Session.FreePlay && Story.Index == 24 && Story.Mission != null && station == Story.Mission.station
                 && (Shop.FirstMounted(db, 13) == null || Shop.FirstMounted(db, 17) == null)) { ShowDialog(T(532), null, null, true); return; }
-            bool otherSystem = SystemOf(station) != currentSystem;
-            // Remake: the mission map views any system; without a drive a target past the gate neighbours needs a gate route.
-            if (travel && !jumpDrive && otherSystem && !GalaxyMap.IsInRoutes(current, SystemOf(station))
-                && GalaxyMap.SystemPath(db, currentSystem, SystemOf(station)) == null) { ShowDialog(T(420), null, null, true); return; }
+            int system = SystemOf(station);
+            bool otherSystem = system != currentSystem;
+            // Remake: the mission map views any system, and the station's and the gate's maps take any system the gates reach
+            // (GateRoutes): without a drive a target past the gate neighbours needs a gate route.
+            if (GateRoutes && !jumpDrive && otherSystem && !GateReachable(system)) { ShowDialog(T(420), null, null, true); return; }
+            int gateJumps = GateRoutes && otherSystem ? GalaxyMap.GateJumps(db, currentSystem, system) : 0;
+            string travelTo = DestinationText(station, gateJumps);
             if (jumpDrive && otherSystem && GalaxyMap.HasVolatileGoods)
             {
-                // Ship::hasVolatileGoods: no Khador Drive; a gate neighbour is still reached through the jumpgate.
-                if (!GalaxyMap.IsInRoutes(current, SystemOf(station))) { ShowDialog(T(612), null, null, true); return; }
-                ShowDialog($"{T(574)}: {StationName(station)}\n{T(421)}", () => Choose(station, false), null);
+                // Ship::hasVolatileGoods: no Khador Drive; a gate neighbour (remake: any system on a gate route) is still
+                // reached through the jumpgate.
+                if (!GateReachable(system)) { ShowDialog(T(612), null, null, true); return; }
+                TravelByGates(station, false);
                 return;
             }
             if (jumpDrive && otherSystem)
             {
-                if (cellsInCargo < cells && cells != 1) { ShowDialog(T(579), null, null, true); return; }
-                if (cellsInCargo < cells) { ShowDialog(T(582), () => Choose(station, false), null); return; }
+                // Remake: where the gates reach the target they are the drive's alternative, so 582 (the jumpgate instead) for
+                // any of them, not only a gate neighbour.
+                if (cellsInCargo < cells && cells != 1 && gateJumps == 0) { ShowDialog(T(579), null, null, true); return; }
+                if (cellsInCargo < cells)
+                {
+                    ShowDialog(gateJumps > 1 ? $"{T(582)}\n{RouteJumpsText(gateJumps)}" : T(582), () => TravelByGates(station, true), null);
+                    return;
+                }
                 if (noGate && cellsInCargo < 2 * cells) { ShowDialog(T(581), () => Choose(station, true), null); return; }
+                // Remake (jumpgate route planning, "or when you don't want to use one"): the drive or the gates, No cancels.
+                if (gateJumps > 0)
+                {
+                    ShowDialog(travelTo, () => Choose(station, true), null, yesText: T(1359).ToUpperInvariant(),
+                               altText: Localization.Extra("mapRouteGates", "Jumpgates").ToUpperInvariant(), onAlt: () => TravelByGates(station, true));
+                    return;
+                }
+                ShowDialog(travelTo, () => Choose(station, true), null);
+                return;
             }
-            ShowDialog($"{T(574)}: {StationName(station)}\n{T(421)}", () => Choose(station, jumpDrive && otherSystem), null);
+            TravelByGates(station, false);
         }
-        void Choose(int station, bool instant) =>
-            Close(new StarMapResult { station = station, instantJump = instant && SystemOf(station) != currentSystem, cells = cells });
+        /// <summary>Remake (jumpgate route planning): to 'station' by the gates (or within this system). Where the safest route
+        /// differs from the fastest, the dialog asks which: FASTEST ROUTE / SAFEST ROUTE / NO; else the plain "Destination: X /
+        /// Travel to this station?" ('asked': the destination is already confirmed, so straight on).</summary>
+        void TravelByGates(int station, bool asked)
+        {
+            int system = SystemOf(station);
+            var fast = system != currentSystem ? GalaxyMap.RoutePath(db, currentSystem, system, false) : null;
+            var safe = SafeAlternative(currentSystem, system, fast);
+            if (safe == null)
+            {
+                if (asked) Choose(station, false);
+                else ShowDialog(DestinationText(station, fast != null ? fast.Count - 1 : 0), () => Choose(station, false), null);
+                return;
+            }
+            string text = $"{T(574)}: {StationName(station)}\n{RouteFastestText}: {JumpCountText(fast.Count - 1)}\n"
+                        + $"{RouteSafestText}: {JumpCountText(safe.Count - 1)}\n{T(421)}";
+            ShowDialog(text, () => Choose(station, false), null, yesText: RouteFastestText.ToUpperInvariant(),
+                       altText: RouteSafestText.ToUpperInvariant(), onAlt: () => Choose(station, false, true));
+        }
+        /// <summary>The safest route from a to b where it isn't the fastest one ('fast'), else null.</summary>
+        List<int> SafeAlternative(int a, int b, List<int> fast)
+        {
+            if (fast == null) return null;
+            var safe = GalaxyMap.RoutePath(db, a, b, true);
+            return safe != null && !System.Linq.Enumerable.SequenceEqual(safe, fast) ? safe : null;
+        }
+        /// <summary>"Destination: X / Travel to this station?", with the gate jumps between when the route takes more than one
+        /// (remake).</summary>
+        string DestinationText(int station, int gateJumps) =>
+            gateJumps > 1 ? $"{T(574)}: {StationName(station)}\n{RouteJumpsText(gateJumps)}\n{T(421)}" : $"{T(574)}: {StationName(station)}\n{T(421)}";
+        static string RouteJumpsText(int jumps) => string.Format(Localization.Extra("mapRouteJumps", "Jumpgate jumps: {0}"), jumps);
+        static string JumpCountText(int jumps) => string.Format(Localization.Extra("mapRouteJumpCount", "{0} jumps"), jumps);
+        static string RouteFastestText => Localization.Extra("mapRouteFastest", "Fastest route");
+        static string RouteSafestText => Localization.Extra("mapRouteSafest", "Safest route");
+        void Choose(int station, bool instant, bool safest = false) =>
+            Close(new StarMapResult { station = station, instantJump = instant && SystemOf(station) != currentSystem, cells = cells,
+                                      safestRoute = safest && !instant });
         bool DialogOpen => dialog != null && dialog.ClassListContains("map-dialog-backdrop--shown");
         /// <summary>Layout::initHelpWindow over the map (the station's first-visit hints 628 / 631). Asked right after Open, the
         /// overlay isn't built yet (PanelRenderer builds it in its reload callback): the hint waits for it. It threw there,
@@ -196,16 +264,27 @@ namespace GoF2Remake.UI
             if (help != null) help.style.display = HelpText != null ? DisplayStyle.Flex : DisplayStyle.None;
         }
         /// <param name="noFirst">No has the keyboard / controller focus when it opens (else Yes).</param>
-        void ShowDialog(string text, Action onYes, Action onNo, bool info = false, bool noFirst = false)
+        /// <param name="yesText">Remake: Yes named for what it does (null: Yes).</param>
+        /// <param name="altText">Remake: a third answer between Yes and No (null: none), running onAlt; Back then closes the
+        /// dialog unanswered.</param>
+        void ShowDialog(string text, Action onYes, Action onNo, bool info = false, bool noFirst = false,
+                        string yesText = null, string altText = null, Action onAlt = null)
         {
             dialogAction = onYes;
             dialogNoAction = onNo;
+            dialogAltAction = onAlt;
             dialogInfo = info;
+            dialogBackCancels = altText != null && !info;
             root.Q<Label>("dialogText").text = text;
-            dialogYes.text = info ? Localization.Extra("ok", "OK") : T(134).ToUpperInvariant();
+            dialogYes.text = info ? Localization.Extra("ok", "OK") : yesText ?? T(134).ToUpperInvariant();
             dialogNo.style.display = info ? DisplayStyle.None : DisplayStyle.Flex;
+            if (dialogAlt != null)
+            {
+                dialogAlt.text = altText ?? "";
+                dialogAlt.style.display = dialogBackCancels ? DisplayStyle.Flex : DisplayStyle.None;
+            }
             dialog.AddToClassList("map-dialog-backdrop--shown");
-            dialogFocus = noFirst && !info ? 1 : 0;
+            dialogFocus = noFirst && !info ? DialogButtons.Count - 1 : 0;
             HighlightDialog();
             Play(assets.infoSound);
             BuildHints(InputMode.Current);
@@ -213,19 +292,57 @@ namespace GoF2Remake.UI
         void AnswerDialog(bool yes)
         {
             if (!DialogOpen) return;
-            Play(assets.buttonRelease);
             var a = yes && !dialogInfo ? dialogAction : dialogNoAction;
             if (dialogInfo) a = dialogAction ?? dialogNoAction;
+            Answer(a);
+        }
+        void AnswerAlt()
+        {
+            if (DialogOpen) Answer(dialogAltAction);
+        }
+        /// <summary>Closes the dialog without an answer (Back on a dialog whose No is a choice).</summary>
+        void CloseDialog()
+        {
+            if (DialogOpen) Answer(null);
+        }
+        void Answer(Action a)
+        {
+            Play(assets.buttonRelease);
             dialog.RemoveFromClassList("map-dialog-backdrop--shown");
-            dialogAction = dialogNoAction = null;
+            dialogAction = dialogNoAction = dialogAltAction = null;
             BuildHints(InputMode.Current);
             a?.Invoke();
+        }
+        /// <summary>The dialog's answers in their order on screen (Yes, the third answer while shown, No while shown).</summary>
+        List<Button> DialogButtons
+        {
+            get
+            {
+                var list = new List<Button> { dialogYes };
+                if (!dialogInfo && dialogBackCancels && dialogAlt != null) list.Add(dialogAlt);
+                if (!dialogInfo) list.Add(dialogNo);
+                return list;
+            }
+        }
+        /// <summary>Enter / A on the focused answer.</summary>
+        void AnswerFocused()
+        {
+            var b = DialogButtons[Mathf.Clamp(dialogFocus, 0, DialogButtons.Count - 1)];
+            if (b == dialogAlt) AnswerAlt();
+            else AnswerDialog(b == dialogYes);
+        }
+        void MoveDialogFocus(int step)
+        {
+            int n = DialogButtons.Count;
+            dialogFocus = (dialogFocus + step + n) % n;
+            HighlightDialog();
         }
         void HighlightDialog()
         {
             bool keys = InputMode.Current != InputKind.Touch;
-            dialogYes.EnableInClassList("map-button--focus", keys && dialogFocus == 0);
-            dialogNo.EnableInClassList("map-button--focus", keys && dialogFocus == 1);
+            var buttons = DialogButtons;
+            foreach (var b in new[] { dialogYes, dialogAlt, dialogNo })
+                b?.EnableInClassList("map-button--focus", keys && buttons.IndexOf(b) == dialogFocus);
         }
         // ---- pointer input (StarMap::OnTouchBegin / OnTouchMove / OnTouchEnd) -------------------------------
         bool InputBlocked => DialogOpen || zoomDir != 0 || autoRotate || cam == null || revealing;
@@ -291,7 +408,7 @@ namespace GoF2Remake.UI
                 pan += d * DragScale;
                 vel = d * DragScale;
                 AddWhoosh(Mathf.Min(Mathf.Abs(vel.x + vel.y), 10f));
-                if (far && !dragged) { selected = centred = -1; cells = 0; }
+                if (far && !dragged) { selected = centred = -1; cells = 0; PlanRoute(-1); }
             }
             else
             {

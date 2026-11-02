@@ -97,6 +97,11 @@ namespace GoF2Remake.Multiplayer
                 if (EventHost.Local) EventRunner.OnWreckHacked(LocalPilot.Instance, station, name);
                 else NetState.Instance?.WreckHackedRpc(station, name ?? "");
             };
+            SpaceHooks.PadDocked = station =>
+            {
+                if (EventHost.Local) EventRunner.OnPadDocked(LocalPilot.Instance, station);
+                else NetState.Instance?.PadDockedRpc(station);
+            };
             SpaceHooks.Notice = NetChat.Notice;
             SpaceHooks.KeysProvider = () => NetChat.Keys;
 
@@ -109,6 +114,8 @@ namespace GoF2Remake.Multiplayer
             SpaceHooks.ToggleDistress = NetDistress.Toggle;
             SpaceHooks.HelpSquadmate = client => NetDistress.Help(NetSquad.Find(client));
             SpaceHooks.DistressArrival = NetDistress.ArrivalNear;
+            SpaceHooks.FollowSquadmate = client => NetFollow.Toggle(NetSquad.Find(client));
+            SpaceHooks.FollowedSquadmate = () => NetFollow.Following;
             SpaceHooks.TeleportPose = NetTeleport.TakePose;
             SpaceHooks.ArenaProvider = () => NetArenaClient.Current;
             SpaceHooks.InArenaMatch = () => NetArenaClient.InMatch;
@@ -117,6 +124,7 @@ namespace GoF2Remake.Multiplayer
 
             SpaceHooks.EventNoDocking = () => EventRules.NoDocking;
             SpaceHooks.EventNoJumps = () => EventRules.NoJumps;
+            SpaceHooks.EventNoKhador = () => EventRules.NoKhador;
             SpaceHooks.EventCinematic = () => EventCutscene.Cinematic;
             SpaceHooks.EventInvulnerable = () => EventCutscene.Invulnerable;
             SpaceHooks.EventQuestionOpen = () => EventScreen.QuestionOpen;

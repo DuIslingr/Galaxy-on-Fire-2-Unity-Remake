@@ -73,6 +73,7 @@ namespace GoF2Remake.Flight
         // Supernova story objects (PlayerFixedObject::setDockingType, KIPlayer::setSpacePoints, KIPlayer+0x70):
         public int dockingType;        // 0 none, 1 drop-off, 2 pick-up, 3 hackable (ObjectDocking)
         public int spacePoints = -1;   // the SpacePoints set (docks_hd.json)
+        public bool stationPort;       // remake mods: a station's docking pads (SpaceLevel.SpawnStationPads): no model, nobody's target
         public bool radarHidden;       // KIPlayer+0x70: no marker, no lock
         // The Most Wanted criminal (KIPlayer+0x3e / +0x44) and its escort (wingmen_wanted.md 2.6).
         public int wantedIndex = -1;
@@ -100,7 +101,10 @@ namespace GoF2Remake.Flight
         public int empPoints = -1;         // the EMP pool (-1 = NpcTables.Emp)
         public bool modCapital;            // remake mods: a mod's capital ship or freighter (Modding.ModCapitalShips): its own
                                            // model and boxes, its turret items armed even parked, no wreck
-        public const int CapitalBattleship = 1, CapitalCarrier = 2, CapitalVossk = 3;
+        public Modding.NpcShipType npcType;   // remake mods: its NPC ship type (npcships.json, TrafficPlan.ApplyNpcType), null = none
+        public SpawnSpec escortLeader;     // ... a freighter's escort: follows it (NpcOrder Follow, Traffic.Create) ...
+        public Vector3 escortOffset;       // ... at this offset (game units: right, up, forward)
+        public const int CapitalBattleship = 1, CapitalCarrier = 2, CapitalVossk = 3, CapitalMod = 4;   // CapitalMod: a mod's type
     }
 
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
@@ -196,7 +200,14 @@ namespace GoF2Remake.Flight
             if (secEff == 3 && raidersOn && Session.Difficulty < 1f) raiders = Random.Range(0, 2) + 1;   // Easy / Normal
 
             int jumpers = 0, freighters = 0, x = 0;
-            if (station != 78) { jumpers = Random.Range(0, 2); freighters = Random.Range(0, 5); x = Random.Range(0, 2); }
+            var freighterType = Modding.ModNpcShips.Changed(Modding.ModNpcShips.FreighterKey);   // remake mods: a mod's freighters
+            if (station != 78)
+            {
+                jumpers = Random.Range(0, 2);
+                freighters = Random.Range(0, 5);
+                if (freighterType?.spawn != null && freighterType.spawn.countSet) freighters = Random.Range(freighterType.spawn.min, freighterType.spawn.max + 1);
+                x = Random.Range(0, 2);
+            }
             int local = (mido ? Random.Range(0, 2) : secEff) + x + freighters / 4;
             // The "big battle" (npc_traffic_ai.md 2.2): raiders on, campaign > 0x1f, 8 %: 9 raiders against 9 locals.
             if (raidersOn && cm > 0x1f && Random.Range(0, 100) < 8) raiders = local = 9;
@@ -259,9 +270,10 @@ namespace GoF2Remake.Flight
             }
             // The capital-ship specials (npc_combat_specials.md 2.1): the first freighter becomes the battleship / carrier
             // (Terran) or the Vossk battleship.
-            bool terran = sysRace == 0 && freighters > 0 && Random.Range(0, 100) < 30;
-            bool vossk = sysRace == 1 && freighters > 0 && Random.Range(0, 100) < 30 && cm > 0x8c;
-            bool carrier = terran && Random.Range(0, 100) < 30 && cm > 0x67;
+            // Remake mods: a mod's "spawn.chance" for the battleship / carrier / Vossk battleship (ModNpcShips) in place of 30.
+            bool terran = sysRace == 0 && freighters > 0 && Random.Range(0, 100) < Modding.ModNpcShips.Chance(Modding.ModNpcShips.Battleship, 30);
+            bool vossk = sysRace == 1 && freighters > 0 && Random.Range(0, 100) < Modding.ModNpcShips.Chance(Modding.ModNpcShips.VosskBattleship, 30) && cm > 0x8c;
+            bool carrier = terran && Random.Range(0, 100) < Modding.ModNpcShips.Chance(Modding.ModNpcShips.Carrier, 30) && cm > 0x67;
             // The supernova system (27) before campaign 0x9e (Status::inSupernovaSystem): nothing but the story's.
             if (story && system.index == 27 && cm < 0x9e) { local = jumpers = freighters = raiders = 0; raidersOn = terran = vossk = false; }
             // Remake (CapitalShips): now and then a fleet battle (a Terran and a Vossk capital ship with their wings) instead of
@@ -326,9 +338,23 @@ namespace GoF2Remake.Flight
                 var at = new Vector3(s * (Random.Range(0, 60000) - 80000), Random.Range(0, 40000) - 20000, Random.Range(0, 160000) - 80000);
                 int modShip = Modding.ModCapitalShips.PickFreighter(race, -1);   // remake mods: now and then a mod's freighter
                 if (modShip < 0 && modOnly) continue;   // (mods' ships only: no game freighter)
+                if (modShip < 0 && freighterType != null)
+                {
+                    // A mod's change to the game's freighters: its hull ("ship"), its rules (TrafficPlanNpcShips).
+                    int at0 = list.Count;
+                    list.Add(freighterType.ship >= 0 ? NpcHost(db, freighterType, race, at)
+                             : new SpawnSpec { group = NpcGroup.Freighter, race = race, ship = ship, freighter = true, position = at });
+                    ApplyNpcType(db, list, at0, freighterType, true);
+                    continue;
+                }
                 list.Add(modShip >= 0 ? Modding.ModCapitalShips.Spawn(modShip, race, at)
                        : new SpawnSpec { group = NpcGroup.Freighter, race = race, ship = ship, freighter = true, position = at });
             }
+            // Remake mods: the mods' own NPC ship types by their "spawn" rules (npcships.json); a "replaceGame" one comes in
+            // the game's capital ship's place. Not in the special orbits (the story's, the pirate havens, Loma).
+            bool quietOrbit = (station >= 100 && station <= 104) || station == 108 || station == 10 || system.index == 25 || lootOrbit
+                              || informer || (story && system.index == 27 && cm < 0x9e);
+            if (!quietOrbit && AddModNpcShips(db, list, station, system, sysRace, terran || vossk)) terran = vossk = carrier = false;
             if (terran || vossk) AddCapitalShip(db, list, terran, carrier, station);
             if (modCapital >= 0) AddModCapital(list, modCapital, sysRace, station);
             if (fleetBattle) AddFleetBattle(db, list, station);
@@ -408,10 +434,28 @@ namespace GoF2Remake.Flight
         static readonly int[] BossLoot = { 113, 108, 107, 102, 101 };   // Implants, Vossk Organs, Organs, Rare Plants / Animals
         static readonly int[] DangerousBossLoot = { 113, 108 };          // Implants, Vossk Organs
         /// <summary>A Dangerous outpost's crate: one piece of equipment by the player's rank (below 10: Berger Converge IV,
-        /// Tyrfing Blaster, MaxHeat o20, Mass Driver MD 10, Beamshield II; from 10: M6 A3 "Wolverine", D'iol, T'yol, L'ksaar,
-        /// Fluxed Matter Shield, Rhoda Blackhole).</summary>
-        static readonly int[] DangerousLootLow = { 8, 21, 30, 27, 53 };
-        static readonly int[] DangerousLootHigh = { 11, 58, 59, 49, 54, 67 };
+        /// Tyrfing Blaster, MaxHeat o20, Mass Driver MD 10, Beamshield II, 128MJ Railgun; from 10: M6 A3 "Wolverine", D'iol,
+        /// T'yol, L'ksaar, Fluxed Matter Shield, Rhoda Blackhole, Gunant's Drill). The railgun and the drill: players'
+        /// feedback 2026-10-22 ("the set of blueprint weapons that can be dropped is too limited").</summary>
+        static readonly int[] DangerousLootLow = { 8, 21, 30, 27, 53, 25 };
+        static readonly int[] DangerousLootHigh = { 11, 58, 59, 49, 54, 67, 90 };
+        /// <summary>The same feedback: the add-ons' gear joins those tables in multiplayer's finished world only
+        /// (Session.CompletedWorld; a single player meets it in the Valkyrie and Supernova campaigns). Below 10: Berger FlaK
+        /// 9-9, Berger AGT 20mm; from 10: Icarus Heavy AS, Disruptor Laser, SunFire o50, HH-AT "Archimedes", Matador TS,
+        /// Pandora Leech, PE Proton, PE Ambipolar-5. Never the Kaamo Club's own (Shop's KaamoSpecials) or a time extender.</summary>
+        static readonly int[] AddOnLootLow = { 177, 180 };
+        static readonly int[] AddOnLootHigh = { 178, 183, 193, 182, 224, 223, 198, 199 };
+        /// <summary>The same feedback: a tier 4 / 5 event's munitions, one stack (item, least, most) beside its equipment, by
+        /// the same rank rule: Amour Rocket, Intelli Jet; from 10: Intelli Jet, AMR Extinctor. Multiplayer's finished world adds
+        /// the Berger SG-100 sentry gun; from 10 the Shock Blast and the Berger SG-400.</summary>
+        static readonly (int item, int min, int max)[] MunitionsLow = { (33, 20, 40), (37, 20, 40) };
+        static readonly (int item, int min, int max)[] MunitionsHigh = { (37, 30, 50), (46, 15, 30) };
+        static readonly (int item, int min, int max)[] AddOnMunitionsLow = { (211, 3, 6) };
+        static readonly (int item, int min, int max)[] AddOnMunitionsHigh = { (226, 5, 10), (212, 3, 6) };
+        /// <summary>The same feedback (bosses gave goods alone, outposts stacks of everything): a boss's stash, freighter cargo
+        /// rolls by tier, one fewer than an outpost's (OutpostStashRolls) from tier 3; tier 4 / 5 also the outpost's equipment
+        /// and munitions.</summary>
+        public static readonly int[] BossStashRolls = { 0, 0, 1, 2, 3 };
         /// <summary>Remake mods: the odds (1 in N) that a tier-5 outpost's piece of equipment is a mod's tech level 11+ gear.</summary>
         public const int TopTechOdds = 3;
 

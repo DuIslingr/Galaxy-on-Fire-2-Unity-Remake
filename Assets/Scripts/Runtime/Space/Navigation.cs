@@ -53,7 +53,9 @@ namespace GoF2Remake.Flight
                            Distress, Assist,
             /// <summary>Remake multiplayer: a named object (/spawn ... named, DebugSpawner.SpawnObject): its name and distance
             /// near the crosshair like a landmark's, never locked or flown to.</summary>
-            Marker }
+            Marker,
+            /// <summary>Remake multiplayer: follow a squadmate from orbit to orbit, or stop (NetFollow).</summary>
+            Follow }
 
         public class Target
         {
@@ -66,7 +68,7 @@ namespace GoF2Remake.Flight
             public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
             public NpcShip dockingShip;     // docking targets: the object
-            public ulong client;             // multiplayer Assist: the squadmate calling for help
+            public ulong client;             // multiplayer Assist / Follow: the squadmate calling for help / to follow
             public bool freelance;          // waypoints: a freelance mission's route (the white freelance icon, not the gold story one)
             public bool eventWaypoint;      // waypoints: the event's own one (SetEventWaypoint), beside the player route
             public int techLevel = -1;      // stations: the tech level its marker shows (-1 = the orbit's station's)
@@ -250,6 +252,9 @@ namespace GoF2Remake.Flight
 
         /// <summary>Set by the level: planet jumps and the Khador Drive are refused (story, campaign_flow.md 7).</summary>
         public Func<bool> JumpsBlocked;
+        /// <summary>Set by the level (remake): the Khador Drive and the slipstream alone are refused (an event's Restrict Travel
+        /// "khador"), the planet jumps and the gate still open.</summary>
+        public Func<bool> KhadorBlocked;
         /// <summary>Set by the level: the HUD text for a jump JumpsBlocked refuses, null = 525 "Not possible on a mission."
         /// (42 in the Void: the way out is the wormhole, Story.EscapesByWormhole).</summary>
         public Func<string> JumpRefusalText;
@@ -438,6 +443,13 @@ namespace GoF2Remake.Flight
                     if (m != null && !m.IsOwner && m.Distress)
                         list.Add(new Target { kind = Kind.Assist, client = m.OwnerClientId,
                                               name = string.Format(Localization.Extra("mpHelpEntry", "Help {0}"), m.DisplayName) });
+                // Follow each squadmate from orbit to orbit (NetFollow), or stop following the one followed.
+                ulong followed = GoF2Remake.World.SpaceHooks.FollowedSquadmate?.Invoke() ?? ulong.MaxValue;
+                foreach (var m in GoF2Remake.World.SpaceHooks.Squad)
+                    if (m != null && !m.IsOwner)
+                        list.Add(new Target { kind = Kind.Follow, client = m.OwnerClientId,
+                                              name = string.Format(m.OwnerClientId == followed ? Localization.Extra("mpUnfollowEntry", "Stop following {0}")
+                                                                                              : Localization.Extra("mpFollowEntry", "Follow {0}"), m.DisplayName) });
             }
             return list;
         }
@@ -489,6 +501,12 @@ namespace GoF2Remake.Flight
                 if (!string.IsNullOrEmpty(msg)) Say(msg);
                 return;
             }
+            if (target.kind == Kind.Follow)
+            {
+                string msg = GoF2Remake.World.SpaceHooks.FollowSquadmate?.Invoke(target.client);
+                if (!string.IsNullOrEmpty(msg)) Say(msg);
+                return;
+            }
             if (target.kind == Kind.TimeExtender) { Extender?.Toggle(); return; }   // the game runs again: CloseMenu above
             if (target.kind == Kind.DockingTarget) { Docking?.Dock(target.dockingShip); return; }
             if (target.kind == Kind.Waypoint)
@@ -504,7 +522,7 @@ namespace GoF2Remake.Flight
             }
             if (target.kind == Kind.KhadorDrive)
             {
-                if (JumpsBlocked != null && JumpsBlocked() && Story.ForcedKhadorTarget(Session.StationIndex) == null) { Say(JumpRefusal); return; }
+                if (((JumpsBlocked != null && JumpsBlocked()) || (KhadorBlocked != null && KhadorBlocked())) && Story.ForcedKhadorTarget(Session.StationIndex) == null) { Say(JumpRefusal); return; }
                 if (GalaxyMap.HasVolatileGoods) { Say(Localization.Get(612)); return; }   // MGame::UseKhadorDrive: ChoiceWindow 612
                 KhadorRequested?.Invoke();
                 return;

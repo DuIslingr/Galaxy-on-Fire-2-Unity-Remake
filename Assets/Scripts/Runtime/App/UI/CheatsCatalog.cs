@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GoF2Remake.Data;
 using UIE = UnityEngine.UIElements;
 
@@ -57,6 +58,27 @@ namespace GoF2Remake.UI
             Button("cheatPeace", () => X("cheatMakePeace", "Make peace with all races"), () => { Cheats.MakePeace(); notify?.Invoke(X("cheatPeaceMade", "Standing neutral with every race.")); }),
             Button("cheatKaamo", () => X("cheatFillKaamo", "Fill the Kaamo Club (every item and ship)"), () => notify?.Invoke(Cheats.FillKaamoClub(db))),
         };
+
+        // ---- destroy around the player (the pause menu, in flight) ----------------------------------------------------
+
+        static int killRange = 6, killFilter;   // 1 km, hostile only
+
+        /// <summary>Range (10 m - 30 km), what to destroy, "Destroy around you" (World.DebugSpawner.KillAround).</summary>
+        public static List<OptionDef> Destroy(World.SpaceLevel level, Action<string> notify)
+        {
+            var ranges = World.DebugSpawner.KillRanges;
+            return new List<OptionDef>
+            {
+                Choice("debugKillRange", () => X("debugKillRange", "Range"), false,
+                    () => Array.ConvertAll(ranges, World.DebugSpawner.RangeText), () => killRange, i => killRange = i),
+                Choice("debugKillFilter", () => X("debugKillFilter", "Destroy"), false,
+                    () => new[] { X("debugKillHostile", "Hostile only"), X("debugKillShips", "All ships"), X("debugKillEverything", "Everything (asteroids too)") },
+                    () => killFilter, i => killFilter = i),
+                Button("debugKill", () => X("debugKill", "Destroy around you"), () =>
+                    notify?.Invoke(World.DebugSpawner.KillAround(level, ranges[Math.Clamp(killRange, 0, ranges.Length - 1)],
+                                                                 (World.DebugSpawner.KillFilter)killFilter))),
+            };
+        }
 
         static string Credits() => $"{X("cheatCreditsNow", "Credits")}: {Session.Credits:N0}";
 
@@ -421,7 +443,7 @@ namespace GoF2Remake.UI
 
         // ---- spawn any ship or object (the pause menu, in flight) ---------------------------------------------------
 
-        static int shipRace, shipPick, behaviourPick, objectCategory, objectPick, capitalPick, turretPick;
+        static int shipRace, shipPick, behaviourPick, objectCategory, objectPick, capitalPick, turretPick, npcTypePick;
         static readonly int[] Races = { 0, 1, 2, 3, Flight.Standing.Pirate, Flight.Standing.Void, Flight.Standing.Specter };
 
         static string RaceName(int race)
@@ -496,6 +518,15 @@ namespace GoF2Remake.UI
                     notify?.Invoke(World.DebugSpawner.SpawnCapital(level, capitalPick + 1, TurretItem()))),
                 Button("debugSpawnBattle", () => X("debugSpawnBattle", "Spawn fleet battle"), () =>
                     notify?.Invoke(World.DebugSpawner.SpawnFleetBattle(level))),
+                // Remake mods: the mods' own NPC ship types (npcships.json), whatever their spawn rules.
+                Choice("debugNpcType", () => X("debugNpcType", "Mod NPC ship"), false,
+                    () =>
+                    {
+                        var names = Modding.ModNpcShips.ModTypes().Select(t => t.name ?? t.key).ToArray();
+                        return names.Length > 0 ? names : new[] { X("debugNoNpcTypes", "No mod NPC ships are on.") };
+                    }, () => npcTypePick, i => npcTypePick = i),
+                Button("debugSpawnNpcType", () => X("debugSpawnNpcType", "Spawn mod NPC ship"), () =>
+                    notify?.Invoke(World.DebugSpawner.SpawnNpcType(level, Modding.ModNpcShips.ModTypes().ElementAtOrDefault(npcTypePick)))),
                 Choice("debugObjectCategory", () => X("debugObjectCategory", "Object type"), false,
                     () => categories.ToArray(), () => objectCategory, i => { objectCategory = i; objectPick = 0; }),
                 Choice("debugObject", () => X("debugObject", "Object"), false,

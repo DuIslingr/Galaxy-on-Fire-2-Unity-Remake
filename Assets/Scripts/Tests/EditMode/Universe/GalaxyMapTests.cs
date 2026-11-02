@@ -3,7 +3,7 @@
 // gate routes, SystemPathFinder's BFS through visible systems, energy cells for a Khador jump: gate jumps on the route, 4
 // without one, x2 on Extreme; the Khador Drive item 85 / ships 37 / 38 / 40 and the remake's free-play rule for gateless
 // systems; volatile goods 209 / 204; the galaxy-view sun positions; the system view's planets, java.util.Random(system *
-// 1000)), plus the security / owner rules of the map's labels.
+// 1000)), plus the security / owner rules of the map's labels and the remake's jumpgate route planning (GateJumps, NextHop).
 // Expected numbers: Reference/tools/starmap/starmap_tables.py (gate_path, energy_cells, sun_position, system_map; run with
 // python -I, generator gen/starmap_expected.py in the session scratchpad) and Reference/research/starmap_travel.md
 // ("No owner" systems 23 / 24 / 26 / 32 / 33, 7.2 energy cells, Ship::hasJumpDrive); the initially visible systems from
@@ -176,6 +176,134 @@ namespace GoF2Remake.Tests
                     Assert.IsNotNull(back, "gates work both ways");
                     Assert.AreEqual(p.Count, back.Count, $"{a}<->{b} same length both ways");
                 }
+        }
+
+        // ---- jumpgate route planning (remake) -------------------------------------------------------------------
+
+        static int StationIn(int system, int not = -1) => Db.Stations.First(s => s.system == system && s.index != not).index;
+        static int GateStation(int system) => Sys(system).jumpgateStation;
+
+        [Test]
+        public void GateJumpsCountTheRoute()
+        {
+            AllVisible();
+            Assert.AreEqual(0, GalaxyMap.GateJumps(Db, 2, 2));
+            Assert.AreEqual(1, GalaxyMap.GateJumps(Db, 0, 8), "a gate neighbour");
+            Assert.AreEqual(5, GalaxyMap.GateJumps(Db, 0, 31));
+            Assert.AreEqual(0, GalaxyMap.GateJumps(Db, 15, 3), "gateless Mido");
+            Assert.IsTrue(GalaxyMap.GateReachable(Db, 0, 31));
+            Assert.IsTrue(GalaxyMap.GateReachable(Db, 3, 3));
+            Assert.IsFalse(GalaxyMap.GateReachable(Db, 28, 22), "to gateless Beidan");
+        }
+
+        [Test]
+        public void GateRoutesOnlyThroughVisibleSystems()
+        {
+            // new game: 3 is two jumps from 2 (through 8), 21 can't be reached
+            Assert.AreEqual(2, GalaxyMap.GateJumps(Db, 2, 3));
+            Assert.IsFalse(GalaxyMap.GateReachable(Db, 3, 21));
+            Assert.AreEqual(0, GalaxyMap.GateJumps(Db, 3, 21));
+        }
+
+        [Test]
+        public void NextHopIsTheNextSystemsGateOrbit()
+        {
+            AllVisible();
+            // 0 -> 31: 0, 8, 3, 5, 20, 31: the first hop lands in 8's gate orbit, then 3's, 5's, 20's, then the station itself
+            int target = StationIn(31);
+            Assert.AreEqual(GateStation(8), GalaxyMap.NextHop(Db, StationIn(0), target));
+            Assert.AreEqual(GateStation(3), GalaxyMap.NextHop(Db, GateStation(8), target));
+            Assert.AreEqual(GateStation(20), GalaxyMap.NextHop(Db, GateStation(5), target));
+            Assert.AreEqual(target, GalaxyMap.NextHop(Db, GateStation(20), target), "the last gate jumps to the destination");
+        }
+
+        // Expected routes: Dijkstra over every system (scratchpad safe_routes.py), the pairs with a single cheapest route
+        // either way. Security: 2 Behon 1, 9 Weymire 2, 11 Union 2, 8 Buntta 2, 19 Augmenta 3, 14 Magnetar 3, 16 Prospero 1,
+        // 12 Oom'bak 2.
+        [TestCase(0, 7, new[] { 0, 2, 9, 11, 7 }, new[] { 0, 8, 19, 14, 11, 7 })]
+        [TestCase(9, 13, new[] { 9, 11, 16, 13 }, new[] { 9, 19, 14, 12, 13 })]
+        [TestCase(7, 0, new[] { 7, 11, 9, 2, 0 }, new[] { 7, 11, 14, 19, 8, 0 })]
+        public void SafestRouteGoesRoundTheDangerousSystems(int a, int b, int[] fastest, int[] safest)
+        {
+            AllVisible();
+            Assert.AreEqual(fastest, GalaxyMap.RoutePath(Db, a, b, false).ToArray());
+            Assert.AreEqual(fastest, GalaxyMap.SystemPath(Db, a, b).ToArray(), "SystemPath is the fewest jumps");
+            Assert.AreEqual(safest, GalaxyMap.RoutePath(Db, a, b, true).ToArray());
+            Assert.Less(GalaxyMap.RouteDanger(Db, safest.ToList()), GalaxyMap.RouteDanger(Db, fastest.ToList()));
+            Assert.AreEqual(safest.Length - 1, GalaxyMap.GateJumps(Db, a, b, true));
+        }
+
+        // The Terrans (race 0: Aquila 7, Union 11, Magnetar 14, Augmenta 19, Buntta 8) hostile: the safest route leaves their
+        // systems for the others' (expected: scratchpad safe_enemy.py, Dijkstra with 3 more danger in an enemy's system).
+        [TestCase(7, 0, new[] { 7, 11, 14, 19, 8, 0 }, new[] { 7, 11, 9, 2, 0 })]
+        [TestCase(8, 9, new[] { 8, 19, 9 }, new[] { 8, 2, 9 })]
+        public void SafestRouteAvoidsAnEnemyRacesSystems(int a, int b, int[] calm, int[] hostile)
+        {
+            AllVisible();
+            var axes = (int[])Session.Standing.Clone();
+            try
+            {
+                Assert.AreEqual(calm, GalaxyMap.RoutePath(Db, a, b, true).ToArray(), "new game standing");
+                Session.Standing[0] = -100;   // the Terrans hate the player, the Vossk like them
+                Assert.IsTrue(GalaxyMap.EnemyTerritory(Sys(19)));
+                Assert.IsFalse(GalaxyMap.EnemyTerritory(Sys(3)), "Vossk");
+                Assert.AreEqual(hostile, GalaxyMap.RoutePath(Db, a, b, true).ToArray());
+                Assert.AreEqual(GalaxyMap.SystemPath(Db, a, b).Count, GalaxyMap.RoutePath(Db, a, b, false).Count, "the fastest ignores standing");
+            }
+            finally { Session.Standing = axes; }
+        }
+
+        [Test]
+        public void AnUnownedSystemIsNoEnemyTerritory()
+        {
+            var axes = (int[])Session.Standing.Clone();
+            try
+            {
+                Session.Standing[0] = -100;
+                Assert.AreEqual(0, Sys(24).raceId, "Skavac lists the Terrans");
+                Assert.IsFalse(GalaxyMap.EnemyTerritory(Sys(24)), "but no one owns it");
+            }
+            finally { Session.Standing = axes; }
+        }
+
+        [Test]
+        public void SafestNeverTakesMoreDangerOrFewerJumps()
+        {
+            AllVisible();
+            for (int a = 0; a < 34; a++)
+                for (int b = 0; b < 34; b++)
+                {
+                    var fast = GalaxyMap.RoutePath(Db, a, b, false);
+                    var safe = GalaxyMap.RoutePath(Db, a, b, true);
+                    Assert.AreEqual(fast == null, safe == null, $"{a}->{b} reachable either way");
+                    if (fast == null) continue;
+                    Assert.GreaterOrEqual(safe.Count, fast.Count, $"{a}->{b}");
+                    Assert.LessOrEqual(GalaxyMap.RouteDanger(Db, safe), GalaxyMap.RouteDanger(Db, fast), $"{a}->{b}");
+                    for (int k = 1; k < safe.Count; k++) Assert.IsTrue(Sys(safe[k - 1]).jumpRoutesTo.Contains(safe[k]), $"{a}->{b}");
+                }
+        }
+
+        [Test]
+        public void TheSafestRoutesHopsFollowIt()
+        {
+            AllVisible();
+            int target = StationIn(7);
+            Assert.AreEqual(GateStation(2), GalaxyMap.NextHop(Db, StationIn(0), target), "fastest: through Behon");
+            Assert.AreEqual(GateStation(8), GalaxyMap.NextHop(Db, StationIn(0), target, true), "safest: through Buntta");
+            Assert.AreEqual(GateStation(19), GalaxyMap.NextHop(Db, GateStation(8), target, true));
+            Assert.AreEqual(GateStation(14), GalaxyMap.NextHop(Db, GateStation(19), target, true));
+        }
+
+        [Test]
+        public void NextHopIsTheDestinationWhereTheOriginalsGateWent()
+        {
+            AllVisible();
+            int neighbour = StationIn(8);
+            Assert.AreEqual(neighbour, GalaxyMap.NextHop(Db, StationIn(0), neighbour), "a gate neighbour");
+            int here = StationIn(0);
+            Assert.AreEqual(here, GalaxyMap.NextHop(Db, StationIn(0, here), here), "this system");
+            int beidan = StationIn(22);
+            Assert.AreEqual(beidan, GalaxyMap.NextHop(Db, StationIn(28), beidan), "no gate route: straight there");
         }
 
         // ---- energy cells (StarMap::OnTouchBegin) ---------------------------------------------------------------
