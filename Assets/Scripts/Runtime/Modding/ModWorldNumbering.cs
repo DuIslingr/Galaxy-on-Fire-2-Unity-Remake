@@ -14,13 +14,23 @@ namespace GoF2Remake.Modding
     {
         public static void NoteOriginalCounts(Database db)
         {
-            if (originalSystems < 0) originalSystems = db.Systems.Count;
-            if (originalStations < 0) originalStations = db.Stations.Count;
+            // An empty table is a load that found nothing (an asset import before Resources load), never the size (as
+            // ModContent.NoteOriginalCounts): kept, it numbered every mod system and station from 0 (2026-11-02, a reimport in a
+            // batch test run: 112 failures).
+            if (originalSystems < 0 && db.Systems.Count > 0) originalSystems = db.Systems.Count;
+            if (originalStations < 0 && db.Stations.Count > 0) originalStations = db.Stations.Count;
         }
         static void EnsureMapping()
         {
             if (mappedRevision == ModManager.Revision && originalSystems >= 0) return;
-            if (originalSystems < 0) { Database.Load(); if (originalSystems < 0) return; }
+            if (originalSystems < 0)
+            {
+                if (loadingOriginals) return;   // Load's own Apply comes back here while the tables are missing
+                loadingOriginals = true;
+                try { Database.Load(); }
+                finally { loadingOriginals = false; }
+                if (originalSystems < 0) return;
+            }
             mappedRevision = ModManager.Revision;
             systemIndex.Clear(); stationIndex.Clear(); systemAt.Clear(); stationAt.Clear(); missingSystems.Clear(); missingStations.Clear(); stationLook.Clear();
             bool session = ModManager.InSession;

@@ -16,7 +16,17 @@ namespace GoF2Remake.Modding
         static void EnsureMapping()
         {
             if (mappedRevision == ModManager.Revision && originalItems >= 0 && originalShips >= 0) return;
-            if (originalItems < 0 || originalShips < 0) { Database.Load(); if (originalItems < 0 || originalShips < 0) return; }   // Load sets them
+            if (originalItems < 0 || originalShips < 0)
+            {
+                // Load sets them. Once: without the tables (an asset import before Resources load, the Editor's event graph
+                // importer) Load's own Apply came back here and loaded again without end, a deeper "missing" warning each
+                // time (a 65 GB Editor.log, 2026-11-02).
+                if (loadingOriginals) return;
+                loadingOriginals = true;
+                try { Database.Load(); }
+                finally { loadingOriginals = false; }
+                if (originalItems < 0 || originalShips < 0) return;
+            }
             _ = ModManager.Active;   // read first: the first read may scan the mods, a new revision, and map all this again inside the loops
             mappedRevision = ModManager.Revision;
             itemIndex.Clear(); itemDefAt.Clear(); placeholderItems.Clear(); itemLook.Clear(); itemRenames.Clear(); deedAt.Clear();

@@ -326,6 +326,17 @@ energy cells.
 | `cruiseRange` | 134 | Cruise drive: the distance one leg of energy cells buys (game units, 20 per metre; default 60000 = 3 km) |
 | `cruiseChargeMs` | 37 | Cruise drive: the charge before it engages (ms; the Khador Drive's own charge attribute) |
 | `miningTime` | 132 | An ore's mining time in percent of the game's 6 seconds per layer (default 100; 200 = twice as long). The ore a whole asteroid gives stays the same: it comes slower. Counts for the drill's minigame and the mining beam |
+| `cloakCooldownMs` | 146 | A cloak's own cooldown in ms, in place of the difficulty's 5 to 12 seconds |
+| `device` | 136 | An active device's type (see [Devices](#devices)): 1 EMP wave, 2 EMP shot, 3 shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector |
+| `deviceCooldownMs` | 137 | Device: its cooldown after a run (default 60000) |
+| `deviceDurationMs` | 138 | Device: how long it runs: the slow on its targets, the strike charge's boost, the deflector (0 = at once) |
+| `deviceRadius` | 139 | Device: its reach in game units (20 per metre): the EMP wave's, the EMP shot's burst, the overchargers' |
+| `deviceGrowMs` | 140 | Device: the EMP wave's time to reach its full radius |
+| `deviceSlowPercent` | 141 | Device: the speed an EMP device leaves its targets, in percent (default 25) |
+| `deviceShieldCost` | 142 | Device: the overchargers' cost in percent of the ship's maximum shield |
+| `deviceDamagePercent` | 143 | Device: the overchargers' damage per target in percent of the shield spent; the strike charge's damage factor (175 = x1.75); the deflector's turned-back shots' damage; the shield disruptor's damage on a ship without a shield, in percent of its `damage` (default 100) |
+| `deviceCharge` | 144 | Device: the strike charge's charge, the damage the primary guns must deal before it can fire |
+| `deviceConeDeg` | 145 | Device: the overcharger beam's half-angle ahead (default 30) |
 
 Which stats an item uses depends on its category, so copy the stats its base item has (see `items.json` and
 `item_attributes.json` in `Assets/Resources/GoF2Data`). items.json's own stat names (`loadingTimeMs`, `range`,
@@ -398,6 +409,41 @@ volume, or the asteroid it sits in destroyed for 20 damage.
     "techLevel": 10,
     "price": [540000, 580000],
     "stats": { "cloakDurationMs": 80000, "cloakChargeMs": 7000, "energyCells": 5, "phaseCloak": 1 }
+}
+```
+
+### Devices
+
+An active device is equipment fired from the quick menu (its name, half-transparent while it isn't ready) or the keys 4, 5
+and 6 (the first three mounted, rebindable as Device 1-3), then cooling down for `deviceCooldownMs` (the HUD's row of
+recharge icons shows it with keys and a controller; "<item> ready" when it is). Make one from the seatless cabin
+(`"base": 91`, `"cabinSize": 0`) with `"device"` set to its type; the shop calls it "Device". A ship carries one of each
+type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
+
+| `device` | What it does | Its stats |
+| --- | --- | --- |
+| 1 EMP wave | A wave from the ship out to `deviceRadius` over `deviceGrowMs`; each hostile ship it reaches flies at `deviceSlowPercent` of its speed and can't turn for `deviceDurationMs` (sparks show it); `empDamage` adds an EMP hit | radius, grow, slow, duration |
+| 2 EMP shot | A homing shot at the locked ship (`projectileSpeed`, `lifetimeMs`); where it hits, every hostile ship within `deviceRadius` is slowed like the wave | radius, slow, duration |
+| 3 Shield disruptor | A homing shot whose hit takes `damage` off the target's shield; a ship without a shield (the game's NPCs) takes `deviceDamagePercent` of it as damage | damage, damage percent |
+| 4 Overcharger area | Spends `deviceShieldCost` % of the ship's maximum shield (refused with less shield than that) and deals `deviceDamagePercent` % of what it spent to every hostile ship within `deviceRadius` | radius, shield cost, damage percent |
+| 5 Overcharger beam | The same cost, as beams at every hostile ship within `deviceRadius` and `deviceConeDeg` of the nose | radius, cone, shield cost, damage percent |
+| 6 Strike charge | Charged by `deviceCharge` points of damage the primary guns deal (its icon fills as it charges), then `deviceDurationMs` of their damage x `deviceDamagePercent` / 100 | charge, duration, damage percent |
+| 7 Deflector | For `deviceDurationMs` the enemy shots that would hit the ship fly back at their shooter, homing, at `deviceDamagePercent` % of their damage; beams are stopped | duration, damage percent |
+
+The item's `"fx"` gives its sound (its shot sound plays when it fires) and the EMP and disruptor shots' look; without
+one they fly as the Dia EMP's shots. Kills and standing count as the player's. In multiplayer the slow reaches another
+game's NPCs; the shots and the beams are seen only by their pilot.
+
+```json
+{
+    "id": "area_emp",
+    "base": 91,
+    "name": "Area EMP",
+    "techLevel": 6,
+    "occurrence": 25,
+    "price": [64000, 67200],
+    "stats": { "cabinSize": 0, "device": 1, "deviceCooldownMs": 60000, "deviceDurationMs": 8000, "deviceRadius": 9120,
+               "deviceGrowMs": 2500, "deviceSlowPercent": 25 }
 }
 ```
 

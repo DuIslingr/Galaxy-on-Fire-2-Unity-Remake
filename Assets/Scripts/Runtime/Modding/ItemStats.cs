@@ -60,6 +60,14 @@ namespace GoF2Remake.Modding
             // costs (Flight.CruiseDrive, Navigation; Modding/README.md "Cruise drives").
             // interstellar 1: it also flies the space between the systems (InterstellarSpace).
             ["cruiseSpeed"] = 133, ["cruiseRange"] = 134, ["cruiseChargeMs"] = 37, ["interstellar"] = 135,
+            // An active device (Flight.Device; Modding/README.md "Devices"): device is its type (1 area EMP, 2 EMP shot, 3
+            // shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector), the rest its numbers
+            // (radius in game units, slow = the speed left in percent, shield cost in percent of the maximum shield).
+            ["device"] = 136, ["deviceCooldownMs"] = 137, ["deviceDurationMs"] = 138, ["deviceRadius"] = 139, ["deviceGrowMs"] = 140,
+            ["deviceSlowPercent"] = 141, ["deviceShieldCost"] = 142, ["deviceDamagePercent"] = 143, ["deviceCharge"] = 144,
+            ["deviceConeDeg"] = 145,
+            // A cloak's cooldown in ms in place of the difficulty's 5-12 s (Flight.Cloak; GoF3's Hiroto Cloak 60 s).
+            ["cloakCooldownMs"] = 146,
             // items.json's statList names
             ["steerable"] = 15, ["handling"] = 17,
             ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,

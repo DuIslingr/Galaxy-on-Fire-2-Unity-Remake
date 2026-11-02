@@ -70,6 +70,8 @@ namespace GoF2Remake.Modding
         }
 
         static int originalSystems = -1, originalStations = -1, mappedRevision = -1;
+        /// <summary>EnsureMapping is loading the tables to learn the originals' counts.</summary>
+        static bool loadingOriginals;
         static readonly Dictionary<string, int> systemIndex = new Dictionary<string, int>(StringComparer.Ordinal);
         static readonly Dictionary<string, int> stationIndex = new Dictionary<string, int>(StringComparer.Ordinal);
         static readonly Dictionary<int, Def> systemAt = new Dictionary<int, Def>(), stationAt = new Dictionary<int, Def>();

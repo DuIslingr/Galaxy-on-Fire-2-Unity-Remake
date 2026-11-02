@@ -103,6 +103,8 @@ namespace GoF2Remake.Modding
         // The numbering for ModManager.Revision.
         static int mappedRevision = -1;
         static int originalItems = -1;
+        /// <summary>EnsureMapping is loading the tables to learn the originals' counts: a Load inside it maps nothing.</summary>
+        static bool loadingOriginals;
         static readonly Dictionary<string, int> itemIndex = new Dictionary<string, int>(StringComparer.Ordinal);
         static readonly Dictionary<int, ItemDef> itemDefAt = new Dictionary<int, ItemDef>();
         static readonly Dictionary<int, string> placeholderItems = new Dictionary<int, string>();
