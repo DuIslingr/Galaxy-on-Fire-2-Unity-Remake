@@ -73,9 +73,9 @@ namespace GoF2Remake.Flight
         /// <summary>Multiplayer: a repair beam's hull points passed on to the game that owns the ship (NetProxy, NetPlayer);
         /// null = it can't be repaired from here.</summary>
         [NonSerialized] public Action<int> RemoteHeal;
-        /// <summary>Remake (Flight.Device, an EMP device): slows the ship (ms, the speed left 0..1, no turning meanwhile): its
-        /// NpcShip, or in multiplayer the game that owns it (NetProxy); null = it can't be slowed.</summary>
-        [NonSerialized] public Action<float, float> SlowBy;
+        /// <summary>Remake (Flight.Device's EMP devices, a weapon's slowMs): slows the ship (ms, the speed left 0..1, no turning
+        /// meanwhile): its NpcShip, or in multiplayer the game that owns it (NetProxy); null = it can't be slowed.</summary>
+        [NonSerialized] public Action<float, float, bool> SlowBy;
         /// <summary>Remake (the Carom Deflector, PlayerDevices): a shot of this gun (gun, bullet index) about to hit this ship is
         /// turned back instead: true = it was (Gun.Strike skips the hit).</summary>
         [NonSerialized] public Func<Gun, int, bool> Deflects;

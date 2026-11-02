@@ -40,6 +40,9 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(Device.ChargeAttr, ItemStats.IdOf("deviceCharge"));
             Assert.AreEqual(Device.ConeAttr, ItemStats.IdOf("deviceConeDeg"));
             Assert.AreEqual(Cloak.CooldownAttr, ItemStats.IdOf("cloakCooldownMs"));
+            Assert.AreEqual(Gun.ShieldBypassAttr, ItemStats.IdOf("shieldBypass"));
+            Assert.AreEqual(Gun.SlowMsAttr, ItemStats.IdOf("slowMs"));
+            Assert.AreEqual(Gun.SlowPercentAttr, ItemStats.IdOf("slowPercent"));
         }
 
         [Test]

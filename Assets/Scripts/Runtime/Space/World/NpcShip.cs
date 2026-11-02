@@ -265,7 +265,8 @@ namespace GoF2Remake.World
         ShipSmoke smoke;
         ShipBurn burn;
         EmpSparks sparks;
-        /// <summary>Remake (Flight.Device, an EMP device): slower and no turning while it runs (Target.SlowBy).</summary>
+        /// <summary>Remake (Flight.Device's EMP devices, a slowing weapon): slower, and no turning for a device, while it runs
+        /// (Target.SlowBy).</summary>
         Slow slow;
         bool smoking;   // PlayerFighter +0x1f4
 
@@ -391,7 +392,7 @@ namespace GoF2Remake.World
             Target.hitpoints = new Hitpoints(spec.hitpoints > 0 ? spec.hitpoints : NpcTables.Hull(kind, spec.ship));
             Target.hitpoints.SetEmp(spec.empPoints > 0 ? spec.empPoints : NpcTables.Emp(kind), NpcTables.EmpRecoveryMs(kind));   // also with a hull override
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
-            Target.SlowBy = (ms, factor) => { if (Target.Alive && !Target.phased) slow.Apply(ms, factor); };
+            Target.SlowBy = (ms, factor, noTurn) => { if (Target.Alive && !Target.phased) slow.Apply(ms, factor, noTurn); };
             Target.displayName = !string.IsNullOrEmpty(spec.name) ? spec.name : spec.nameText >= 0 ? Localization.Get(spec.nameText) : null;
             if (spec.speed > 0f) speed = baseSpeed = spec.speed;
             alwaysEnemy = spec.alwaysEnemy;

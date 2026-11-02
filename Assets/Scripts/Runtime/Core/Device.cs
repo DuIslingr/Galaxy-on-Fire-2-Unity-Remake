@@ -160,26 +160,33 @@ namespace GoF2Remake.Flight
         public static float SlowFactor(int percent) => Mathf.Clamp01(percent / 100f);
     }
 
-    /// <summary>A ship slowed by an EMP device (Device.Type.AreaEmp / EmpShot): its speed x Factor and no turning until the
-    /// time runs out. A second hit takes the longer time and the stronger slow.</summary>
+    /// <summary>A ship slowed by an EMP device (Device.Type.AreaEmp / EmpShot: no turning either) or a slowing weapon (its
+    /// slowMs / slowPercent: GoF3's AbilitySlowdown, the speed only): its speed x Factor until the time runs out. A second
+    /// hit takes the longer time and the stronger slow.</summary>
     public struct Slow
     {
         public float LeftMs { get; private set; }
-        float factor;
+        float factor, noTurnMs;
 
         public bool Active => LeftMs > 0f;
         public float SpeedFactor => Active ? factor : 1f;
-        public bool CanTurn => !Active;
+        public bool CanTurn => noTurnMs <= 0f;
 
-        public void Apply(float ms, float speedFactor)
+        public void Apply(float ms, float speedFactor, bool noTurn = true)
         {
             if (ms <= 0f) return;
             factor = Active ? Mathf.Min(factor, Mathf.Clamp01(speedFactor)) : Mathf.Clamp01(speedFactor);
             LeftMs = Mathf.Max(LeftMs, ms);
+            if (noTurn) noTurnMs = Mathf.Max(noTurnMs, ms);
         }
 
-        public void Tick(float dtMs) { if (LeftMs > 0f) LeftMs = Mathf.Max(0f, LeftMs - Mathf.Max(0f, dtMs)); }
+        public void Tick(float dtMs)
+        {
+            dtMs = Mathf.Max(0f, dtMs);
+            if (LeftMs > 0f) LeftMs = Mathf.Max(0f, LeftMs - dtMs);
+            if (noTurnMs > 0f) noTurnMs = Mathf.Max(0f, noTurnMs - dtMs);
+        }
 
-        public void Clear() => LeftMs = 0f;
+        public void Clear() { LeftMs = 0f; noTurnMs = 0f; }
     }
 }

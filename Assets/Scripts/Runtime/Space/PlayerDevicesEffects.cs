@@ -174,7 +174,7 @@ namespace GoF2Remake.Flight
                 if (d.sqrMagnitude > radius * radius) continue;
                 reached?.Add(t);
                 t.lastPlayerWeapon = e.item.index;
-                t.SlowBy?.Invoke(e.rules.durationMs, factor);
+                t.SlowBy?.Invoke(e.rules.durationMs, factor, true);
                 if (e.emp > 0) weapons?.DeviceHit(t, 0f, e.emp, d.normalized, e.item.index);
             }
         }
@@ -190,7 +190,7 @@ namespace GoF2Remake.Flight
                     Explosion.Spawn(11, p, dir, e.radius / ShockScaleUnits, null, false);
                     Slow(e, p, e.radius * M, null);
                     if (Affects(t) && t.SlowBy != null && (t.transform.position - p).sqrMagnitude > e.radius * M * e.radius * M)
-                        t.SlowBy(e.rules.durationMs, Device.SlowFactor(e.slowPercent));   // a big hull whose centre lies beyond the radius
+                        t.SlowBy(e.rules.durationMs, Device.SlowFactor(e.slowPercent), true);   // a big hull whose centre lies beyond the radius
                     break;
                 case Device.Type.ShieldDisruptor:
                 {

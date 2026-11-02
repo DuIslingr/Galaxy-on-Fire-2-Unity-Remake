@@ -329,6 +329,8 @@ energy cells.
 | `cruiseChargeMs` | 37 | Cruise drive: the charge before it engages (ms; the Khador Drive's own charge attribute) |
 | `miningTime` | 132 | An ore's mining time in percent of the game's 6 seconds per layer (default 100; 200 = twice as long). The ore a whole asteroid gives stays the same: it comes slower. Counts for the drill's minigame and the mining beam |
 | `cloakCooldownMs` | 160 | A cloak's own cooldown in ms, in place of the difficulty's 5 to 12 seconds |
+| `shieldBypass` | 161 | 1: the weapon's hits go past the shield, straight to the armor and hull (the shield untouched) |
+| `slowMs`, `slowPercent` | 162, 163 | A hit slows the ship to `slowPercent` of its speed (default 50) for `slowMs`; it can still turn. The game's NPCs and other games' NPCs in multiplayer; not players |
 | `device` | 150 | An active device's type (see [Devices](#devices)): 1 EMP wave, 2 EMP shot, 3 shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector |
 | `deviceCooldownMs` | 151 | Device: its cooldown after a run (default 60000) |
 | `deviceDurationMs` | 152 | Device: how long it runs: the slow on its targets, the strike charge's boost, the deflector (0 = at once) |

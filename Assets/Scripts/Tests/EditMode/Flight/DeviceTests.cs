@@ -154,5 +154,21 @@ namespace GoF2Remake.Tests
             s.Apply(0f, 0.1f);
             Assert.IsFalse(s.Active, "no time, no slow");
         }
+
+        [Test]
+        public void AWeaponsSlowLetsTheShipTurn()
+        {
+            // GoF3's AbilitySlowdown (a mod weapon's slowMs / slowPercent): the speed only
+            var s = new Slow();
+            s.Apply(6000f, 0.5f, false);
+            Assert.AreEqual(0.5f, s.SpeedFactor);
+            Assert.IsTrue(s.CanTurn);
+            s.Apply(2000f, 0.25f);
+            Assert.IsFalse(s.CanTurn, "an EMP device's stops the turning");
+            s.Tick(2000f);
+            Assert.IsTrue(s.CanTurn, "for its own time");
+            Assert.IsTrue(s.Active, "the longer slow goes on");
+            Assert.AreEqual(0.25f, s.SpeedFactor);
+        }
     }
 }

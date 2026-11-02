@@ -171,10 +171,16 @@ namespace GoF2Remake.Flight
         [System.NonSerialized] public float shieldFactor = 1f;
 
         public const int ShieldDamageAttr = 124, DisruptorShieldPercent = 200;
+        /// <summary>Remake mods (GoF3's abilities): 161 shieldBypass (its hits go past the shield), 162 slowMs / 163 slowPercent
+        /// (a hit slows the ship to that share of its speed for that long, turning still allowed: AbilitySlowdown).</summary>
+        public const int ShieldBypassAttr = 161, SlowMsAttr = 162, SlowPercentAttr = 163;
+        /// <summary>Remake mods: a hit slows the ship for slowMs to slowFactor of its speed (0 = none).</summary>
+        [System.NonSerialized] public float slowMs, slowFactor = 1f;
 
         public static float ShieldFactor(ItemData item)
         {
             if (item == null) return 1f;
+            if (item.Attr(ShieldBypassAttr) > 0) return 0f;   // remake mods: shieldBypass (Hitpoints.Damage's 0)
             int pct = item.Attr(ShieldDamageAttr);
             if (pct <= 0) pct = item.Look == 183 ? DisruptorShieldPercent : 100;
             return Mathf.Clamp(pct, 1, 1000) / 100f;
@@ -191,6 +197,8 @@ namespace GoF2Remake.Flight
             isBeam = IsBeamLook(look);
             damage = item.Attr(9);
             shieldFactor = ShieldFactor(item);
+            slowMs = Mathf.Max(0, item.Attr(SlowMsAttr));
+            slowFactor = Mathf.Clamp01(item.Attr(SlowPercentAttr, 50) / 100f);
             echo = GunEcho.From(item);
             emp = item.Attr(10);
             reloadMs = Mathf.Max(1, item.Attr(11, 500));

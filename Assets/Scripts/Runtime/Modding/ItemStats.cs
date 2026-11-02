@@ -71,6 +71,10 @@ namespace GoF2Remake.Modding
             ["deviceConeDeg"] = 159,
             // A cloak's cooldown in ms in place of the difficulty's 5-12 s (Flight.Cloak; GoF3's Hiroto Cloak 60 s).
             ["cloakCooldownMs"] = 160,
+            // A weapon's hits go past the shield to the armor and hull (1; Flight.Gun.ShieldFactor 0, Hitpoints.Damage), or slow
+            // the ship hit to slowPercent of its speed for slowMs (Target.SlowBy; turning still allowed): GoF3's
+            // AbilityBypassShield and AbilitySlowdown.
+            ["shieldBypass"] = 161, ["slowMs"] = 162, ["slowPercent"] = 163,
             // items.json's statList names
             ["steerable"] = 15, ["handling"] = 17,
             ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,

@@ -329,7 +329,7 @@ namespace GoF2Remake.Multiplayer
             target.maxHp = 100f;
             target.RemoteDamage = (amount, hitVector, byNpc, _) => DamageUpRpc(amount, hitVector, byNpc);   // NPCs have no shield
             target.RemoteEmp = emp => EmpUpRpc(emp);
-            target.SlowBy = (ms, factor) => SlowUpRpc(ms, factor);   // remake: an EMP device (Flight.Device)
+            target.SlowBy = (ms, factor, noTurn) => SlowUpRpc(ms, factor, noTurn);   // remake: an EMP device (Flight.Device), a slowing weapon
             target.RemoteSteal = (item, amount) => StealUpRpc(item, amount);
             target.RemoteHeal = points => HealUpRpc(points);   // another player's repair beam (RepairBeam)
             // Space junk is lockable after the ships and a far dot, like the owner's own junk (Target.RadarObjects).
@@ -545,12 +545,12 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>Remake (Flight.Device): another game's EMP device slows this ship, through the server like an EMP.</summary>
         [Rpc(SendTo.Server)]
-        void SlowUpRpc(float ms, float factor, RpcParams rpc = default)
+        void SlowUpRpc(float ms, float factor, bool noTurn, RpcParams rpc = default)
         {
             ulong shooter = rpc.Receive.SenderClientId;
             if (shooter == OwnerClientId || !NetRateLimit.Allow(shooter, NetRateLimit.Kind.Hit)) return;
             if (!(ms > 0f && ms <= MaxSlowMs) || !(factor >= 0f && factor <= 1f)) { NetRateLimit.Reject(shooter, $"a slow of {ms} ms"); return; }
-            if (NetGuard.InOrbit(shooter, station.Value)) SlowRpc(ms, factor);
+            if (NetGuard.InOrbit(shooter, station.Value)) SlowRpc(ms, factor, noTurn);
         }
 
         /// <summary>The longest slow a device may send (GoF3's area EMP: 8 s).</summary>
@@ -558,9 +558,9 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>The checked slow: the owner's ship takes it (the slower flight shows through the pose stream).</summary>
         [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
-        void SlowRpc(float ms, float factor)
+        void SlowRpc(float ms, float factor, bool noTurn)
         {
-            if (ship != null) ship.Target.SlowBy?.Invoke(ms, factor);
+            if (ship != null) ship.Target.SlowBy?.Invoke(ms, factor, noTurn);
         }
 
         /// <summary>Another player's tractor beam stole 'amount' of 'item' from this ship (CombatRadar.Capture: rnd(amount) of

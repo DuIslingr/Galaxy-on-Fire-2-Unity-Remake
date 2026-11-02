@@ -159,10 +159,16 @@ namespace GoF2Remake.UI
                         break;
                 }
             }
-            // Remake: a weapon's damage to shields (Flight.Gun.ShieldFactor: the Disruptor's 200 %, a mod's shieldDamage).
+            // Remake: a weapon's damage to shields (Flight.Gun.ShieldFactor: the Disruptor's 200 %, a mod's shieldDamage), or
+            // through them (shieldBypass); its slow (slowMs / slowPercent).
             float shieldFactor = Flight.Gun.ShieldFactor(it);
-            if ((it.TypeId == 0 || it.TypeId == 2) && Mathf.Abs(shieldFactor - 1f) > 0.001f)
+            if (it.TypeId <= 2 && shieldFactor <= 0f)
+                rows.Add((Localization.Extra("statShieldBypass", "Shields"), Localization.Extra("statShieldBypassOn", "Passes through")));
+            else if ((it.TypeId == 0 || it.TypeId == 2) && Mathf.Abs(shieldFactor - 1f) > 0.001f)
                 rows.Add((Localization.Extra("statShieldDamage", "Damage to shields"), $"{Mathf.RoundToInt(shieldFactor * 100f)} %"));
+            if (it.TypeId <= 2 && it.Attr(Flight.Gun.SlowMsAttr) > 0)
+                rows.Add((Localization.Extra("statSlow", "Slows the target"),
+                          $"{it.Attr(Flight.Gun.SlowPercentAttr, 50)} % · {(it.Attr(Flight.Gun.SlowMsAttr) / 1000f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)} s"));
             int defense = it.Attr(Flight.PointDefense.Attribute);
             if (defense > 0)
                 rows.Add((Localization.Extra("statMissileDefense", "Shoots down missiles within"), $"{Mathf.RoundToInt(defense * Flight.Gun.MetersPerUnit)} m"));
