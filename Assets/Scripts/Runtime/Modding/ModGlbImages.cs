@@ -116,7 +116,12 @@ namespace GoF2Remake.Modding
                     Mark(result, pbr?["baseColorTexture"], Role.Color);
                     Mark(result, m?["emissiveTexture"], Role.Color);
                     Mark(result, m?["normalTexture"], Role.Normal);
-                    var mr = Mark(result, pbr?["metallicRoughnessTexture"], Role.MetallicRoughness);
+                    // KHR_materials_pbrSpecularGlossiness: its diffuse and its specular-glossiness map (RGB sRGB, A as it is)
+                    // go in as they are, like a base colour (ModMaterials.FromGltf); its material takes no metallic map
+                    var sgx = m?["extensions"]?["KHR_materials_pbrSpecularGlossiness"];
+                    Mark(result, sgx?["diffuseTexture"], Role.Color);
+                    Mark(result, sgx?["specularGlossinessTexture"], Role.Color);
+                    var mr = sgx == null ? Mark(result, pbr?["metallicRoughnessTexture"], Role.MetallicRoughness) : null;
                     mr?.mrFactors.Add((Factor(pbr?["metallicFactor"]), Factor(pbr?["roughnessFactor"])));
                 }
 

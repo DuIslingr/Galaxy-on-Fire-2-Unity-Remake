@@ -26,6 +26,8 @@ namespace GoF2Remake.Modding
         public Material engineGlowTint;
         [Tooltip("URP Lit, opaque / alpha clip / transparent (premultiplied), each without and with detail maps.")]
         public Material litOpaque, litOpaqueDetail, litCutout, litCutoutDetail, litTransparent, litTransparentDetail;
+        [Tooltip("The same in URP's specular setup (_SPECULAR_SETUP, _SpecGlossMap): materials with \"specularGlossiness\" / \"specularColor\" and glTF's KHR_materials_pbrSpecularGlossiness.")]
+        public Material specOpaque, specOpaqueDetail, specCutout, specCutoutDetail, specTransparent, specTransparentDetail;
         [Tooltip("The weapon fx templates of mod items (items.json \"fx\", ModWeapons): sprite_fire (GoF2/Additive) and sprite_smoke (GoF2/AlphaBlend).")]
         public Material fxAdditive, fxAlpha;
         [Tooltip("Hidden/GoF2/MetallicRoughnessToGloss: a glTF metallic-roughness texture to URP's metallic / smoothness map.")]
@@ -50,5 +52,19 @@ namespace GoF2Remake.Modding
             transparent ? (detail ? litTransparentDetail : litTransparent)
             : cutout ? (detail ? litCutoutDetail : litCutout)
             : (detail ? litOpaqueDetail : litOpaque);
+
+        /// <summary>Lit's template in the specular setup; Lit's own when the assets were built before it had them.</summary>
+        public Material Lit(bool cutout, bool transparent, bool detail, bool specular)
+        {
+            if (!specular) return Lit(cutout, transparent, detail);
+            var m = transparent ? (detail ? specTransparentDetail : specTransparent)
+                  : cutout ? (detail ? specCutoutDetail : specCutout)
+                  : (detail ? specOpaqueDetail : specOpaque);
+            return m != null ? m : Lit(cutout, transparent, detail);
+        }
+
+        /// <summary>Every Lit template, metallic and specular.</summary>
+        public Material[] LitTemplates => new[] { litOpaque, litOpaqueDetail, litCutout, litCutoutDetail, litTransparent, litTransparentDetail,
+                                                  specOpaque, specOpaqueDetail, specCutout, specCutoutDetail, specTransparent, specTransparentDetail };
     }
 }

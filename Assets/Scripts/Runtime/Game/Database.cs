@@ -339,6 +339,11 @@ namespace GoF2Remake.Data
         public float detailTiling = 1f, detailNormalScale = 1f;
         public float tiling = 1f;  // remake mods: the main textures repeat this many times over the UVs (EVERSPACE 2's plating 'Tiling')
         public float opacity;   // 0 / 1 = opaque; below 1 a see-through surface (glass: premultiplied, so reflections stay bright)
+        // remake mods: the specular workflow (URP's specular setup) in place of metallic: 'specularGlossiness' a map of the
+        // specular colour (RGB, sRGB) and smoothness (A, x 'smoothness'), or 'specularColor' (RGB) without one. Galaxy on
+        // Fire 3's hulls light this way (a coloured specular over the diffuse, not a metal).
+        public string specularGlossiness;
+        public float[] specularColor;
         public bool doubleSided;   // both faces drawn (models with one-sided panels the camera can see from behind)
         public bool engine;        // its emission shows only while the engines run (dark on a ship parked in a hangar)
         // With "engine": its share of the glow at throttle 0 (0..1); 1 = steady like the game's own engine glow, lit

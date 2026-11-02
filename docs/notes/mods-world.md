@@ -33,7 +33,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   ships in the background (`ModStations.LoadAll`, its own `TimeBudgetPerFrameDeferAgent`, textures through
   `ModMaterials.PreloadTexture`, the planet / sun PNGs too; `ModLoading` waits for it) into an always-visible AssembledObject
   template "modstation_NNN" (pack "mod", registered in `db.Assemblies`; `AssembledObject.LoadPrefab` hands it out); scaled to
-  modelSize, turned, its bounds' centre at the origin. `OrbitBuilder.StationAssembly` / `AddObstacles` use it once built
+  modelSize, turned, its bounds' centre at the origin; its glTF node animations loop like a ship's (`ModGltf.LoopAnimations`,
+  2026-11-02: the GoF3 Systems mod's turning gate rings and moving station parts stood still, glTFast's clip played once).
+  `OrbitBuilder.StationAssembly` / `AddObstacles` use it once built
   (`ModStations.Built`; else the looksLike original and its collision.json volumes): volumes from the placed model's bounds
   (`ModStations.Volumes`, axis-aligned) or the listed ones. `SpaceLevel.StationDockRange` = max(16000, radius + 6000) and
   `UndockPoint` z = max(10000, radius + 3000) game units for a mod model (radius = the obstacle's cubeHalf − 5000; NetTeleport

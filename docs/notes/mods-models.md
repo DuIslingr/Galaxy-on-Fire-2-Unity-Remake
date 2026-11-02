@@ -36,7 +36,16 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   the material's `metallicFactor` / `roughnessFactor` baked in, also on the CPU path, per factor pair
   (`ModGlbImages.Image.mrFactors`, `ModMaterials.RoleKey`): they were taken as 1, and the GoF3 Ships mod's maps are all
   metal in B with metallicFactor 0, so its hulls were mirrors, black against space) or
-  the entry's `materials` (`ModMaterials.FromSpec`: the PR's fields plus `doubleSided`). Textures load from the mod's PNGs,
+  the entry's `materials` (`ModMaterials.FromSpec`: the PR's fields plus `doubleSided`). **Specular setup** (2026-11-02):
+  a `materials` entry with `specularGlossiness` (RGB specular, sRGB; A smoothness) or `specularColor`, a glTF material with
+  `KHR_materials_pbrSpecularGlossiness` (its diffuse, map, factors; `ModGlbImages` marks both maps as colour) and a kit skin's
+  `specularGlossiness` take the `ModSpec_*` templates (URP's `_SPECULAR_SETUP`, `_SpecGlossMap`; `ModAssetsGuard` keeps the
+  keyword on them for builds; assets built before them fall back to the metallic ones). Galaxy on Fire 3 lights its hulls
+  that way: a coloured specular map over the diffuse (structures: the `_n_s_g` map's B x `Specular_Color` x
+  `Specular_Multiplier`, gloss in A; ships: their `specular_gloss` map), no metal; as metallic 0 the GoF3 Systems mod's
+  stations, gates and capital ships had a flat 4 % and looked matte, and the ships lost their panel masks and the gold
+  schemes' gold. GoF3's values are gamma-space shader values, so the maps are read as sRGB (0.4 -> a reflectance of 0.13).
+  Textures load from the mod's PNGs,
   compressed with mipmaps. Normal maps (ships / stations / rooms `normal` / `detailNormal`, glTF normal textures, `*_normal`
   texture replacements) are loaded with `normal: true`: Android's normal map encoding is "DXT5nm-style" (Player settings),
   so URP there reads X from alpha and Y from green (`UNITY_ASTC_NORMALMAP_ENCODING`); the game's Normal Map imports are

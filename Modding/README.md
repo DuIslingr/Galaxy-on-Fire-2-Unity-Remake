@@ -876,6 +876,7 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 | `normal`, `normalScale` | Normal map. |
 | `tiling` | How many times the main textures (colour, normal, metallic, emission) repeat over the UVs (default 1): a plating texture laid over a big hull. |
 | `metallicSmoothness`, `metallic`, `smoothness` | Metallic (red) / smoothness (alpha) map; without a map `metallic` sets the metalness. |
+| `specularGlossiness`, `specularColor` | The specular workflow in place of metallic: a map of the specular colour (RGB, sRGB) and smoothness (alpha, times `smoothness`), or a specular colour `[r, g, b]` without a map. A coloured highlight and reflection over the diffuse, not a metal (Galaxy on Fire 3's hulls). A glTF model's `KHR_materials_pbrSpecularGlossiness` materials load the same way. |
 | `emission`, `emissionColor`, `emissionIntensity` | Emission map and / or colour; above 1 it blooms. |
 | `alphaClip` | Cut the diffuse's alpha below this (decals). |
 | `opacity` | Below 1: glass (see-through, reflections stay bright). |
@@ -1273,7 +1274,7 @@ Skin row ("Standard" is the model's own look, then the skins the ship's type may
 |---|---|
 | `id`, `name` | The skin's id (not `none`) and its name in the Customize screen (a string or per language). |
 | `types` | The ship types that may wear it (a ship's `kitType`; none = every type of the kit). |
-| `materials` | Per material whose name contains `material` (the model's own glTF material name, or part of it), the textures that replace its own: `diffuse` (base colour), `emission`, `metallicSmoothness` (URP Lit's layout: R metallic, A smoothness; not glTF's metallic-roughness), `normal`; `color` / `emissionColor` (`[r, g, b]`, 0 to 1) and `emissionIntensity` too. A field left out keeps the model's own; a material no entry names is untouched. PNG or JPG. |
+| `materials` | Per material whose name contains `material` (the model's own glTF material name, or part of it), the textures that replace its own: `diffuse` (base colour), `emission`, `metallicSmoothness` (URP Lit's layout: R metallic, A smoothness; not glTF's metallic-roughness), `specularGlossiness` (RGB specular, A smoothness: on a material in the specular workflow), `normal`; `color` / `emissionColor` (`[r, g, b]`, 0 to 1) and `emissionIntensity` too. A field left out keeps the model's own; a material no entry names is untouched. PNG or JPG. |
 | `engineColor` | `[r, g, b]`: every exhaust's glow in this skin (otherwise the mounts' own `glowColor` / the ship's `engineGlowColor`). |
 | `colors` | A colour scheme the skin brings along: a preset's id, or `{ "slot": value }` like a preset's `colors`. Picking the skin sets them; the colour rows can change them after. |
 | `livery`, `decal` | A livery's / decal's id (below) the skin brings along. |
@@ -1566,7 +1567,7 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | `techLevel` | 0 to 10: which items its shop sells. |
 | `planet` | The planet it orbits: one of the game's planet textures, 0 to 22 or 24 to 26. |
 | `looksLike` | An original station whose model and docking shape it uses. Default: the first original station of its system's race. With a `model` it stands in while the model loads, or when it can't be read. |
-| `model` | Its own 3D model: a glTF / GLB file in the mod (made like a ship's, see [Ship models](#new-ships)), or one of the game's (`"gof2:station_078_midorian"`, as made unless `modelSize` is given). |
+| `model` | Its own 3D model: a glTF / GLB file in the mod (made like a ship's, see [Ship models](#new-ships)), or one of the game's (`"gof2:station_078_midorian"`, as made unless `modelSize` is given). Its first animation (turning rings, sliding arms) plays on a loop, like a ship's. |
 | `modelSize` | The model's largest extent in game units (20 units = 1 m). Default 40000 (2 km); the original stations are 20000-100000. |
 | `modelYaw` | Degrees to turn the model about its up axis. A launch leaves along the station's front (the model's +Z after the turn, toward the orbit's planet); arrivals come from there too. |
 | `modelCentre` | `true` (default): the middle of the model is the station's centre; `false`: the model's own origin is. |
