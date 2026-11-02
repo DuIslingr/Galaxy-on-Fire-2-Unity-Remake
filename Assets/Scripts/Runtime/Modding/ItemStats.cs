@@ -63,6 +63,10 @@ namespace GoF2Remake.Modding
             // costs (Flight.CruiseDrive, Navigation; Modding/README.md "Cruise drives").
             // interstellar 1: it also flies the space between the systems (InterstellarSpace).
             ["cruiseSpeed"] = 133, ["cruiseRange"] = 134, ["cruiseChargeMs"] = 37, ["interstellar"] = 135,
+            // EVERSPACE 2's ship passives on any mounted item, both flight styles (Modding.ModFlight, FlightBonus): fullStopDamage
+            // = the primary guns' damage in % more while the ship stands still; lowSpeedResistance = damage taken in % less once
+            // it has flown slower than 30 m/s for a second (FlightModel.WeaponDamageFactor / DamageTakenFactor).
+            ["fullStopDamage"] = 138, ["lowSpeedResistance"] = 139,
             // An active device (Flight.Device; Modding/README.md "Devices"): device is its type (1 area EMP, 2 EMP shot, 3
             // shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector), the rest its numbers
             // (radius in game units, slow = the speed left in percent, shield cost in percent of the maximum shield).

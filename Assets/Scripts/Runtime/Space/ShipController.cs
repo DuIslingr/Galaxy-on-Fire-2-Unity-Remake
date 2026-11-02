@@ -246,11 +246,18 @@ namespace GoF2Remake.Flight
             UpdateEngineParts();
             // Remake: a boost shakes off the homing missiles locked on this ship (Gun, Target.boosting).
             if (selfTarget == null) selfTarget = GetComponent<Target>();
-            if (selfTarget != null) selfTarget.boosting = Model.IsBoosting;
+            if (selfTarget != null)
+            {
+                selfTarget.boosting = Model.IsBoosting;
+                // Remake mods (FlightBonus.lowSpeedResistance, EVERSPACE 2's low-speed damage reduction): the hits on this ship
+                // x the model's factor (Target.Damage scales by damageFactor before the pools).
+                selfTarget.damageFactor = Model.DamageTakenFactor;
+            }
             // A mod or an event can switch the flight style in flight (Modding.ModFlight): its key layout follows.
             if (useBuiltInInput) GameControls.ApplyStyle();
             Model.TiltMode = tiltMode;
             Model.LevelPitch = Data.Settings.LevelPitch;
+            Model.AutoRoll = Data.Settings.AutoRoll;   // remake: EVERSPACE 2's auto-roll in free flight
             Model.Mass = mass;
             // PlayerEgo::up / right with the mouse cursor: the ramp divisor is 12, i.e. (3.3 - sens) x 20 with sens 2.7.
             Model.Sensitivity = tiltMode ? Data.Settings.TiltSensitivity : mouseSteering ? 2.7f : sensitivity;

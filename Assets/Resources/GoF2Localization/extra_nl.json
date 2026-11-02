@@ -3212,5 +3212,7 @@
  "speedrunResetHelp": "Beëindigt de run nu en bewaart hem als onafgemaakte poging.",
  "speedrunFolder": "Runsmap openen",
  "speedrunFolderHelp": "Runs worden bewaard als LiveSplit-splitbestanden (.lss) voor LiveSplit en splits.io. Zet hier andere .lss-bestanden neer om ermee te vergelijken.",
- "speedrunNewPb": "Nieuw persoonlijk record!"
+ "speedrunNewPb": "Nieuw persoonlijk record!",
+ "autoRoll": "Automatisch rollen naar de horizon (vrije vlucht)",
+ "autoRollHelp": "In vrije vlucht rolt het schip zichzelf vlak met de horizon, zachtjes en pas vanaf 15 graden schuinstand, zoals in EVERSPACE 2 met een controller. Twee seconden onderbroken na een steile klim of duik."
 }

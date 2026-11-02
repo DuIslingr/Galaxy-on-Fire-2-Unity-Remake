@@ -3212,5 +3212,7 @@
  "speedrunResetHelp": "Termina ora la run e la conserva come tentativo incompiuto.",
  "speedrunFolder": "Apri la cartella delle run",
  "speedrunFolderHelp": "Le run vengono salvate come file di split LiveSplit (.lss) per LiveSplit e splits.io. Metti qui altri file .lss per confrontarti con essi.",
- "speedrunNewPb": "Nuovo record personale!"
+ "speedrunNewPb": "Nuovo record personale!",
+ "autoRoll": "Rollio automatico verso l'orizzonte (volo libero)",
+ "autoRollHelp": "In volo libero la nave si rimette da sola in piano con l'orizzonte, dolcemente e solo oltre i 15 gradi di inclinazione, come in EVERSPACE 2 con il controller. Sospeso per due secondi dopo una salita o una picchiata ripida."
 }

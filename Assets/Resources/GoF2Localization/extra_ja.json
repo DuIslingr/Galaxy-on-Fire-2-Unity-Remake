@@ -3212,5 +3212,7 @@
  "speedrunResetHelp": "今すぐランを終了し、未完了の試行として保存します。",
  "speedrunFolder": "ランフォルダを開く",
  "speedrunFolderHelp": "ランは LiveSplit のスプリットファイル（.lss）として保存され、LiveSplit や splits.io で使えます。比較したい他の .lss ファイルはここに置いてください。",
- "speedrunNewPb": "自己ベスト更新！"
+ "speedrunNewPb": "自己ベスト更新！",
+ "autoRoll": "自動ロールで水平に戻す（フリーフライト）",
+ "autoRollHelp": "フリーフライトでは、機体が15度以上傾いたときだけ、ゆっくりと自動で水平に戻ります（コントローラー使用時のEVERSPACE 2と同じ）。急上昇や急降下のあとは2秒間停止します。"
 }

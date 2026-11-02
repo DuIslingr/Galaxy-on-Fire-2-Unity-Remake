@@ -273,6 +273,9 @@ namespace GoF2Remake.Data
         /// forward) or free flight after EVERSPACE 2 (thrust, strafe and up / down held, inertial dampeners, the mouse aiming
         /// through a virtual joystick; Flight.FlightModel's free mode). It also switches the key layout (GameControls).</summary>
         public static int FlightStyle { get => Mathf.Clamp(Mathf.RoundToInt(Get("flightStyle", FlightStyles.Original)), 0, 1); set => Set("flightStyle", Mathf.Clamp(value, 0, 1)); }
+        /// <summary>Remake: EVERSPACE 2's auto-roll in free flight (FlightModel.AutoRoll): the ship rolls itself level with the
+        /// horizon, gently, once it leans past 15 degrees; off by default (EVERSPACE 2 turns it on for a controller only).</summary>
+        public static bool AutoRoll { get => GetBool("autoRoll", false); set => SetBool("autoRoll", value); }
         /// <summary>Remake: Discord Rich Presence (DiscordPresence, desktop).</summary>
         public static bool DiscordPresence { get => GetBool("discordPresence", true); set => SetBool("discordPresence", value); }
         /// <summary>options[0x11] = 0: the accelerometer steers (MGame::handleAccelerometer).</summary>
@@ -600,7 +603,7 @@ namespace GoF2Remake.Data
         };
         public static readonly string[] ControlsKeys =
         {
-            "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "invertPitch", "invertYaw", "invertDrillY",
+            "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "autoRoll", "invertPitch", "invertYaw", "invertDrillY",
             "invertDrillX", "invertOrbitY", "invertOrbitX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "mouseSensitivity", "vrGrabControls", "haptics", "stickDeadzone",
             "touchLeftHeight", "touchRightHeight", "floatingTouchStick", "flightStyle", "padGlyphs",
         };

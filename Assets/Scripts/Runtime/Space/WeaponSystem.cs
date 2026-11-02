@@ -179,6 +179,16 @@ namespace GoF2Remake.Flight
         public event Action<float> PrimaryDamageDealt;
         /// <summary>Remake (the strike charge, PlayerDevices): the primary guns' damage x this.</summary>
         [NonSerialized] public float DamageBoost = 1f;
+        /// <summary>Remake mods (FlightBonus.fullStopDamage, EVERSPACE 2's full-stop weapon bonus): the primary guns' damage x the
+        /// flight model's factor while the ship stands still (FlightModel.WeaponDamageFactor).</summary>
+        float FlightDamageFactor
+        {
+            get
+            {
+                if (shipController == null) shipController = GetComponent<ShipController>();
+                return shipController != null && shipController.Model != null ? shipController.Model.WeaponDamageFactor : 1f;
+            }
+        }
         /// <summary>Locked target for homing missiles (the radar's ship lock, CombatRadar).</summary>
         public Target LockTarget { get; set; }
         /// <summary>The player's own hittable object: never hit by its own guns.</summary>
@@ -597,7 +607,7 @@ namespace GoF2Remake.Flight
             bool missile = r.gun.isSecondary;
             bool wasAlive = target.Alive;
             target.lastPlayerWeapon = r.gun.itemIndex;
-            float damage = missile && target.isAsteroid ? 9999f : missile ? r.gun.damage : r.gun.damage * DamageBoost;
+            float damage = missile && target.isAsteroid ? 9999f : missile ? r.gun.damage : r.gun.damage * DamageBoost * FlightDamageFactor;
             if (!missile && wasAlive && target.isShip) PrimaryDamageDealt?.Invoke(damage);
             if (Cheats.OneHitKills && !target.isPlayer) damage = 99999999f;
             target.Damage(damage, false, r.gun.bullets[bullet].velocity, r.gun.shieldFactor);

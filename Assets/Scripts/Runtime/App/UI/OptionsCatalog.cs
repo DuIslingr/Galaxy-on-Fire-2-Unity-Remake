@@ -193,6 +193,7 @@ namespace GoF2Remake.UI
             ["sensitivity"] = ("sensitivityHelp", "How quickly the ship turns when you steer."),
             ["keyAutofire"] = ("keyAutofireHelp", "Press fire twice quickly and the guns keep firing until you press it again, like the touch fire button."),
             ["levelPitch"] = ("levelPitchHelp", "Level out also brings the nose to the horizon, not only the wings."),
+            ["autoRoll"] = ("autoRollHelp", "In free flight the ship rolls itself level with the horizon, gently and only once it leans past 15 degrees, as EVERSPACE 2 does with a controller. Paused for two seconds after a steep climb or dive."),
             ["invert"] = ("invertYHelp", "Pushing up points the nose down, like a flight stick."),
             ["invertYaw"] = ("invertXHelp", "Pushing left turns the ship right."),
             ["invertDrillY"] = ("invertDrillHelp", "Reverses the drill's movement in the mining game."),

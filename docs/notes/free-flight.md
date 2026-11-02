@@ -80,3 +80,19 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   stopped in 1.48 s; the boost 209 / 306 / 320 m/s at +1 / +2 / +3 s, braking 33 m/s^2 after it; the heading turning
   153.1 deg/s (125 x sqrt(1.5), the square root of then; now 169); the mouse's yaw the offset's horizontal share of the radius x the top rate (94.1 / 55.6
   deg/s for 232 / 137 px of 377), nothing back in the dead zone.
+- **Auto-roll** (remake, 2026-11-02, Options > Controls "Auto-roll to the horizon (free flight)", `Settings.AutoRoll`, off by
+  default; `FlightModel.AutoRoll` / `AutoRollInput`, after EVERSPACE 2's `UShipMovementComponent::GenerateAutoRollInput`,
+  decompiled, with the numbers from the component's constructor named by the SDK dump's field layout: `MaxAutoRollInput`
+  0.15, `RollAngleThreshold` 15 deg, `RollAngleTolerance` 3 deg, `PitchAngleThreshold` 81 deg, `PitchInputThreshold` 0.9,
+  `EaseInTime` 2 s; ES2 turns it on per input device, a controller yes, keyboard and mouse no): in free flight, with no roll
+  held and no level-out running, the ship rolls itself toward the horizon with a roll input of at most 0.15 (a fifteenth of
+  the top roll rate, 19 deg/s at handling 100) once it leans past 15 deg, until it is within 3 deg; the input shrinks with
+  the lean below 15 deg; after the nose passes 81 deg or a pitch input beyond 0.9 it is held back and eases in again over
+  2 s (ES2's timer reset to `EaseInTime` on either). The decompiled routine's vector part didn't survive Ghidra (its matrix
+  math), so the bank is measured as `AutoLevelRoll` does (the right wing's drop against the horizon). The original flight
+  keeps its level-out. Tests `FreeFlightTests` (a 40 deg bank levelled within 3 deg, never faster than 0.15 of the roll
+  rate; off by default; the ease-in after a pitch).
+- **ES2 travel-mode flames** (2026-11-02): `EngineFlame.Travel` = the player's `FlightModel.CruiseVisual` into the flame
+  shader's `_Travel` (EVERSPACE 2's TravelMode custom primitive data 21: the flame 1 + 4 x longer and in `_TravelColor`,
+  lit whatever the thrust), so an ES2 kit's flames cruise as in ES2 (the cruise drive, the fast-forward cruise). The
+  cruise's wider view was already the boost's (`ChaseCamera`: `BoostVisualPercent` includes `CruiseVisual`).

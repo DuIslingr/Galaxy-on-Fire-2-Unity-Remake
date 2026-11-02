@@ -76,16 +76,24 @@ namespace GoF2Remake.Flight
     {
         public float topSpeed, turnRate, strafeSpeed, acceleration;
         public int boostFactor;
+        /// <summary>Remake, after EVERSPACE 2's ship passives (BP_Ship_Player's TickItemEffects): fullStopDamage = the primary
+        /// guns' damage in % more while the ship stands still (FullStopWeaponDamageIncrease: its WeaponBoost condition while
+        /// the velocity is nearly zero); lowSpeedResistance = damage taken in % less once the ship has flown slower than 30 m/s
+        /// (3000 cm/s) for a second (LowSpeedDamageResistanceIncrease: the Gunship's DamageReduction condition, added by a
+        /// 1 s timer). Both add up like the other bonuses; FlightModel.WeaponDamageFactor / DamageTakenFactor.</summary>
+        public float fullStopDamage, lowSpeedResistance;
 
         public FlightBonus Add(FlightBonus o)
         {
             if (o == null) return this;
             topSpeed += o.topSpeed; turnRate += o.turnRate; strafeSpeed += o.strafeSpeed; acceleration += o.acceleration;
+            fullStopDamage += o.fullStopDamage; lowSpeedResistance += o.lowSpeedResistance;
             if (o.boostFactor > 0) boostFactor = o.boostFactor;
             return this;
         }
 
-        public bool IsEmpty => topSpeed == 0f && turnRate == 0f && strafeSpeed == 0f && acceleration == 0f && boostFactor == 0;
+        public bool IsEmpty => topSpeed == 0f && turnRate == 0f && strafeSpeed == 0f && acceleration == 0f && boostFactor == 0
+                               && fullStopDamage == 0f && lowSpeedResistance == 0f;
 
         public static float Scale(float percent) => Mathf.Max(0.1f, 1f + percent / 100f);
     }
@@ -201,6 +209,7 @@ namespace GoF2Remake.Flight
             public bool hasBooster;
             public float speedScale = 1f, turnScale = 1f, strafeScale = 1f, accelScale = 1f;
             public int boostFactor;   // free flight's boost x100 (0 = the booster's)
+            public float fullStopDamage, lowSpeedResistance;   // % (FlightBonus)
         }
         readonly StyleState styleOriginal = new StyleState(), styleFree = new StyleState();
         StyleState Style => FreeFlight ? styleFree : styleOriginal;
@@ -300,6 +309,45 @@ namespace GoF2Remake.Flight
         float boostEnergy = 1f, freeBoostVisual, freeYaw, freePitch, freeRoll;   // the free rates in rad/ms
         bool boostSpent;   // the pool ran empty while the key was held
 
+        // EVERSPACE 2's auto-roll (UShipMovementComponent::GenerateAutoRollInput, run from TickComponent while AutoRoll is set;
+        // the component's constructor gives the numbers, named by the SDK's field layout): the ship rolls itself level with
+        // the horizon (AutoRollHorizonUp) with a roll input of at most MaxAutoRollInput, once it leans past RollAngleThreshold
+        // and until it is within RollAngleTolerance; after the nose passes PitchAngleThreshold or a pitch input beyond
+        // PitchInputThreshold the auto-roll is held back and eases in again over EaseInTime (the decompiled tail: the timer
+        // reset to EaseInTime on either, counting down otherwise). ES2 turns it on per input device (a controller yes, keyboard
+        // and mouse no); the remake's Options > Controls toggle (Settings.AutoRoll, ShipController) is off by default.
+        const float AutoRollMaxInput = 0.15f;          // MaxAutoRollInput
+        const float AutoRollAngleDeg = 15f;            // RollAngleThreshold
+        const float AutoRollToleranceDeg = 3f;         // RollAngleTolerance
+        const float AutoRollPitchAngleDeg = 81f;       // PitchAngleThreshold
+        const float AutoRollPitchInput = 0.9f;         // PitchInputThreshold
+        const float AutoRollEaseInMs = 2000f;          // EaseInTime
+        /// <summary>Free flight: EVERSPACE 2's auto-roll toward the horizon (Settings.AutoRoll).</summary>
+        public bool AutoRoll;
+        float autoRollPauseMs;
+        bool autoRolling;
+
+        /// <summary>The auto-roll's roll input this frame (-1..1, at most AutoRollMaxInput), 0 when it rests: the ship's bank
+        /// from its up and right vectors, the nose's pitch from its forward.</summary>
+        float AutoRollInput(float dtMs, Vector3 forward, Vector3 up, Vector3 right, float pitchInput)
+        {
+            if (!AutoRoll) { autoRolling = false; autoRollPauseMs = 0f; return 0f; }
+            float pitchDeg = Mathf.Asin(Mathf.Clamp(forward.y, -1f, 1f)) * Mathf.Rad2Deg;
+            if (Mathf.Abs(pitchDeg) > AutoRollPitchAngleDeg || Mathf.Abs(pitchInput) > AutoRollPitchInput) autoRollPauseMs = AutoRollEaseInMs;
+            else autoRollPauseMs = Mathf.Max(0f, autoRollPauseMs - dtMs);
+            // the bank: how far the right wing points down against the horizon (AutoLevelRoll's lean), signed, 0 level
+            float lean = -right.y;
+            float bankDeg = Mathf.Atan2(lean, up.y) * Mathf.Rad2Deg;
+            float bank = Mathf.Abs(bankDeg);
+            if (bank > AutoRollAngleDeg) autoRolling = true;
+            else if (bank <= AutoRollToleranceDeg) autoRolling = false;
+            if (!autoRolling) return 0f;
+            float share = 1f - autoRollPauseMs / AutoRollEaseInMs;
+            float amount = AutoRollMaxInput * Mathf.Min(1f, bank / AutoRollAngleDeg) * share;
+            // a positive roll input rolls right (rollRad = -freeRoll x dt), so the lean's sign is rolled against
+            return -Mathf.Sign(lean) * amount;
+        }
+
         /// <summary>Free flight: the boost's top speed, of the forward one, by the booster: its original boost speed
         /// (PlayerEgo's int(2 b / 100) + 2 u/ms, over the base 2) x 3.2 / 3, so the Me'al boosts like EVERSPACE 2's
         /// measured x3.2: Linear / Cyclotron x1.6, Synchrotron x2.67, Polytron x4.27.</summary>
@@ -346,6 +394,9 @@ namespace GoF2Remake.Flight
             if (Mathf.Abs(roll) > 0.01f) StopLeveling();
             UpdateLevelRequest(input.aim, dtMs);
             SteeringEndsLevelOut(input.aim, dtMs);
+            // EVERSPACE 2's auto-roll (AutoRollInput): only with no roll held and no level-out running
+            if (Mathf.Abs(roll) <= 0.01f && !IsLeveling) roll = AutoRollInput(dtMs, rotation * Vector3.forward, shipUp, shipRight, input.aim.y);
+            else autoRolling = false;
             float rollTop = FreeTopTurnRate(he) * RollScale;   // EVERSPACE 2 rolls as fast as it turns
             freeRoll = Mathf.MoveTowards(freeRoll, roll * rollTop, rollTop / (FreeTurnRampMs / Mathf.Max(0.05f, Inertia)) * dtMs);
             float rollRad = -freeRoll * dtMs;
@@ -427,6 +478,7 @@ namespace GoF2Remake.Flight
             // no key held, whatever the ship's momentum), the forward speed as MoveSpeed.
             float forwardSpeed = Vector3.Dot(FreeVelocity, fwd);
             MoveSpeed = Mathf.Max(0f, forwardSpeed);
+            UpdateSpeedBonuses(dtMs, v.magnitude);
             Throttle = Mathf.Clamp01(thrust);
             EnginesOff = thrust <= 0f && !IsBoosting;
             Braking = false;
@@ -522,6 +574,29 @@ namespace GoF2Remake.Flight
             st.strafeScale = FlightBonus.Scale(b.strafeSpeed);
             st.accelScale = FlightBonus.Scale(b.acceleration);
             st.boostFactor = Mathf.Max(0, b.boostFactor);
+            st.fullStopDamage = b.fullStopDamage;
+            st.lowSpeedResistance = b.lowSpeedResistance;
+        }
+
+        // ---- remake, after EVERSPACE 2: the full-stop and low-speed passives (FlightBonus.fullStopDamage / lowSpeedResistance)
+        const float FullStopUnits = 1e-4f;     // units / ms: Vector_IsNearlyZero on the velocity (BP_Ship_Player's TickItemEffects)
+        const float LowSpeedUnits = 0.6f;      // 30 m/s: VSize(PawnLinearVelocity) <= 3000 cm/s
+        const float LowSpeedDelayMs = 1000f;   // the 1 s timer that adds the Gunship's low-speed damage reduction
+        float lowSpeedMs;
+
+        /// <summary>The ship stands still (its velocity nearly zero): the full-stop weapon bonus applies.</summary>
+        public bool AtFullStop { get; private set; }
+        /// <summary>The primary guns' damage x this: 1 + fullStopDamage % while the ship stands still, else 1.</summary>
+        public float WeaponDamageFactor => AtFullStop ? Mathf.Max(0.1f, 1f + Style.fullStopDamage / 100f) : 1f;
+        /// <summary>The damage the ship takes x this: 1 - lowSpeedResistance % once it has flown below 30 m/s for a second
+        /// (Target.damageFactor on the player's ship), else 1.</summary>
+        public float DamageTakenFactor => lowSpeedMs >= LowSpeedDelayMs ? Mathf.Clamp(1f - Style.lowSpeedResistance / 100f, 0f, 1f) : 1f;
+
+        /// <summary>Each frame's speed (units / ms, the velocity's magnitude) for the passives above.</summary>
+        void UpdateSpeedBonuses(float dtMs, float speed)
+        {
+            AtFullStop = speed < FullStopUnits;
+            lowSpeedMs = speed <= LowSpeedUnits ? lowSpeedMs + Mathf.Max(0f, dtMs) : 0f;
         }
 
         /// <summary>Handling after the hardcore-mode cargo penalty: H*(0.6 + 0.4*(1 - load/max)).</summary>
@@ -754,6 +829,7 @@ namespace GoF2Remake.Flight
 
             // ---- movement -------------------------------------------------------------------------
             float forward = dtMs * StepMoveSpeed(dtMs);
+            UpdateSpeedBonuses(dtMs, MoveSpeed);   // the full-stop / low-speed passives count in the original flight too
 
             float push = 0f;
             if (Mathf.Abs(collisionPush) > CollisionPushCutoff)
