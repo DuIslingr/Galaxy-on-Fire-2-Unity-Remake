@@ -242,6 +242,10 @@ namespace GoF2Remake.Modding
             public Vector3? skyRotation;
             /// <summary>The orbit's own sky (the system skybox's fields), in place of the system's; null: the system's.</summary>
             public Skybox skybox;
+            /// <summary>The second light (GoF2's LIGHT1, the planet's): its colour (gamma, 0..2, black = none) and direction
+            /// (yaw / pitch as "sun"); null: the game's. The scene's ambient (gamma 0..1), null: 0.15 x the sun's.</summary>
+            public Color? light2Color, ambient;
+            public Vector2? light2Direction;
         }
 
         /// <summary>A planet's place in the star map's system view (stations.json "mapPlace").</summary>
@@ -257,7 +261,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };

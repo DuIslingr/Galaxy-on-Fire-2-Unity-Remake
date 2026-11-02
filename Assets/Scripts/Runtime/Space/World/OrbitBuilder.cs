@@ -159,14 +159,15 @@ namespace GoF2Remake.World
             else SetSunGamma(Vector3.zero);
             if (planet != null)
             {
-                // LIGHT1 direction (0, 0, -1) game = toward the orbit planet (Unity +Z); light travels toward -Z.
-                planet.transform.rotation = Quaternion.LookRotation(Vector3.back);
+                // LIGHT1 direction (0, 0, -1) game = toward the orbit planet (Unity +Z); light travels toward -Z. Remake mods: an
+                // orbit's own "light2" direction.
+                planet.transform.rotation = Quaternion.LookRotation(-ToLight2(layout));
                 planet.color = layout.planetLightColor;
                 planet.intensity = planetIntensity;
             }
             // Modified: LIGHT1 in GoF2/Hull's gamma-space sum (see _GoF2PlanetLight)
             bool gammaPlanet = gammaSun && sun != null && planet != null && planet.enabled;
-            Shader.SetGlobalVector("_GoF2PlanetLight", gammaPlanet ? (Vector4)Vector3.forward : Vector4.zero);
+            Shader.SetGlobalVector("_GoF2PlanetLight", gammaPlanet ? (Vector4)ToLight2(layout) : Vector4.zero);
             Shader.SetGlobalVector("_GoF2PlanetColor", gammaPlanet ? (Vector4)layout.planetLightColor : Vector4.zero);   // gamma values
             Shader.SetGlobalVector("_GoF2PlanetLinear", gammaPlanet ? (Vector4)(planet.color.linear * planet.intensity) : Vector4.zero);
         }
@@ -181,8 +182,14 @@ namespace GoF2Remake.World
 
         /// <summary>Modified: StarSystem::initLight's LightSetGlobalSceneColorAmbient, kA x the sun colour (gamma): kA 0.15, 0.7
         /// in the supernova system (texture 15) but at mission 89 and from 158, where the sun colour is halved first.</summary>
+        /// <summary>Unity's direction toward the second light (LIGHT1): toward the orbit planet (+Z), or a mod orbit's "light2".</summary>
+        public static Vector3 ToLight2(OrbitLayout layout) =>
+            layout.modLight2Direction.HasValue ? OrbitLayout.DirToUnity(layout.modLight2Direction.Value).normalized : Vector3.forward;
+
         public static Color SceneAmbient(OrbitLayout layout)
         {
+            if (layout.modAmbient.HasValue) return layout.modAmbient.Value;   // remake mods: an orbit's own "ambient"
+
             var c = layout.sunColor;
             float k = 0.15f;
             if (layout.systemTexture == 15)

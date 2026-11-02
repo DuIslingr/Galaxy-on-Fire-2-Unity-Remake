@@ -85,6 +85,10 @@ namespace GoF2Remake.World
         public List<(int item, int chance)> modOres;
         /// <summary>Remake mods: the orbit's own sky turn (stations.json orbit "skyRotation", Unity degrees), null: the system's.</summary>
         public Vector3? modSkyRotation;
+        /// <summary>Remake mods: the second light's direction toward it (game space; stations.json orbit "light2"), null: the
+        /// game's (toward the orbit planet); the scene's ambient (orbit "ambient", gamma), null: OrbitBuilder.SceneAmbient's.</summary>
+        public Vector3? modLight2Direction;
+        public Color? modAmbient;
 
         // Level::initParticleSystems
         public Color dustFogTint;
@@ -223,6 +227,9 @@ namespace GoF2Remake.World
             if (m.asteroidType >= 0) asteroidType = m.asteroidType;
             if (m.ores != null) modOres = m.ores;
             if (m.skyRotation.HasValue) modSkyRotation = m.skyRotation;
+            if (m.light2Color.HasValue) planetLightColor = m.light2Color.Value;
+            if (m.light2Direction.HasValue) modLight2Direction = ModDirection(m.light2Direction.Value.x, m.light2Direction.Value.y);
+            if (m.ambient.HasValue) modAmbient = m.ambient;
             if (m.fog == false) fog = false;
             else if (m.fog == true)
             {

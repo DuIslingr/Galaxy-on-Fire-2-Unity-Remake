@@ -219,6 +219,26 @@ namespace GoF2Remake.Modding
                 if (!(sun is JArray sa) || sa.Count != 2) throw new ModJsonException($"{where}: orbit \"sun\" must be [yaw, pitch] (degrees)");
                 s.sun = new Vector2((float)sa[0], Mathf.Clamp((float)sa[1], -89f, 89f));
             }
+            if (ModJson.Get(o, "light2") is JToken l2)
+            {
+                if (l2.Type == JTokenType.Boolean && !(bool)l2) s.light2Color = Color.black;
+                else if (l2 is JObject lo)
+                {
+                    if (ModJson.Get(lo, "color") is JToken lc)
+                    {
+                        if (!(lc is JArray la) || la.Count != 3) throw new ModJsonException($"{where}: orbit light2 \"color\" must be [r, g, b] (0..2)");
+                        s.light2Color = new Color(Mathf.Clamp((float)la[0], 0f, 2f), Mathf.Clamp((float)la[1], 0f, 2f), Mathf.Clamp((float)la[2], 0f, 2f));
+                    }
+                    if (ModJson.Has(lo, "yaw") || ModJson.Has(lo, "pitch"))
+                        s.light2Direction = new Vector2(ModJson.Float(lo, "yaw", 0f, StationsFile), Mathf.Clamp(ModJson.Float(lo, "pitch", 0f, StationsFile), -89f, 89f));
+                }
+                else throw new ModJsonException($"{where}: orbit \"light2\" is false or {{ \"color\": [r, g, b], \"yaw\", \"pitch\" }}");
+            }
+            if (ModJson.Get(o, "ambient") is JToken am)
+            {
+                if (!(am is JArray aa) || aa.Count != 3) throw new ModJsonException($"{where}: orbit \"ambient\" must be [r, g, b] (0..1)");
+                s.ambient = new Color(Mathf.Clamp01((float)aa[0]), Mathf.Clamp01((float)aa[1]), Mathf.Clamp01((float)aa[2]), 1f);
+            }
             if (ModJson.Get(o, "skybox") is JToken sb) s.skybox = ParseSkybox(mod, sb, $"{where}: orbit");
             if (ModJson.Get(o, "skyRotation") is JToken sr)
             {
