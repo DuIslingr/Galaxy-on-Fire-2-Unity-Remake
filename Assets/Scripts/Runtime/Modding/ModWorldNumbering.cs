@@ -219,6 +219,7 @@ namespace GoF2Remake.Modding
                 if (!(sun is JArray sa) || sa.Count != 2) throw new ModJsonException($"{where}: orbit \"sun\" must be [yaw, pitch] (degrees)");
                 s.sun = new Vector2((float)sa[0], Mathf.Clamp((float)sa[1], -89f, 89f));
             }
+            if (ModJson.Get(o, "skybox") is JToken sb) s.skybox = ParseSkybox(mod, sb, $"{where}: orbit");
             if (ModJson.Get(o, "skyRotation") is JToken sr)
             {
                 if (!(sr is JArray ra) || ra.Count != 3 || ra.Any(v => v.Type != JTokenType.Integer && v.Type != JTokenType.Float))
@@ -251,7 +252,8 @@ namespace GoF2Remake.Modding
         public static IEnumerable<string> BackdropTextures()
         {
             Database.Load();
-            var sky = skyboxes.Values.SelectMany(s => new[] { s.nebula, s.stars }).Where(n => n != null);
+            var sky = skyboxes.Values.Concat(orbits.Values.Select(o => o.skybox).Where(b => b != null))
+                .SelectMany(s => new[] { s.nebula, s.stars }).Where(n => n != null);
             return planetTextures.Values.Concat(sunTextures.Values).Concat(mapTextures.Values).Concat(sky).Distinct().ToList();
         }
         public static Skybox SkyOf(int system) => skyboxes.TryGetValue(system, out var s) ? s : null;

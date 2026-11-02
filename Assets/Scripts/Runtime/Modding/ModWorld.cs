@@ -240,6 +240,8 @@ namespace GoF2Remake.Modding
             /// <summary>The sky's turn in this orbit ([x, y, z] Unity degrees, as the system's skybox "rotation"), over the
             /// system's "rotation" / "sunAligned" and the game's per-station turn; null: those.</summary>
             public Vector3? skyRotation;
+            /// <summary>The orbit's own sky (the system skybox's fields), in place of the system's; null: the system's.</summary>
+            public Skybox skybox;
         }
 
         /// <summary>A planet's place in the star map's system view (stations.json "mapPlace").</summary>
@@ -255,7 +257,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };

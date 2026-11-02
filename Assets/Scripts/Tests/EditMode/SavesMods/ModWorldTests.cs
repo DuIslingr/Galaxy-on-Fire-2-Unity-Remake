@@ -265,6 +265,21 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AnOrbitMayHaveItsOwnSky()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("sky/h2.png", "x"),
+                ("stations.json", "[ { 'override': 78, 'orbit': { 'skybox': { 'nebula': 'sky/h2.png', 'stars': 1, 'nebulaBrightness': 0.5 } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var own = ModWorld.OrbitOf(78).skybox;
+            Assert.AreEqual("mod:t_world|sky/h2.png", own.nebula);
+            Assert.AreEqual(1, own.starsLayer);
+            Assert.AreEqual(0.5f, own.nebulaBrightness);
+            Assert.IsNull(ModWorld.OrbitOf(78).skyRotation);
+            CollectionAssert.Contains(ModWorld.BackdropTextures().ToList(), "mod:t_world|sky/h2.png", "decoded with the other backdrops");
+        }
+
+        [Test]
         public void TheExamplesMapPlanetAndRing()
         {
             Frontier();

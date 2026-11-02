@@ -62,6 +62,8 @@ namespace GoF2Remake.World
             var rotation = SkyRotation(layout);
             // Remake mods: a system's own sky (systems.json "skybox": panorama / cube-strip images, the star layer, a turn).
             var mod = layout.systemIndex >= 0 && nebulaOverride < 0 ? Modding.ModWorld.SkyOf(layout.systemIndex) : null;
+            // (a station's orbit may have its own: stations.json orbit "skybox", the GoF3 Systems mod's sky of each GoF3 level)
+            if (layout.systemIndex >= 0 && nebulaOverride < 0 && Modding.ModWorld.OrbitOf(layout.stationIndex)?.skybox is Modding.ModWorld.Skybox own) mod = own;
             if (mod != null)
             {
                 SetModLayer(sky, mod.nebula, "_NebulaMap", "_NEBULA_PANORAMA", "_NEBULA_STRIP");
