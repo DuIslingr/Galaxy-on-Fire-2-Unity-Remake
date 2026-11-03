@@ -449,6 +449,7 @@ namespace GoF2Remake.World
                 foreach (var st in spec.extraLoot) if (st != null && st.amount > 0) loot.Add(new ItemStack(st.item, st.amount));
                 multiKindLoot = true;
             }
+            SetupRoleLoot();   // remake mods: a loot drone's pieces (NpcShipRoles)
 
             sfx = gameObject.AddComponent<AudioSource>();
             Setup3D(sfx);
@@ -530,6 +531,7 @@ namespace GoF2Remake.World
             route = (Spec.route ?? Route.DefaultPatrol(Spec.race)).Clone();
             // PlayerFighter::revive 0xf3de0: a revived Void ship or Specter carries nothing (the Void's remains come at death).
             loot = Spec.noLoot || Race == Standing.Void || Race == Standing.Specter ? new List<ItemStack>() : RollLoot();
+            SetupRoleLoot();
             crate = null;
             crateDropped = false;
             if (engine != null && engine.clip != null) engine.Play();

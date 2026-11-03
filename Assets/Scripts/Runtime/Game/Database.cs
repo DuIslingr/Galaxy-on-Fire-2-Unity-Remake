@@ -309,7 +309,8 @@ namespace GoF2Remake.Data
         /// "freighter" = it cruises among the orbits' freighters. Either way it never flies as a fighter. Empty = a fighter.</summary>
         public string capital;
         /// <summary>Remake (2026-11-03): its role in a fight (Flight.NpcRoles, EVERSPACE 2's drone types): "sniper", "detonator",
-        /// "webber", "shieldCharger", "armorLink", "antiMissile", "jumpSuppressor"; empty = an ordinary fighter.</summary>
+        /// "webber", "shieldCharger", "armorLink", "antiMissile", "jumpSuppressor", "lootDrone" (never a fighter: the loot drone encounter's,
+        /// Modding.ModTraffic.PickLootDrone); empty = an ordinary fighter.</summary>
         public string role;
     }
 

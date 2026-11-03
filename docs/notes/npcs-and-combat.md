@@ -422,3 +422,13 @@ battle spawns in 156 ms with its hulls.
   `SystemJump.StartCharging` with "Jump suppressed", the story's forced jumps excepted). ES2's metres x3.6 as its ships'.
   The amounts ES2 keeps in NPC levelling data (blast, repair, slow strength, link share) are the remake's picks. Not done:
   the support drones' beams drawn, ES2's frost shield, defusal, stealth and split drones. Tests `NpcRoleTests`.
+  lootDrone (2026-11-03, decompiled BP_LootDrone: NumLoot RandomIntegerInRange(4, 7), DropPercentages i / n x RandomFloat(1 -
+  1 / n, 1 + 1 / n) clamped 0.05..1 checked on each health change, a piece (LootDrop.AddLootFromItems + DropLoot) and
+  BP_Explosion_ProximityMine (no damage set: effect only) each, OnAiEndIdle -> FleeDelayMin..Max 5..10 s -> JumpDrive
+  StartJumpFocus (OrbitJumpChargeDuration 6 s), ApplyEMP AbortJumpFocus, RemoveEMP starts it again): no fire; its cargo
+  plus freighter rolls make 4-7 one-stack pieces (`multiKindLoot`, so what is left drops a crate a piece at death);
+  `NpcRoles.DropThresholds`, checked below the full hull, throws a piece (`MakeCrate` + `Launch`, `Explosion.Spawn` x0.5);
+  found (hit, or the player in its detection box) it steers away from the player (`RoleFlees`, no break-off) and after the delay and charge
+  `JumpOut` (state 6, gone with the rest, nobody's kill). Never a traffic fighter (`ModTraffic.Scan`); the cruise drive's
+  `lootdrone` encounter flies it, neutral; the other ships leave it out of their enemy lists (`Traffic.ConnectPlayers`, ES2's
+  bIgnoredByAI). Not done: ES2's jump charge effect and sound, its marker kept in range once found.

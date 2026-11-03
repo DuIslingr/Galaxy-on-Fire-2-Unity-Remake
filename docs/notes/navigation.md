@@ -121,12 +121,14 @@ the player ship) and `NavigationView` (flight HUD).
   the system's race (`NpcTables.RandomFreighter`) + 2 locals, derelict 2-4 junk crates with a freighter's loot roll (empty:
   energy cells), distress a local under attack by 1 + rank / 8 raiders, flyby 3 locals of a random race; names Extra
   `encounter*`. Modelled on No Man's Sky's pulse encounters and EVERSPACE 2's signals (behaviour only).
-  Remake 2026-11-03: five more kinds for mods' entries (not in the game's table, whose weights still add to 100), after
+  Remake 2026-11-03: six more kinds for mods' entries (not in the game's table, whose weights still add to 100), after
   EVERSPACE 2's encounters (decompiled BP_Encounter_FactionBattle (a battle task, GivesCreditsReward / GiveRenown),
   _Trap (SpawnFactorNPCs 1.25, ChanceForTwoGroups 0.2, the second group 650 m ahead in a 20 deg cone), _HiddenStash (an
   invisible container of spawn group 75 found by a detect-signal task), _ResourceDepot (SpawnFactorNPCs 1.5, Resources 3,
   Containers 2), _HighRiskArea (waves, respawns, boss loot, bFailIfPlayerLeaves), BP_EncounterBase's
-  CalculateRewardCredits): `battle`, `trap` (named as an unknown signal), `stash`, `depot`, `highrisk`
+  CalculateRewardCredits): `battle`, `trap` (named as an unknown signal), `stash`, `depot`, `highrisk`, `lootdrone` (a
+  mod's loot drone, `ModTraffic.PickLootDrone`, else a pirate fighter with `SpawnSpec.role` "lootDrone"; neutral as a pirate
+  (`alwaysNeutral`), after ES2's Freelancer drone that never turns hostile; see the drone roles in npcs-and-combat.md)
   (`CruiseEncounterSpawner`; `EncounterWatch` pays `BattlePay` 1500 + 300 x rank when the battle's raiders are gone, runs the
   high-risk area's three waves and its crate, and stops unpaid past 15 km). Counts and pay are the remake's picks (ES2's
   spawn groups and reward tables aren't on disk). The ES2 importer's mod writes them (encounters.json). Not done: ES2's

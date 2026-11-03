@@ -55,6 +55,7 @@ namespace GoF2Remake.World
             // Turned and fired at a spot on the target's model (AimAt); the break-off range measured to its centre.
             var aimPos = attacking && !followingWaypoint && target != null ? AimAt(target, dtMs) : targetPos;
             var dir = aimPos - transform.position;
+            if (RoleFlees) dir = transform.position - FleeFrom.transform.position;   // (remake: a loot drone runs, NpcShipRoles)
             // PlayerFighter::update's fly state: the player docked at an object (PlayerEgo::isDockedToDockingPoint) is circled
             // at +-12000 instead of +-8000, and not fired at while it is above the ship (0xf2cfa).
             bool dockedPlayer = target != null && target.isPlayer && ObjectDocking.PlayerDocked;

@@ -18,6 +18,11 @@
 //   depot     three crates of ore (ES2's SpawnFactorResources 3, Containers 2) guarded by 1.5 x the pirates' count / 2 raiders
 //   highrisk  three waves of raiders, each on the last one's end (ES2's HighRiskArea: waves, respawns, boss loot); after the
 //             third a crate with three loot rolls and twice BattlePay; leaving ends it
+//   lootdrone a loot drone (Flight.NpcRoles' lootDrone: it runs, shedding its loot, and jumps away): one of the mods' (their
+//             ships.json "traffic": { "role": "lootDrone" }, ModTraffic.PickLootDrone), else a pirate fighter flying as one;
+//             neutral, as a pirate (ES2's BP_LootDrone, placed at its locations: a Freelancer that never turns hostile, raises
+//             no wanted level and the other ships ignore; here no friendly-fire rules, and its kill is a pirate's), in the
+//             group the orbit never relaunches (Special)
 // The counts and pay are the remake's picks: ES2 keeps them in its spawn groups and reward tables.
 
 using System.Collections.Generic;
@@ -129,6 +134,13 @@ namespace GoF2Remake.World
                     var wave = new List<NpcShip>();
                     for (int i = 0; i < n; i++) wave.Add(Raider(traffic, at + Jitter(6000f)));
                     EncounterWatch.Start(level, wave, BattlePay(rank) * 2, true, waves: 3, waveSize: n, centre: at);
+                    break;
+                }
+                case CruiseEncounters.LootDrone:
+                {
+                    int ship = Modding.ModTraffic.PickLootDrone();
+                    traffic.SpawnShip(new SpawnSpec { group = NpcGroup.Special, race = Standing.Pirate, ship = ship >= 0 ? ship : NpcTables.RandomFighter(Standing.Pirate),
+                                                      role = ship >= 0 ? null : "lootDrone", alwaysNeutral = true, position = at });
                     break;
                 }
                 default:

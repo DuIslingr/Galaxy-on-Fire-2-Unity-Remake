@@ -17,6 +17,13 @@
 //                    AntiMissileReloadMs (ES2's anti-missile drone: sensing 800 m, perfect aiming)
 //   jumpSuppressor   doesn't fire: while one flies, hostile, in the orbit, the player's Khador Drive won't charge (ES2's
 //                    JumpSuppressorComponent, enabled from BeginPlay until the drone dies; its marker seen from 100 km)
+//   lootDrone        doesn't fire: carries LootMin..LootMax pieces of loot (one crate each) and runs. Once it is hit or the
+//                    player comes within its detection box it flees from the player; FleeDelayMinMs..FleeDelayMaxMs later it charges its jump drive for JumpChargeMs
+//                    and is gone with what it still carries (an EMP stops the charge, which starts over once the EMP wears
+//                    off). Each time its hull falls to one of DropThresholds a piece pops out with a small blast; what is left
+//                    when it dies drops at once (ES2's BP_LootDrone: RandomIntegerInRange(4, 7), its DropPercentages, flee
+//                    delay 5..10 s, OrbitJumpChargeDuration 6 s, ApplyEMP's AbortJumpFocus, BP_Explosion_ProximityMine with
+//                    no damage)
 // The numbers ES2 keeps in its NPC levelling data or runtime attributes (the blast and repair amounts, the slow's strength,
 // the link's share) are the remake's picks.
 
@@ -24,13 +31,15 @@ namespace GoF2Remake.Flight
 {
     public static class NpcRoles
     {
-        public enum Role { None, Sniper, Detonator, Webber, ShieldCharger, ArmorLink, AntiMissile, JumpSuppressor }
+        public enum Role { None, Sniper, Detonator, Webber, ShieldCharger, ArmorLink, AntiMissile, JumpSuppressor, LootDrone }
 
         public const float FireRangeFactor = 2.5f;
         public const float TriggerM = 20f * 3.6f, BlastM = 100f * 3.6f, BlastFactor = 10f;
         public const float WebMs = 4000f, WebSpeedFactor = 0.5f;
         public const float SupportM = 1500f, RepairShare = 0.05f, LinkDamageFactor = 0.5f;
         public const float AntiMissileM = 800f * 3.6f, AntiMissileReloadMs = 1000f;
+        public const int LootMin = 4, LootMax = 7;
+        public const float FleeDelayMinMs = 5000f, FleeDelayMaxMs = 10000f, JumpChargeMs = 6000f;
 
         /// <summary>ships.json's role names (case-insensitive); anything else is None.</summary>
         public static Role Parse(string name)
@@ -44,6 +53,7 @@ namespace GoF2Remake.Flight
                 case "armorlink": case "armourlink": return Role.ArmorLink;
                 case "antimissile": return Role.AntiMissile;
                 case "jumpsuppressor": return Role.JumpSuppressor;
+                case "lootdrone": case "loot": return Role.LootDrone;
                 default: return Role.None;
             }
         }
@@ -53,6 +63,21 @@ namespace GoF2Remake.Flight
 
         /// <summary>A detonator's blast on a ship 'gunDamage' would hit for: BlastFactor x that.</summary>
         public static float BlastDamage(float gunDamage) => gunDamage * BlastFactor;
+
+        /// <summary>A loot drone's 'n' hull shares (0..1) that each drop a piece, 'random' giving 0..1: the i-th (from 1) is
+        /// i / n x a factor of 1 -+ 1 / n, at least 0.05 (the last at about the full hull: its first hit drops one).</summary>
+        public static float[] DropThresholds(int n, System.Func<float> random)
+        {
+            if (n <= 0) return new float[0];
+            var t = new float[n];
+            float step = 1f / n;
+            for (int i = 0; i < n; i++)
+            {
+                float f = (1f - step) + random() * 2f * step;
+                t[i] = System.Math.Min(1f, System.Math.Max(0.05f, (i + 1) * step * f));
+            }
+            return t;
+        }
 
         /// <summary>A shield charger's repair over 'dtMs' for a ship of 'maxHull': RepairShare of it a second.</summary>
         public static float Repair(int maxHull, float dtMs) => maxHull * RepairShare * dtMs / 1000f;

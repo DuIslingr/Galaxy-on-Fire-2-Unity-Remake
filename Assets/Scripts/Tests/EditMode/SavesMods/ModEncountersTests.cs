@@ -76,9 +76,9 @@ namespace GoF2Remake.Tests
         [Test]
         public void AModMayUseEverspaceTwosKinds()
         {
-            ModOn(@"[ { 'id': 'b', 'kind': 'battle' }, { 'id': 'h', 'kind': 'highrisk', 'ships': 3 } ]");
+            ModOn(@"[ { 'id': 'b', 'kind': 'battle' }, { 'id': 'h', 'kind': 'highrisk', 'ships': 3 }, { 'id': 'l', 'kind': 'lootdrone' } ]");
             Assert.IsFalse(Installed(Mod).Broken, AllMessages(Installed(Mod)));
-            Assert.AreEqual(7, ModEncounters.All().Count);
+            Assert.AreEqual(8, ModEncounters.All().Count);
             Assert.AreEqual(3, ModEncounters.All().Find(e => e.kind == "highrisk").ships);
         }
 

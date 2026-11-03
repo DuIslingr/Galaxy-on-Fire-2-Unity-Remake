@@ -2,7 +2,8 @@
 // NpcShip, part: a mod ship's role in a fight (Flight.NpcRoles; ships.json "traffic": { "role" }, EVERSPACE 2's drone types).
 // The steering reads RoleFires / RoleRangeFactor / RoleBreaksOff, GunHit the webber's slow; UpdateRole runs the rest each
 // frame of flight: the detonator's blast, the shield charger's repairs, the armour link's damage share, the anti-missile
-// drone's shots at the player's missiles. JumpSuppressed is the Khador Drive's check (SystemJump).
+// drone's shots at the player's missiles, the loot drone's run (its pieces of loot, its flight and jump; Steer reads
+// RoleFlees). JumpSuppressed is the Khador Drive's check (SystemJump).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -39,12 +40,40 @@ namespace GoF2Remake.World
         bool RoleFires => NpcRoles.Fires(Role);
         float RoleRangeFactor => Role == NpcRoles.Role.Sniper ? NpcRoles.FireRangeFactor : 1f;
         /// <summary>The detonator flies into its target instead of circling away at the break-off range.</summary>
-        bool RoleBreaksOff => Role != NpcRoles.Role.Detonator;
+        bool RoleBreaksOff => Role != NpcRoles.Role.Detonator && !RoleFlees;
+        /// <summary>A loot drone that was found: it flies away from the player.</summary>
+        bool RoleFlees => Role == NpcRoles.Role.LootDrone && lootAwake && FleeFrom != null;
+        Target FleeFrom => traffic != null && traffic.Player != null && traffic.Player.Alive ? traffic.Player : null;
+
+        // The loot drone: the hull shares still to drop a piece at (NpcRoles.DropThresholds, NaN once dropped), whether it was
+        // found, its flight's delay and its jump's charge (ms, -1 = not yet).
+        float[] dropAt;
+        bool lootAwake;
+        float fleeMs = -1f, chargeMs = -1f;
 
         void SetupRole(SpawnSpec spec)
         {
-            Role = NpcRoles.Parse((db?.Ship(spec.ship) as CustomShipData)?.traffic?.role);
+            Role = NpcRoles.Parse(spec.role ?? (db?.Ship(spec.ship) as CustomShipData)?.traffic?.role);
             if (Role == NpcRoles.Role.JumpSuppressor && !suppressors.Contains(this)) suppressors.Add(this);
+        }
+
+        /// <summary>After its cargo is rolled (Setup, Revive): a loot drone's LootMin..LootMax pieces, each a stack of its own,
+        /// its cargo first, then freighter rolls (NpcTables.RollLoot), energy cells when those come up empty.</summary>
+        void SetupRoleLoot()
+        {
+            dropAt = null;
+            lootAwake = false;
+            fleeMs = chargeMs = -1f;
+            if (Role != NpcRoles.Role.LootDrone || Spec.noLoot || db == null) return;
+            int n = Random.Range(NpcRoles.LootMin, NpcRoles.LootMax + 1);
+            var pieces = new List<ItemStack>();
+            foreach (var s in loot) if (s != null && s.amount > 0 && pieces.Count < n) pieces.Add(s);
+            for (int tries = 0; pieces.Count < n && tries < n * 2; tries++)
+                foreach (var s in NpcTables.RollLoot(db, true)) if (pieces.Count < n) pieces.Add(s);
+            while (pieces.Count < n) pieces.Add(new ItemStack(GalaxyMap.EnergyCellItem, Random.Range(1, 5)));
+            loot = pieces;
+            multiKindLoot = true;   // what is left drops a crate a piece (DropCrate)
+            dropAt = NpcRoles.DropThresholds(n, () => Random.value);
         }
 
         void TeardownRole()
@@ -72,6 +101,7 @@ namespace GoF2Remake.World
 
         void UpdateRole(float dtMs)
         {
+            if (Role == NpcRoles.Role.LootDrone) { if (Target.Alive) UpdateLootDrone(dtMs); return; }
             if (Role == NpcRoles.Role.None || !Target.Alive || Hp.empDisabled) { Unlink(); return; }
             if (Role == NpcRoles.Role.Detonator) { UpdateDetonator(); return; }
             roleTickMs += dtMs;
@@ -111,6 +141,39 @@ namespace GoF2Remake.World
                     linked.Add(t);
                 }
             }
+        }
+
+        /// <summary>The loot drone: a piece out at each share of its hull passed; found (hit, or the player within its detection
+        /// box), it runs and then jumps.</summary>
+        void UpdateLootDrone(float dtMs)
+        {
+            if (dropAt != null && Hp.hull < Hp.maxHull)   // (ES2 checks on a change of its health: none at full hull)
+            {
+                float share = (float)Hp.hull / Hp.maxHull;
+                for (int i = 0; i < dropAt.Length; i++)
+                    if (!float.IsNaN(dropAt[i]) && share <= dropAt[i]) { dropAt[i] = float.NaN; DropPiece(); }
+            }
+            if (!lootAwake)
+            {
+                if (Hp.hull >= Hp.maxHull && !(FleeFrom != null && InBox(FleeFrom))) return;
+                lootAwake = true;
+                fleeMs = Random.Range(NpcRoles.FleeDelayMinMs, NpcRoles.FleeDelayMaxMs);
+            }
+            if (fleeMs > 0f) { fleeMs -= dtMs; if (fleeMs <= 0f) chargeMs = 0f; return; }
+            if (Hp.empDisabled) { chargeMs = 0f; return; }   // the EMP stops the charge; it starts over afterwards
+            chargeMs += dtMs;
+            if (chargeMs >= NpcRoles.JumpChargeMs) JumpOut();   // gone with the rest
+        }
+
+        /// <summary>One of its pieces thrown off in a crate of its own, with a small blast.</summary>
+        void DropPiece()
+        {
+            int i = loot.FindIndex(s => s != null && s.amount > 0);
+            if (i < 0 || assets == null) return;
+            var piece = loot[i];
+            loot.RemoveAt(i);
+            MakeCrate(new List<ItemStack> { piece }).Launch(Random.onUnitSphere, CrateBurst);
+            Explosion.Spawn(transform.position, 0.5f);
         }
 
         /// <summary>Within the trigger of its target: the blast on every ship around, then itself.</summary>
