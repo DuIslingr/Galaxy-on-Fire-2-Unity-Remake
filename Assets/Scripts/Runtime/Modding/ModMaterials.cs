@@ -450,6 +450,16 @@ namespace GoF2Remake.Modding
         /// <summary>A ships.json material entry (CustomShipMaterial, see CustomShipBuilder in PR #34 for the original).</summary>
         static readonly int GoF3ParamsId = Shader.PropertyToID("_GoF3Params");
 
+        /// <summary>A material with an emission map or colour draws it: _EMISSION on its copy, whatever the template holds. The
+        /// templates' keyword is lost whenever the Editor re-saves them (a shader reimport did, 2026-11-02: every mod room and
+        /// glow went dark, the Manticore's hangar a flat grey with GoF3's baked lighting in its emission); ModAssetsGuard
+        /// only restores it before a build.</summary>
+        static void Glowing(Material m)
+        {
+            m.EnableKeyword("_EMISSION");
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+        }
+
         public static Material FromSpec(ModInfo mod, CustomShipMaterial e, string name)
         {
             var a = ModAssets.Get();
@@ -505,6 +515,7 @@ namespace GoF2Remake.Modding
                 var ec = Rgb(e.emissionColor, Color.white) * e.emissionIntensity;
                 ec.a = 1f;
                 m.SetColor("_EmissionColor", ec);
+                Glowing(m);
             }
             else m.SetColor("_EmissionColor", Color.black);
             if (em == null && !emColor && !string.IsNullOrEmpty(e.damageEmission))
@@ -699,6 +710,7 @@ namespace GoF2Remake.Modding
             {
                 m.SetTexture("_EmissionMap", emMap);
                 m.SetColor("_EmissionColor", emMap != null && emissive.maxColorComponent <= 0f ? Color.white : emissive);
+                Glowing(m);
             }
             else m.SetColor("_EmissionColor", Color.black);
             if (clip) m.SetFloat("_Cutoff", g.alphaCutoff);

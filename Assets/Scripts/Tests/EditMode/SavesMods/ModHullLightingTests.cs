@@ -110,6 +110,28 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AGlowingEntryGlowsWhateverTheTemplateLost()
+        {
+            // The Editor re-saving the templates drops their _EMISSION (a shader reimport did, 2026-11-02: the Manticore's
+            // hangar went a flat grey, its baked lighting in the emission).
+            var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);
+            bool had = a.litOpaque.IsKeywordEnabled("_EMISSION");
+            a.litOpaque.DisableKeyword("_EMISSION");
+            var m = ModMaterials.FromSpec(null, new CustomShipMaterial { emissionColor = new[] { 1f, 0.5f, 0.2f } }, "glow test");
+            var dark = ModMaterials.FromSpec(null, new CustomShipMaterial(), "dark test");
+            try
+            {
+                Assert.IsTrue(m.IsKeywordEnabled("_EMISSION"), "an emission colour draws");
+                Assert.AreEqual(Color.black, dark.GetColor("_EmissionColor"));
+            }
+            finally
+            {
+                if (had) a.litOpaque.EnableKeyword("_EMISSION");
+                Object.DestroyImmediate(m); Object.DestroyImmediate(dark);
+            }
+        }
+
+        [Test]
         public void AnAdditiveEntryIsAGlowLayer()
         {
             // Galaxy on Fire 3's gate electricity: DiffuseColor x Opacity, UVAnim scrolling, no vertex colours.
