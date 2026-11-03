@@ -522,6 +522,13 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   original save export stops at the first mod entry. "escorts" (ships the wingmen take in turn, `TrafficPlan.AddWanted`),
   "taunt" (said in its name after the uncover line, `Traffic.CriminalSays`), "music" (a mod track for the wanted
   category 4, `UpdateMusic`; an unknown track warns). `ModWantedTests`.
+- **Crates** (remake, 2026-11-02, the user's request for GoF3's loot containers; `ModCrates`, test `ModCratesTests`): ships.json
+  `crate` (a glTF file) / `crateSize` (game units) on `CustomShipData`. Each file loads once at mod load (`ModLoading`,
+  hidden DontDestroyOnLoad templates); `Crate.Model` draws a container (look 0) with it when it is loaded, fitted to the
+  race container's largest mesh extent (the game's ~393 units, bsphere 341) unless the key has a size, else the race's
+  container. `NpcShipDamage` (death and steal crates) passes `ModCrates.KeyOf(Spec.ship)`; `Crate.model` keeps the key
+  ("mod id|path"), which `NetCrate` sends as its data's sixth field so the other players draw the same model (an old
+  client reads five fields: the race's). Not mod-specific: rocks, junk and mission containers keep the game's.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),

@@ -235,6 +235,11 @@ namespace GoF2Remake.Data
         /// <summary>A mod capital ship that jumps away when its hull is depleted instead of being destroyed (World.CapitalRetreat:
         /// EVERSPACE 2's Dreadnought), so an encounter with it can come again.</summary>
         public bool retreat;
+        /// <summary>Remake mods: the loot container this ship leaves when it dies or is robbed (Modding.ModCrates): a glTF / GLB
+        /// file in the mod, drawn in place of its race's container, as big as that container unless 'crateSize' (its largest
+        /// extent, game units) says otherwise; none = the race's.</summary>
+        public string crate;
+        public float crateSize;
     }
 
     /// <summary>Remake mods: EVERSPACE 2's per-ship switches of its engine effects (a ship blueprint's SpawnEngineGlow /
