@@ -308,6 +308,9 @@ namespace GoF2Remake.Data
         /// (instead of the Terran battleship / the Vossk battleship, and in Nivelian / Midorian systems, which have none),
         /// "freighter" = it cruises among the orbits' freighters. Either way it never flies as a fighter. Empty = a fighter.</summary>
         public string capital;
+        /// <summary>Remake (2026-11-03): its role in a fight (Flight.NpcRoles, EVERSPACE 2's drone types): "sniper", "detonator",
+        /// "webber", "shieldCharger", "armorLink", "antiMissile", "jumpSuppressor"; empty = an ordinary fighter.</summary>
+        public string role;
     }
 
     /// <summary>Remake mods: a mod ship in the ordinary ship dealers' lists (Shop.GenerateShips): each time a station's dealer

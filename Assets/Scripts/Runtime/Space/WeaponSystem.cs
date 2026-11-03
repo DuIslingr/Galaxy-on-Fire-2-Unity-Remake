@@ -162,6 +162,29 @@ namespace GoF2Remake.Flight
             return 0;
         }
 
+        /// <summary>Remake mods (an anti-missile drone, NpcRoles): the nearest of this ship's live homing missiles within 'reachM' of
+        /// 'from' is shot down (its burst as the point defense's); false = none in reach.</summary>
+        public bool ShootDownMissile(Vector3 from, float reachM)
+        {
+            Gun best = null;
+            int bi = -1;
+            float bd = reachM * reachM;
+            foreach (var r in rigs)
+            {
+                var g = r.gun;
+                if (!g.isSecondary || !g.Homing || g.Mirror) continue;
+                for (int i = 0; i < g.bullets.Length; i++)
+                {
+                    if (!g.IsActive(i)) continue;
+                    float d = (g.bullets[i].position - from).sqrMagnitude;
+                    if (d < bd) { bd = d; best = g; bi = i; }
+                }
+            }
+            if (best == null) return false;
+            PointDefense.Exploded?.Invoke(best.ShootDown(bi));
+            return true;
+        }
+
         /// <summary>The flight menu's pick (MGame::OnTouchEnd, keys 0x2000 / 0x4000 / 0x8000 / 0x10000).</summary>
         public void SelectSecondary(int item)
         {

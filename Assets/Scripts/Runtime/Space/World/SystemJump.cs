@@ -472,8 +472,18 @@ namespace GoF2Remake.World
         /// <summary>The warp starting over this orbit as the ship is drawn into the hole, 0..1.</summary>
         public float RiftWarp => rift != null ? KhadorTimeline.RiftWarp(animMs, riftCrossMs) : 0f;
 
+        bool suppressedShown;
+
         void StartCharging()
         {
+            // Remake mods: a hostile jump suppressor in the orbit holds the drive (NpcRoles; the charge starts once it's gone).
+            if (!storyForced && NpcShip.JumpSuppressed)
+            {
+                if (!suppressedShown) Message?.Invoke(Localization.Extra("jumpSuppressed", "Jump suppressed: destroy the suppressor drone"));
+                suppressedShown = true;
+                return;
+            }
+            suppressedShown = false;
             if (toInterstellar)
             {
                 int leg = nav.Drive != null ? nav.Drive.cellsPerLeg : 1;

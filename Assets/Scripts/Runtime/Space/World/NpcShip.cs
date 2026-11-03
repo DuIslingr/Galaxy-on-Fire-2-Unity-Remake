@@ -393,6 +393,7 @@ namespace GoF2Remake.World
             Target.hitpoints.SetEmp(spec.empPoints > 0 ? spec.empPoints : NpcTables.Emp(kind), NpcTables.EmpRecoveryMs(kind));   // also with a hull override
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
             Target.SlowBy = (ms, factor, noTurn) => { if (Target.Alive && !Target.phased) slow.Apply(ms, factor, noTurn); };
+            SetupRole(spec);   // remake mods: its traffic role (NpcShipRoles)
             Target.displayName = !string.IsNullOrEmpty(spec.name) ? spec.name : spec.nameText >= 0 ? Localization.Get(spec.nameText) : null;
             if (spec.speed > 0f) speed = baseSpeed = spec.speed;
             alwaysEnemy = spec.alwaysEnemy;
@@ -542,6 +543,7 @@ namespace GoF2Remake.World
 
         void OnDestroy()
         {
+            TeardownRole();
             cloak?.Dispose();
             EngineVoices.Unregister(engine);
         }
@@ -597,6 +599,8 @@ namespace GoF2Remake.World
             if (Asleep) { UpdateSleep(); return; }
             if (IsTurret) { UpdateTurret(dtMs); return; }
             if (parked || frozen) return;   // parked: a target that neither flies nor shoots
+            UpdateRole(dtMs);   // remake mods: a drone's role (NpcShipRoles)
+            if (!Target.Alive) return;   // (a detonator went off)
             if (scriptedSpeed >= 0f)
             {
                 // AEGeometry::moveForward never touches the fighter's speed (+0x1e0): released, the AI flies at its own
