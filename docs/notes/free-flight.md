@@ -134,3 +134,16 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   centre (which then costs this instead of the original's 20 and is still destroyed), and the maximum is the hull's and
   the armour's; 3 % of it at 50 m/s, a quarter at 200 m/s, all at 500 m/s. Tests `Es2ShipEffectsTests` (the threshold, the
   exponent, the full hull at strength 1).
+- **ES2 boost feel** (2026-11-02; decompiled `UShipMovementComponent::StartBoosting` / `StopBoosting` / `TickComponent` /
+  `ChangeBoostEnergy`, `AESPawn::StartBoosting`, `AESPlayerController::InputStartBoosting` / `InputStopBoosting`,
+  `UESGameUserSettings::GetBoostAsToggle`, in `es2_re/ghidra/boost.c` / `boost2.c`): a boost on an empty pool is refused
+  silently (StartBoosting returns when the energy is at 0, bUseEnergyForBoost and BoostEnergyConsumption > 0); the boost
+  that runs dry is stopped by the tick, its energy set to 0, and `TryToBoostWithEnergyDepletedSound` plays (the remake:
+  `FlightModel.BoostRanDry` the frame the pool empties, `PlayerEngine` plays a mod ship's "boostDepleted" sound beside
+  `boostStop`; the ES2 importer writes ES2's cue as it). The boost-as-toggle setting (per device in ES2: a press while
+  boosting stops, else starts): Options > Controls "Boost is a toggle (free flight)", `Settings.BoostToggle`, off by
+  default; `ShipController.BoostInput` latches a press only when `FlightModel.CanStartBoost`, and a boost that ran dry
+  unlatches. Not taken: `BoostRechargeDelay` (the timer StopBoosting sets before the regeneration resumes: no nonzero
+  default found in the blueprint or the constructor dump, the remake refills at once). The "momentum on boost stop" of the
+  candidate list is a legendary thruster's buildup condition (`BP_Condition_Buildup_Momentum`), an item perk, not flight.
+  Landing gear: ES2's ships have none (no gear assets or animations; the landing dust is `Es2Dock`'s already).

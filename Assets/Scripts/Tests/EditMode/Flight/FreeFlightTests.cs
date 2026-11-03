@@ -119,6 +119,33 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(174f, Fly(m, 1000f, Thrust(0f)), 8f);
         }
 
+        [Test]
+        public void ABoostThatRunsDryReportsItForOneFrameAndWaitsForAFreshPress()
+        {
+            // EVERSPACE 2's tick: the energy at 0 while boosting stops the boost (TryToBoostWithEnergyDepletedSound); its
+            // StartBoosting returns silently on an empty pool; here the pool restarts from a fifth full on a fresh press.
+            using var cheat = new SettingsScope<bool>(() => Cheats.NoEquipmentCooldown, v => Cheats.NoEquipmentCooldown = v);
+            Cheats.NoEquipmentCooldown = false;
+            var m = Model(boostSpeed: 200, boostMs: 1000);
+            Assert.IsTrue(m.CanStartBoost, "a full pool");
+            m.BoostHeld = true;
+            int dryFrames = 0;
+            for (int i = 0; i < 120; i++)
+            {
+                m.StepFree(Thrust(), Step, Quaternion.identity, Vector3.up, Vector3.right);
+                if (m.BoostRanDry) dryFrames++;
+            }
+            Assert.AreEqual(1, dryFrames, "reported on the one frame the pool empties (1 s of boost in 1.2 s of frames)");
+            Assert.IsFalse(m.IsBoosting);
+            Assert.IsFalse(m.CanStartBoost, "spent while the key is still held");
+            m.BoostHeld = false;
+            Fly(m, 3000f, Thrust());   // recharges 0.3 of 10 s: past the fifth it restarts from
+            Assert.IsTrue(m.CanStartBoost, "released and a fifth full again");
+            m.BoostHeld = true;
+            Fly(m, 50f, Thrust());
+            Assert.IsTrue(m.IsBoosting);
+        }
+
         // ---- EVERSPACE 2's auto-roll (FlightModel.AutoRoll: GenerateAutoRollInput's numbers from the component's constructor:
         // at most 0.15 of the roll rate once the bank passes 15 deg, until within 3 deg, held back 2 s after a steep pitch)
 

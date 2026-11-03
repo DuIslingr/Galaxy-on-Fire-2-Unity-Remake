@@ -90,6 +90,7 @@ namespace GoF2Remake.Tests
             {
                 Assert.IsTrue(Settings.Headlights, "EVERSPACE 2's bHeadlightsEnabled starts on (its HUD warns while they are off)");
                 Assert.IsFalse(Settings.CollisionDamage, "the original's collision rules unless asked for");
+                Assert.IsFalse(Settings.BoostToggle, "the boost is held unless asked for (EVERSPACE 2's keyboard default)");
                 Settings.Headlights = false;
                 Assert.IsFalse(Headlights.On);
                 Headlights.On = true;

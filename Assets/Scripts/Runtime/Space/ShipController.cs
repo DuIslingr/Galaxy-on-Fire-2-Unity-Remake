@@ -142,6 +142,19 @@ namespace GoF2Remake.Flight
         }
         public void SetThrottle(float t) => Model.SetThrottle(t);
         public void Boost() => Model.Boost();
+
+        bool boostLatched;
+        /// <summary>Free flight's boost input: the key held, or with Settings.BoostToggle a press to start and a press to stop
+        /// (EVERSPACE 2's AESPlayerController::InputStartBoosting with GetBoostAsToggle: a press while boosting stops it, else it
+        /// starts one; its StartBoosting returns silently on an empty pool, so a press then latches nothing). A boost that ran
+        /// dry unlatches (a fresh press starts the next).</summary>
+        bool BoostInput(bool live)
+        {
+            if (!Data.Settings.BoostToggle) { boostLatched = false; return live && GameControls.Boost.IsPressed(); }
+            if (Model.BoostRanDry || !live) boostLatched = false;
+            if (live && GameControls.Boost.WasPressedThisFrame()) boostLatched = boostLatched ? false : Model.CanStartBoost;
+            return boostLatched;
+        }
         public void AlignToHorizon() => Model.AlignToHorizon();
 
         /// <summary>The accelerometer steers (FlightHud): the tilt sensitivity and pitch factors apply.</summary>
@@ -275,7 +288,7 @@ namespace GoF2Remake.Flight
                     SteerInput = turretSteer;
                 }
                 Model.FreeFlight = FreeFlightActive;
-                Model.BoostHeld = Model.FreeFlight && useBuiltInInput && !inputLocked && !Navigation.InputHalted && GameControls.Boost.IsPressed();
+                Model.BoostHeld = Model.FreeFlight && BoostInput(useBuiltInInput && !inputLocked && !Navigation.InputHalted);
                 Model.TickBoost(dtMs);   // PlayerEgo::update: the boost and its recharge run on (the mining approach boosts)
                 SpeedMetersPerSecond = ExternalSpeedMetersPerSecond;
                 Model.SyncFree(transform.forward, ExternalSpeedMetersPerSecond / 1000f / metersPerUnit);
@@ -343,7 +356,7 @@ namespace GoF2Remake.Flight
             // Model convention: +x = yaw left, +y = pitch down. Map "stick right = turn right".
             var model = new Vector2(invertYaw ? steer.x : -steer.x, invertPitch ? steer.y : -steer.y);
 
-            Model.BoostHeld = Model.FreeFlight && live && GameControls.Boost.IsPressed();
+            Model.BoostHeld = Model.FreeFlight && BoostInput(live);
             if (Model.FreeFlight && autopilotTarget == null && !inputLocked && !steeringLocked)
             {
                 // In free look the stick (the right one in this layout) and the mouse turn the camera: the ship flies on.

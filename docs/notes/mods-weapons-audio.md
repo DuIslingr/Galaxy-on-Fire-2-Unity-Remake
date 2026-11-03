@@ -108,7 +108,7 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   sniffed)`, #208): the Weapon fx page's "Sound file…" had saved a picked sound as `fx/<item>.tmp` (`AddFile` keeps the
   copy's extension), which the name alone refused, so the weapon kept its game sound on the new build too.
 - **Ship and weapon sounds** (`ModShipSounds`): ships.json `"sounds"` (a new ship or an override; `ShipDef.sounds`,
-  `ModContent.ShipSounds`) = engine / boostStart / boostLoop / boostStop / charger, each a file, a list (random) or { file(s),
+  `ModContent.ShipSounds`) = engine / boostStart / boostLoop / boostStop / boostDepleted (2026-11-02) / charger, each a file, a list (random) or { file(s),
   volume, pitch } with a value or [from, to]; a kit hardpoint rule's `"sound"` { shot, loop, release } (`Rule.sound`,
   `ModHardpoints.SoundOf` by the item's type as the slot). A file missing under its name is taken in another audio format of
   the same name (`Resolve`: the ES2 importer always names .ogg and keeps a .wav where it couldn't encode, and lists `audio/` in

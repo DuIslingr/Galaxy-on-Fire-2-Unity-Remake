@@ -487,6 +487,9 @@ namespace GoF2Remake.Data
         /// <summary>Remake (2026-11-02): the headlights are on (Flight.Headlights; EVERSPACE 2's bHeadlightsEnabled, on by
         /// default). Switched by the Headlights key, not an options row.</summary>
         public static bool Headlights { get => GetBool("headlights", true); set => SetBool("headlights", value); }
+        /// <summary>Remake (2026-11-02): free flight's boost key is a toggle, a press to start and one to stop (EVERSPACE 2's
+        /// "boost as toggle" setting, per input device there; ShipController); off = held, the default.</summary>
+        public static bool BoostToggle { get => GetBool("boostToggle", false); set => SetBool("boostToggle", value); }
         /// <summary>Remake (2026-11-02): running into a station, gate, freighter or asteroid costs hull by the speed of the
         /// impact, after EVERSPACE 2's collision damage (PlayerCollision); off = the original's rules (asteroids 20, the
         /// rest none).</summary>
@@ -610,7 +613,7 @@ namespace GoF2Remake.Data
         };
         public static readonly string[] ControlsKeys =
         {
-            "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "autoRoll", "invertPitch", "invertYaw", "invertDrillY",
+            "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "autoRoll", "boostToggle", "invertPitch", "invertYaw", "invertDrillY",
             "invertDrillX", "invertOrbitY", "invertOrbitX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "mouseSensitivity", "vrGrabControls", "haptics", "stickDeadzone",
             "touchLeftHeight", "touchRightHeight", "floatingTouchStick", "flightStyle", "padGlyphs",
         };

@@ -3217,5 +3217,7 @@
  "autoRollHelp": "En vol libre, le vaisseau se remet de lui-même à l'horizontale, en douceur et seulement au-delà de 15 degrés d'inclinaison, comme dans EVERSPACE 2 à la manette. Suspendu deux secondes après une montée ou un piqué prononcé.",
  "collisionDamage": "Dégâts de collision",
  "collisionDamageHelp": "Heurter une station, une porte, un cargo ou un astéroïde coûte de la coque selon la vitesse de l'impact, comme dans EVERSPACE 2 : rien en dessous de 5 m/s, 3 % de la coque à 50 m/s, un quart à 200 m/s, toute la coque à 500 m/s, une demi-seconde de répit après chaque choc. Désactivé : les règles de l'original (un astéroïde coûte 20, le reste rien).",
- "ctlHeadlights": "Phares allumés / éteints"
+ "ctlHeadlights": "Phares allumés / éteints",
+ "boostToggle": "Boost en bascule (vol libre)",
+ "boostToggleHelp": "En vol libre, une pression sur la touche de boost le lance et une autre l'arrête, au lieu de maintenir la touche, comme le réglage boost en bascule d'EVERSPACE 2. Une pression avec le booster vide ne fait rien."
 }

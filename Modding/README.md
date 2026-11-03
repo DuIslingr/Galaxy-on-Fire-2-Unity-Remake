@@ -906,6 +906,7 @@ The Mod Builder has them on a ship's page under **Camera and damage**.
   "boostStart": { "file": "audio/boost_start.ogg", "volume": 0.4, "pitch": [0.8, 1.2] },
   "boostLoop":  { "file": "audio/boost_loop.ogg", "volume": [0.5, 1.0], "pitch": [1.0, 1.5] },
   "boostStop":  { "file": "audio/boost_stop.ogg", "volume": 0.25 },
+  "boostDepleted": { "file": "audio/boost_dry.ogg", "volume": 0.5 },
   "charger":    { "file": "audio/boost_charge.ogg", "volume": [0.1, 0.6], "pitch": [0.5, 2.0] }
 }
 ```
@@ -913,6 +914,7 @@ The Mod Builder has them on a ship's page under **Camera and damage**.
 - `engine`: the engine loop, from its first `volume` / `pitch` at a standstill to the second at top speed. NPCs flying the
   ship (see `traffic`), its hangar flights and other players' copies of it play it too.
 - `boostStart` / `boostStop`: played once when a boost starts / ends; a `pitch` range is a random pitch in between.
+- `boostDepleted`: played once, beside `boostStop`, when a free-flight boost dies because its booster ran empty (EVERSPACE 2's empty-tank sound); a held key then has to be pressed again.
 - `boostLoop`: a loop while boosting, from its first values as the boost starts to its second at full strength.
 - `charger`: a loop while the booster recharges, from empty to full.
 

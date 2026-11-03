@@ -3217,5 +3217,7 @@
  "autoRollHelp": "In volo libero la nave si rimette da sola in piano con l'orizzonte, dolcemente e solo oltre i 15 gradi di inclinazione, come in EVERSPACE 2 con il controller. Sospeso per due secondi dopo una salita o una picchiata ripida.",
  "collisionDamage": "Danni da collisione",
  "collisionDamageHelp": "Urtare una stazione, un portale, un cargo o un asteroide costa scafo in base alla velocità dell'impatto, come in EVERSPACE 2: niente sotto i 5 m/s, il 3 % dello scafo a 50 m/s, un quarto a 200 m/s, tutto a 500 m/s, mezzo secondo di tregua dopo ogni urto. Disattivato: le regole dell'originale (un asteroide costa 20, il resto niente).",
- "ctlHeadlights": "Fari accesi / spenti"
+ "ctlHeadlights": "Fari accesi / spenti",
+ "boostToggle": "Boost a interruttore (volo libero)",
+ "boostToggleHelp": "In volo libero una pressione del tasto boost lo avvia e un'altra lo ferma, invece di tenere premuto il tasto, come l'impostazione boost a interruttore di EVERSPACE 2. Una pressione con il booster vuoto non fa nulla."
 }

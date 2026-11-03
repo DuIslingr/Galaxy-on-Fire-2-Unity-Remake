@@ -308,6 +308,13 @@ namespace GoF2Remake.Flight
         const float BoostRestartEnergy = 0.2f;   // an emptied pool boosts again from a fifth full
         float boostEnergy = 1f, freeBoostVisual, freeYaw, freePitch, freeRoll;   // the free rates in rad/ms
         bool boostSpent;   // the pool ran empty while the key was held
+        /// <summary>Free flight: this frame the boost died of an empty pool (EVERSPACE 2's UShipMovementComponent::TickComponent:
+        /// the energy at 0 while boosting stops the boost and plays TryToBoostWithEnergyDepletedSound; a mod ship's
+        /// "boostDepleted" sound, PlayerEngine).</summary>
+        public bool BoostRanDry { get; private set; }
+        /// <summary>Free flight: a fresh boost press would start one now (the pool at BoostRestartEnergy or more and not spent;
+        /// EVERSPACE 2's StartBoosting returns silently on an empty pool).</summary>
+        public bool CanStartBoost => hasBooster && !IsBoosting && boostEnergy >= BoostRestartEnergy && !boostSpent;
 
         // EVERSPACE 2's auto-roll (UShipMovementComponent::GenerateAutoRollInput, run from TickComponent while AutoRoll is set;
         // the component's constructor gives the numbers, named by the SDK's field layout): the ship rolls itself level with
@@ -515,17 +522,18 @@ namespace GoF2Remake.Flight
         /// refills in its recharge time; an emptied pool boosts again from BoostRestartEnergy on a fresh press.</summary>
         void UpdateFreeBoost(float dtMs)
         {
+            BoostRanDry = false;
             if (!hasBooster) { IsBoosting = false; CurrentSpeed = TopSpeed; return; }
             if (Data.Cheats.NoEquipmentCooldown) boostEnergy = 1f;
-            // An emptied pool doesn't restart while the key is still held (EVERSPACE 2 answers a boost on an empty pool
-            // with a refusal sound): release and press again.
+            // An emptied pool doesn't restart while the key is still held (EVERSPACE 2's StartBoosting returns silently on
+            // an empty pool; the boost that ran dry played its depleted sound): release and press again.
             if (!BoostHeld) boostSpent = false;
             bool can = IsBoosting ? boostEnergy > 0f : boostEnergy >= BoostRestartEnergy && !boostSpent;
             if (BoostHeld && can)
             {
                 IsBoosting = true;
                 boostEnergy = Mathf.Max(0f, boostEnergy - dtMs / (boostDurationMs > 0 ? boostDurationMs : FreeBoostDurationMs));
-                if (boostEnergy <= 0f) { IsBoosting = false; boostSpent = true; }
+                if (boostEnergy <= 0f) { IsBoosting = false; boostSpent = true; BoostRanDry = true; }
             }
             else
             {
