@@ -398,6 +398,8 @@ namespace GoF2Remake.UI
                 () => Settings.HangarFlights, v => Settings.HangarFlights = v));
             list.Add(Toggle("tutorialHints", OptionPage.Gameplay, () => X("tutorialHints", "Tutorials"),
                 () => Settings.TutorialHints, v => Settings.TutorialHints = v));
+            list.Add(Toggle("collisionDamage", OptionPage.Gameplay, () => X("collisionDamage", "Collision damage"),
+                () => Settings.CollisionDamage, v => Settings.CollisionDamage = v));
             var storyStep = Toggle("showStoryStep", OptionPage.Gameplay, () => X("showStoryStep", "Show story step"),
                 () => Settings.ShowStoryStep, v => Settings.ShowStoryStep = v);
             storyStep.description = () => X("showStoryStepHelp", "The current story step at the bottom right, for bug reports.");

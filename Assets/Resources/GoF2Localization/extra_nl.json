@@ -3214,5 +3214,8 @@
  "speedrunFolderHelp": "Runs worden bewaard als LiveSplit-splitbestanden (.lss) voor LiveSplit en splits.io. Zet hier andere .lss-bestanden neer om ermee te vergelijken.",
  "speedrunNewPb": "Nieuw persoonlijk record!",
  "autoRoll": "Automatisch rollen naar de horizon (vrije vlucht)",
- "autoRollHelp": "In vrije vlucht rolt het schip zichzelf vlak met de horizon, zachtjes en pas vanaf 15 graden schuinstand, zoals in EVERSPACE 2 met een controller. Twee seconden onderbroken na een steile klim of duik."
+ "autoRollHelp": "In vrije vlucht rolt het schip zichzelf vlak met de horizon, zachtjes en pas vanaf 15 graden schuinstand, zoals in EVERSPACE 2 met een controller. Twee seconden onderbroken na een steile klim of duik.",
+ "collisionDamage": "Botsingsschade",
+ "collisionDamageHelp": "Tegen een station, een poort, een vrachtschip of een asteroïde vliegen kost romp naar de snelheid van de inslag, zoals in EVERSPACE 2: niets onder 5 m/s, 3 % van de romp bij 50 m/s, een kwart bij 200 m/s, alles bij 500 m/s, een halve seconde respijt na elke klap. Uit: de regels van het origineel (een asteroïde kost 20, de rest niets).",
+ "ctlHeadlights": "Koplampen aan / uit"
 }

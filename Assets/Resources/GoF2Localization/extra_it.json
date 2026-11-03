@@ -3214,5 +3214,8 @@
  "speedrunFolderHelp": "Le run vengono salvate come file di split LiveSplit (.lss) per LiveSplit e splits.io. Metti qui altri file .lss per confrontarti con essi.",
  "speedrunNewPb": "Nuovo record personale!",
  "autoRoll": "Rollio automatico verso l'orizzonte (volo libero)",
- "autoRollHelp": "In volo libero la nave si rimette da sola in piano con l'orizzonte, dolcemente e solo oltre i 15 gradi di inclinazione, come in EVERSPACE 2 con il controller. Sospeso per due secondi dopo una salita o una picchiata ripida."
+ "autoRollHelp": "In volo libero la nave si rimette da sola in piano con l'orizzonte, dolcemente e solo oltre i 15 gradi di inclinazione, come in EVERSPACE 2 con il controller. Sospeso per due secondi dopo una salita o una picchiata ripida.",
+ "collisionDamage": "Danni da collisione",
+ "collisionDamageHelp": "Urtare una stazione, un portale, un cargo o un asteroide costa scafo in base alla velocità dell'impatto, come in EVERSPACE 2: niente sotto i 5 m/s, il 3 % dello scafo a 50 m/s, un quarto a 200 m/s, tutto a 500 m/s, mezzo secondo di tregua dopo ogni urto. Disattivato: le regole dell'originale (un asteroide costa 20, il resto niente).",
+ "ctlHeadlights": "Fari accesi / spenti"
 }

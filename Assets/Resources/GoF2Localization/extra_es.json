@@ -3214,5 +3214,8 @@
  "speedrunFolderHelp": "Los runs se guardan como archivos de splits de LiveSplit (.lss) para LiveSplit y splits.io. Pon aquí otros archivos .lss para compararte con ellos.",
  "speedrunNewPb": "¡Nuevo récord personal!",
  "autoRoll": "Nivelarse solo con el horizonte (vuelo libre)",
- "autoRollHelp": "En vuelo libre la nave rueda por sí sola hasta quedar nivelada con el horizonte, con suavidad y solo cuando se inclina más de 15 grados, como en EVERSPACE 2 con mando. Se pausa dos segundos tras un ascenso o un picado pronunciado."
+ "autoRollHelp": "En vuelo libre la nave rueda por sí sola hasta quedar nivelada con el horizonte, con suavidad y solo cuando se inclina más de 15 grados, como en EVERSPACE 2 con mando. Se pausa dos segundos tras un ascenso o un picado pronunciado.",
+ "collisionDamage": "Daño por colisión",
+ "collisionDamageHelp": "Chocar contra una estación, una puerta, un carguero o un asteroide cuesta casco según la velocidad del impacto, como en EVERSPACE 2: nada por debajo de 5 m/s, el 3 % del casco a 50 m/s, un cuarto a 200 m/s, todo a 500 m/s, medio segundo de gracia tras cada golpe. Desactivado: las reglas del original (un asteroide cuesta 20, el resto nada).",
+ "ctlHeadlights": "Faros encendidos / apagados"
 }

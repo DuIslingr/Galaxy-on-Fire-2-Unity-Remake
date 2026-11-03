@@ -3214,5 +3214,8 @@
  "speedrunFolderHelp": "Runy są zapisywane jako pliki międzyczasów LiveSplit (.lss) dla LiveSplit i splits.io. Umieść tu inne pliki .lss, aby się z nimi porównywać.",
  "speedrunNewPb": "Nowy rekord osobisty!",
  "autoRoll": "Automatyczny przechył do horyzontu (swobodny lot)",
- "autoRollHelp": "W swobodnym locie statek sam wyrównuje się do horyzontu, łagodnie i dopiero po przechyle ponad 15 stopni, jak w EVERSPACE 2 na kontrolerze. Wstrzymane na dwie sekundy po stromym wznoszeniu lub nurkowaniu."
+ "autoRollHelp": "W swobodnym locie statek sam wyrównuje się do horyzontu, łagodnie i dopiero po przechyle ponad 15 stopni, jak w EVERSPACE 2 na kontrolerze. Wstrzymane na dwie sekundy po stromym wznoszeniu lub nurkowaniu.",
+ "collisionDamage": "Obrażenia od zderzeń",
+ "collisionDamageHelp": "Zderzenie ze stacją, bramą, frachtowcem lub asteroidą kosztuje kadłub zależnie od prędkości uderzenia, jak w EVERSPACE 2: nic poniżej 5 m/s, 3 % kadłuba przy 50 m/s, jedna czwarta przy 200 m/s, cały przy 500 m/s, pół sekundy ochrony po każdym uderzeniu. Wyłączone: zasady oryginału (asteroida kosztuje 20, reszta nic).",
+ "ctlHeadlights": "Reflektory wł. / wył."
 }

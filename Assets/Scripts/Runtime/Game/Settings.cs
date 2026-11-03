@@ -484,6 +484,13 @@ namespace GoF2Remake.Data
         /// 2026-10-27, the user's request: it pulled the nose back as soon as pitch was let go) = the original's roll only,
         /// which steering doesn't end.</summary>
         public static bool LevelPitch { get => GetBool("levelPitch", false); set => SetBool("levelPitch", value); }
+        /// <summary>Remake (2026-11-02): the headlights are on (Flight.Headlights; EVERSPACE 2's bHeadlightsEnabled, on by
+        /// default). Switched by the Headlights key, not an options row.</summary>
+        public static bool Headlights { get => GetBool("headlights", true); set => SetBool("headlights", value); }
+        /// <summary>Remake (2026-11-02): running into a station, gate, freighter or asteroid costs hull by the speed of the
+        /// impact, after EVERSPACE 2's collision damage (PlayerCollision); off = the original's rules (asteroids 20, the
+        /// rest none).</summary>
+        public static bool CollisionDamage { get => GetBool("collisionDamage", false); set => SetBool("collisionDamage", value); }
         /// <summary>Remake (desktop): no sound while the window isn't focused (Bootstrap; the volume, not AudioListener.pause,
         /// which the pause menu uses).</summary>
         public static bool MuteInBackground { get => GetBool("muteInBackground", false); set => SetBool("muteInBackground", value); }
@@ -609,7 +616,7 @@ namespace GoF2Remake.Data
         };
         public static readonly string[] GameplayKeys =
         {
-            "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "pirateEvents", "capitalShips", "kaamoStacking", "kaamoMaxLevel", "kaamoKeepsEquipment", "cloakBay", "informerOriginalRule",
+            "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "collisionDamage", "pirateEvents", "capitalShips", "kaamoStacking", "kaamoMaxLevel", "kaamoKeepsEquipment", "cloakBay", "informerOriginalRule",
             "originalTargetLock", "keepEnemyLock", "modShipTraffic", "dyingCargoMarkers", "cloakLosesPursuers", "empBreaksCloak", "smarterNpcTargeting", "shipCollision", "preciseShipCollision", "autoAdvanceDialogue", "animatedDialogue", "playOnInConversations", "inputHints", "hudMode", "hudScale", "hudOpacity", "discordPresence",
             "farShipMarkers", "markerDistance", "speedrunTimer", "speedrunSplits", "speedrunLength", "speedrunTiming", "speedrunCompare",
             "speedrunPosition", "speedrunLiveSplit",

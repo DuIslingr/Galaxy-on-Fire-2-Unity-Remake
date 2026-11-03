@@ -3214,5 +3214,8 @@
  "speedrunFolderHelp": "런은 LiveSplit과 splits.io용 LiveSplit 스플릿 파일(.lss)로 저장됩니다. 비교할 다른 .lss 파일을 여기에 넣으세요.",
  "speedrunNewPb": "새 개인 최고 기록!",
  "autoRoll": "수평선으로 자동 롤 (자유 비행)",
- "autoRollHelp": "자유 비행에서 함선이 15도 넘게 기울었을 때만 부드럽게 스스로 수평을 되찾습니다. 컨트롤러를 쓰는 EVERSPACE 2와 같습니다. 급상승이나 급강하 뒤에는 2초간 멈춥니다."
+ "autoRollHelp": "자유 비행에서 함선이 15도 넘게 기울었을 때만 부드럽게 스스로 수평을 되찾습니다. 컨트롤러를 쓰는 EVERSPACE 2와 같습니다. 급상승이나 급강하 뒤에는 2초간 멈춥니다.",
+ "collisionDamage": "충돌 피해",
+ "collisionDamageHelp": "정거장, 게이트, 화물선, 소행성에 부딪히면 EVERSPACE 2처럼 충돌 속도에 따라 선체가 깎입니다. 5 m/s 미만은 무피해, 50 m/s에서 선체의 3 %, 200 m/s에서 4분의 1, 500 m/s에서 선체 전부, 충돌 후 0.5초 유예. 꺼짐: 원작 규칙(소행성 20, 나머지 없음).",
+ "ctlHeadlights": "전조등 켜기 / 끄기"
 }

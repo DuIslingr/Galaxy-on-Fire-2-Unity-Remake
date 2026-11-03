@@ -229,6 +229,8 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   it has flown at or below 30 m/s (3000 cm/s) for 1 s (ES2's 1 s timer; `FlightModel.DamageTakenFactor` ->
   `Target.damageFactor` on the player's ship, set by `ShipController` each frame); both styles, so the original's throttle
   at 0 counts as a full stop).
+  Mounts (2026-11-02): `slotType` 6 contrail point and 7 headlight fixture (EVERSPACE 2's `SKT_Contrail` / `SKT_HeadLight`
+  sockets, the ES2 importer writes them; `Modding.Es2Contrails` / `Es2Headlights`, see free-flight.md); `es2Engine.contrails`.
   Ships (new or override): `flightStyle` and `flight` { topSpeed, turnRate, strafeSpeed, acceleration, boostFactor,
   fullStopDamage, lowSpeedResistance, original {},
   free {} } (`ShipData.flightStyle` / `flightBoth` / `flightOriginal` / `flightFree`, non-serialized, set by
