@@ -3212,5 +3212,12 @@
  "speedrunResetHelp": "Beendet den Run jetzt und behält ihn als unvollendeten Versuch.",
  "speedrunFolder": "Run-Ordner öffnen",
  "speedrunFolderHelp": "Runs werden als LiveSplit-Splitdateien (.lss) für LiveSplit und splits.io gespeichert. Lege andere .lss-Dateien hier ab, um mit ihnen zu vergleichen.",
- "speedrunNewPb": "Neue persönliche Bestzeit!"
+ "speedrunNewPb": "Neue persönliche Bestzeit!",
+ "autoRoll": "Automatisch zum Horizont rollen (Freier Flug)",
+ "autoRollHelp": "Im freien Flug rollt sich das Schiff von selbst waagerecht zum Horizont, sanft und erst ab 15 Grad Schräglage, wie in EVERSPACE 2 mit einem Controller. Nach einem steilen Steig- oder Sturzflug zwei Sekunden lang ausgesetzt.",
+ "collisionDamage": "Kollisionsschaden",
+ "collisionDamageHelp": "Wer gegen eine Station, ein Tor, einen Frachter oder einen Asteroiden fliegt, verliert Hülle je nach Aufprallgeschwindigkeit, wie in EVERSPACE 2: nichts unter 5 m/s, 3 % der Hülle bei 50 m/s, ein Viertel bei 200 m/s, alles bei 500 m/s, nach jedem Treffer eine halbe Sekunde Schonfrist. Aus: die Regeln des Originals (ein Asteroid kostet 20, der Rest nichts).",
+ "ctlHeadlights": "Scheinwerfer an / aus",
+ "boostToggle": "Boost als Schalter (Freier Flug)",
+ "boostToggleHelp": "Im freien Flug startet ein Druck auf die Boost-Taste den Boost und ein weiterer beendet ihn, statt die Taste zu halten, wie in EVERSPACE 2 mit der Einstellung Boost als Schalter. Ein Druck bei leerem Booster bewirkt nichts."
 }

@@ -3212,5 +3212,12 @@
  "speedrunResetHelp": "立即结束本次速通，并将其保存为未完成的尝试。",
  "speedrunFolder": "打开速通文件夹",
  "speedrunFolderHelp": "速通保存为 LiveSplit 分段文件（.lss），可用于 LiveSplit 和 splits.io。将其他 .lss 文件放在这里即可与之对比。",
- "speedrunNewPb": "新的个人最佳！"
+ "speedrunNewPb": "新的个人最佳！",
+ "autoRoll": "自动滚转回水平（自由飞行）",
+ "autoRollHelp": "自由飞行中，飞船只有倾斜超过15度时才会平缓地自动回正到水平，与使用手柄的 EVERSPACE 2 一样。急速爬升或俯冲后暂停两秒。",
+ "collisionDamage": "碰撞伤害",
+ "collisionDamageHelp": "撞上空间站、星门、货船或小行星时，会像 EVERSPACE 2 一样按撞击速度扣除船体：低于 5 m/s 无损，50 m/s 时扣 3 % 船体，200 m/s 时扣四分之一，500 m/s 时扣光整个船体，每次撞击后有半秒的保护时间。关闭：原版规则（小行星扣 20，其余无损）。",
+ "ctlHeadlights": "车头灯 开 / 关",
+ "boostToggle": "加速切换模式（自由飞行）",
+ "boostToggleHelp": "自由飞行中，按一下加速键开始加速，再按一下停止，而不用一直按住，如同 EVERSPACE 2 的加速切换设置。推进器耗尽时按下无效。"
 }

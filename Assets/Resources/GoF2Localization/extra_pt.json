@@ -3212,5 +3212,12 @@
  "speedrunResetHelp": "Encerra a run agora e a guarda como tentativa não concluída.",
  "speedrunFolder": "Abrir a pasta de runs",
  "speedrunFolderHelp": "As runs são salvas como arquivos de splits do LiveSplit (.lss) para o LiveSplit e o splits.io. Coloque outros arquivos .lss aqui para se comparar com eles.",
- "speedrunNewPb": "Novo recorde pessoal!"
+ "speedrunNewPb": "Novo recorde pessoal!",
+ "autoRoll": "Rolar sozinho para o horizonte (voo livre)",
+ "autoRollHelp": "No voo livre a nave rola sozinha até ficar nivelada com o horizonte, suavemente e só a partir de 15 graus de inclinação, como no EVERSPACE 2 com comando. Pausa dois segundos após uma subida ou um mergulho acentuado.",
+ "collisionDamage": "Dano de colisão",
+ "collisionDamageHelp": "Bater numa estação, num portal, num cargueiro ou num asteroide custa casco conforme a velocidade do impacto, como em EVERSPACE 2: nada abaixo de 5 m/s, 3 % do casco a 50 m/s, um quarto a 200 m/s, tudo a 500 m/s, meio segundo de tolerância após cada batida. Desligado: as regras do original (um asteroide custa 20, o resto nada).",
+ "ctlHeadlights": "Faróis ligados / desligados",
+ "boostToggle": "Impulso como alternância (voo livre)",
+ "boostToggleHelp": "Em voo livre, uma pressão na tecla de impulso inicia-o e outra pára-o, em vez de manter a tecla, como a definição de impulso alternado do EVERSPACE 2. Premir com o propulsor vazio não faz nada."
 }

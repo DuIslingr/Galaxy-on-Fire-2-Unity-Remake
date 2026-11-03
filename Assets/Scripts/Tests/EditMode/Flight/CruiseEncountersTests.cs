@@ -170,6 +170,25 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void EverspaceTwosKindsAreForModsOnly()
+        {
+            foreach (var k in new[] { CruiseEncounters.Battle, CruiseEncounters.Trap, CruiseEncounters.Stash, CruiseEncounters.Depot, CruiseEncounters.HighRisk })
+            {
+                CollectionAssert.Contains(CruiseEncounters.Kinds, k);
+                Assert.IsNull(CruiseEncounters.BuiltIn().Find(e => e.kind == k), k + ": not in the game's own table");
+                Assert.IsTrue(new CruiseEncounters.Entry { kind = k }.StopsTheDrive, k);
+            }
+        }
+
+        [Test]
+        public void ABattlePaysByRank()
+        {
+            Assert.AreEqual(1500, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(0));
+            Assert.AreEqual(4500, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(10));
+            Assert.IsFalse(GoF2Remake.World.EncounterWatch.AnyLeft(new List<GoF2Remake.World.NpcShip>()), "no raiders left: won");
+        }
+
+        [Test]
         public void NullTableMeansTheBuiltIns()
         {
             var c = new CruiseEncounters(null);

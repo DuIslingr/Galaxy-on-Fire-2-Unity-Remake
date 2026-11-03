@@ -119,6 +119,18 @@ the player ship) and `NavigationView` (flight HUD).
   the system's race (`NpcTables.RandomFreighter`) + 2 locals, derelict 2-4 junk crates with a freighter's loot roll (empty:
   energy cells), distress a local under attack by 1 + rank / 8 raiders, flyby 3 locals of a random race; names Extra
   `encounter*`. Modelled on No Man's Sky's pulse encounters and EVERSPACE 2's signals (behaviour only).
+  Remake 2026-11-03: five more kinds for mods' entries (not in the game's table, whose weights still add to 100), after
+  EVERSPACE 2's encounters (decompiled BP_Encounter_FactionBattle (a battle task, GivesCreditsReward / GiveRenown),
+  _Trap (SpawnFactorNPCs 1.25, ChanceForTwoGroups 0.2, the second group 650 m ahead in a 20 deg cone), _HiddenStash (an
+  invisible container of spawn group 75 found by a detect-signal task), _ResourceDepot (SpawnFactorNPCs 1.5, Resources 3,
+  Containers 2), _HighRiskArea (waves, respawns, boss loot, bFailIfPlayerLeaves), BP_EncounterBase's
+  CalculateRewardCredits): `battle`, `trap` (named as an unknown signal), `stash`, `depot`, `highrisk`
+  (`CruiseEncounterSpawner`; `EncounterWatch` pays `BattlePay` 1500 + 300 x rank when the battle's raiders are gone, runs the
+  high-risk area's three waves and its crate, and stops unpaid past 15 km). Counts and pay are the remake's picks (ES2's
+  spawn groups and reward tables aren't on disk). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
+  Minesweeper (mines), Scavenger Baiting, Incursion and Rift (Leviathan encounters are
+  left out on purpose).
+  The `stash` and `depot` crates stay until emptied (`Crate.keep`), not the crates' 60 s.
   **Between the systems** (2026-11-03, the user: "encounters should pull you out either in their own space or the nearest
   system"; `CruiseEncounters.Between`): the same table rolls on an interstellar leg (single player, as that space is), the
   security the system left's, but not on the way out, on a dive into the Void, or while a system's orbit is built ahead
@@ -132,6 +144,22 @@ the player ship) and `NavigationView` (flight HUD).
   `CruiseEncounterRules` allows, with no scripted arrival (`ScriptedArrival`) or story refusal (`PlanetJumpRefused`).
   An entry's `interstellar`: pirates, derelict and flyby `space`, trader and distress either (50 / 50, deep space when the
   system won't have it), a quest always the system (its graph needs an orbit), `never` keeps it out.
+- **Wreck fields** (remake 2026-11-03, for mods; stations.json `orbit.wrecks` -> `ModWorld.OrbitSpec.wreckCount /
+  wreckCentre / wreckSpread`, `World.WreckField.Spawn` with the gas clouds in `SpaceLevelWormholes`): after EVERSPACE 2's wreck
+  field locations (Wreck Field, Ghost Fleet, Warship Remains: war wrecks among loot containers), each visit lays out
+  `count` (1-60, default 12) wreck containers (the junk crate look) at random in the field's cube (`spread`, default
+  60000; a third as tall), each a freighter's loot roll or 1-5 Space Waste (item 99), kept until emptied (`Crate.keep`). Not
+  in the alien orbit or interstellar space. ES2's wreck meshes aren't placed (only containers). The ES2 importer gives
+  its wreck-field locations one; its outlaw strongholds are pirate-held orbits (`pirateHeld`: outposts and guards).
+- **Hazard volumes** (remake 2026-11-03, for mods; stations.json `orbit.hazards` -> `ModWorld.HazardSpec`, `Flight.Hazards`
+  plain, `World.HazardZones` on the player's ship, attached with the wreck field): after EVERSPACE 2's BP_HeatDamageVolume
+  (DamagePerSecondMax 200 x (1 - d / SphereRadius)^DamageFalloffExponent 2 each DamageInterval 0.25 s; its overheat buildup
+  into Scorching, equipment efficiency, not taken) and BP_RadiationField (BuildupDuration 5 s into
+  BP_Condition_Debuff_Radiated: MaxHitpoints_Hull x 0.85 a token, TokenLimit 10, kept beyond the location, docking removes
+  it): `heat` (dps x falloff, through the shield, `Target.Damage` as an NPC hit), `radiation` (`Hazards.RadiationTokens`,
+  the hull capped at maxHull x 0.85^n in every orbit, `StationLevel` clears it on docking). HUD lines on entering and per
+  token. Not drawn (ES2's post-process tint). Not done: ES2's lightning fields (a storm effect), acid sacks, lightning
+  plants and meltable ice (props with ES2's models).
 - **Menu order** (`Hud::initHudMenu(3)`): outside the alien orbit Asteroid field, Station, Jumpgate, 573 **Waypoint** (a
   player route not finished: the autopilot follows the route, "Target: Waypoint"), "Destination: X"; then every named
   docking target (also in the alien orbit). The original's only restriction is no menu in mission type 0xb7 (the

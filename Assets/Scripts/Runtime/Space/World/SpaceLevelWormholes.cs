@@ -407,6 +407,8 @@ namespace GoF2Remake.World
             FreeLook = FreeLookCamera.Attach(root, chase, Turret);
             // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).
             if (!Layout.interstellar) GasClouds = GasCloudField.Spawn(db, Layout, ctrl, Turret);
+            if (!Layout.interstellar && !Layout.alienOrbit) WreckField.Spawn(db, Layout);   // remake mods: the orbit's wreck field
+            HazardZones.Attach(this);   // remake mods: the orbit's heat / radiation volumes, a radiated hull's cap
             if (Radar != null) Radar.Clouds = GasClouds;   // the spectral filters' markers and lock
             Extender = TimeExtender.Attach(root, db);
 

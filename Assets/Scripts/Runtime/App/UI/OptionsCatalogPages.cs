@@ -281,6 +281,12 @@ namespace GoF2Remake.UI
             // Remake (#37): Level out levels the nose too (the original: the roll only).
             list.Add(Toggle("levelPitch", OptionPage.Controls, () => X("levelPitch", "Level out also levels the nose"),
                 () => Settings.LevelPitch, v => Settings.LevelPitch = v));
+            // Remake: EVERSPACE 2's auto-roll in free flight (FlightModel.AutoRoll; off by default, as ES2 has it for keyboard and mouse).
+            list.Add(Toggle("autoRoll", OptionPage.Controls, () => X("autoRoll", "Auto-roll to the horizon (free flight)"),
+                () => Settings.AutoRoll, v => Settings.AutoRoll = v));
+            // Remake: EVERSPACE 2's boost as a toggle (its GetBoostAsToggle setting; ShipController.BoostInput).
+            list.Add(Toggle("boostToggle", OptionPage.Controls, () => X("boostToggle", "Boost is a toggle (free flight)"),
+                () => Settings.BoostToggle, v => Settings.BoostToggle = v));
             // options[0x10] "Invert controls" (500), split per axis; the mining drill has its own pair.
             list.Add(Toggle("invert", OptionPage.Controls, () => X("invertY", "Invert up / down"), () => Settings.InvertPitch, v => Settings.InvertPitch = v));
             list.Add(Toggle("invertYaw", OptionPage.Controls, () => X("invertX", "Invert left / right"), () => Settings.InvertYaw, v => Settings.InvertYaw = v));
@@ -395,6 +401,8 @@ namespace GoF2Remake.UI
                 () => Settings.HangarFlights, v => Settings.HangarFlights = v));
             list.Add(Toggle("tutorialHints", OptionPage.Gameplay, () => X("tutorialHints", "Tutorials"),
                 () => Settings.TutorialHints, v => Settings.TutorialHints = v));
+            list.Add(Toggle("collisionDamage", OptionPage.Gameplay, () => X("collisionDamage", "Collision damage"),
+                () => Settings.CollisionDamage, v => Settings.CollisionDamage = v));
             var storyStep = Toggle("showStoryStep", OptionPage.Gameplay, () => X("showStoryStep", "Show story step"),
                 () => Settings.ShowStoryStep, v => Settings.ShowStoryStep = v);
             storyStep.description = () => X("showStoryStepHelp", "The current story step at the bottom right, for bug reports.");

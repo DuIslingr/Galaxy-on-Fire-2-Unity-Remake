@@ -168,6 +168,46 @@ namespace GoF2Remake.Modding
                 }
                 if (s.pads.Count == 0) s.pads = null;
             }
+            // Remake (2026-11-03): hazard volumes, EVERSPACE 2's heat volumes and radiation fields (World.HazardZones)
+            if (ModJson.Get(o, "hazards") is JToken hz)
+            {
+                if (!(hz is JArray hzList)) throw new ModJsonException($"{where}: orbit \"hazards\" must be a list [ {{ \"kind\": \"heat\" | \"radiation\", \"centre\", \"radius\" }} ]");
+                s.hazards = new List<HazardSpec>();
+                foreach (var e in hzList)
+                {
+                    if (!(e is JObject h)) throw new ModJsonException($"{where}: a hazard is {{ \"kind\", \"centre\", \"radius\" }}");
+                    foreach (var p in h.Properties())
+                        if (p.Name != "kind" && p.Name != "centre" && p.Name != "center" && p.Name != "radius" && p.Name != "dps") Report(mod, $"{where}: unknown hazard field \"{p.Name}\" (ignored)");
+                    var kindName = ModJson.Str(h, "kind") ?? "";
+                    HazardKind kind;
+                    if (kindName.Equals("heat", StringComparison.OrdinalIgnoreCase)) kind = HazardKind.Heat;
+                    else if (kindName.Equals("radiation", StringComparison.OrdinalIgnoreCase)) kind = HazardKind.Radiation;
+                    else throw new ModJsonException($"{where}: a hazard's \"kind\" is \"heat\" or \"radiation\"");
+                    var centre = Xyz(h, "centre", where) ?? Xyz(h, "center", where);
+                    if (!centre.HasValue) throw new ModJsonException($"{where}: a hazard needs \"centre\": [x, y, z]");
+                    s.hazards.Add(new HazardSpec
+                    {
+                        kind = kind, centre = centre.Value,
+                        radius = Mathf.Clamp(ModJson.Float(h, "radius", 20000f, StationsFile), 1000f, 400000f),
+                        dps = Mathf.Max(0f, ModJson.Float(h, "dps", 10f, StationsFile)),
+                    });
+                }
+                if (s.hazards.Count == 0) s.hazards = null;
+            }
+            // Remake (2026-11-03): a wreck field, EVERSPACE 2's (World.WreckField)
+            if (ModJson.Get(o, "wrecks") is JToken wr)
+            {
+                if (wr.Type == JTokenType.Boolean) s.wreckCount = (bool)wr ? 12 : 0;
+                else if (wr is JObject w)
+                {
+                    foreach (var p in w.Properties())
+                        if (p.Name != "count" && p.Name != "centre" && p.Name != "center" && p.Name != "spread") Report(mod, $"{where}: unknown wrecks field \"{p.Name}\" (ignored)");
+                    s.wreckCount = Mathf.Clamp(ModJson.Int(w, "count", 12, StationsFile), 0, 60);
+                    s.wreckCentre = Xyz(w, "centre", where) ?? Xyz(w, "center", where);
+                    if (ModJson.Has(w, "spread")) s.wreckSpread = Mathf.Clamp(ModJson.Float(w, "spread", 60000f, StationsFile), 5000f, 400000f);
+                }
+                else throw new ModJsonException($"{where}: orbit \"wrecks\" is true, false or {{ \"count\", \"centre\", \"spread\" }}");
+            }
             var ast = ModJson.Get(o, "asteroids");
             if (ast != null && ast.Type == JTokenType.Boolean) s.asteroids = (bool)ast;
             else if (ast is JObject a)

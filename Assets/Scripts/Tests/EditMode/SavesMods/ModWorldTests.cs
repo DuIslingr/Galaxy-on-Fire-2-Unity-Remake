@@ -488,6 +488,46 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(PirateHold.Marked(other, 15));
         }
 
+        // Remake (2026-11-03, EVERSPACE 2's wreck fields): a station's "orbit.wrecks" (World.WreckField).
+        [Test]
+        public void AnOrbitsWreckField()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'wrecks': { 'count': 20, 'centre': [1000, 0, 5000], 'spread': 30000 } } }, { 'override': 79, 'orbit': { 'wrecks': true } }, " +
+                "{ 'override': 80, 'orbit': { 'wrecks': { 'count': 500 } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var a = ModWorld.OrbitOf(78);
+            Assert.AreEqual(20, a.wreckCount);
+            Assert.AreEqual(new Vector3(1000, 0, 5000), a.wreckCentre);
+            Assert.AreEqual(30000f, a.wreckSpread);
+            Assert.AreEqual(12, ModWorld.OrbitOf(79).wreckCount, "true: the default field");
+            Assert.IsNull(ModWorld.OrbitOf(79).wreckCentre);
+            Assert.AreEqual(60, ModWorld.OrbitOf(80).wreckCount, "at most 60");
+            Assert.AreEqual(0, ModWorld.OrbitOf(81)?.wreckCount ?? 0, "none unless asked for");
+            Assert.IsNotEmpty(GoF2Remake.World.WreckField.Loot(null), "an empty roll: Space Waste");
+        }
+
+        [Test]
+        public void AnOrbitsHazards()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'hazards': [ { 'kind': 'heat', 'centre': [0, 0, 20000], 'radius': 8000, 'dps': 15 }, { 'kind': 'Radiation', 'centre': [5000, 0, 0] } ] } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var h = ModWorld.OrbitOf(78).hazards;
+            Assert.AreEqual(2, h.Count);
+            Assert.AreEqual(ModWorld.HazardKind.Heat, h[0].kind);
+            Assert.AreEqual(8000f, h[0].radius);
+            Assert.AreEqual(15f, h[0].dps);
+            Assert.AreEqual(ModWorld.HazardKind.Radiation, h[1].kind, "any case");
+            Assert.AreEqual(20000f, h[1].radius, "the default radius");
+        }
+
+        [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\" or \"radiation\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
+
+        [Test] public void WrecksAreAFieldOrAFlag() => StringAssert.Contains("\"wrecks\" is true, false or", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'wrecks': 3 } } ]"));
+
         [Test] public void PadsAreAList() => StringAssert.Contains("\"pads\" must be a list", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'pads': 3 } } ]"));
         [Test] public void APadNeedsAPosition() => StringAssert.Contains("a pad needs \"position\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'pads': [ { 'facing': [0, 0, 1] } ] } } ]"));
     }

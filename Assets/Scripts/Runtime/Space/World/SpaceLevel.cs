@@ -471,6 +471,7 @@ namespace GoF2Remake.World
             Collision.wormholeHeld = () => WormholeHeld;
             Collision.wormholeNoPull = () => WormholeNoPull;
             VolatileCargo.Attach(Player.gameObject, db, Player);   // PlayerEgo+0x398: volatile goods, sound 35
+            Headlights.Attach(Player.gameObject);   // remake: EVERSPACE 2's headlights (the L key)
             bool storyOrbit = !interstellar && !Session.FreePlay && Story.IsLevelMission(station);
             IsStoryOrbit = storyOrbit;
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
