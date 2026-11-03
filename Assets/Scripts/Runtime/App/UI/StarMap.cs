@@ -136,6 +136,9 @@ namespace GoF2Remake.UI
         StarMapMode mode;
         public StarMapMode Mode => mode;
         bool jumpDrive;
+        /// <summary>Remake: the Khador Slipstream is mounted (Data.InterstellarSpace.Drive): a system elsewhere may be reached
+        /// between the systems too (the travel dialog's SLIPSTREAM answer, StarMapResult.slipstream).</summary>
+        bool slipstream;
         /// <summary>Remake (players' suggestion): a Mission map that can travel: confirming a station programs it like the
         /// station's map, and a target past the gate neighbours is reached along the gate route (GalaxyMap.NextHop).</summary>
         bool travel;
@@ -294,9 +297,10 @@ namespace GoF2Remake.UI
         Vector2Int lastSafeScreen;
         Label energyLine;
         Button backButton, keyButton, zoomButton, voidButton, dialogYes, dialogNo;
-        /// <summary>Remake: the dialog's third answer between Yes and No (the gates beside the drive), made at runtime.</summary>
-        Button dialogAlt;
-        Action dialogAction, dialogNoAction, dialogAltAction;
+        /// <summary>Remake: the dialog's third answer between Yes and No (the gates beside the drive), made at runtime; and a
+        /// fourth after it (the Khador Slipstream's: KHADOR DRIVE / SLIPSTREAM / JUMPGATES / NO).</summary>
+        Button dialogAlt, dialogAlt2;
+        Action dialogAction, dialogNoAction, dialogAltAction, dialogAlt2Action;
         bool dialogInfo;
         /// <summary>Back (Esc / B) closes the dialog without answering: its No is a choice, not a cancel (the drive or the gates).</summary>
         bool dialogBackCancels;

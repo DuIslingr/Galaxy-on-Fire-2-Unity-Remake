@@ -1505,6 +1505,8 @@
  "farShipMarkersHelp": "Cómo se marca una nave lejana: un punto encima, un anillo hueco o un puntito sobre ella.",
  "markerDistance": "Distancia en los marcadores",
  "markerDistanceHelp": "Muestra la distancia bajo la marca de cada nave lejana.",
+ "interstellarDistance": "Distancias entre los sistemas",
+ "interstellarDistanceHelp": "Muestra a qué distancia está cada sistema mientras el Slipstream de Khador vuela entre ellos.",
  "saveFolder": "Carpeta de guardado: {0}",
  "saveFolderDefault": "solo este dispositivo",
  "saveFolderUnreachable": "No se alcanza la carpeta ({0}). Las partidas quedan aquí y se sincronizan al volver.",

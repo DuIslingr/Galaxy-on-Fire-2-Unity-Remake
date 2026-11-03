@@ -1505,6 +1505,8 @@
  "farShipMarkersHelp": "Jak oznaczyć daleki statek: kropka na nim, pusty pierścień lub mała kropka nad nim.",
  "markerDistance": "Odległość przy znacznikach",
  "markerDistanceHelp": "Pokazuje odległość pod znacznikiem każdego dalekiego statku.",
+ "interstellarDistance": "Odległości między systemami",
+ "interstellarDistanceHelp": "Pokazuje, jak daleko jest każdy system, gdy Khador Slipstream leci między nimi.",
  "saveFolder": "Folder zapisów: {0}",
  "saveFolderDefault": "tylko to urządzenie",
  "saveFolderUnreachable": "Folder niedostępny ({0}). Zapisy zostają tutaj i zsynchronizują się po powrocie.",

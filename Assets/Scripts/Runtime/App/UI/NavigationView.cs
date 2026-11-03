@@ -150,7 +150,7 @@ namespace GoF2Remake.UI
                     Image(m.bracket, Tex("bracket"));
                     layer.Add(m.bracket);
                 }
-                if (t.kind == Navigation.Kind.Jumpgate || t.kind == Navigation.Kind.System || t.kind == Navigation.Kind.Waypoint || wormhole || (t.kind == Navigation.Kind.Planet && t.station == gateStation))
+                if (t.kind == Navigation.Kind.Jumpgate || (t.kind == Navigation.Kind.System && t.planetOf == null) || t.kind == Navigation.Kind.Waypoint || wormhole || (t.kind == Navigation.Kind.Planet && t.station == gateStation))
                 {
                     m.icon = new VisualElement { pickingMode = PickingMode.Ignore, usageHints = UsageHints.DynamicTransform };
                     m.icon.AddToClassList("nav-abs");
@@ -291,13 +291,15 @@ namespace GoF2Remake.UI
                 m.name.EnableInClassList("combat-label--friend", friendly);
                 m.bracket?.EnableInClassList("nav-bracket--friend", friendly);
                 m.name.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
-                if (m.distance != null) m.distance.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
+                // Remake: between the systems the distances may be off (Settings.InterstellarDistance).
+                bool distance = nearCentre && (!nav.Interstellar || Settings.InterstellarDistance);
+                if (m.distance != null) m.distance.style.display = distance ? DisplayStyle.Flex : DisplayStyle.None;
                 if (m.tech != null) m.tech.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
                 if (nearCentre)
                 {
                     Place(m.name, p.x + lx, p.y);
                     if (m.tech != null) Place(m.tech, p.x + lx, p.y + 30f);
-                    if (m.distance != null)
+                    if (m.distance != null && distance)
                     {
                         Place(m.distance, p.x + lx, p.y + (station ? 60f : 30f));
                         m.distance.text = Navigation.FormatDistance((t.Position - cam.transform.position).magnitude / M);

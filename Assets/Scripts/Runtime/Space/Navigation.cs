@@ -67,6 +67,7 @@ namespace GoF2Remake.Flight
             public Vector3 fixedPosition;
             public int station = -1;         // planets: the station it leads to (interstellar systems: their arrival)
             public int system = -1;          // interstellar systems: the system
+            public Target planetOf;          // interstellar: a planet of that system's sun, a pick of where it arrives
             public bool disabled;            // drawn half-transparent, ignores taps (the cloak while not ready)
             public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
@@ -544,6 +545,7 @@ namespace GoF2Remake.Flight
                 return;
             }
             if (target.kind == Kind.Slipstream) { RequestInterstellar(); return; }
+            target = MenuPlanet(target);   // remake: a system's planet between the systems (NavigationInterstellar)
             if (target == VoidDive) StartVoidDive();
             Say($"{Localization.Get(546)}: {target.name}", HudMessageKind.Target);
             Play(sounds?.autopilotOn);

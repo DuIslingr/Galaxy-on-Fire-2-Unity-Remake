@@ -1501,6 +1501,8 @@
  "farShipMarkersHelp": "遠くの船の表示：船に重なる点、中空のリング、または上の小さな点。",
  "markerDistance": "マーカーに距離を表示",
  "markerDistanceHelp": "遠くの船すべての表示の下に距離を表示。",
+ "interstellarDistance": "星系間の距離",
+ "interstellarDistanceHelp": "カドール・スリップストリームで星系間を飛行中、各星系までの距離を表示します。",
  "saveFolder": "セーブフォルダー：{0}",
  "saveFolderDefault": "この端末のみ",
  "saveFolderUnreachable": "フォルダーに届きません（{0}）。セーブはここに残り、戻ったら同期。",

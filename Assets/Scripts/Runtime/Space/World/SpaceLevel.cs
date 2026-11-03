@@ -436,7 +436,7 @@ namespace GoF2Remake.World
             void OnTookOff()
             {
                 // the take-off's end, like the launch camera's: on to a programmed station (the map's destination)
-                if (Session.ProgrammedStation >= 0 && !Session.InstantJump) Navigation?.ContinueToProgrammedStation();
+                if (Session.ProgrammedStation >= 0 && !Session.InstantJump && !Session.SlipstreamDeparture) Navigation?.ContinueToProgrammedStation();
             }
             if (Es2 != null) Es2.TookOff += OnTookOff;
             foreach (var md in mobileDocks.Values) md.TookOff += OnTookOff;

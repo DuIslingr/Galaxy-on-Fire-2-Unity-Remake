@@ -518,6 +518,11 @@ namespace GoF2Remake.UI
                 () => Settings.MarkerDistance, v => Settings.MarkerDistance = v);
             markerDistance.description = () => X("markerDistanceHelp", "Shows the distance under every distant ship's marker.");
             list.Add(markerDistance);
+            // Remake (the user, 2026-11-03): the systems' distances while the Khador Slipstream flies between them.
+            var interstellarDistance = Toggle("interstellarDistance", OptionPage.Gameplay, () => X("interstellarDistance", "Distances between the systems"),
+                () => Settings.InterstellarDistance, v => Settings.InterstellarDistance = v);
+            interstellarDistance.description = () => X("interstellarDistanceHelp", "Shows how far each system is while the Khador Slipstream flies between them.");
+            list.Add(interstellarDistance);
             // Remake: Discord Rich Presence (DiscordPresence), desktop only.
             if (!Application.isMobilePlatform)
                 list.Add(Toggle("discordPresence", OptionPage.Gameplay, () => X("discordPresence", "Show what I'm doing in Discord"),

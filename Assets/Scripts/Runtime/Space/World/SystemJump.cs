@@ -164,6 +164,12 @@ namespace GoF2Remake.World
                         if (GateBlocked != null && GateBlocked()) nav.Refuse();   // MGame::dockEvent: 525 on a mission
                         else DockToStream();
                     }
+                    else if (Session.SlipstreamDeparture && (Time.time - levelStart) * 1000f > 5000f && !nav.Jumping && !nav.Paused && !nav.Conversation && !GoF2Remake.World.SpaceHooks.StarMapOpen)
+                    {
+                        // Remake: the station's map chose the Khador Slipstream: the drive opens as the quick menu's entry would.
+                        Session.SlipstreamDeparture = false;
+                        if (!nav.StartSlipstream()) Session.SlipstreamAutopilot = false;
+                    }
                     else if ((Session.InstantJump || storyTarget.HasValue || toInterstellar) && (Time.time - levelStart) * 1000f > 5000f && !nav.Jumping && !nav.Paused && !nav.Conversation && !GoF2Remake.World.SpaceHooks.StarMapOpen)
                         StartCharging();
                     break;
@@ -417,7 +423,7 @@ namespace GoF2Remake.World
             // drive from the Debug panel reaches the Void early. Free play and multiplayer sessions too (Void Crystals), but
             // only with a real drive: free play's gateless-system stand-in (GalaxyMap.HasJumpDrive) doesn't reach the Void.
             // Remake: the map opens at once and its Jump to the Void button asks 422 (StarMap.AskVoid).
-            bool askVoid = GalaxyMap.HasIntegratedDrive(Session.ShipIndex) || Session.Equipment.Exists(e => e.item == GalaxyMap.KhadorDriveItem);
+            bool askVoid = GalaxyMap.HasKhadorDrive(db);
             bool opened = SpaceHooks.OpenStarMap != null && SpaceHooks.OpenStarMap(db, StarMapMode.Khador, true, r =>
             {
                 nav.Paused = false;

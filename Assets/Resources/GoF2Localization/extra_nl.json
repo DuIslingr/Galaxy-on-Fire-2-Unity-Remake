@@ -1505,6 +1505,8 @@
  "farShipMarkersHelp": "Hoe een ver schip gemarkeerd wordt: een stip erop, een holle ring of een stipje erboven.",
  "markerDistance": "Afstand bij scheepsmarkeringen",
  "markerDistanceHelp": "Toont de afstand onder de markering van elk ver schip.",
+ "interstellarDistance": "Afstanden tussen de stelsels",
+ "interstellarDistanceHelp": "Toont hoe ver elk stelsel is terwijl de Khador Slipstream ertussen vliegt.",
  "saveFolder": "Opslagmap: {0}",
  "saveFolderDefault": "alleen dit apparaat",
  "saveFolderUnreachable": "Map onbereikbaar ({0}). Opslagen blijven hier en synchroniseren als hij terug is.",

@@ -1417,6 +1417,8 @@
  "farShipMarkersHelp": "远处飞船的标记方式：其上的点、空心圆环或上方的小点。",
  "markerDistance": "标记上显示距离",
  "markerDistanceHelp": "在每艘远处飞船的标记下显示距离。",
+ "interstellarDistance": "星系间的距离",
+ "interstellarDistanceHelp": "在卡多尔滑流于星系之间飞行时，显示每个星系的距离。",
  "saveFolder": "存档文件夹：{0}",
  "saveFolderDefault": "仅此设备",
  "saveFolderUnreachable": "无法访问文件夹（{0}）。存档留在本机，恢复后同步。",

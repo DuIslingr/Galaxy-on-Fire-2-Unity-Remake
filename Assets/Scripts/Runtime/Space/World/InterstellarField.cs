@@ -45,6 +45,7 @@ namespace GoF2Remake.World
         float blend, approachBlend;
         Quaternion skyTurn = Quaternion.identity;
         OrbitLayout blendedLayout;
+        int loadedStation = -1;
         Vector3 arrivalAt;
         Quaternion arrivalFacing = Quaternion.identity;
         Matrix4x4 blendedSky = Matrix4x4.identity;
@@ -60,12 +61,12 @@ namespace GoF2Remake.World
             int left = level.Layout.stationIndex == Session.VoidOrbit ? Session.VoidReturnStation : level.Layout.stationIndex;
             origin = db.Stations.Find(s => s.index == left)?.system ?? level.Layout.systemIndex;
             originAt = ship.position;
-            foreach (var t in nav.Targets) if (t.kind == Navigation.Kind.System && t.system == origin) originAt = t.Position;
+            foreach (var t in nav.Targets) if (t.kind == Navigation.Kind.System && t.planetOf == null && t.system == origin) originAt = t.Position;
             var materials = StarMapAssets.Load()?.sunMaterials;
             var mesh = Quad();
             foreach (var t in level.Navigation.Targets)
             {
-                if (t.kind != Navigation.Kind.System) continue;
+                if (t.kind != Navigation.Kind.System || t.planetOf != null) continue;   // a planet pick has no sun of its own
                 var go = new GameObject("Sun " + t.name);
                 go.transform.SetParent(transform, false);
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
@@ -119,7 +120,7 @@ namespace GoF2Remake.World
             {
                 float units = (want.Position - ship.position).magnitude / M;
                 // A system the autopilot only flies past shows its sky; its orbit comes only where the ship can arrive.
-                if (nav.AutopilotTarget == null || want == nav.AutopilotTarget)
+                if (nav.AutopilotTarget == null || want == Navigation.SunOf(nav.AutopilotTarget))
                     near = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(InterstellarSpace.ArriveUnits, InterstellarSpace.ApproachUnits, units));
                 goal = Mathf.Max(near, InterstellarSpace.SkyShare((originAt - ship.position).magnitude / M, units));
             }
@@ -146,8 +147,10 @@ namespace GoF2Remake.World
             if (way.sqrMagnitude < 1f) return;
             var turn = arrivalFacing * Quaternion.Inverse(Quaternion.LookRotation(way.normalized, Vector3.up));
             if (blend <= 0.001f) skyTurn = turn;
-            else if (nav.AutopilotTarget == blended || Vector3.Dot(way, ship.forward) > 0f) skyTurn = Quaternion.RotateTowards(skyTurn, turn, SkyTurnPerMs * dtMs);
+            else if (Navigation.SunOf(nav.AutopilotTarget) == blended || Vector3.Dot(way, ship.forward) > 0f) skyTurn = Quaternion.RotateTowards(skyTurn, turn, SkyTurnPerMs * dtMs);
             Shader.SetGlobalMatrix("_BlendRotation", blendedSky * Matrix4x4.Rotate(skyTurn));
+            // the arrival the system has now (a planet picked, the programmed one): its orbit, until the approach is built
+            if (approach == null && blended.station != loadedStation) Load(blended);
             if (approach == null && near > 0f && want == blended && level.HudShown > 0f) approach = new SystemApproach(level, blendedLayout, arrivalAt, arrivalFacing, transform);
             approach?.Update(ship.position, way, turn, approachBlend * level.HudShown);
         }
@@ -164,7 +167,7 @@ namespace GoF2Remake.World
                 float d = (s.target.Position - ship.position).sqrMagnitude;
                 if (d < best) { best = d; nearest = s.target; }
             }
-            var pilot = nav.AutopilotTarget;
+            var pilot = Navigation.SunOf(nav.AutopilotTarget);
             var aim = pilot != null && pilot.kind == Navigation.Kind.System && (pilot == nav.VoidDive || pilot.system != origin) ? pilot : null;
             if (aim == null) return nearest;
             float close = InterstellarSpace.ApproachUnits * M;
@@ -190,6 +193,7 @@ namespace GoF2Remake.World
         /// <summary>The system's sky (as its arrival orbit builds it) into the shader's second set of layers.</summary>
         void Load(Navigation.Target system)
         {
+            loadedStation = system.station;
             var layout = blendedLayout = OrbitLayout.Build(db, system.station);
             layout.ArrivalPose(Session.StationIndex, out arrivalAt, out arrivalFacing);
             if (layout.alienOrbit) Session.WarpArrivalPoint = layout.hiddenJumpgate;   // drawn at random: the arrival keeps this one

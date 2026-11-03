@@ -139,8 +139,13 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   (90000) as a station (`NetDistress.TravelTo`), and the approach's asteroids weren't the session's seeded field. The
   plumbing stays (`SpaceLevel.NetOrbitId` gives 90000 here) should it come back. Each visible system is a `Kind.System` target and a sun
   (`InterstellarField`: the map's sun material, kept inside the far plane); `GalaxyMap.Visibility` decides, every frame,
-  so bought coordinates, the story, an event's hide and a mod's `available` all hold here. Scale 240 units a map unit
-  (the average hop, 2510 on the map, is 30 km; the galaxy +-66 km around the origin, centred for floats' sake). A leg
+  so bought coordinates, the story, an event's hide and a mod's `available` all hold here. **Layout** (2026-11-03, the
+  user: easier to pick a system by eye; `InterstellarSpace.Layout`, `Position(db, s)`): the map's places, centred for
+  floats' sake, the thin axis stretched `DiscStretch` 1.5, any two systems pushed to `MinSeparation` 2600 map units
+  apart (half the shortfall each, index order, up to 200 passes), then scaled (about 198 units a map unit) so the gates'
+  average hop is exactly `LegUnits` (30 km); every system with a station, shown or not, mods' too. From a hop's middle a
+  sun's nearest neighbour went from a median 7.9 deg to 11.2, those within 3 deg from 15 % to 5 %; the closest two are
+  0.86 legs apart (were 0.4); the farthest 91 km out. Two systems in line from where the ship is still overlap. A leg
   is `LegUnits`, the average hop, so `InterstellarSpace.CellsFor` is about the Khador Drive's `GalaxyMap.EnergyCells`
   (`InterstellarSpaceTests`: 0.5 to 1.25 x over every pair); `CruiseDrive.keepLeg` keeps a paid leg over a stop. The
   autopilot holds the drive there (`Navigation.UpdateDrive`), `CanFastForward` is false. Within `ArriveUnits` (8 km):
@@ -149,6 +154,30 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   (`PlanetJumpRefused`) holds until the ship is back outside 1.5 x that. The leg that empties the hold says so (Extra `interstellarLastLeg`); no cells for the next leg: `FallOutOfSlipstream`
   at the nearest system, nobody strands. Under the autopilot only its own target's edge is an arrival, the others are flown
   past (a flight off the galaxy's disc curved out of its start through Weymire's edge, 2026-11-01).
+  **Arrival planet** (2026-11-03, the user: the Khador Drive reaches any planet, so should this): a system's target carries
+  where it brings the ship out (`Navigation.UpdateArrivals`, `InterstellarSpace.ArrivalFor`): a planet picked in flight, else
+  the programmed destination when it is in that system and the story allows it (`PlanetJumpRefused`), else the gate orbit;
+  `SystemJump.LeaveInterstellar` takes any station (a scripted one with its arrival camera). Its planets
+  (`GalaxyMap.SystemLayout`, the star map's order; systems with two or more) are `Kind.System` targets with `planetOf` (no
+  sun, no gate icon), shown round their sun at `PlanetRingDeg` 4 deg (the map's angle) while the sun or one of them is
+  locked or the autopilot's, or the sun is the nearest within `PlanetsShownUnits` 800000 (40 km); the autopilot menu lists
+  them under the system in hand ("›" marks its arrival). Locking one or the autopilot to it picks it ("X: arriving at Y",
+  Extra `interstellarArrivalPicked`); one the story refuses is half-transparent and can't be picked. Within `ApproachUnits`
+  the arrival is settled (its orbit is built ahead, `InterstellarField` builds the arrival's, again whenever it changes
+  before that) and the planets go, a lock or autopilot on one passing to its sun. Distances: Gameplay "Distances between
+  the systems" (`Settings.InterstellarDistance`, on by default) hides the markers' distance here only.
+  **The Slipstream is a Khador Drive too** (2026-11-03, the user: it replaces the drive on the ship, `Shop.Replaces`):
+  `GalaxyMap.HasSlipstream` joins `HasKhadorDrive` (the item, a ship's own) in `HasJumpDrive`: the quick menu's Khador
+  Drive entry beside the Slipstream's, the Khador key's map, the station's map in jump mode, the Void's question
+  (`SystemJump.askVoid`), the Khador hint. **By the Slipstream from the map** (the user's "as the jumpgates over the Khador
+  Drive", see "Jumpgate route planning"): with it mounted (`StarMap.slipstream`: `InterstellarSpace.Drive`, so single
+  player; the station's and the travel Mission map, not the in-flight Khador map: in flight the quick menu offers the Khador
+  Drive's original jump and the Slipstream's crossing as two entries) the travel dialog for another system asks
+  KHADOR DRIVE / SLIPSTREAM (the item's name) / JUMPGATES (where the gates reach it) / NO (a fourth button, `dialogAlt2`,
+  made at runtime; the row wraps on a phone). SLIPSTREAM: `StarMapResult.slipstream`; from a station
+  `Session.SlipstreamDeparture` holds the autopilot back after the launch and opens the drive once the level is 5 s old
+  (`SystemJump`, as an instant jump's charge; `Navigation.StartSlipstream`, its refusals said); between the systems `Session.SlipstreamAutopilot` sets the autopilot on the destination's system
+  (`PilotToDestination`), which arrives at that planet ("Arrival planet"). Volatile goods: the gates only, as for the drive.
   **The Void** (2026-11-01, the user: "make the Slipstream go to the alien void as well", then "void should not be one
   point you go to, distance should also be unknown/hidden as its not a system in the universe we know", 10-15 s): no place
   here, no marker, no distance. The autopilot menu's last entry, 415 "Void" (`Navigation.VoidDive`, a `Kind.System` target

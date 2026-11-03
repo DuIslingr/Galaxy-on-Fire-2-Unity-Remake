@@ -254,7 +254,7 @@ namespace GoF2Remake.Flight
             var at = ship.transform.position;
             foreach (var t in Targets)
             {
-                if (t.kind != Kind.System || t.hidden) continue;
+                if (t.kind != Kind.System || t.hidden || t.planetOf != null) continue;
                 float d = (t.Position - at).sqrMagnitude;
                 if (d < nearest) { nearest = d; home = t; }
             }
