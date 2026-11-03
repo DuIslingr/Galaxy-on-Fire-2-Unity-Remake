@@ -168,6 +168,32 @@ namespace GoF2Remake.Modding
                 }
                 if (s.pads.Count == 0) s.pads = null;
             }
+            // Remake (2026-11-03): hazard volumes, EVERSPACE 2's heat volumes and radiation fields (World.HazardZones)
+            if (ModJson.Get(o, "hazards") is JToken hz)
+            {
+                if (!(hz is JArray hzList)) throw new ModJsonException($"{where}: orbit \"hazards\" must be a list [ {{ \"kind\": \"heat\" | \"radiation\", \"centre\", \"radius\" }} ]");
+                s.hazards = new List<HazardSpec>();
+                foreach (var e in hzList)
+                {
+                    if (!(e is JObject h)) throw new ModJsonException($"{where}: a hazard is {{ \"kind\", \"centre\", \"radius\" }}");
+                    foreach (var p in h.Properties())
+                        if (p.Name != "kind" && p.Name != "centre" && p.Name != "center" && p.Name != "radius" && p.Name != "dps") Report(mod, $"{where}: unknown hazard field \"{p.Name}\" (ignored)");
+                    var kindName = ModJson.Str(h, "kind") ?? "";
+                    HazardKind kind;
+                    if (kindName.Equals("heat", StringComparison.OrdinalIgnoreCase)) kind = HazardKind.Heat;
+                    else if (kindName.Equals("radiation", StringComparison.OrdinalIgnoreCase)) kind = HazardKind.Radiation;
+                    else throw new ModJsonException($"{where}: a hazard's \"kind\" is \"heat\" or \"radiation\"");
+                    var centre = Xyz(h, "centre", where) ?? Xyz(h, "center", where);
+                    if (!centre.HasValue) throw new ModJsonException($"{where}: a hazard needs \"centre\": [x, y, z]");
+                    s.hazards.Add(new HazardSpec
+                    {
+                        kind = kind, centre = centre.Value,
+                        radius = Mathf.Clamp(ModJson.Float(h, "radius", 20000f, StationsFile), 1000f, 400000f),
+                        dps = Mathf.Max(0f, ModJson.Float(h, "dps", 10f, StationsFile)),
+                    });
+                }
+                if (s.hazards.Count == 0) s.hazards = null;
+            }
             // Remake (2026-11-03): a wreck field, EVERSPACE 2's (World.WreckField)
             if (ModJson.Get(o, "wrecks") is JToken wr)
             {

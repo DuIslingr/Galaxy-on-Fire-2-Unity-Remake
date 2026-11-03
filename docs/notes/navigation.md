@@ -138,6 +138,15 @@ the player ship) and `NavigationView` (flight HUD).
   60000; a third as tall), each a freighter's loot roll or 1-5 Space Waste (item 99), kept until emptied (`Crate.keep`). Not
   in the alien orbit or interstellar space. ES2's wreck meshes aren't placed (only containers). The ES2 importer gives
   its wreck-field locations one; its outlaw strongholds are pirate-held orbits (`pirateHeld`: outposts and guards).
+- **Hazard volumes** (remake 2026-11-03, for mods; stations.json `orbit.hazards` -> `ModWorld.HazardSpec`, `Flight.Hazards`
+  plain, `World.HazardZones` on the player's ship, attached with the wreck field): after EVERSPACE 2's BP_HeatDamageVolume
+  (DamagePerSecondMax 200 x (1 - d / SphereRadius)^DamageFalloffExponent 2 each DamageInterval 0.25 s; its overheat buildup
+  into Scorching, equipment efficiency, not taken) and BP_RadiationField (BuildupDuration 5 s into
+  BP_Condition_Debuff_Radiated: MaxHitpoints_Hull x 0.85 a token, TokenLimit 10, kept beyond the location, docking removes
+  it): `heat` (dps x falloff, through the shield, `Target.Damage` as an NPC hit), `radiation` (`Hazards.RadiationTokens`,
+  the hull capped at maxHull x 0.85^n in every orbit, `StationLevel` clears it on docking). HUD lines on entering and per
+  token. Not drawn (ES2's post-process tint). Not done: ES2's lightning fields (a storm effect), acid sacks, lightning
+  plants and meltable ice (props with ES2's models).
 - **Menu order** (`Hud::initHudMenu(3)`): outside the alien orbit Asteroid field, Station, Jumpgate, 573 **Waypoint** (a
   player route not finished: the autopilot follows the route, "Target: Waypoint"), "Destination: X"; then every named
   docking target (also in the alien orbit). The original's only restriction is no menu in mission type 0xb7 (the

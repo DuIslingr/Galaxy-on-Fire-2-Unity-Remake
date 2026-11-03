@@ -209,8 +209,22 @@ namespace GoF2Remake.Modding
 
         /// <summary>A station's orbit level laid out by its mod (stations.json "orbit"), applied by OrbitLayout.Build over the
         /// seeded layout; null fields keep the game's. Positions in game units around the station (the orbit's centre).</summary>
+        /// <summary>Remake (2026-11-03): an orbit's hazard volume (stations.json "orbit.hazards", Flight.Hazards).</summary>
+        public enum HazardKind { Heat, Radiation }
+        public sealed class HazardSpec
+        {
+            public HazardKind kind;
+            public Vector3 centre;
+            /// <summary>Game units.</summary>
+            public float radius;
+            /// <summary>Heat: the damage a second at the centre.</summary>
+            public float dps;
+        }
+
         public sealed class OrbitSpec
         {
+            /// <summary>Remake (2026-11-03, EVERSPACE 2's heat volumes and radiation fields): null = none.</summary>
+            public List<HazardSpec> hazards;
             /// <summary>-1 the game's; 0 no station (an empty orbit); 1 a station to dock at; 2 its model without docking.</summary>
             public int station = -1;
             public bool? jumpgate;
@@ -266,7 +280,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };
