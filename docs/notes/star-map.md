@@ -140,12 +140,18 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   plumbing stays (`SpaceLevel.NetOrbitId` gives 90000 here) should it come back. Each visible system is a `Kind.System` target and a sun
   (`InterstellarField`: the map's sun material, kept inside the far plane); `GalaxyMap.Visibility` decides, every frame,
   so bought coordinates, the story, an event's hide and a mod's `available` all hold here. **Layout** (2026-11-03, the
-  user: easier to pick a system by eye; `InterstellarSpace.Layout`, `Position(db, s)`): the map's places, centred for
-  floats' sake, the thin axis stretched `DiscStretch` 1.5, any two systems pushed to `MinSeparation` 2600 map units
-  apart (half the shortfall each, index order, up to 200 passes), then scaled (about 198 units a map unit) so the gates'
-  average hop is exactly `LegUnits` (30 km); every system with a station, shown or not, mods' too. From a hop's middle a
-  sun's nearest neighbour went from a median 7.9 deg to 11.2, those within 3 deg from 15 % to 5 %; the closest two are
-  0.86 legs apart (were 0.4); the farthest 91 km out. Two systems in line from where the ship is still overlap. A leg
+  user: easier to pick a system by eye, then "make use of verticality"; `InterstellarSpace.Layout`, `Position(db, s)`): the
+  map's places, centred for floats' sake, the thin axis stretched `DiscStretch` 2.5 and each system lifted off the disc by
+  its own `Height` share of `HeightJitter` 3500 map units (from its index; a mod system's from its key, as mod systems are
+  numbered per player), any two pushed to `MinSeparation` 3500 apart (half the shortfall each, index order, up to 200
+  passes; two in one place, a mod's put on another's, apart along the thin axis), then scaled (about 122 units a map unit)
+  so the gates' average hop is exactly `LegUnits` (30 km); every system with a station, shown or not, mods' too, made again
+  with each database. From a hop's middle a sun's nearest neighbour went from a median 7.9 deg to 14.4 (the worst tenth 2.5 to
+  5.4), those within 3 deg from 15 % to 4 %; the closest two are 0.71 legs apart (were 0.4); the farthest 70 km out. Two
+  systems in line from where the ship is still overlap. **Light years** (the user: big numbers falling fast, for the speed):
+  the markers here read `InterstellarSpace.FormatLightYears(units, WorldScale)`, a hop 50 ly (`UnitsPerLightYear`), two
+  places (Extra `unitLightYears`, 13 languages), at the hops' scale (so the zone's edge reads 1.00 ly from both sides); a
+  planet within `PlanetKmUnits` 25 km reads the orbit's own km (`Navigation.FormatDistance`); ships met here keep m / km. A leg
   is `LegUnits`, the average hop, so `InterstellarSpace.CellsFor` is about the Khador Drive's `GalaxyMap.EnergyCells`
   (`InterstellarSpaceTests`: 0.5 to 1.25 x over every pair); `CruiseDrive.keepLeg` keeps a paid leg over a stop. The
   autopilot holds the drive there (`Navigation.UpdateDrive`), `CanFastForward` is false. Within `ArriveUnits` (8 km):
@@ -158,12 +164,30 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   where it brings the ship out (`Navigation.UpdateArrivals`, `InterstellarSpace.ArrivalFor`): a planet picked in flight, else
   the programmed destination when it is in that system and the story allows it (`PlanetJumpRefused`), else the gate orbit;
   `SystemJump.LeaveInterstellar` takes any station (a scripted one with its arrival camera). Its planets
-  (`GalaxyMap.SystemLayout`, the star map's order; systems with two or more) are `Kind.System` targets with `planetOf` (no
-  sun, no gate icon), shown round their sun at `PlanetRingDeg` 4 deg (the map's angle) while the sun or one of them is
-  locked or the autopilot's, or the sun is the nearest within `PlanetsShownUnits` 800000 (40 km); the autopilot menu lists
-  them under the system in hand ("›" marks its arrival). Locking one or the autopilot to it picks it ("X: arriving at Y",
-  Extra `interstellarArrivalPicked`); one the story refuses is half-transparent and can't be picked. Within `ApproachUnits`
-  the arrival is settled (its orbit is built ahead, `InterstellarField` builds the arrival's, again whenever it changes
+  (`GalaxyMap.SystemLayout`, the star map's order; systems with two or more) are `Kind.System` targets with `planetOf`, real
+  places round the sun (the user's design: the sun first, its planets round it, one picked and flown to, its orbit spawning
+  there; then "within less than one light year" of the star, orbiting it, km near a planet): only in the system's **zone**
+  (`Navigation.UpdateZone`, `InterstellarSpace.ZoneUnits` 1 ly = 12000 units, 600 m between the systems, of the star flown
+  to, the autopilot's when it flies to one): there the space round the ship grows `ZoneScale` 75 x (`Navigation.WorldScale`,
+  every fixed target moved out from the ship, so nothing on screen jumps; `WorldScaled` moves the field's own point left; the
+  suns' size follows the scale, 3000 m in a zone, 40 m outside), the star then 45 km away, and back past `ZoneExit` 1.05 x
+  that. Arrivals happen in the zone only (the 8 km edge, the approach's 20 km, the settling are the zone's), no encounter
+  rolls there, a hop's energy cells count the distance flown / `WorldScale`, the locked landmark's 1 km stop is off here.
+  The planets are laid out once, the first time the zone opens (`Navigation.LayOut`), the map's angles, `PlanetSunUnits` 70000 + map radius x
+  `PlanetUnitsPerMapUnit` 6 out, the disc tilted `PlanetDiscTilt` 55 deg from edge-on toward the way in.
+  `InterstellarField` draws them as the star map's 3D planets (`galaxymap_planet_*`, `GoF2/SpacePlanet`: lit toward their
+  own sun's direction, `_Fade`), `PlanetRadiusMeters` 600 x their map size, inside the far plane like the suns, on faint orbit
+  rings (`LineRenderer`s in the disc, `Navigation.PlanetDisc`, each point pulled inside the far plane along its ray), fading
+  in over the zone's first 4 % and out as the arrival's orbit is built ahead (`SystemApproach.HandedOver`). The system's
+  arrival point (`Navigation.ArrivalPoint`) is its arrival planet once laid out: the autopilot flies a sun there, the 8 km
+  edge, the leave's way and the approach (built round it, `InterstellarField.UpdateSky`) are measured from it. Locking one
+  (the lock takes the target nearest the crosshair here, `UpdateLock`; the planets stay out while one is being locked) or
+  the autopilot to it picks it ("X: arriving at Y", Extra `interstellarArrivalPicked`); the autopilot menu lists the system
+  in hand's planets under it, that system always listed after the destination's ("›" marks its arrival); one the story
+  refuses is half-transparent and can't be picked. The lock plate's badge is the locked system's race (`NavigationView
+  .RaceOfSystem`, none for an unowned one), not the orbit left's (it showed Mido's Midorian badge on every system, starting
+  at 78). Within `ApproachUnits` of the arrival planet the arrival is settled (its
+  orbit is built ahead, `InterstellarField` builds the arrival's, again whenever it changes
   before that) and the planets go, a lock or autopilot on one passing to its sun. Distances: Gameplay "Distances between
   the systems" (`Settings.InterstellarDistance`, on by default) hides the markers' distance here only.
   **The Slipstream is a Khador Drive too** (2026-11-03, the user: it replaces the drive on the ship, `Shop.Replaces`):

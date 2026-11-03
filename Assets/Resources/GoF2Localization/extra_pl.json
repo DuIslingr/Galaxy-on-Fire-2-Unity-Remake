@@ -1520,6 +1520,7 @@
  "markerDistanceHelp": "Pokazuje odległość pod znacznikiem każdego dalekiego statku.",
  "interstellarDistance": "Odległości między systemami",
  "interstellarDistanceHelp": "Pokazuje, jak daleko jest każdy system, gdy Khador Slipstream leci między nimi.",
+ "unitLightYears": "{0} lś",
  "saveFolder": "Folder zapisów: {0}",
  "saveFolderDefault": "tylko to urządzenie",
  "saveFolderUnreachable": "Folder niedostępny ({0}). Zapisy zostają tutaj i zsynchronizują się po powrocie.",

@@ -1512,6 +1512,7 @@
  "markerDistanceHelp": "يُظهر المسافة أسفل علامة كل سفينة بعيدة.",
  "interstellarDistance": "المسافات بين الأنظمة",
  "interstellarDistanceHelp": "يعرض مدى بُعد كل نظام بينما ينقلك تيار خادور بين الأنظمة.",
+ "unitLightYears": "{0} سنة ضوئية",
  "saveFolder": "مجلد الحفظ: {0}",
  "saveFolderDefault": "هذا الجهاز فقط",
  "saveFolderUnreachable": "تعذّر الوصول إلى المجلد ({0}). تبقى الحفظات هنا وتتزامن عند عودته.",

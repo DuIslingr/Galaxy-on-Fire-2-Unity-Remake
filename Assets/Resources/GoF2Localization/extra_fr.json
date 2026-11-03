@@ -1520,6 +1520,7 @@
  "markerDistanceHelp": "Affiche la distance sous le marqueur de chaque vaisseau lointain.",
  "interstellarDistance": "Distances entre les systèmes",
  "interstellarDistanceHelp": "Affiche la distance de chaque système pendant que le Slipstream de Khador vole entre eux.",
+ "unitLightYears": "{0} al",
  "saveFolder": "Dossier de sauvegarde : {0}",
  "saveFolderDefault": "cet appareil uniquement",
  "saveFolderUnreachable": "Dossier inaccessible ({0}). Les sauvegardes restent ici et se synchronisent à son retour.",

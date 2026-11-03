@@ -96,7 +96,7 @@ namespace GoF2Remake.Flight
         {
             if (Drive == null || ship == null) return;
             var p = ship.transform.position;
-            float moved = driveMoved ? (p - lastDrivePos).magnitude / M : 0f;
+            float moved = driveMoved ? (p - lastDrivePos).magnitude / M / WorldScale : 0f;   // a hop's cells by the space's own scale
             lastDrivePos = p;
             driveMoved = true;
             // The button: the original fast-forward wins while it is allowed (the autopilot and the approaches).
@@ -197,7 +197,7 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>The locked landmark (station, gate, docking target, wormhole) in units; float.MaxValue = none.</summary>
-        float LockedLandmarkUnits() => LandmarkLocked ? (Locked.Position - ship.transform.position).magnitude / M : float.MaxValue;
+        float LockedLandmarkUnits() => LandmarkLocked && !Interstellar ? (Locked.Position - ship.transform.position).magnitude / M : float.MaxValue;   // (between the systems the zone and the arrival stop it)
 
         // ---- encounters ------------------------------------------------------------------------------------------
 
@@ -248,7 +248,7 @@ namespace GoF2Remake.Flight
         /// slipstream already or with a system's orbit built ahead (the arrival is near: its own encounters come there).</summary>
         bool InterstellarRolls()
         {
-            if (LeavingInterstellar || OutOfSlipstream || ApproachRuns || (VoidDive != null && AutopilotTarget == VoidDive)) return false;
+            if (LeavingInterstellar || OutOfSlipstream || ApproachRuns || Zone != null || (VoidDive != null && AutopilotTarget == VoidDive)) return false;
             home = null;
             float nearest = float.MaxValue;
             var at = ship.transform.position;

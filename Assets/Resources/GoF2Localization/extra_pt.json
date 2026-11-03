@@ -1525,6 +1525,7 @@
  "markerDistanceHelp": "Mostra a distância sob o marcador de cada nave distante.",
  "interstellarDistance": "Distâncias entre os sistemas",
  "interstellarDistanceHelp": "Mostra a que distância está cada sistema enquanto o Slipstream de Khador voa entre eles.",
+ "unitLightYears": "{0} a.l.",
  "saveFolder": "Pasta de saves: {0}",
  "saveFolderDefault": "só este dispositivo",
  "saveFolderUnreachable": "Pasta inacessível ({0}). Os saves ficam aqui e sincronizam quando ela voltar.",

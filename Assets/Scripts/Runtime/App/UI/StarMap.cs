@@ -255,8 +255,6 @@ namespace GoF2Remake.UI
         readonly List<Transform> planetDiscs = new List<Transform>();   // remake mods: a station's planetTexture facing the camera
         static readonly Dictionary<string, Material> modPlanetMaterials = new Dictionary<string, Material>();
         static int modPlanetRevision = -1;
-        static readonly Dictionary<float, Mesh> wrappedSpheres = new Dictionary<float, Mesh>();
-        static Mesh discQuad;
         readonly List<Camera> disabledCameras = new List<Camera>();
         readonly List<Light> disabledLights = new List<Light>();
         UnityEngine.Rendering.AmbientMode savedAmbientMode;

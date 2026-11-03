@@ -5,11 +5,13 @@
 // Session.StationIndex, so a save or a load in here is the orbit the ship left. No station, gate, planets, asteroids,
 // traffic or story; every system on the star map is a sun near its galaxy map place (GalaxyMap.SunPosition), a target the
 // autopilot flies to. Reaching one plays the Khador scene into its gate orbit, as a Khador jump arrives.
-//   the layout    the map's places spread out (Layout, the user, 2026-11-03: easier to pick a system by eye in flight): the
-//                 galaxy's thin axis stretched DiscStretch times, any two systems pushed apart to MinSeparation, then all
-//                 scaled so the average gate hop is LegUnits. From a gate hop's middle a sun's nearest neighbour went from
-//                 a median 7.9 deg to 11.2, those within 3 deg of another from 15 % to 5 %. Every system with a station
-//                 is laid out, shown or not and the mods' too, so revealing one moves nothing.
+//   the layout    the map's places spread out (Layout, the user, 2026-11-03: easier to pick a system by eye in flight, and
+//                 then "make use of verticality": nothing says the systems share one plane): the galaxy's thin axis stretched
+//                 DiscStretch times and each system lifted off it by its own HeightJitter share (fixed per system), any two
+//                 pushed apart to MinSeparation, then all scaled so the average gate hop is LegUnits. From a gate hop's
+//                 middle a sun's nearest neighbour went from a median 7.9 deg to 14.4 (the worst tenth 2.5 to 5.4), those
+//                 within 3 deg of another from 15 % to 4 %. Every system with a station is laid out, shown or not and the
+//                 mods' too, so revealing one moves nothing.
 //   what shows    GalaxyMap.Visibility, the star map's own rule: only what is revealed (the story, bought coordinates), an
 //                 event's show / hide, a mod's "available", never a missing mod's placeholder. Nothing else is reachable.
 //   energy cells  a leg of the drive is LegUnits here, the average gate hop, so a crossing costs what the gate route's
@@ -31,10 +33,52 @@ namespace GoF2Remake.Data
     {
         /// <summary>The layout (Layout): the galaxy map's thin axis (z) stretched this many times, and the least distance
         /// between two systems, in map units (the average gate hop is 2510), before the scaling to LegUnits.</summary>
-        public const float DiscStretch = 1.5f, MinSeparation = 2600f;
+        public const float DiscStretch = 2.5f, MinSeparation = 3500f;
+        /// <summary>The most a system is lifted off the galaxy's disc (map units, either way; Height: fixed per system).</summary>
+        public const float HeightJitter = 3500f;
+        /// <summary>A system's own share of HeightJitter, -1..1: from its index for the game's, from its key for a mod's (mod
+        /// systems are numbered per player, ModRegistry: the key keeps a mod system's place the same for everyone).</summary>
+        public static float Height(int system)
+        {
+            string key = Modding.ModWorld.IsModSystem(system) ? Modding.ModWorld.SystemKey(system) : null;
+            uint h = key == null ? unchecked((uint)system * 2654435761u) : Fnv(key);
+            return h / (float)uint.MaxValue * 2f - 1f;
+        }
+
+        static uint Fnv(string s)
+        {
+            uint h = 2166136261u;
+            foreach (char c in s) h = unchecked((h ^ c) * 16777619u);
+            return unchecked(h * 2654435761u);
+        }
         const int SpreadPasses = 200;
         /// <summary>A leg of energy cells here: the average gate hop.</summary>
         public const float LegUnits = 600000f;
+        /// <summary>Distances here are read in light years (the user, 2026-11-03: big numbers that fall fast on the way in, for
+        /// the speed): the average gate hop (LegUnits) is 50 ly.</summary>
+        public const float UnitsPerLightYear = LegUnits / 50f;
+
+        /// <summary>A system's zone (the user, 2026-11-03: its planets come out within a light year of its star, orbiting it):
+        /// within ZoneUnits (1 ly) of the star flown to, the space round the ship grows ZoneScale times (Flight.Navigation
+        /// .WorldScale: every direction kept, the star then ZoneUnits x ZoneScale away, 45 km), so a system's planets and an
+        /// arrival's approach have room at the orbits' own scale while the hops between the systems keep theirs; leaving it
+        /// (ZoneExit x that) shrinks it back.</summary>
+        public const float ZoneUnits = UnitsPerLightYear, ZoneScale = 75f, ZoneExit = 1.05f;
+        /// <summary>Within this of a planet (units, in a zone) its distance reads in the orbit's km, not light years.</summary>
+        public const float PlanetKmUnits = 500000f;
+
+        /// <summary>'units' as the markers show it here: light years to two places (thousands whole), the unit per language.
+        /// 'scale': the space's own (WorldScale), so a distance reads the same across a zone's edge.</summary>
+        public static string FormatLightYears(float units, float scale = 1f) => FormatLy(units / Mathf.Max(1e-6f, scale));
+
+        static string FormatLy(float units)
+        {
+            float ly = Mathf.Max(0f, units) / UnitsPerLightYear;
+            string n = ly >= 1000f ? ly.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+                                   : ly.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+            return string.Format(Localization.Extra("unitLightYears", "{0} ly"), n);
+        }
+
         /// <summary>A system's edge (8 km): the level changes here, at full warp with nothing near and the sky already the
         /// system's, and the ship flies the rest of the way in through the real orbit (CarryMeters).</summary>
         public const float ArriveUnits = 160000f;
@@ -95,7 +139,7 @@ namespace GoF2Remake.Data
         static Vector3 Spread(SystemData s)
         {
             var p = GalaxyMap.SunPosition(s) - Centre;
-            return new Vector3(p.x, p.y, p.z * DiscStretch);
+            return new Vector3(p.x, p.y, p.z * DiscStretch + Height(s.index) * HeightJitter);
         }
 
         /// <summary>Every system with a station in this space (game units), made once per database's system list: the map's
@@ -120,7 +164,9 @@ namespace GoF2Remake.Data
                     {
                         var d = at[i] - at[j];
                         float m = d.magnitude;
-                        if (m >= MinSeparation || m < 1e-3f) continue;
+                        if (m >= MinSeparation) continue;
+                        // two in one place (a mod's system put on another's): apart along the disc's thin axis, the earlier one +z
+                        if (m < 1e-3f) { d = Vector3.forward * 1e-3f; m = 1e-3f; }
                         var push = d * ((MinSeparation - m) * 0.5f / m);
                         at[i] += push;
                         at[j] -= push;

@@ -5,6 +5,7 @@
 // dive off the galaxy's disc once the story has been there.
 
 using System.Collections.Generic;
+using System.Linq;
 using GoF2Remake.Data;
 using GoF2Remake.World;
 using NUnit.Framework;
@@ -163,7 +164,10 @@ namespace GoF2Remake.Tests
             float least = float.MaxValue;
             for (int i = 0; i < laid.Count; i++)
                 for (int j = i + 1; j < laid.Count; j++) least = Mathf.Min(least, (laid[i].at - laid[j].at).magnitude);
-            Assert.Greater(least, InterstellarSpace.LegUnits * 0.75f, "no two systems crowd each other (the map's closest were 0.4 legs)");
+            Assert.Greater(least, InterstellarSpace.LegUnits * 0.65f, "no two systems crowd each other (the map's closest were 0.4 legs)");
+            var heights = laid.ConvertAll(l => InterstellarSpace.Height(l.s.index));
+            Assert.That(heights, Is.All.InRange(-1f, 1f));
+            Assert.Greater(heights.Max() - heights.Min(), 1f, "lifted off the disc both ways");
             // the map's arrangement holds: east stays east of west, top above bottom
             var map = laid.ConvertAll(l => GalaxyMap.SunPosition(l.s));
             int kept = 0, pairs = 0;

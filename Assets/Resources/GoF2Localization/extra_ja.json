@@ -1512,6 +1512,7 @@
  "markerDistanceHelp": "遠くの船すべての表示の下に距離を表示。",
  "interstellarDistance": "星系間の距離",
  "interstellarDistanceHelp": "カドール・スリップストリームで星系間を飛行中、各星系までの距離を表示します。",
+ "unitLightYears": "{0}光年",
  "saveFolder": "セーブフォルダー：{0}",
  "saveFolderDefault": "この端末のみ",
  "saveFolderUnreachable": "フォルダーに届きません（{0}）。セーブはここに残り、戻ったら同期。",

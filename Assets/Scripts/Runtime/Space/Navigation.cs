@@ -694,7 +694,10 @@ namespace GoF2Remake.Flight
                 float box = w / 16f, centre = w / 6f, planetBox = w / 32f;
                 if (c.z > 0f)
                 {
-                    // Landmarks first (not during the autopilot), then planets (also during the autopilot).
+                    // Landmarks first (not during the autopilot), then planets (also during the autopilot). Remake: between the
+                    // systems the one nearest the crosshair, not the first in the box: a system's planets sit round its sun
+                    // within the box (NavigationInterstellar), and the sun came first.
+                    float nearest = float.MaxValue;
                     foreach (var t in Targets)
                     {
                         if (t.kind == Kind.Planet || t.kind == Kind.Wormhole || t.kind == Kind.Marker || t.hidden || Autopilot) continue;
@@ -702,7 +705,10 @@ namespace GoF2Remake.Flight
                         var p = cam.WorldToScreenPoint(t.Position);
                         if (p.z <= 0f || p.x < 0f || p.y < 0f || p.x > w || p.y > h) continue;
                         if (Mathf.Abs(p.x - w / 2f) >= centre || Mathf.Abs(p.y - h / 2f) >= centre) continue;
-                        if (Mathf.Abs(p.x - c.x) < box && Mathf.Abs(p.y - c.y) < box) { best = t; break; }
+                        if (Mathf.Abs(p.x - c.x) >= box || Mathf.Abs(p.y - c.y) >= box) continue;
+                        if (!Interstellar) { best = t; break; }
+                        float d = ((Vector2)p - (Vector2)c).sqrMagnitude;
+                        if (d < nearest) { nearest = d; best = t; }
                     }
                     if (best == null)
                         foreach (var t in Targets)
@@ -789,7 +795,9 @@ namespace GoF2Remake.Flight
         {
             if (ArrivalHeld && target != null) return;
             AutopilotTarget = target;
-            ship.autopilotTarget = target != null ? () => target.Position : null;
+            // remake: between the systems a system's sun is flown to its arrival planet (NavigationInterstellar.ArrivalPoint)
+            ship.autopilotTarget = target == null ? null : Interstellar && target.kind == Kind.System && target.planetOf == null && target != VoidDive
+                ? () => ArrivalPoint(target) : () => target.Position;
             if (target != null) ship.SetThrottle(1f);
             Locked = Candidate = null;
             LockTimer = 0f;

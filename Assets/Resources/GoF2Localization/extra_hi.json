@@ -1428,6 +1428,7 @@
  "markerDistanceHelp": "हर दूर जहाज़ के निशान के नीचे दूरी दिखाता है।",
  "interstellarDistance": "सिस्टमों के बीच की दूरी",
  "interstellarDistanceHelp": "खादोर स्लिपस्ट्रीम के सिस्टमों के बीच उड़ते समय हर सिस्टम की दूरी दिखाता है।",
+ "unitLightYears": "{0} प्रकाश-वर्ष",
  "saveFolder": "सेव फ़ोल्डर: {0}",
  "saveFolderDefault": "केवल यह डिवाइस",
  "saveFolderUnreachable": "फ़ोल्डर तक नहीं पहुँच ({0})। सेव यहीं रहते हैं और लौटने पर सिंक होते हैं।",

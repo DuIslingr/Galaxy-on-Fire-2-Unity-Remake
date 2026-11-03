@@ -1520,6 +1520,7 @@
  "markerDistanceHelp": "Zeigt die Entfernung unter der Markierung jedes fernen Schiffs.",
  "interstellarDistance": "Entfernungen zwischen den Systemen",
  "interstellarDistanceHelp": "Zeigt, wie weit jedes System entfernt ist, während der Khador-Slipstream zwischen ihnen fliegt.",
+ "unitLightYears": "{0} Lj",
  "saveFolder": "Speicherordner: {0}",
  "saveFolderDefault": "nur dieses Gerät",
  "saveFolderUnreachable": "Ordner nicht erreichbar ({0}). Spielstände bleiben hier und gleichen ab, sobald er zurück ist.",
