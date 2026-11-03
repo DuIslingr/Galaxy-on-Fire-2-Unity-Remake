@@ -56,16 +56,49 @@ namespace GoF2Remake.Flight
             foreach (var b in beamPool) if (b != null) Destroy(b.gameObject);
         }
 
-        /// <summary>What must hold before 'e' fires: the overcharger needs the shield it spends.</summary>
+        /// <summary>What must hold before 'e' fires: the overcharger needs the shield it spends; a repair something to repair, the
+        /// restock a selected secondary, the charger a cooldown to end (EVERSPACE 2's CanBeUsed of each consumable).</summary>
         bool CanFire(Entry e)
         {
-            if (e.rules.type != Device.Type.OverchargeArea && e.rules.type != Device.Type.OverchargeBeam) return true;
             var hp = self.hitpoints;
-            int cost = hp != null ? Device.OverchargeCost(hp.maxShield, e.shieldCost) : 0;
-            if (cost > 0 && hp.shield >= cost) return true;
-            Message?.Invoke(string.Format(Localization.Extra("deviceNoShield", "{0}: not enough shield"), e.name));
-            return false;
+            switch (e.rules.type)
+            {
+                case Device.Type.OverchargeArea:
+                case Device.Type.OverchargeBeam:
+                {
+                    int cost = hp != null ? Device.OverchargeCost(hp.maxShield, e.shieldCost) : 0;
+                    if (cost > 0 && hp.shield >= cost) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoShield", "{0}: not enough shield"), e.name));
+                    return false;
+                }
+                case Device.Type.HullRepair:
+                    if (hp != null && hp.hull < hp.maxHull) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNothingToRepair", "{0}: nothing to repair"), e.name));
+                    return false;
+                case Device.Type.ArmorRepair:
+                    if (hp != null && hp.maxArmor > 0 && hp.armor < hp.maxArmor) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNothingToRepair", "{0}: nothing to repair"), e.name));
+                    return false;
+                case Device.Type.Restock:
+                    if (weapons != null && weapons.SelectedSecondary >= 0) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoSecondary", "{0}: no secondary weapon selected"), e.name));
+                    return false;
+                case Device.Type.DeviceCharger:
+                    foreach (var o in devices) if (o != e && o.rules.State == Device.Phase.Cooldown) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoCooldowns", "{0}: no device is cooling down"), e.name));
+                    return false;
+                default:
+                    return true;
+            }
         }
+
+        /// <summary>Remake: the points a repair device restores, 'percent' of the layer's maximum (rounded up, at least 1).</summary>
+        public static int RepairPoints(int max, int percent) => max <= 0 ? 0 : Mathf.Max(1, Mathf.CeilToInt(max * Mathf.Clamp(percent, 0, 100) / 100f));
+
+        // the sensor cloud: where it was dropped and its reach (Unity metres); the ship hidden by it this frame
+        Entry cloud;
+        Vector3 cloudCentre;
+        bool hiddenByCloud;
 
         void Fire(Entry e)
         {
@@ -115,6 +148,32 @@ namespace GoF2Remake.Flight
                     deflector = e;
                     self.Deflects = deflect;
                     break;
+                case Device.Type.SensorCloud:
+                    cloud = e;
+                    cloudCentre = pos;
+                    Explosion.Spawn(11, pos, transform.forward, e.radius / ShockScaleUnits, null, false);   // (the burst; the cloud itself isn't drawn yet)
+                    break;
+                case Device.Type.HullRepair:
+                {
+                    var hp = self.hitpoints;
+                    if (hp == null) break;
+                    hp.hull = Mathf.Min(hp.maxHull, hp.hull + RepairPoints(hp.maxHull, e.damagePercent));
+                    self.hp = hp.hull;
+                    break;
+                }
+                case Device.Type.ArmorRepair:
+                {
+                    var hp = self.hitpoints;
+                    if (hp == null) break;
+                    hp.armor = Mathf.Min(hp.maxArmor, hp.armor + RepairPoints(hp.maxArmor, e.damagePercent));
+                    break;
+                }
+                case Device.Type.Restock:
+                    weapons?.Restock(e.ammo);
+                    break;
+                case Device.Type.DeviceCharger:
+                    foreach (var o in devices) if (o != e) o.rules.ResetCooldown();
+                    break;
             }
         }
 
@@ -130,11 +189,34 @@ namespace GoF2Remake.Flight
                     if ((object)self.Deflects == (object)deflect) self.Deflects = null;
                     deflector = null;
                     break;
+                case Device.Type.SensorCloud:
+                    if (cloud == e) { cloud = null; Unhide(); }
+                    break;
             }
+        }
+
+        /// <summary>The ship's own cloak's state back on Target.cloaked once the cloud no longer hides it.</summary>
+        void Unhide()
+        {
+            if (!hiddenByCloud) return;
+            hiddenByCloud = false;
+            var cloak = GetComponent<PlayerCloak>();
+            self.cloaked = cloak != null && cloak.Rules != null && cloak.Rules.Cloaked;
+        }
+
+        /// <summary>EVERSPACE 2's smoke bomb field: grown over GrowDuration to its radius, the ship inside it hidden (IsHiddenByActor).</summary>
+        void UpdateCloud()
+        {
+            if (cloud == null || !cloud.rules.Active) { Unhide(); return; }
+            float reach = Device.WaveRadius(cloud.rules.Timer, cloud.growMs, cloud.radius) * M;
+            bool inside = (transform.position - cloudCentre).sqrMagnitude <= reach * reach;
+            if (inside) { hiddenByCloud = true; self.cloaked = true; }
+            else Unhide();
         }
 
         void UpdateEffects(float dtMs)
         {
+            UpdateCloud();
             for (int w = waves.Count - 1; w >= 0; w--)
             {
                 var wave = waves[w];

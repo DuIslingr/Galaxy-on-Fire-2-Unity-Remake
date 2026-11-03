@@ -64,6 +64,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake: an active device (Flight.Device), a mod equipment item with device (attr 150) 1..7.</summary>
         public static bool IsDevice(ItemData it) => DeviceType(it) != Flight.Device.Type.None;
 
+        /// <summary>Remake (2026-11-02): a device used up one unit per use (deviceConsumable, EVERSPACE 2's consumables): the
+        /// hangar stacks it like a secondary's ammo, PlayerDevices spends the stack.</summary>
+        public static bool IsConsumableDevice(ItemData it) => IsDevice(it) && it.Attr(Flight.Device.ConsumableAttr) > 0;
+
         public static Flight.Device.Type DeviceType(ItemData it)
         {
             int t = it != null && it.TypeId == 3 ? it.Attr(Flight.Device.TypeAttr) : 0;

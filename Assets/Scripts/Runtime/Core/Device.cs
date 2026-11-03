@@ -40,12 +40,29 @@ namespace GoF2Remake.Flight
             /// <summary>Carom Deflector: for deviceDurationMs the enemy shots that hit the ship are turned back at their shooter
             /// at deviceDamagePercent of their damage.</summary>
             Deflector = 7,
+            // Remake (2026-11-02): EVERSPACE 2's consumables (its BP_Consumable_* blueprints), usually with deviceConsumable
+            // (one use per unit, stacked like missiles; PlayerDevices).
+            /// <summary>Smoke Bomb: a sensor cloud of deviceRadius around the ship for deviceDurationMs (grown over deviceGrowMs,
+            /// ES2's 2 s): while the ship is inside, the enemies lose it (as under a cloak: no fire, no missile locks).</summary>
+            SensorCloud = 8,
+            /// <summary>Nano Injector: deviceDamagePercent % of the hull's maximum repaired at once (only with hull missing).</summary>
+            HullRepair = 9,
+            /// <summary>Armor Repair: deviceDamagePercent % of the armour's maximum repaired at once (ES2: to full; only with
+            /// armour missing).</summary>
+            ArmorRepair = 10,
+            /// <summary>Secondaries Restock: deviceAmmo rounds for the selected secondary (ES2: a share of its maximum ammo).</summary>
+            Restock = 11,
+            /// <summary>Device Charger: every other device's cooldown ends at once (ES2's ResetCooldowns; only while one cools down).</summary>
+            DeviceCharger = 12,
         }
 
-        public const int TypeCount = 7;
+        public const int TypeCount = 12;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
         public const int TypeAttr = 150, CooldownAttr = 151, DurationAttr = 152, RadiusAttr = 153, GrowAttr = 154,
                          SlowAttr = 155, ShieldCostAttr = 156, DamagePercentAttr = 157, ChargeAttr = 158, ConeAttr = 159;
+        /// <summary>Remake (2026-11-02): deviceConsumable 1 = one use per unit, the mounted stack's amount the uses left (the
+        /// hangar stacks them like missiles; 0 cooldown unless given one); deviceAmmo = the restock's rounds.</summary>
+        public const int ConsumableAttr = 164, AmmoAttr = 165;
         /// <summary>Shop.KindOf: the devices' one-per-ship kinds, KindBase + type (past the cruise drive's 1000).</summary>
         public const int KindBase = 1100;
         /// <summary>GoF3's cooldown for every player device (DeviceConfiguration cooldown 60).</summary>
@@ -98,6 +115,15 @@ namespace GoF2Remake.Flight
         {
             if (chargeMax <= 0f || State == Phase.Active || points <= 0f) return;
             Charge = Mathf.Min(chargeMax, Charge + points);
+        }
+
+        /// <summary>The device charger (EVERSPACE 2's ResetCooldowns): a cooldown ends now; true if one was running.</summary>
+        public bool ResetCooldown()
+        {
+            if (State != Phase.Cooldown) return false;
+            State = Phase.Ready;
+            Timer = 0f;
+            return true;
         }
 
         /// <summary>A death or a cutscene: a run ends now and the cooldown starts.</summary>

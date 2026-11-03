@@ -435,6 +435,15 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 5 Overcharger beam | The same cost, as beams at every hostile ship within `deviceRadius` and `deviceConeDeg` of the nose | radius, cone, shield cost, damage percent |
 | 6 Strike charge | Charged by `deviceCharge` points of damage the primary guns deal (its icon fills as it charges), then `deviceDurationMs` of their damage x `deviceDamagePercent` / 100 | charge, duration, damage percent |
 | 7 Deflector | For `deviceDurationMs` the enemy shots that would hit the ship fly back at their shooter, homing, at `deviceDamagePercent` % of their damage; beams are stopped | duration, damage percent |
+| 8 Sensor cloud | A cloud of `deviceRadius` around the ship for `deviceDurationMs`, grown over `deviceGrowMs`: while the ship flies inside it the enemies lose it, as under a cloak (they hold their fire, missiles lose their lock), like EVERSPACE 2's Smoke Bomb | radius, grow, duration |
+| 9 Hull repair | Repairs `deviceDamagePercent` % of the hull's maximum at once (EVERSPACE 2's Nano Injector); refused with nothing to repair | damage percent |
+| 10 Armour repair | Repairs `deviceDamagePercent` % of the armour's maximum at once (EVERSPACE 2's Armor Repair, 100 = to full); refused with nothing to repair | damage percent |
+| 11 Restock | `deviceAmmo` rounds more for the selected secondary weapon (EVERSPACE 2's Secondaries Restock); refused with none selected | ammo |
+| 12 Device charger | Every other device's cooldown ends at once (EVERSPACE 2's Device Charger); refused while none is cooling down | |
+
+A **consumable** device (`"deviceConsumable": 1`, EVERSPACE 2's consumables) is used up one unit per use and has no
+cooldown unless given one: the hangar stacks bought units like a secondary's ammo (mounting moves the whole stack,
+more bought join it), the HUD says "<item>: N left" after each use, and the last use takes the item off the ship.
 
 The item's `"fx"` gives its sound (its shot sound plays when it fires) and the EMP and disruptor shots' look; without
 one they fly as the Dia EMP's shots. Kills and standing count as the player's. In multiplayer the slow reaches another

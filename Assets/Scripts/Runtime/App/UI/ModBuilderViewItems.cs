@@ -291,7 +291,7 @@ namespace GoF2Remake.UI
             {
                 // A seatless cabin (cabinSize 0) made an active device (Flight.Device, PlayerDevices).
                 Add(Flight.Device.TypeAttr, 0, 0, Flight.Device.TypeCount, T("mbStatNoteDevice",
-                    "An active device (with cabinSize 0): 1 EMP wave, 2 EMP shot, 3 shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector."));
+                    "An active device (with cabinSize 0): 1 EMP wave, 2 EMP shot, 3 shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector, 8 sensor cloud, 9 hull repair, 10 armour repair, 11 restock, 12 device charger."));
                 Add(Flight.Device.CooldownAttr, Flight.Device.DefaultCooldownMs, 0, 600000);
                 Add(Flight.Device.DurationAttr, 8000, 0, 120000, T("mbStatNoteDeviceDuration", "How long it runs (the slow, the boost, the deflector); 0 = at once."));
                 Add(Flight.Device.RadiusAttr, 9120, 0, 200000, T("mbStatNoteDeviceRadius", "Its reach (20 = 1 m)."));
@@ -302,6 +302,8 @@ namespace GoF2Remake.UI
                     "The overcharger's damage in percent of the shield spent, the strike charge's boost, the deflector's turned-back shots."));
                 Add(Flight.Device.ChargeAttr, 0, 0, 100000, T("mbStatNoteDeviceCharge", "The strike charge: the damage dealt that fills it."));
                 Add(Flight.Device.ConeAttr, 30, 1, 180);
+                Add(Flight.Device.ConsumableAttr, 0, 0, 1, T("mbStatNoteDeviceConsumable", "1: used up one unit per use, stacked like missiles, no cooldown unless given one."));
+                Add(Flight.Device.AmmoAttr, 0, 0, 1000, T("mbStatNoteDeviceAmmo", "The restock's rounds for the selected secondary."));
             }
             return list;
         }

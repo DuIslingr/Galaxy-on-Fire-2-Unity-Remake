@@ -152,6 +152,16 @@ namespace GoF2Remake.Flight
             foreach (var r in rigs) if (r.gun.isSecondary && r.gun.itemIndex == item && r.stack != null) n += Mathf.Max(0, r.stack.amount);
             return n;
         }
+        /// <summary>Remake (2026-11-02, the restock device after EVERSPACE 2's Secondaries Restock): 'rounds' more for the selected
+        /// secondary's mounted stack; the rounds added (0: none selected).</summary>
+        public int Restock(int rounds)
+        {
+            if (SelectedSecondary < 0 || rounds <= 0) return 0;
+            foreach (var r in rigs)
+                if (r.gun.isSecondary && r.gun.itemIndex == SelectedSecondary && r.stack != null) { r.stack.amount = Mathf.Max(0, r.stack.amount) + rounds; return rounds; }
+            return 0;
+        }
+
         /// <summary>The flight menu's pick (MGame::OnTouchEnd, keys 0x2000 / 0x4000 / 0x8000 / 0x10000).</summary>
         public void SelectSecondary(int item)
         {

@@ -73,6 +73,8 @@ namespace GoF2Remake.Modding
             ["device"] = 150, ["deviceCooldownMs"] = 151, ["deviceDurationMs"] = 152, ["deviceRadius"] = 153, ["deviceGrowMs"] = 154,
             ["deviceSlowPercent"] = 155, ["deviceShieldCost"] = 156, ["deviceDamagePercent"] = 157, ["deviceCharge"] = 158,
             ["deviceConeDeg"] = 159,
+            // Remake (2026-11-02): EVERSPACE 2's consumables as devices (Flight.Device 8-12)
+            ["deviceConsumable"] = 164, ["deviceAmmo"] = 165,
             // A cloak's cooldown in ms in place of the difficulty's 5-12 s (Flight.Cloak; GoF3's Hiroto Cloak 60 s).
             ["cloakCooldownMs"] = 160,
             // A weapon's hits go past the shield to the armor and hull (1; Flight.Gun.ShieldFactor 0, Hitpoints.Damage), or slow
