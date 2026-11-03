@@ -499,7 +499,8 @@ namespace GoF2Remake.UI
         // Read every frame and written only when a value changed. Hidden under the hangar, Missions and Status windows
         // (StationMenu.uss) and with the rest of the menu under the star map and while it is flown away.
         Label fundsCargo, fundsCredits;
-        int shownCredits = int.MinValue, shownLoad = int.MinValue, shownMaxLoad = int.MinValue;
+        long shownCredits = long.MinValue;   // remake: 64-bit credits
+        int shownLoad = int.MinValue, shownMaxLoad = int.MinValue;
 
         void Update()
         {
@@ -719,6 +720,13 @@ namespace GoF2Remake.UI
                 else if (kb != null && kb.digit1Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Ship); }
                 else if (kb != null && kb.digit2Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Shop); }
                 else if (kb != null && kb.digit3Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Blueprints); }
+                // Remake, the Kaamo Club VIP Card (HangarWindowKaamoVip): 4 = its Ships tab, F / the right stick press = search
+                // (a controller's keyboard), R / the left stick press = the next sort order. Nothing without the card's perks.
+                else if (kb != null && kb.digit4Key.wasPressedThisFrame && hangarWindow.VipTools) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Ships); }
+                else if (kb != null && kb.fKey.wasPressedThisFrame) hangarWindow.FocusSearch(false);
+                else if (pad != null && pad.rightStickButton.wasPressedThisFrame) hangarWindow.FocusSearch(true);
+                else if ((kb != null && kb.rKey.wasPressedThisFrame) || (pad != null && pad.leftStickButton.wasPressedThisFrame))
+                    hangarWindow.CycleSort();
                 else if ((kb != null && kb.iKey.wasPressedThisFrame) || (pad != null && pad.buttonNorth.wasPressedThisFrame))
                     hangarWindow.OpenInfo();   // remake keys for the row's info button
                 return;

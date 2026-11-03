@@ -106,7 +106,9 @@ namespace GoF2Remake.Data
         /// <summary>Statistics for the Status window and the medals: Status+0xd8 asteroids destroyed, +0xa0 / +0xa4 ore /
         /// cores mined (t) and the types (+0x94 / +0x98), crates salvaged (t), +0xb0 junk destroyed, +0x118 battleships
         /// destroyed, the highest credits, the hull % on the last arrival at a station (Survivor).</summary>
-        public static int AsteroidsDestroyed, OreMined, CoresMined, CratesSalvaged, JunkDestroyed, BattleshipsDestroyed, HighestCredits;
+        public static int AsteroidsDestroyed, OreMined, CoresMined, CratesSalvaged, JunkDestroyed, BattleshipsDestroyed;
+        /// <summary>Remake: the most credits held (medal 25), 64-bit like Credits.</summary>
+        public static long HighestCredits;
         public static int LastArrivalHullPercent = 100;
         /// <summary>Remake (World.CapitalShips): the playing time (PlaySeconds) from which a carrier / Vossk battleship carries
         /// loot again (an hour after the last one the player destroyed with its crate).</summary>
@@ -159,6 +161,8 @@ namespace GoF2Remake.Data
         /// <summary>Status+0x114 (Reference/research/kaamo_club.md 2): the Kaamo Club, 0 not owned, 1 Mkkt Bkkt's call
         /// heard, 2 purchasable, 3 owned.</summary>
         public static int KaamoState;
+        /// <summary>Remake: the Kaamo Club VIP Card was bought (KaamoClub.VipFeatures; saved, carried into New Game+).</summary>
+        public static bool KaamoVip;
         /// <summary>Status+0xf4: the selected secondary weapon item (-1 = none), kept while it stays mounted.</summary>
         public static int SelectedSecondary = -1;
         /// <summary>Status+200: nukes detonated (medal 20).</summary>
@@ -302,8 +306,27 @@ namespace GoF2Remake.Data
         /// <summary>Cargo hold (Ship+0x70) in acquisition order; every unit weighs 1 t.</summary>
         public static List<ItemStack> Cargo = new List<ItemStack>();
 
-        /// <summary>Status+0x1ac.</summary>
-        public static int Credits;
+        /// <summary>Status+0x1ac (the original's an int). Remake (the user's request): a 64-bit amount, up to long.MaxValue
+        /// (9 223 372 036 854 775 807). Overflow-safe: a sum that would pass the top stays at it (a wrapped addition comes in
+        /// as a huge negative while the credits were positive: AddCredits / the setter keep long.MaxValue instead), so
+        /// `Credits += x` from anywhere can't wrap round to minus nine quintillion.</summary>
+        public static long Credits
+        {
+            get => credits;
+            set => credits = credits >= 0 && value < long.MinValue / 2 ? long.MaxValue : value;
+        }
+        static long credits;
+        /// <summary>The top of the credits (long.MaxValue).</summary>
+        public const long MaxCredits = long.MaxValue;
+        /// <summary>'amount' (either sign) onto the credits, saturating at 0 .. MaxCredits for a gain past the top.</summary>
+        public static void AddCredits(long amount) => Credits = SaturatingAdd(Credits, amount);
+        /// <summary>a + b clamped to long's range instead of wrapping.</summary>
+        public static long SaturatingAdd(long a, long b)
+        {
+            if (b > 0 && a > long.MaxValue - b) return long.MaxValue;
+            if (b < 0 && a < long.MinValue - b) return long.MinValue;
+            return a + b;
+        }
 
         /// <summary>Status+0x19c: the last 3 visited stations with their stock (newest last).</summary>
         public static List<StationStock> RecentStations = new List<StationStock>();
@@ -486,6 +509,16 @@ namespace GoF2Remake.Data
         /// <summary>GameRecord::load(last save): back to the docked state of the auto-save.</summary>
         public static bool LoadAutosave() => SaveGame.Load(SaveGame.AutoSaveSlot);
 
+        /// <summary>Status::resetGame's ship, loadout, cargo and credits alone: the Phantom, its weapons and equipment, an
+        /// empty hold, no credits (a co-op campaign's start after the multiplayer session's free-play start, CoopCampaign).</summary>
+        public static void ResetStartShip()
+        {
+            ShipIndex = 10;
+            Equipment = StartEquipment();
+            Cargo = new List<ItemStack>();
+            Credits = 0;
+        }
+
         public static void ResetNewGame()
         {
             PlaySeconds = 0f;
@@ -527,7 +560,8 @@ namespace GoF2Remake.Data
             PendingProducts = new List<PendingProduct>();
             GoodsProduced = 0;
             Medals = new int[45];
-            AsteroidsDestroyed = OreMined = CoresMined = CratesSalvaged = JunkDestroyed = BattleshipsDestroyed = HighestCredits = 0;
+            AsteroidsDestroyed = OreMined = CoresMined = CratesSalvaged = JunkDestroyed = BattleshipsDestroyed = 0;
+            HighestCredits = 0;
             LastArrivalHullPercent = 100;
             CapitalLootReadyAt = 0f;
             ArrivedWithoutGear = false;
@@ -538,6 +572,7 @@ namespace GoF2Remake.Data
             CoreTypesMined = new HashSet<int>();
             ShipMods = new List<int>();
             KaamoState = 0;
+            KaamoVip = false;
             SelectedSecondary = -1;
             BombsDetonated = 0;
             PirateBaseDestroyed = new bool[4];

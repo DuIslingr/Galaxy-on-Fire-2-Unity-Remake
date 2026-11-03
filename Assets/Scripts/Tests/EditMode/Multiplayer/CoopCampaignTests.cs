@@ -157,7 +157,7 @@ namespace GoF2Remake.Tests
             Session.ResetNewGame();
             Story.StartNewGame(0);
             while (Story.Index < Story.GameWonIndex - 1) Story.Advance(db);
-            int before = Session.Credits;
+            long before = Session.Credits;
             Story.Advance(db);
             Assert.AreEqual(before + 13334, Session.Credits, "40 000 for a crew of three");
         }
@@ -366,8 +366,12 @@ namespace GoF2Remake.Tests
         public void NewCampaignStartsWithThePrologue()
         {
             Session.ResetNewGame();
+            Session.ShipIndex = 0;          // NetGame.PrepareSession's multiplayer pilot: Betty and 10000 credits
+            Session.Credits = 10000;
             CoopCampaign.NewCampaign(db, Campaign.GalaxyOnFire2);
             Assert.AreEqual(0, Story.Index, "the prologue, in flight (the crew gathered in the lobby first)");
+            Assert.AreEqual(10, Session.ShipIndex, "the Phantom, not the multiplayer Betty (#229)");
+            Assert.AreEqual(0, Session.Credits, "resetGame's credits");
             Assert.AreEqual(78, Session.StationIndex);
             Assert.IsFalse(Session.LaunchedFromStation);
             Assert.IsFalse(Session.FreePlay);

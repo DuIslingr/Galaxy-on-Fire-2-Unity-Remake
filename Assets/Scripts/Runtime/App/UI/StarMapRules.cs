@@ -171,18 +171,18 @@ namespace GoF2Remake.UI
                 // they reach it), No cancels.
                 if (slipstream)
                 {
-                    string drive = SlipstreamText.ToUpperInvariant();
+                    string drive = SlipstreamText.UiCaps();
                     if (gateJumps > 0)
-                        ShowDialog(travelTo, () => Choose(station, true), null, yesText: T(1359).ToUpperInvariant(), altText: drive, onAlt: () => BySlipstream(station),
-                                   alt2Text: Localization.Extra("mapRouteGates", "Jumpgates").ToUpperInvariant(), onAlt2: () => TravelByGates(station, true));
-                    else ShowDialog(travelTo, () => Choose(station, true), null, yesText: T(1359).ToUpperInvariant(), altText: drive, onAlt: () => BySlipstream(station));
+                        ShowDialog(travelTo, () => Choose(station, true), null, yesText: T(1359).UiCaps(), altText: drive, onAlt: () => BySlipstream(station),
+                                   alt2Text: Localization.Extra("mapRouteGates", "Jumpgates").UiCaps(), onAlt2: () => TravelByGates(station, true));
+                    else ShowDialog(travelTo, () => Choose(station, true), null, yesText: T(1359).UiCaps(), altText: drive, onAlt: () => BySlipstream(station));
                     return;
                 }
                 // Remake (jumpgate route planning, "or when you don't want to use one"): the drive or the gates, No cancels.
                 if (gateJumps > 0)
                 {
-                    ShowDialog(travelTo, () => Choose(station, true), null, yesText: T(1359).ToUpperInvariant(),
-                               altText: Localization.Extra("mapRouteGates", "Jumpgates").ToUpperInvariant(), onAlt: () => TravelByGates(station, true));
+                    ShowDialog(travelTo, () => Choose(station, true), null, yesText: T(1359).UiCaps(),
+                               altText: Localization.Extra("mapRouteGates", "Jumpgates").UiCaps(), onAlt: () => TravelByGates(station, true));
                     return;
                 }
                 ShowDialog(travelTo, () => Choose(station, true), null);
@@ -206,8 +206,8 @@ namespace GoF2Remake.UI
             }
             string text = $"{T(574)}: {StationName(station)}\n{RouteFastestText}: {JumpCountText(fast.Count - 1)}\n"
                         + $"{RouteSafestText}: {JumpCountText(safe.Count - 1)}\n{T(421)}";
-            ShowDialog(text, () => Choose(station, false), null, yesText: RouteFastestText.ToUpperInvariant(),
-                       altText: RouteSafestText.ToUpperInvariant(), onAlt: () => Choose(station, false, true));
+            ShowDialog(text, () => Choose(station, false), null, yesText: RouteFastestText.UiCaps(),
+                       altText: RouteSafestText.UiCaps(), onAlt: () => Choose(station, false, true));
         }
         /// <summary>The safest route from a to b where it isn't the fastest one ('fast'), else null.</summary>
         List<int> SafeAlternative(int a, int b, List<int> fast)
@@ -253,8 +253,8 @@ namespace GoF2Remake.UI
             var view = root?.Q<Label>("mapViewTitle");
             if (title == null || view == null) return;
             bool station = stationTitle != null && builder == null;
-            title.text = station ? stationTitle : T(177).ToUpperInvariant();
-            view.text = station ? T(177).ToUpperInvariant() : "";
+            title.text = station ? stationTitle : T(177).UiCaps();
+            view.text = station ? T(177).UiCaps() : "";
             view.style.display = station ? DisplayStyle.Flex : DisplayStyle.None;
         }
         /// <summary>Modified: the help text the header's "?" shows (null: no "?").</summary>
@@ -295,7 +295,7 @@ namespace GoF2Remake.UI
             dialogInfo = info;
             dialogBackCancels = altText != null && !info;
             root.Q<Label>("dialogText").text = text;
-            dialogYes.text = info ? Localization.Extra("ok", "OK") : yesText ?? T(134).ToUpperInvariant();
+            dialogYes.text = info ? Localization.Extra("ok", "OK").OgCase() : yesText ?? T(134).UiCaps();
             dialogNo.style.display = info ? DisplayStyle.None : DisplayStyle.Flex;
             if (dialogAlt != null)
             {

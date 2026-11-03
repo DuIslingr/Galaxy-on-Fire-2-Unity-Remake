@@ -223,7 +223,8 @@ namespace GoF2Remake.UI
         void UpdateFunds()
         {
             if (fundsCargo == null || fundsCredits == null || level == null || level.Database == null) return;
-            int credits = Session.Credits, load = Shop.CargoLoad(), max = Shop.MaxLoad(level.Database);
+            long credits = Session.Credits;
+            int load = Shop.CargoLoad(), max = Shop.MaxLoad(level.Database);
             if (credits != shownCredits)
             {
                 shownCredits = credits;
@@ -233,7 +234,7 @@ namespace GoF2Remake.UI
             {
                 shownLoad = load;
                 shownMaxLoad = max;
-                fundsCargo.text = $"{Localization.Get(184).ToUpperInvariant()}  {load} / {max} t";   // 184 Cargo, as the hangar's footer
+                fundsCargo.text = $"{Localization.Get(184).UiCaps()}  {load} / {max} t";   // 184 Cargo, as the hangar's footer
                 fundsCargo.EnableInClassList("station-funds-cargo--over", load > max);
             }
         }

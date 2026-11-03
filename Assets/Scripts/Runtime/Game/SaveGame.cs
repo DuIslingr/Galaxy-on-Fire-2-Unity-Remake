@@ -25,7 +25,8 @@ namespace GoF2Remake.Data
         public int campaign;
         public float difficulty;
         public int campaignMission;
-        public int station, previousStation, ship, credits;
+        public int station, previousStation, ship;
+        public long credits;   // remake: 64-bit (Session.Credits); older saves' ints read the same
         /// <summary>Remake: the station the player last docked at (Session.LastDockedStation), -1 = unknown (older saves).</summary>
         public int lastDockedStation = -1;
         /// <summary>#122: Session.KhadorCronusGift, 1 / 0; -1 = a save from before it (then given at step 77 to a player not in
@@ -67,7 +68,8 @@ namespace GoF2Remake.Data
         public List<PendingProduct> pendingProducts;
         public int goodsProduced;
         public int[] medals;
-        public int asteroidsDestroyed, oreMined, coresMined, cratesSalvaged, junkDestroyed, battleshipsDestroyed, highestCredits, lastArrivalHullPercent = 100;
+        public int asteroidsDestroyed, oreMined, coresMined, cratesSalvaged, junkDestroyed, battleshipsDestroyed, lastArrivalHullPercent = 100;
+        public long highestCredits;
         public List<int> oreTypesMined, coreTypesMined;
         public float capitalLootReadyAt;   // remake: World.CapitalShips' loot cooldown (playing time)
         public int boozeBought, alienRemainsCollected;   // v8
@@ -111,6 +113,8 @@ namespace GoF2Remake.Data
         public List<string> graphQuestsDone;
         // (remake, no version of its own: older saves have none) the repeatable quests finished, "name|playing seconds"
         public List<string> graphQuestRepeats;
+        // (remake, no version of its own: older saves have none) the Kaamo Club VIP Card bought (KaamoClub.VipFeatures)
+        public bool kaamoVip;
         // version 14: a mod's campaign (Session.ModCampaign, Modding.ModCampaigns)
         public string modCampaign;
         // version 15: a hardcore (permadeath) game and the run it belongs to (Session.Hardcore / RunId)
@@ -425,7 +429,7 @@ namespace GoF2Remake.Data
                 agentsTalkedTo = Session.AgentsTalkedTo, offersDeclined = Session.OffersDeclined, offersRepeated = Session.OffersRepeated,
                 acceptedBlindRisk = Session.AcceptedBlindRisk, acceptedBlindMap = Session.AcceptedBlindMap,
                 containersDelivered = Session.ContainersDelivered, passengersDelivered = Session.PassengersDelivered,
-                kaamoState = Session.KaamoState, kaamoItems = Session.KaamoItems, kaamoShips = Session.KaamoShips,
+                kaamoState = Session.KaamoState, kaamoItems = Session.KaamoItems, kaamoShips = Session.KaamoShips, kaamoVip = Session.KaamoVip,
                 selectedSecondary = Session.SelectedSecondary, bombsDetonated = Session.BombsDetonated,
                 pirateBaseDestroyed = Session.PirateBaseDestroyed, hints = new List<int>(Session.Hints),
                 graveRiserKills = Session.GraveRiserKills, cloakMs = Session.CloakMs,
@@ -688,6 +692,7 @@ namespace GoF2Remake.Data
                 Session.KaamoState = s.kaamoState;
                 Session.KaamoItems = s.kaamoItems ?? new List<ItemStack>();
                 Session.KaamoShips = s.kaamoShips ?? new List<StoredShip>();
+                Session.KaamoVip = s.kaamoVip;
             }
             if (s.version >= 5)
             {
