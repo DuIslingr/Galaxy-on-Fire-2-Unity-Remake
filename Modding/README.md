@@ -1729,6 +1729,7 @@ ahead of it; pitch up from the horizon.
 | `skyRotation` | `[x, y, z]` degrees: the sky's turn in this orbit, like the system skybox's `rotation` but for this station alone (over the system's `rotation` and `sunAligned`): each orbit can show its sky from its own angle, lined up with its own `sun`. |
 | `pads` | Docking pads outside the station, docked at from space like the arms in the Luur mission: `[ { "position": [x, y, z], "approach": [x, y, z], "facing": [x, y, z] } ]`. `position` is where the ship rests, `approach` where it comes in from (default 2000 units above the pad), `facing` where its nose points (default `z`). The player docks at the nearest free one ("DOCK" on the station's pads target); missions hear it as `on pad` (see the steps). With `"station": "nodock"` they are the only way to dock. |
 | `pirateHeld` | `true`: pirates hold this station on every visit, like the Kaamo Club at the start (four pirate outposts and their fighters; no docking, jumpgate or Khador Drive until the outposts fall). Driven out, they come back after 30 minutes of play. `false` keeps the station free in a system that is `pirateHeld`. |
+| `wrecks` | A field of wrecks to salvage, like EVERSPACE 2's wreck fields: `{ "count": 1-60 (default 12), "centre": [x, y, z], "spread": units across (default 60000) }`, or `true` for 12 at the default place. Each visit lays out that many wreck containers at random in the field, each with a freighter's loot (or a little Space Waste); they stay until emptied. |
 
 ```json
 {

@@ -58,6 +58,8 @@ namespace GoF2Remake.Flight
         [System.NonSerialized] public System.Action PullStarted;
         /// <summary>A mirror of another game's crate (NetCrate): it neither drifts nor expires by itself.</summary>
         [System.NonSerialized] public bool remote;
+        /// <summary>Remake: stays until emptied, no 60 s expiry (an orbit's wreck field, a stash: World.WreckField).</summary>
+        [System.NonSerialized] public bool keep;
 
         /// <summary>KIPlayer::createCrate's type: the model. 0 the race's container, 1 the rock 0x421e asteroid_01_junk (a shot
         /// asteroid), 2 its Void variant 0x421f, 3 the space junk's 0x4218.</summary>
@@ -123,7 +125,7 @@ namespace GoF2Remake.Flight
             ageMs += dtMs;
             // The Hijacker's mission container stays (the original tractors it straight out of the ship; the remake's crate
             // expiring left Recovery / Salvage neither won nor failed).
-            if ((ageMs > LifetimeMs && !missionCrate) || !HasLoot) { Destroy(gameObject); return; }
+            if ((ageMs > LifetimeMs && !missionCrate && !keep) || !HasLoot) { Destroy(gameObject); return; }
             if (!pulled && force > 0.05f)
             {
                 transform.position += drift * force * frames * M;

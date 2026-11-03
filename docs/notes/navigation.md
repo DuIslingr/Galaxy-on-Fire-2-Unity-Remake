@@ -130,6 +130,14 @@ the player ship) and `NavigationView` (flight HUD).
   spawn groups and reward tables aren't on disk). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
   Minesweeper (mines), Scavenger Baiting, Incursion and Rift (Leviathan encounters are
   left out on purpose).
+  The `stash` and `depot` crates stay until emptied (`Crate.keep`), not the crates' 60 s.
+- **Wreck fields** (remake 2026-11-03, for mods; stations.json `orbit.wrecks` -> `ModWorld.OrbitSpec.wreckCount /
+  wreckCentre / wreckSpread`, `World.WreckField.Spawn` with the gas clouds in `SpaceLevelWormholes`): after EVERSPACE 2's wreck
+  field locations (Wreck Field, Ghost Fleet, Warship Remains: war wrecks among loot containers), each visit lays out
+  `count` (1-60, default 12) wreck containers (the junk crate look) at random in the field's cube (`spread`, default
+  60000; a third as tall), each a freighter's loot roll or 1-5 Space Waste (item 99), kept until emptied (`Crate.keep`). Not
+  in the alien orbit or interstellar space. ES2's wreck meshes aren't placed (only containers). The ES2 importer gives
+  its wreck-field locations one; its outlaw strongholds are pirate-held orbits (`pirateHeld`: outposts and guards).
 - **Menu order** (`Hud::initHudMenu(3)`): outside the alien orbit Asteroid field, Station, Jumpgate, 573 **Waypoint** (a
   player route not finished: the autopilot follows the route, "Target: Waypoint"), "Destination: X"; then every named
   docking target (also in the alien orbit). The original's only restriction is no menu in mission type 0xb7 (the

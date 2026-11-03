@@ -111,14 +111,14 @@ namespace GoF2Remake.World
                     var cargo = new List<ItemStack>();
                     for (int k = 0; k < 3; k++) Merge(cargo, NpcTables.RollLoot(db, true));
                     if (cargo.Count == 0) cargo.Add(new ItemStack(GalaxyMap.EnergyCellItem, Random.Range(2, 6)));
-                    Crate.Spawn(ToUnity(at), cargo, systemRace, Crate.LookJunk);
+                    Crate.Spawn(ToUnity(at), cargo, systemRace, Crate.LookJunk).keep = true;   // (found, not timed)
                     break;
                 }
                 case CruiseEncounters.Depot:
                 {
                     int crates = e.ships > 0 ? e.ships : 3;
                     for (int i = 0; i < crates; i++)
-                        Crate.Spawn(ToUnity(at + Jitter(3000f)), new List<ItemStack> { new ItemStack(Ores[Random.Range(0, Ores.Length)], Random.Range(4, 13)) }, systemRace, Crate.LookJunk);
+                        Crate.Spawn(ToUnity(at + Jitter(3000f)), new List<ItemStack> { new ItemStack(Ores[Random.Range(0, Ores.Length)], Random.Range(4, 13)) }, systemRace, Crate.LookJunk).keep = true;
                     int guards = Mathf.Max(1, Mathf.RoundToInt(Mathf.Clamp(2 + rank / 6, 2, 5) * 1.5f / 2f));
                     for (int i = 0; i < guards; i++) Raider(traffic, at + Jitter(6000f));
                     break;
