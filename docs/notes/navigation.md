@@ -167,6 +167,15 @@ the player ship) and `NavigationView` (flight HUD).
   freighter's roll (`WreckField.Loot`), two for a bulletproof one (remake pick: ES2's loot tables aren't on disk). Not done:
   ES2's secure containers (OpenOnUnlocked, energized through conductors; the importer counts its armoured ones as
   bulletproof), its loot menu (everything spills), the open animation.
+- **Traffic lanes** (remake 2026-11-03, for mods; stations.json `orbit.lanes` -> `ModWorld.LaneSpec`, `Flight.TrafficLane`
+  plain (a Catmull-Rom path walked by distance, 16 chords a segment; open paths turn over at their ends),
+  `World.TrafficLanes` attached with the containers): after EVERSPACE 2's BP_SplineTraffic (Count 10, BaseSpeed 8000 cm/s,
+  TwoLanes with LaneOffset 2000 cm (x3.6 here, for the ships' size), ClosedLoop / DoUTurns, UnitHealth 50, RespawnDelay
+  30 s, a destroyed unit TryTriggerWantedSystem(1); its units are SM_Traffic_* static meshes, physics-knocked when rammed):
+  the ships are the lane's `ships` or the system race's fighters (`NpcTables.RandomFighter`), models only plus a Target of
+  `TrafficLanes.HitPoints` 30 (remake pick for 50 on ES2's scale) with no marker; destroyed: `Explosion.Spawn` x0.6,
+  `Standing.ApplyDelict(system race, 1)` unless an NPC did it, back after 30 s. Not done: ramming them aside, their engine
+  sound, ES2's random glow colours and its traffic meshes.
 - **Hazard volumes** (remake 2026-11-03, for mods; stations.json `orbit.hazards` -> `ModWorld.HazardSpec`, `Flight.Hazards`
   plain, `World.HazardZones` on the player's ship, attached with the wreck field): after EVERSPACE 2's BP_HeatDamageVolume
   (DamagePerSecondMax 200 x (1 - d / SphereRadius)^DamageFalloffExponent 2 each DamageInterval 0.25 s; its overheat buildup

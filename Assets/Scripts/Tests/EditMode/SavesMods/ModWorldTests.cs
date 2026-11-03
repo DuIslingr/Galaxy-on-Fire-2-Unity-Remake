@@ -548,6 +548,46 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(360f, GoF2Remake.World.LootContainer.OpenRangeM, 1e-3f, "ES2's 100 m interact radius x 3.6");
         }
 
+        // Remake (2026-11-03, EVERSPACE 2's spline traffic): a station's "orbit.lanes" (World.TrafficLanes).
+        [Test]
+        public void AnOrbitsTrafficLanes()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'lanes': [ { 'points': [[0, 0, 0], [0, 0, 20000], [20000, 0, 20000]], 'ships': ['3', 'x:y'], 'count': 6, 'speed': 120, 'loop': false, 'twoLanes': false }, " +
+                "{ 'points': [[0, 0, 0], [5000, 0, 0]], 'count': 99 } ] } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var l = ModWorld.OrbitOf(78).lanes;
+            Assert.AreEqual(2, l.Count);
+            Assert.AreEqual(3, l[0].points.Count);
+            Assert.AreEqual(new Vector3(20000, 0, 20000), l[0].points[2]);
+            CollectionAssert.AreEqual(new[] { "3", "x:y" }, l[0].ships);
+            Assert.AreEqual(6, l[0].count);
+            Assert.AreEqual(120f, l[0].speed);
+            Assert.IsFalse(l[0].loop);
+            Assert.IsFalse(l[0].twoLanes);
+            Assert.AreEqual(40, l[1].count, "at most 40 ships a lane");
+            Assert.IsNull(l[1].ships, "the system race's fighters");
+            Assert.AreEqual(80f, l[1].speed, "ES2's 8000 cm/s");
+            Assert.IsTrue(l[1].loop && l[1].twoLanes, "ES2's ClosedLoop and TwoLanes");
+        }
+
+        [Test] public void ALaneNeedsTwoPoints() => StringAssert.Contains("a lane needs \"points\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'lanes': [ { 'points': [[0, 0, 0]] } ] } } ]"));
+
+        [Test]
+        public void ALanesPathRunsThroughItsPoints()
+        {
+            var lane = new GoF2Remake.Flight.TrafficLane(new System.Collections.Generic.List<Vector3> { Vector3.zero, new Vector3(0, 0, 100) }, true);
+            Assert.IsFalse(lane.Loop, "two points: an open path");
+            Assert.AreEqual(100f, lane.Length, 1e-3f);
+            Assert.AreEqual(95f, lane.Position(10f, 95f, out bool back), 1e-3f, "turns over at the end");
+            Assert.IsTrue(back);
+            var sq = new GoF2Remake.Flight.TrafficLane(new System.Collections.Generic.List<Vector3> { Vector3.zero, new Vector3(100, 0, 0), new Vector3(100, 0, 100), new Vector3(0, 0, 100) }, true);
+            Assert.IsTrue(sq.Loop);
+            sq.Sample(sq.Length, out var end, out _);
+            Assert.AreEqual(0f, end.magnitude, 1e-3f, "a loop ends where it began");
+        }
+
         [Test] public void ContainersAreAFieldOrAFlag() => StringAssert.Contains("\"containers\" is true, false or", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': 3 } } ]"));
 
         [Test] public void WrecksAreAFieldOrAFlag() => StringAssert.Contains("\"wrecks\" is true, false or", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'wrecks': 3 } } ]"));

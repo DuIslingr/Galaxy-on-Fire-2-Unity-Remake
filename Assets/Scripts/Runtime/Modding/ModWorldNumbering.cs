@@ -208,6 +208,43 @@ namespace GoF2Remake.Modding
                 }
                 else throw new ModJsonException($"{where}: orbit \"wrecks\" is true, false or {{ \"count\", \"centre\", \"spread\" }}");
             }
+            // Remake (2026-11-03): traffic lanes, EVERSPACE 2's spline traffic (World.TrafficLanes)
+            if (ModJson.Get(o, "lanes") is JToken ln)
+            {
+                if (!(ln is JArray lnList)) throw new ModJsonException($"{where}: orbit \"lanes\" must be a list [ {{ \"points\": [[x, y, z], ...] }} ]");
+                s.lanes = new List<LaneSpec>();
+                foreach (var e in lnList)
+                {
+                    if (!(e is JObject l)) throw new ModJsonException($"{where}: a lane is {{ \"points\", \"ships\", \"count\", \"speed\", \"loop\", \"twoLanes\" }}");
+                    foreach (var p in l.Properties())
+                        if (p.Name != "points" && p.Name != "ships" && p.Name != "count" && p.Name != "speed" && p.Name != "loop" && p.Name != "twoLanes")
+                            Report(mod, $"{where}: unknown lane field \"{p.Name}\" (ignored)");
+                    if (!(ModJson.Get(l, "points") is JArray pts) || pts.Count < 2)
+                        throw new ModJsonException($"{where}: a lane needs \"points\": at least two [x, y, z]");
+                    var lane = new LaneSpec { points = new List<Vector3>() };
+                    foreach (var pt in pts)
+                    {
+                        if (!(pt is JArray a) || a.Count != 3 || a.Any(v => v.Type != JTokenType.Integer && v.Type != JTokenType.Float))
+                            throw new ModJsonException($"{where}: a lane's points are [x, y, z] (game units)");
+                        var v3 = new Vector3((float)a[0], (float)a[1], (float)a[2]);
+                        if (Mathf.Abs(v3.x) > 1e6f || Mathf.Abs(v3.y) > 1e6f || Mathf.Abs(v3.z) > 1e6f) throw new ModJsonException($"{where}: a lane's point lies too far out (at most 1000000 units)");
+                        lane.points.Add(v3);
+                    }
+                    if (ModJson.Get(l, "ships") is JArray sh)
+                    {
+                        lane.ships = new List<string>();
+                        foreach (var r in sh) if (r.Type == JTokenType.String || r.Type == JTokenType.Integer) lane.ships.Add(r.ToString());
+                        if (lane.ships.Count == 0) lane.ships = null;
+                    }
+                    lane.count = Mathf.Clamp(ModJson.Int(l, "count", Flight.TrafficLane.DefaultCount, StationsFile), 1, 40);
+                    lane.speed = Mathf.Clamp(ModJson.Float(l, "speed", Flight.TrafficLane.DefaultSpeedMps, StationsFile), 5f, 1000f);
+                    lane.loop = ModJson.Bool(l, "loop", true, StationsFile);
+                    lane.twoLanes = ModJson.Bool(l, "twoLanes", true, StationsFile);
+                    s.lanes.Add(lane);
+                }
+                if (s.lanes.Count == 0) s.lanes = null;
+                else if (s.lanes.Count > 12) throw new ModJsonException($"{where}: at most 12 lanes an orbit");
+            }
             // Remake (2026-11-03): closed containers, EVERSPACE 2's (World.LootContainer)
             if (ModJson.Get(o, "containers") is JToken ct)
             {

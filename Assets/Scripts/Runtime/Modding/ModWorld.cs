@@ -221,8 +221,23 @@ namespace GoF2Remake.Modding
             public float dps;
         }
 
+        /// <summary>Remake (2026-11-03): an orbit's traffic lane (stations.json "orbit.lanes", World.TrafficLanes).</summary>
+        public sealed class LaneSpec
+        {
+            /// <summary>Game units, at least two.</summary>
+            public List<Vector3> points;
+            /// <summary>Ship references ("12", "mod:id") its ships look like, null = the system race's fighters.</summary>
+            public List<string> ships;
+            public int count = Flight.TrafficLane.DefaultCount;
+            /// <summary>Unity metres a second.</summary>
+            public float speed = Flight.TrafficLane.DefaultSpeedMps;
+            public bool loop = true, twoLanes = true;
+        }
+
         public sealed class OrbitSpec
         {
+            /// <summary>Remake (2026-11-03, EVERSPACE 2's spline traffic): null = none.</summary>
+            public List<LaneSpec> lanes;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's heat volumes and radiation fields): null = none.</summary>
             public List<HazardSpec> hazards;
             /// <summary>-1 the game's; 0 no station (an empty orbit); 1 a station to dock at; 2 its model without docking.</summary>
@@ -286,7 +301,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };
