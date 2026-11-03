@@ -74,11 +74,20 @@ namespace GoF2Remake.Data
             return t >= 1 && t <= Flight.Device.TypeCount ? (Flight.Device.Type)t : Flight.Device.Type.None;
         }
 
-        /// <summary>The one-per-ship kind an item belongs to (Hangar's install and swap rules, FirstMounted): its category, or
-        /// a remake kind of its own past the categories: a cruise drive keeps its base's category 18 (the Khador Drive's icon
-        /// and look) but is fitted beside a Khador Drive, not in its place; a device has one kind per type, whatever its base.</summary>
+        /// <summary>The one-per-ship kind an item belongs to (Hangar's install rules, FirstMounted): its category, or a remake
+        /// kind of its own past the categories: a cruise drive keeps its base's category 18 (the Khador Drive's icon and look)
+        /// with a kind of its own, so FirstMounted tells the two apart; a device has one kind per type, whatever its base.</summary>
         public static int KindOf(ItemData it) => it == null ? -1 : IsCruiseDrive(it) ? Flight.CruiseDrive.Kind
                                                : IsDevice(it) ? Flight.Device.KindBase + (int)DeviceType(it) : it.categoryId;
+
+        /// <summary>Remake: a drive, the Khador Drive (category 18) or a cruise drive (the Khador Slipstream, a mod's).</summary>
+        public static bool IsDrive(ItemData it) => it != null && it.TypeId == 3 && (it.categoryId == 18 || IsCruiseDrive(it));
+
+        /// <summary>Mounting 'it' replaces 'mounted' (Hangar.CanMount's swap, text 287): the same one-per-ship kind, or both
+        /// drives (the user, 2026-11-03: a ship carries one drive, so the Khador Slipstream replaces a Khador Drive or
+        /// another cruise drive as a new shield replaces the old one).</summary>
+        public static bool Replaces(ItemData it, ItemData mounted) =>
+            it != null && mounted != null && (KindOf(it) == KindOf(mounted) || (IsDrive(it) && IsDrive(mounted)));
 
         /// <summary>The mounted cruise drive, null without one.</summary>
         public static ItemData MountedCruiseDrive(Database db) => FirstMounted(db, Flight.CruiseDrive.Kind);

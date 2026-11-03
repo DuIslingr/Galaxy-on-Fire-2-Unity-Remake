@@ -474,7 +474,8 @@ game's NPCs; the shots and the beams are seen only by their pilot.
 ### Cruise drives
 
 A cruise drive is an item based on the Khador Drive (85) with `"cruiseSpeed"` above 0: in-system fast travel for a pilot
-flying by hand, beside the Khador Drive (its own one-per-ship kind, so a ship carries both). Hold the fast-forward button
+flying by hand. A ship carries one drive: mounting a cruise drive over a Khador Drive or another cruise drive asks to
+replace it, as a new shield replaces the old one (the replaced drive goes to the hold). Hold the fast-forward button
 (the touch button, Tab, controller Y) while nothing else flies the ship: the drive charges for `cruiseChargeMs`, pays
 `energyCells` energy cells (twice as many on Extreme, like a Khador jump) and the ship flies `cruiseSpeed` / 100 times
 its forward speed, looking and sounding like a boost; every `cruiseRange` units it pays another leg of cells, and without
