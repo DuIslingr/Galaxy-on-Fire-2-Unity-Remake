@@ -45,6 +45,25 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `Specular_Multiplier`, gloss in A; ships: their `specular_gloss` map), no metal; as metallic 0 the GoF3 Systems mod's
   stations, gates and capital ships had a flat 4 % and looked matte, and the ships lost their panel masks and the gold
   schemes' gold. GoF3's values are gamma-space shader values, so the maps are read as sRGB (0.4 -> a reflectance of 0.13).
+  **Lit by GoF3's own ship shader** (2026-11-02, the user's report: the Betty II's rust and orange washed out grey next to
+  GoF3's copper): GoF2/Hull's `_GOF2_PBR` + `_SPECULAR_SETUP` variant skips URP's PBR (`HullForwardPass.hlsl`
+  `GoF3ShipShader`), a port of GoF3's ShipShader fragment (the retro body's `shader_1873945865.ae4shader`, read with the
+  importer's `ae4_shaders.text`): in gamma space, Phong `pow(R.V, exp2(9 gloss + 1))`, spec and gloss raised by a fresnel
+  `(1 - N.V)^2`, the diffuse cut only by the highlight, `Specular_Multiplier` 1.5 on the highlight alone, the environment's
+  brightness (GoF3's cubes are grey) x spec x (light + fresnel) blended over, a 0.1 rim; one light (the main, in a GoF2
+  hangar the key light from above, `_GoF2PbrLight`), URP's ambient, both and the environment dimmed by `_GoF2PbrIndirectDim`
+  (the room cubemap's sheen). URP's PBR specular setup cut the diffuse to `albedo x (1 - max(spec))`, turned panels white at
+  grazing angles and reflected the room at the map's strength; URP's Blinn-Phong (N.H) of GoF3's exponent is four times as
+  wide. Only these materials: the game's hulls and the metallic mod materials (ES2) never take the variant. **Per kind**
+  (2026-11-02, GoF3's other shaders read the same way: its ship glass, the structures' platings / glass / largeship parts, the
+  generic guns): the same lighting, different in `_GoF3Params` (GoF2/Hull, `HullInput.hlsl`'s UnityPerMaterial): x the
+  environment (`Environment_Amount`: ship bodies and glass), y the rim (bodies, station glass, capital parts, guns), z
+  `Specular_Multiplier`, w 1 = the map carries it (the importer's ship and gun maps: the whole specular x it) / 0 = the
+  highlight x it (glass, capital parts); GoF3's glass also turns opaque with its highlight, reflection and fresnel. Set from
+  a JSON material's `environment` / `rim` / `highlightMultiplier` / `multiplierInMap` (`ModMaterials.FromSpec`) or a glTF
+  material's `extras` (`ModGlbImages.Strip` reads them by material name off the main thread, `ModGlbImages.GoF3Params`,
+  `ModGltfMaterials` -> `FromGltf`); a kit skin copies the hull's material and keeps them. Default (1, 1, 1, 0). The GoF3
+  importer writes them per kind (`tools/gof3_shading.py`) and gives the ship glass GoF3's specular. `ModHullLightingTests`.
   An `additive` entry (2026-11-02) is a glow layer: `GoF2/ModGlow` (`ModAssets.glow`, `ModMaterials.Glow`), unlit, `Blend One
   One`, texture rgb x alpha x `_EmissionColor` (colour x intensity) x vertex colours (`_UseVertexColor`, off with
   `ignoreVertexColors`), `_Scroll` UV units a second; no shadow pass, and `HullCollision` skips every `GoF2/Mod*` effect

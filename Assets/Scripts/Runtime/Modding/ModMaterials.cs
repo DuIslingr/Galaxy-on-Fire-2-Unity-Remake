@@ -448,6 +448,18 @@ namespace GoF2Remake.Modding
         static Color Rgb(float[] v, Color fallback) => v != null && v.Length >= 3 ? new Color(v[0], v[1], v[2], 1f) : fallback;
 
         /// <summary>A ships.json material entry (CustomShipMaterial, see CustomShipBuilder in PR #34 for the original).</summary>
+        static readonly int GoF3ParamsId = Shader.PropertyToID("_GoF3Params");
+
+        /// <summary>A material with an emission map or colour draws it: _EMISSION on its copy, whatever the template holds. The
+        /// templates' keyword is lost whenever the Editor re-saves them (a shader reimport did, 2026-11-02: every mod room and
+        /// glow went dark, the Manticore's hangar a flat grey with GoF3's baked lighting in its emission); ModAssetsGuard
+        /// only restores it before a build.</summary>
+        static void Glowing(Material m)
+        {
+            m.EnableKeyword("_EMISSION");
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+        }
+
         public static Material FromSpec(ModInfo mod, CustomShipMaterial e, string name)
         {
             var a = ModAssets.Get();
@@ -487,6 +499,7 @@ namespace GoF2Remake.Modding
                 var sg = Texture(mod, e.specularGlossiness, false);
                 m.SetTexture("_SpecGlossMap", sg != null ? sg : Solid(Rgb(e.specularColor, new Color(0.2f, 0.2f, 0.2f)), false));
                 m.SetColor("_SpecColor", Color.white);
+                m.SetVector(GoF3ParamsId, ModGlbImages.GoF3Params(e.environment, e.rim, e.highlightMultiplier, e.multiplierInMap));
             }
             else
             {
@@ -502,6 +515,7 @@ namespace GoF2Remake.Modding
                 var ec = Rgb(e.emissionColor, Color.white) * e.emissionIntensity;
                 ec.a = 1f;
                 m.SetColor("_EmissionColor", ec);
+                Glowing(m);
             }
             else m.SetColor("_EmissionColor", Color.black);
             if (em == null && !emColor && !string.IsNullOrEmpty(e.damageEmission))
@@ -613,7 +627,7 @@ namespace GoF2Remake.Modding
         /// when the mods' loader made it (ModGltf: compressed, metallic-roughness and normal maps already converted); else
         /// glTFast's own texture, converted here on the GPU.</summary>
         public static Material FromGltf(GLTFast.Schema.MaterialBase g, GLTFast.IGltfReadable gltf,
-            System.Func<int, ModGlbImages.Role, float, float, Texture2D> images = null)
+            System.Func<int, ModGlbImages.Role, float, float, Texture2D> images = null, Vector4? gof3 = null)
         {
             var a = ModAssets.Get();
             if (a == null) return null;
@@ -660,6 +674,7 @@ namespace GoF2Remake.Modding
                 if (sg != null) { m.SetTexture("_SpecGlossMap", sg); m.SetColor("_SpecColor", f.gamma); }
                 else { m.SetTexture("_SpecGlossMap", Solid(f.gamma, false)); m.SetColor("_SpecColor", Color.white); }
                 m.SetFloat("_Smoothness", sgx.glossinessFactor);
+                m.SetVector(GoF3ParamsId, gof3 ?? ModGlbImages.GoF3Params(1f, 1f, 1f, false));   // its "extras" (ModGlbImages)
             }
             else if (mr != null && ours)
             {
@@ -695,6 +710,7 @@ namespace GoF2Remake.Modding
             {
                 m.SetTexture("_EmissionMap", emMap);
                 m.SetColor("_EmissionColor", emMap != null && emissive.maxColorComponent <= 0f ? Color.white : emissive);
+                Glowing(m);
             }
             else m.SetColor("_EmissionColor", Color.black);
             if (clip) m.SetFloat("_Cutoff", g.alphaCutoff);

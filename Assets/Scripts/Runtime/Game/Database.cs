@@ -347,6 +347,11 @@ namespace GoF2Remake.Data
         // Fire 3's hulls light this way (a coloured specular over the diffuse, not a metal).
         public string specularGlossiness;
         public float[] specularColor;
+        // With a specular map or colour, GoF3's own terms (GoF2/Hull's GoF3ShipShader, Modding/README.md "materials"): how much
+        // the surroundings reflect (GoF3's Environment_Amount, default 1) and its rim light (default 1), GoF3's
+        // Specular_Multiplier on the highlight (default 1) and 'multiplierInMap' when the map already carries it.
+        public float environment = 1f, rim = 1f, highlightMultiplier = 1f;
+        public bool multiplierInMap;
         public bool doubleSided;   // both faces drawn (models with one-sided panels the camera can see from behind)
         public bool engine;        // its emission shows only while the engines run (dark on a ship parked in a hangar)
         // With "engine": its share of the glow at throttle 0 (0..1); 1 = steady like the game's own engine glow, lit

@@ -49,6 +49,8 @@ namespace GoF2Remake.UI
         /// ("Veteran [GoF3]"), as rich text for a Label; the plain name without a tag (GameNames.ShipTag / ItemTag).</summary>
         public static string TaggedShipName(int ship) => WithTag(GameNames.Ship(ship), GameNames.ShipTag(ship));
         public static string TaggedItemName(int item) => WithTag(GameNames.Item(item), GameNames.ItemTag(item));
+        public static string TaggedWantedName(WantedData w, bool upper = false) =>
+            w == null ? "" : WithTag(upper ? w.name.ToUpperInvariant() : w.name, GameNames.WantedTag(w));
         public static string WithTag(string name, string tag) =>
             string.IsNullOrEmpty(tag) ? name : $"{name} <alpha=#80><size=80%><noparse>[{tag}]</noparse></size></alpha>";
 

@@ -5,7 +5,8 @@
 // the hangars); in a GoF2 hangar (SkyReflection.SetHangar) their indirect light is dimmed and their main light comes from
 // above, out of a system (SetSystem: space, the lounge) neither applies. A material in the specular workflow
 // ("specularGlossiness" / "specularColor", glTF's KHR_materials_pbrSpecularGlossiness: Galaxy on Fire 3's hulls) takes the
-// ModSpec_ templates, URP's specular setup.
+// ModSpec_ templates, URP's specular setup, which GoF2/Hull lights with GoF3's own ship shader (GoF3ShipShader), its terms
+// per material (_GoF3Params: "environment", "rim", "highlightMultiplier", "multiplierInMap" in JSON or glTF "extras").
 
 using GoF2Remake.Data;
 using GoF2Remake.Modding;
@@ -62,6 +63,72 @@ namespace GoF2Remake.Tests
                 Object.DestroyImmediate(plain);
             }
             finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
+        public void ASpecularEntrySaysItsGoF3Terms()
+        {
+            var m = ModMaterials.FromSpec(null, new CustomShipMaterial { specularColor = new[] { 1f, 1f, 1f }, environment = 0f,
+                rim = 0f, highlightMultiplier = 1.5f, multiplierInMap = true }, "station test");
+            var d = ModMaterials.FromSpec(null, new CustomShipMaterial { specularColor = new[] { 1f, 1f, 1f } }, "default test");
+            try
+            {
+                Assert.AreEqual(new Vector4(0f, 0f, 1.5f, 1f), m.GetVector("_GoF3Params"));
+                Assert.AreEqual(new Vector4(1f, 1f, 1f, 0f), d.GetVector("_GoF3Params"), "a ship's by default: reflection and rim");
+            }
+            finally { Object.DestroyImmediate(m); Object.DestroyImmediate(d); }
+        }
+
+        [Test]
+        public void AGlbMaterialSaysItsGoF3TermsInItsExtras()
+        {
+            var tex = new Texture2D(1, 1);
+            byte[] png = tex.EncodeToPNG();
+            Object.DestroyImmediate(tex);
+            string json = "{\"asset\":{\"version\":\"2.0\"},\"buffers\":[{\"byteLength\":" + png.Length + "}]," +
+                "\"bufferViews\":[{\"buffer\":0,\"byteOffset\":0,\"byteLength\":" + png.Length + "}]," +
+                "\"images\":[{\"bufferView\":0,\"mimeType\":\"image/png\"}],\"textures\":[{\"source\":0}]," +
+                "\"materials\":[{\"name\":\"glass\",\"pbrMetallicRoughness\":{\"baseColorTexture\":{\"index\":0}}," +
+                "\"extras\":{\"environment\":1,\"rim\":0,\"highlightMultiplier\":2}},{\"name\":\"plain\"}]}";
+            var r = ModGlbImages.Strip(Glb(json, png));
+            Assert.IsNotNull(r);
+            Assert.IsTrue(r.gof3.TryGetValue("glass", out var p), "the material's extras");
+            Assert.AreEqual(new Vector4(1f, 0f, 2f, 0f), p);
+            Assert.IsFalse(r.gof3.ContainsKey("plain"), "no extras: the defaults");
+        }
+
+        static byte[] Glb(string json, byte[] bin)
+        {
+            var j = System.Text.Encoding.UTF8.GetBytes(json);
+            int jl = (j.Length + 3) & ~3, bl = (bin.Length + 3) & ~3;
+            var s = new System.IO.MemoryStream();
+            var w = new System.IO.BinaryWriter(s);
+            w.Write(0x46546C67u); w.Write(2u); w.Write((uint)(12 + 8 + jl + 8 + bl));
+            w.Write((uint)jl); w.Write(0x4E4F534Au); w.Write(j); for (int i = j.Length; i < jl; i++) w.Write((byte)' ');
+            w.Write((uint)bl); w.Write(0x004E4942u); w.Write(bin); for (int i = bin.Length; i < bl; i++) w.Write((byte)0);
+            return s.ToArray();
+        }
+
+        [Test]
+        public void AGlowingEntryGlowsWhateverTheTemplateLost()
+        {
+            // The Editor re-saving the templates drops their _EMISSION (a shader reimport did, 2026-11-02: the Manticore's
+            // hangar went a flat grey, its baked lighting in the emission).
+            var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);
+            bool had = a.litOpaque.IsKeywordEnabled("_EMISSION");
+            a.litOpaque.DisableKeyword("_EMISSION");
+            var m = ModMaterials.FromSpec(null, new CustomShipMaterial { emissionColor = new[] { 1f, 0.5f, 0.2f } }, "glow test");
+            var dark = ModMaterials.FromSpec(null, new CustomShipMaterial(), "dark test");
+            try
+            {
+                Assert.IsTrue(m.IsKeywordEnabled("_EMISSION"), "an emission colour draws");
+                Assert.AreEqual(Color.black, dark.GetColor("_EmissionColor"));
+            }
+            finally
+            {
+                if (had) a.litOpaque.EnableKeyword("_EMISSION");
+                Object.DestroyImmediate(m); Object.DestroyImmediate(dark);
+            }
         }
 
         [Test]
