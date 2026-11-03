@@ -52,6 +52,8 @@ namespace GoF2Remake.Flight
 
         void DestroyEffects()
         {
+            if (tethered != null) Tether(null, null);
+            if (self != null) self.Damaged -= OnSelfDamaged;
             if (fxRoot != null) Destroy(fxRoot.gameObject);
             foreach (var b in beamPool) if (b != null) Destroy(b.gameObject);
         }
@@ -87,10 +89,114 @@ namespace GoF2Remake.Flight
                     foreach (var o in devices) if (o != e && o.rules.State == Device.Phase.Cooldown) return true;
                     Message?.Invoke(string.Format(Localization.Extra("deviceNoCooldowns", "{0}: no device is cooling down"), e.name));
                     return false;
+                case Device.Type.Corrosion:
+                case Device.Type.QuantumTether:
+                case Device.Type.Entangler:
+                    if (LockWithin(e) != null) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoTarget", "{0}: no ship locked in reach"), e.name));
+                    return false;
+                case Device.Type.Teleport:
+                case Device.Type.SpectralShift:
+                    if (BlinkDistance(e.radius * M) > 0f) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoRoom", "{0}: no room ahead"), e.name));
+                    return false;
+                case Device.Type.FusionHook:
+                    if (HookTarget(e) != null) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoHookTarget", "{0}: nothing in the sights"), e.name));
+                    return false;
                 default:
                     return true;
             }
         }
+
+        /// <summary>The targeted devices' target: the lock, hostile and within deviceRadius.</summary>
+        Target LockWithin(Entry e)
+        {
+            var t = weapons != null ? weapons.LockTarget : null;
+            if (!Affects(t)) return null;
+            float r = e.radius * M;
+            return (t.transform.position - transform.position).sqrMagnitude <= r * r ? t : null;
+        }
+
+        /// <summary>The fusion hook's target: the lock if it is in the sights, else the nearest hostile ship there (within deviceRadius
+        /// and ES2's aim cone, dot 0.95 with the nose).</summary>
+        Target HookTarget(Entry e)
+        {
+            float r = e.radius * M;
+            var pos = transform.position;
+            bool InSights(Target t)
+            {
+                var d = t.transform.position - pos;
+                return d.sqrMagnitude <= r * r && d.sqrMagnitude > 1e-4f && Vector3.Dot(transform.forward, d.normalized) > Device.HookAimDot;
+            }
+            var lockT = weapons != null ? weapons.LockTarget : null;
+            if (Affects(lockT) && InSights(lockT)) return lockT;
+            Target best = null;
+            float bestD = float.MaxValue;
+            foreach (var t in Target.All)
+            {
+                if (!Affects(t) || !InSights(t)) continue;
+                float d = (t.transform.position - pos).sqrMagnitude;
+                if (d < bestD) { bestD = d; best = t; }
+            }
+            return best;
+        }
+
+        /// <summary>The ship's probe for a blink: a third of its model's largest extent (PlayerCollision's), 3..60 m.</summary>
+        float BlinkProbe()
+        {
+            var ship = GetComponent<ShipController>();
+            var model = ship != null ? ship.visualModel : null;
+            if (model == null) return 10f;
+            var b = new Bounds(model.position, Vector3.zero);
+            foreach (var mr in model.GetComponentsInChildren<MeshRenderer>()) b.Encapsulate(mr.bounds);
+            return Mathf.Clamp(Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z)) / 3f, 3f, 60f);
+        }
+
+        /// <summary>How far ahead the ship may blink of 'want' metres: short of the first hull, landmark volume or asteroid on the
+        /// way by ES2's SafetyMargin and the probe (Device.Blink); 0 or less = no room.</summary>
+        float BlinkDistance(float want)
+        {
+            var from = transform.position;
+            var dir = transform.forward;
+            float probe = BlinkProbe();
+            float hit = float.MaxValue;
+            if (HullCollision.Any && HullCollision.Sweep(from, from + dir * want, probe, b => b != null && b.obstacle != null && b.obstacle.Active && b.Collides, out float hullHit))
+                hit = Mathf.Min(hit, hullHit);
+            // the landmarks' volumes (those without hulls): sampled along the way
+            var all = Obstacle.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var o = all[i];
+                if (o == null || !o.Active || o.UsesHull) continue;
+                for (int k = 1; k <= 20; k++)
+                {
+                    float d = want * k / 20f;
+                    if (d >= hit) break;
+                    if (o.Touches(from + dir * d, out _)) { hit = Mathf.Min(hit, d); break; }
+                }
+            }
+            // the asteroids' cubes as spheres of their radius
+            var targets = Target.All;
+            for (int i = 0; i < targets.Count; i++)
+            {
+                var t = targets[i];
+                if (t == null || !t.isAsteroid || !t.Alive) continue;
+                var c = t.transform.position - from;
+                float along = Vector3.Dot(c, dir);
+                if (along < 0f || along - t.radius > want) continue;
+                float side = (c - dir * along).magnitude;
+                if (side > t.radius + probe) continue;
+                hit = Mathf.Min(hit, along - t.radius);
+            }
+            return Device.Blink(want, hit, probe);
+        }
+
+        // the running devices' state: the corrosion's target and tick, the hook, the tether, the entangler's sum
+        Target corroding; float corrosionTickMs; Entry corrosionEntry;
+        Target hooked; Entry hookEntry; float hookMs, hookPullSpeed, hookTargetSpeed, hookBeamMs;
+        Target tethered; Entry tetherEntry; bool sharing;
+        Target entangled; Entry entanglerEntry; float entangledDamage;
 
         /// <summary>Remake: the points a repair device restores, 'percent' of the layer's maximum (rounded up, at least 1).</summary>
         public static int RepairPoints(int max, int percent) => max <= 0 ? 0 : Mathf.Max(1, Mathf.CeilToInt(max * Mathf.Clamp(percent, 0, 100) / 100f));
@@ -174,8 +280,101 @@ namespace GoF2Remake.Flight
                 case Device.Type.DeviceCharger:
                     foreach (var o in devices) if (o != e) o.rules.ResetCooldown();
                     break;
+                case Device.Type.Corrosion:
+                    corroding = LockWithin(e);
+                    corrosionEntry = e;
+                    corrosionTickMs = 0f;
+                    if (corroding != null) ShowBeam(corroding);
+                    break;
+                case Device.Type.Teleport:
+                case Device.Type.SpectralShift:
+                {
+                    float want = e.radius * M;
+                    float d = BlinkDistance(want);
+                    if (d <= 0f) break;
+                    var from = pos;
+                    var dir = transform.forward;
+                    transform.position = from + dir * d;
+                    if (e.rules.type == Device.Type.SpectralShift)
+                    {
+                        // every hostile ship within deviceRange2 of the way flown takes the device's damage (ES2's sphere trace)
+                        float r2 = e.range2 * M;
+                        var all = Target.All;
+                        for (int i = all.Count - 1; i >= 0; i--)
+                        {
+                            var t = all[i];
+                            if (!Affects(t)) continue;
+                            var c = t.transform.position - from;
+                            float along = Mathf.Clamp(Vector3.Dot(c, dir), 0f, d);
+                            if ((c - dir * along).sqrMagnitude > r2 * r2) continue;
+                            weapons?.DeviceHit(t, e.damage, e.emp, dir, e.item.index);
+                        }
+                    }
+                    break;
+                }
+                case Device.Type.FusionHook:
+                    hooked = HookTarget(e);
+                    hookEntry = e;
+                    hookMs = hookPullSpeed = hookTargetSpeed = hookBeamMs = 0f;
+                    break;
+                case Device.Type.QuantumTether:
+                    Tether(e, LockWithin(e));
+                    break;
+                case Device.Type.Entangler:
+                    entangled = LockWithin(e);
+                    entanglerEntry = e;
+                    entangledDamage = 0f;
+                    if (entangled != null) { self.Damaged += OnSelfDamaged; ShowBeam(entangled); }
+                    break;
             }
         }
+
+        void Tether(Entry e, Target t)
+        {
+            if (tethered != null) { tethered.Damaged -= OnTetheredDamaged; tethered.Died -= OnTetheredDied; }
+            tethered = t;
+            tetherEntry = e;
+            if (t == null) return;
+            t.Damaged += OnTetheredDamaged;
+            t.Died += OnTetheredDied;
+            ShowBeam(t);
+        }
+
+        /// <summary>The tethered ship took 'dmg': every hostile ship within deviceRadius of it takes it too (ES2's chain reaction
+        /// damage, which isn't shared again).</summary>
+        void OnTetheredDamaged(Target t, int dmg, bool byNpc)
+        {
+            if (sharing || tetherEntry == null || dmg <= 0) return;
+            sharing = true;
+            try
+            {
+                float r = tetherEntry.radius * M;
+                var all = Target.All;
+                for (int i = all.Count - 1; i >= 0; i--)
+                {
+                    var o = all[i];
+                    if (o == t || !Affects(o)) continue;
+                    var d = o.transform.position - t.transform.position;
+                    if (d.sqrMagnitude > r * r) continue;
+                    weapons?.DeviceHit(o, dmg, 0, d.normalized, tetherEntry.item.index);
+                }
+            }
+            finally { sharing = false; }
+        }
+
+        /// <summary>The tethered ship died: the tether jumps to a random hostile ship within its reach (ES2's JumpToRandomSurroundingEnemy).</summary>
+        void OnTetheredDied(Target t)
+        {
+            var e = tetherEntry;
+            if (e == null) return;
+            float r = e.radius * M;
+            var near = new List<Target>();
+            foreach (var o in Target.All)
+                if (o != t && Affects(o) && (o.transform.position - t.transform.position).sqrMagnitude <= r * r) near.Add(o);
+            Tether(e, near.Count > 0 ? near[Random.Range(0, near.Count)] : null);
+        }
+
+        void OnSelfDamaged(Target t, int dmg, bool byNpc) { if (dmg > 0) entangledDamage += dmg; }
 
         /// <summary>A run's end (its time or Cancel).</summary>
         void End(Entry e)
@@ -192,7 +391,75 @@ namespace GoF2Remake.Flight
                 case Device.Type.SensorCloud:
                     if (cloud == e) { cloud = null; Unhide(); }
                     break;
+                case Device.Type.Corrosion:
+                    corroding = null; corrosionEntry = null;
+                    break;
+                case Device.Type.FusionHook:
+                    hooked = null; hookEntry = null;
+                    break;
+                case Device.Type.QuantumTether:
+                    Tether(e, null); tetherEntry = null;
+                    break;
+                case Device.Type.Entangler:
+                    self.Damaged -= OnSelfDamaged;
+                    if (entangled != null && entangled.Alive && entangledDamage > 0f)
+                    {
+                        var d = entangled.transform.position - transform.position;
+                        weapons?.DeviceHit(entangled, entangledDamage * e.damagePercent / 100f, 0, d.normalized, e.item.index);
+                    }
+                    entangled = null; entanglerEntry = null; entangledDamage = 0f;
+                    break;
             }
+        }
+
+        /// <summary>The corrosion's tick, the hook's pull, the entangler's and the tether's end when their ship dies.</summary>
+        void UpdateRunning(float dtMs)
+        {
+            float dt = dtMs / 1000f;
+            if (corrosionEntry != null && corrosionEntry.rules.Active)
+            {
+                if (!Affects(corroding)) { if (corrosionEntry.rules.Cancel()) End(corrosionEntry); }
+                else
+                {
+                    corrosionTickMs += dtMs;
+                    if (corrosionTickMs >= Device.CorrosionTickMs)
+                    {
+                        corrosionTickMs -= Device.CorrosionTickMs;
+                        var d = corroding.transform.position - transform.position;
+                        weapons?.DeviceHit(corroding, corrosionEntry.damage, 0, d.normalized, corrosionEntry.item.index, 0f);   // past the shield
+                    }
+                }
+            }
+            if (hookEntry != null && hookEntry.rules.Active)
+            {
+                var e = hookEntry;
+                var d = hooked != null ? hooked.transform.position - transform.position : Vector3.zero;
+                float dist = d.magnitude;
+                bool over = !Affects(hooked) || dist < Device.HookMinDistance || (dist > 1e-4f && Vector3.Dot(transform.forward, d / dist) < Device.HookMaxAngleDot);
+                if (over) { if (e.rules.Cancel()) End(e); }
+                else
+                {
+                    hookMs += dtMs;
+                    hookBeamMs -= dtMs;
+                    if (hookBeamMs <= 0f) { ShowBeam(hooked); hookBeamMs = BeamShowMs * 0.75f; }
+                    if (hookMs >= Device.HookPullDelayMs && dist > 1e-4f)
+                    {
+                        var dir = d / dist;
+                        hookPullSpeed = Mathf.Min(Device.HookMaxSpeed, hookPullSpeed + Device.HookOwnerAccel * dt);
+                        transform.position += dir * (hookPullSpeed * dt);
+                        float share = Mathf.Clamp01(dist / Device.HookTargetAccelRange);
+                        hookTargetSpeed = Mathf.Min(Device.HookMaxSpeed, hookTargetSpeed + Device.HookTargetAccel * share * dt);
+                        if (hooked.RemoteDamage == null) hooked.transform.position -= dir * (hookTargetSpeed * dt);   // another game's ship isn't moved from here
+                    }
+                }
+            }
+            if (entanglerEntry != null && entanglerEntry.rules.Active && !Affects(entangled))
+            {
+                entangledDamage = 0f;   // the link broke with its ship: nothing is dealt
+                if (entanglerEntry.rules.Cancel()) End(entanglerEntry);
+            }
+            if (tetherEntry != null && tetherEntry.rules.Active && tethered == null)
+                if (tetherEntry.rules.Cancel()) End(tetherEntry);
         }
 
         /// <summary>The ship's own cloak's state back on Target.cloaked once the cloud no longer hides it.</summary>
@@ -217,6 +484,7 @@ namespace GoF2Remake.Flight
         void UpdateEffects(float dtMs)
         {
             UpdateCloud();
+            UpdateRunning(dtMs);
             for (int w = waves.Count - 1; w >= 0; w--)
             {
                 var wave = waves[w];

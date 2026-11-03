@@ -440,6 +440,12 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 10 Armour repair | Repairs `deviceDamagePercent` % of the armour's maximum at once (EVERSPACE 2's Armor Repair, 100 = to full); refused with nothing to repair | damage percent |
 | 11 Restock | `deviceAmmo` rounds more for the selected secondary weapon (EVERSPACE 2's Secondaries Restock); refused with none selected | ammo |
 | 12 Device charger | Every other device's cooldown ends at once (EVERSPACE 2's Device Charger); refused while none is cooling down | |
+| 13 Corrosion | The locked ship (within `deviceRadius`) takes `damage` every 0.95 s for `deviceDurationMs`, past its shield (EVERSPACE 2's Corrosion Injector) | radius, duration, damage |
+| 14 Teleport | A blink `deviceRadius` ahead, stopped 10 m short of a hull, a station or an asteroid in the way (EVERSPACE 2's Teleporter); refused with no room | radius |
+| 15 Spectral shift | The same blink, and every hostile ship within `deviceRange2` of the path takes `damage` (EVERSPACE 2's Spectral Shift) | radius, range 2, damage |
+| 16 Fusion hook | The hostile ship in the sights (within `deviceRadius`, 18 degrees of the nose) is grappled for up to `deviceDurationMs`: after 0.3 s you are pulled toward it (up to 800 m/s) and it toward you, until you are within 200 m, it leaves the hook's cone, or it dies (EVERSPACE 2's Fusion Hook) | radius, duration |
+| 17 Quantum tether | For `deviceDurationMs` the damage the locked ship takes is dealt to every hostile ship within `deviceRadius` of it too; when it dies the tether jumps to one of them (EVERSPACE 2's Quantum Tether) | radius, duration |
+| 18 Entangler | For `deviceDurationMs` the damage your ship takes is summed and, at the end, dealt to the locked ship (within `deviceRadius`) x `deviceDamagePercent` / 100, nothing if it died first (EVERSPACE 2's Quantum Entangler) | radius, duration, damage percent |
 
 A **consumable** device (`"deviceConsumable": 1`, EVERSPACE 2's consumables) is used up one unit per use and has no
 cooldown unless given one: the hangar stacks bought units like a secondary's ammo (mounting moves the whole stack,

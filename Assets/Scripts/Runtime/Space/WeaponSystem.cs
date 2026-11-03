@@ -659,12 +659,12 @@ namespace GoF2Remake.Flight
 
         /// <summary>Remake (Flight.Device, PlayerDevices): a device's damage and EMP on one target, credited to the player
         /// like a shot of 'item' (the kill, standing, the crosshair's hit flash).</summary>
-        public void DeviceHit(Target target, float damage, int emp, Vector3 direction, int item)
+        public void DeviceHit(Target target, float damage, int emp, Vector3 direction, int item, float shieldFactor = 1f)
         {
             if (target == null || !target.Alive) return;
             target.lastPlayerWeapon = item;
             if (Cheats.OneHitKills && !target.isPlayer && damage > 0f) damage = 99999999f;
-            if (damage > 0f) target.Damage(damage, false, direction);
+            if (damage > 0f) target.Damage(damage, false, direction, shieldFactor);
             ApplyEmp(target, emp);
             if (damage > 0f) Hit?.Invoke();
         }

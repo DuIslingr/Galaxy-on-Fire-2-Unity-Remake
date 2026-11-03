@@ -116,7 +116,17 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(c.TryFire());
             Assert.AreEqual(Device.Event.Ready, c.Update(10f), "a 0 ms cooldown is over on the next frame");
             Assert.IsTrue(c.Available);
-            Assert.AreEqual(12, Device.TypeCount);
+            Assert.AreEqual(18, Device.TypeCount);
+        }
+
+        [Test]
+        public void ABlinkStopsShortOfWhatIsInTheWay()
+        {
+            // ES2's GetTargetOffset: the whole distance with nothing hit, else SafetyMargin (10 m) and the ship's radius short of the hit
+            Assert.AreEqual(500f, Device.Blink(500f, float.MaxValue, 8f));
+            Assert.AreEqual(500f, Device.Blink(500f, 500f, 8f), "a hit at the end is no hit");
+            Assert.AreEqual(282f, Device.Blink(500f, 300f, 8f), 1e-4f);
+            Assert.LessOrEqual(Device.Blink(500f, 15f, 8f), 0f, "no room: refused");
         }
 
         [Test]

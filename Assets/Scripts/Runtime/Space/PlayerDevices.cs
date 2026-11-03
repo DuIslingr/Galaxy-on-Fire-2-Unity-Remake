@@ -34,7 +34,7 @@ namespace GoF2Remake.Flight
             public int radius, growMs, slowPercent, shieldCost, damagePercent, coneDeg, damage, emp;
             /// <summary>Remake: a consumable (one use per unit, deviceConsumable) and the restock's rounds (deviceAmmo).</summary>
             public bool consumable;
-            public int ammo;
+            public int ammo, range2;
             /// <summary>Available last frame: "{0} ready" when it turns true (the cooldown's end, the strike charge filled).</summary>
             public bool wasAvailable = true;
         }
@@ -97,6 +97,7 @@ namespace GoF2Remake.Flight
                                    type == Device.Type.StrikeCharge ? it.Attr(Device.ChargeAttr) : 0),
                 consumable = consumable,
                 ammo = it.Attr(Device.AmmoAttr),
+                range2 = it.Attr(Device.Range2Attr),
                 radius = it.Attr(Device.RadiusAttr),
                 growMs = it.Attr(Device.GrowAttr),
                 slowPercent = it.Attr(Device.SlowAttr, 25),

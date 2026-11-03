@@ -54,15 +54,49 @@ namespace GoF2Remake.Flight
             Restock = 11,
             /// <summary>Device Charger: every other device's cooldown ends at once (ES2's ResetCooldowns; only while one cools down).</summary>
             DeviceCharger = 12,
+            // Remake (2026-11-02): EVERSPACE 2's cooldown devices with mechanics of their own (its BP_Device_* blueprints).
+            /// <summary>Corrosion Injector: the locked ship (within deviceRadius) takes 'damage' every 0.95 s for deviceDurationMs,
+            /// past its shield (ES2's Corrosion condition: shield-piercing kinetic damage over time).</summary>
+            Corrosion = 13,
+            /// <summary>Teleporter: a blink deviceRadius ahead, stopped short of a hull, a station or an asteroid in the way (ES2's
+            /// sphere trace and 10 m SafetyMargin); refused with no room at all.</summary>
+            Teleport = 14,
+            /// <summary>Spectral Shift: the same blink, and every hostile ship within deviceRange2 of the path takes 'damage'.</summary>
+            SpectralShift = 15,
+            /// <summary>Fusion Hook: the hostile ship in the sights (within deviceRadius, 18 deg of the nose) is grappled for up to
+            /// deviceDurationMs: after 0.3 s the ship is pulled toward it (up to 800 m/s) and it toward the ship, until they are
+            /// within 200 m, it leaves the hook's 37 deg, or it dies.</summary>
+            FusionHook = 16,
+            /// <summary>Quantum Tether: for deviceDurationMs the damage the locked ship takes is dealt to every hostile ship within
+            /// deviceRadius of it too; when it dies the tether jumps to one of them.</summary>
+            QuantumTether = 17,
+            /// <summary>Quantum Entangler: for deviceDurationMs the damage the ship takes is summed and, at the end, dealt to the
+            /// locked ship x deviceDamagePercent / 100 (nothing if it died first).</summary>
+            Entangler = 18,
         }
 
-        public const int TypeCount = 12;
+        public const int TypeCount = 18;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
         public const int TypeAttr = 150, CooldownAttr = 151, DurationAttr = 152, RadiusAttr = 153, GrowAttr = 154,
                          SlowAttr = 155, ShieldCostAttr = 156, DamagePercentAttr = 157, ChargeAttr = 158, ConeAttr = 159;
         /// <summary>Remake (2026-11-02): deviceConsumable 1 = one use per unit, the mounted stack's amount the uses left (the
         /// hangar stacks them like missiles; 0 cooldown unless given one); deviceAmmo = the restock's rounds.</summary>
         public const int ConsumableAttr = 164, AmmoAttr = 165;
+        /// <summary>Remake (2026-11-02): deviceRange2 = the spectral shift's sweep radius around its path (game units).</summary>
+        public const int Range2Attr = 166;
+        // EVERSPACE 2's fusion hook (BP_Device_FusionHook's defaults, cm -> m): the aim cone, the pull's delay, the end conditions
+        // and the speeds; the owner's pull is (AccelerationForward cm/s^2)^1.5 / 15, 126 m/s^2 at the remake's 33 m/s^2.
+        public const float HookAimDot = 0.95f, HookPullDelayMs = 300f, HookMinDistance = 200f, HookMaxAngleDot = 0.8f,
+                           HookMaxSpeed = 800f, HookOwnerAccel = 126f, HookTargetAccel = 800f, HookTargetAccelRange = 200f;
+        /// <summary>The corrosion's tick (BP_Condition_Debuff_Corrosion's timer).</summary>
+        public const float CorrosionTickMs = 950f;
+        /// <summary>The teleporter's SafetyMargin (1000 cm) before an obstacle.</summary>
+        public const float BlinkMarginM = 10f;
+
+        /// <summary>A blink of 'want' metres ahead with something 'hit' metres along the way (float.MaxValue: nothing): the way
+        /// kept, 'margin' plus the ship's 'probe' radius short of it; 0 or less = no room (ES2's GetTargetOffset).</summary>
+        public static float Blink(float want, float hit, float probe, float margin = BlinkMarginM) =>
+            hit >= want ? want : hit - margin - probe;
         /// <summary>Shop.KindOf: the devices' one-per-ship kinds, KindBase + type (past the cruise drive's 1000).</summary>
         public const int KindBase = 1100;
         /// <summary>GoF3's cooldown for every player device (DeviceConfiguration cooldown 60).</summary>
