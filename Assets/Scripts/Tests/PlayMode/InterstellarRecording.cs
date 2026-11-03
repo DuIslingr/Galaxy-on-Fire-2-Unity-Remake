@@ -112,7 +112,7 @@ namespace GoF2Remake.Tests
             var space = Find<SpaceLevel>();
             var nav = space.Navigation;
             var at = space.Player.transform.position;
-            var target = nav.Targets.Where(t => t.kind == Navigation.Kind.System && !t.hidden && t.station != Session.StationIndex && pick(t))
+            var target = nav.Targets.Where(t => t.kind == Navigation.Kind.System && t.planetOf == null && !t.hidden && t.station != Session.StationIndex && pick(t))
                                     .OrderBy(t => (t.Position - at).sqrMagnitude).First();
             nav.SetAutopilot(target);
             yield return CaptureUntil(() => Find<SpaceLevel>() != space && Find<SpaceLevel>() != null && Find<SpaceLevel>().Layout != null && !Find<SpaceLevel>().Layout.interstellar, 240f, "the arrival");
