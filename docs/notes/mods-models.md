@@ -54,7 +54,16 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   hangar the key light from above, `_GoF2PbrLight`), URP's ambient, both and the environment dimmed by `_GoF2PbrIndirectDim`
   (the room cubemap's sheen). URP's PBR specular setup cut the diffuse to `albedo x (1 - max(spec))`, turned panels white at
   grazing angles and reflected the room at the map's strength; URP's Blinn-Phong (N.H) of GoF3's exponent is four times as
-  wide. Only these materials: the game's hulls and the metallic mod materials (ES2) never take the variant.
+  wide. Only these materials: the game's hulls and the metallic mod materials (ES2) never take the variant. **Per kind**
+  (2026-11-02, GoF3's other shaders read the same way: its ship glass, the structures' platings / glass / largeship parts, the
+  generic guns): the same lighting, different in `_GoF3Params` (GoF2/Hull, `HullInput.hlsl`'s UnityPerMaterial): x the
+  environment (`Environment_Amount`: ship bodies and glass), y the rim (bodies, station glass, capital parts, guns), z
+  `Specular_Multiplier`, w 1 = the map carries it (the importer's ship and gun maps: the whole specular x it) / 0 = the
+  highlight x it (glass, capital parts); GoF3's glass also turns opaque with its highlight, reflection and fresnel. Set from
+  a JSON material's `environment` / `rim` / `highlightMultiplier` / `multiplierInMap` (`ModMaterials.FromSpec`) or a glTF
+  material's `extras` (`ModGlbImages.Strip` reads them by material name off the main thread, `ModGlbImages.GoF3Params`,
+  `ModGltfMaterials` -> `FromGltf`); a kit skin copies the hull's material and keeps them. Default (1, 1, 1, 0). The GoF3
+  importer writes them per kind (`tools/gof3_shading.py`) and gives the ship glass GoF3's specular. `ModHullLightingTests`.
   An `additive` entry (2026-11-02) is a glow layer: `GoF2/ModGlow` (`ModAssets.glow`, `ModMaterials.Glow`), unlit, `Blend One
   One`, texture rgb x alpha x `_EmissionColor` (colour x intensity) x vertex colours (`_UseVertexColor`, off with
   `ignoreVertexColors`), `_Scroll` UV units a second; no shadow pass, and `HullCollision` skips every `GoF2/Mod*` effect

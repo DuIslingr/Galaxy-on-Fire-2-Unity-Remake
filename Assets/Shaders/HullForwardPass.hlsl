@@ -99,31 +99,39 @@ half3 GoF2RadialFog(half3 color, float d)
 }
 
 #if defined(_GOF2_PBR) && defined(_SPECULAR_SETUP)
-// Remake mods: a mod's specular map ("specularGlossiness", glTF's KHR_materials_pbrSpecularGlossiness: the GoF3 importer's
-// hulls, stations and capital ships) lit the way Galaxy on Fire 3 lights them: its ShipShader fragment (the retro Groza
-// body's shader_1873945865.ae4shader, ae4_shaders.text in gof3_ships_importer), in gamma space as GoF3 draws:
+// Remake mods: a mod's specular map ("specularGlossiness" / "specularColor", glTF's KHR_materials_pbrSpecularGlossiness: the
+// GoF3 importer's hulls, glass, guns, stations and capital ships) lit the way Galaxy on Fire 3 lights them. GoF3's shaders
+// (its .ae4shader variants, ae4_shaders.text in gof3_ships_importer: the retro Groza's body and glass, the Terran structures'
+// platings, glass and largeship parts, the generic guns) share one lighting, in gamma space as GoF3 draws:
 //   spec  = the map (x Specular_Color) + fresnel / 2 x (1 - it), gloss likewise, fresnel = (1 - N.V)^2
-//   light = lightColour x N.L + ambient;  highlight = (Phong: pow(R.V, exp2(9 gloss + 1)) x lightColour + ambient x
-//           fresnel) x spec;  out = diffuse x light x (1 - highlight.r) + highlight x Specular_Multiplier (1.5)
-//   env   = the environment (GoF3's generic cubes are grey, its blur picked by gloss) x spec x (light + fresnel), clamped:
-//           out = out x (1 - env) + env;  then a rim of 0.1 x (1 - N.V) x light
+//   light = lightColour x N.L + ambient
+//   specular = (Phong pow(R.V, exp2(9 gloss + 1)) x lightColour [x Specular_Multiplier] + ambient x fresnel) x spec
+//   out   = diffuse x light x (1 - specular.r) + specular [x Specular_Multiplier]
+//   env   = the environment (GoF3's generic cubes are grey, its blur picked by gloss) x spec x (light + fresnel), clamped,
+//           x Environment_Amount: out = out x (1 - env) + env
+//   rim   = 0.1 x (1 - N.V) x lightColour x light;  glass: alpha raised by specular.r, env.r and the fresnel
+// and differ per kind in what _GoF3Params says (ModMaterials, from the mod's material): x the environment (ship bodies and
+// glass 1, structures, capital-ship parts and guns 0), y the rim (ship bodies, station glass and capital-ship parts 1,
+// platings, ship glass and guns 0), z Specular_Multiplier, w where it goes: 1 = the map already carries it (the importer's
+// ship bodies: taken out for spec, the whole specular x it, as GoF3's ShipShader), 0 = the highlight x it (glass, capital
+// parts; 1 for the structures, whose maps carry it as GoF3's own do).
 // URP's PBR specular setup took the map as physical reflectance (the diffuse cut to albedo x (1 - max(spec)), its Fresnel
-// toward white at grazing angles, the room reflected at that strength): a grey-white veil over the paint (the Groza
-// Gr'Gath's rust and orange gone grey next to GoF3's own copper, 2026-11-02); URP's Blinn-Phong had the highlight four
-// times too wide. The importer bakes Specular_Multiplier into the map (taken out again for the environment, as GoF3 has it)
-// and stores the gloss as smoothness 1 - (2 / (n + 2))^0.25 (inverted here). One light, as GoF3: the main light (in a GoF2
-// hangar the key light from above, _GoF2PbrLight, as the other mod materials get it); the ambient URP's own.
-#define GOF3_SPECULAR_MULTIPLIER 1.5h
-
-half3 GoF3ShipShader(InputData inputData, SurfaceData surfaceData)
+// toward white at grazing angles, the room reflected at that strength): a grey-white veil over the paint (the Betty II's
+// rust and orange gone grey next to GoF3's own copper, 2026-11-02); URP's Blinn-Phong had the highlight four times too
+// wide. The gloss comes as smoothness 1 - (2 / (n + 2))^0.25 (the importer's conversion, inverted here). One light, as
+// GoF3: the main light (in a GoF2 hangar the key light from above, _GoF2PbrLight, as the other mod materials get it); the
+// ambient URP's own; both and the environment dimmed by the occlusion (_GoF2PbrIndirectDim in a GoF2 hangar).
+half4 GoF3ShipShader(InputData inputData, SurfaceData surfaceData)
 {
     half3 nrm = inputData.normalWS, v = inputData.viewDirectionWS;
     half ndv = saturate(dot(nrm, v));
     half fresnel = (1.0h - ndv) * (1.0h - ndv);
+    half environment = _GoF3Params.x, rimAmount = _GoF3Params.y, multiplier = max(_GoF3Params.z, 1e-3h);
+    bool inMap = _GoF3Params.w > 0.5h;
 
     // the texels in GoF3's gamma space
     half3 diffuse = LinearToSRGB(surfaceData.albedo);
-    half3 spec = LinearToSRGB(surfaceData.specular) / GOF3_SPECULAR_MULTIPLIER;
+    half3 spec = LinearToSRGB(surfaceData.specular) / (inMap ? multiplier : 1.0h);
     half r = 1.0h - surfaceData.smoothness, r2 = r * r;
     half n = clamp(2.0h / max(r2 * r2, 1e-3h) - 2.0h, 2.0h, 1024.0h);
     half gloss = saturate((log2(n) - 1.0h) / 9.0h);
@@ -146,18 +154,33 @@ half3 GoF3ShipShader(InputData inputData, SurfaceData surfaceData)
     half lambert = saturate(dot(lightDir, nrm)) * shadow;
     half3 light = lightG * lambert + ambientG;
     half specDot = saturate(dot(reflect(-lightDir, nrm), v));
-    half3 highlight = (PositivePow(specDot, exp2(9.0h * gloss + 1.0h)) * shadow * lightG + ambientG * fresnel) * spec;
-    half3 outG = diffuse * light * (1.0h - saturate(highlight.r)) + highlight * GOF3_SPECULAR_MULTIPLIER;
+    half highlight = PositivePow(specDot, exp2(9.0h * gloss + 1.0h)) * shadow;
+    half3 specular = (highlight * (inMap ? 1.0h : multiplier) * lightG + ambientG * fresnel) * spec;
+    half3 outG = diffuse * light * (1.0h - saturate(specular.r)) + specular * (inMap ? multiplier : 1.0h);
 
-    // GoF3's generic cubes are grey: the place's environment as its brightness, at the gloss's blur, dimmed like the
-    // ambient (a GoF2 hangar's bright room cubemap laid a pale sheen over the hull: _GoF2PbrIndirectDim)
-    half3 envColor = GlossyEnvironmentReflection(reflect(-v, nrm), inputData.positionWS, 1.0h - gloss, surfaceData.occlusion,
-        inputData.normalizedScreenSpaceUV, UseEnvironmentReflections());
-    half envG = LinearToSRGB(dot(envColor, half3(0.2126h, 0.7152h, 0.0722h)).xxx).r;
-    half3 env = saturate(envG * spec * (light + fresnel));
-    outG = outG * (1.0h - env) + env;
-    outG += 0.1h * (1.0h - ndv) * lightG * light;   // the rim (RimLight_LightStrength 1, RimLight_FallOff 1)
-    return SRGBToLinear(saturate(outG)) + surfaceData.emission;
+    half3 env = 0.0h;
+    if (environment > 0.0h)
+    {
+        // GoF3's generic cubes are grey: the place's environment as its brightness, at the gloss's blur
+        half3 envColor = GlossyEnvironmentReflection(reflect(-v, nrm), inputData.positionWS, 1.0h - gloss, surfaceData.occlusion,
+            inputData.normalizedScreenSpaceUV, UseEnvironmentReflections());
+        half envG = LinearToSRGB(dot(envColor, half3(0.2126h, 0.7152h, 0.0722h)).xxx).r;
+        env = saturate(envG * spec * (light + fresnel)) * environment;
+        outG = outG * (1.0h - env) + env;
+    }
+    outG += rimAmount * 0.1h * (1.0h - ndv) * lightG * light;   // (RimLight_LightStrength 1, RimLight_FallOff 1)
+
+    half alpha = surfaceData.alpha;
+    if (IsSurfaceTypeTransparent())
+    {
+        // GoF3's glass: its highlights, reflections and grazing angles less see-through
+        alpha = lerp(alpha, 1.0h, saturate(specular.r * (inMap ? multiplier : 1.0h)));
+        alpha = lerp(alpha, 1.0h, env.r);
+        alpha = lerp(alpha, 1.0h, fresnel);
+    }
+    half3 rgb = SRGBToLinear(saturate(outG));
+    if (UseAlphaPremultiply()) rgb *= alpha;   // (the glass templates blend premultiplied)
+    return half4(rgb + surfaceData.emission, alpha);
 }
 #endif
 
@@ -220,7 +243,7 @@ void HullPassFragment(
 #endif
 
 #if defined(_GOF2_PBR) && defined(_SPECULAR_SETUP)
-    URP_LIGHT_ACCUM4 color = URP_LIGHT_ACCUM4(GoF3ShipShader(inputData, surfaceData), surfaceData.alpha);
+    URP_LIGHT_ACCUM4 color = GoF3ShipShader(inputData, surfaceData);
 #else
     URP_LIGHT_ACCUM4 color = UniversalFragmentPBR(inputData, surfaceData,
         IsSpecularSetup(), UseSpecularHighlights(), UseAlphaPremultiply(),
