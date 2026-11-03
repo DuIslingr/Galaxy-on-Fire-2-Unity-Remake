@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "车头灯 开 / 关",
  "boostToggle": "加速切换模式（自由飞行）",
  "boostToggleHelp": "自由飞行中，按一下加速键开始加速，再按一下停止，而不用一直按住，如同 EVERSPACE 2 的加速切换设置。推进器耗尽时按下无效。",
- "stationGameOptions": "游戏选项"
+ "stationGameOptions": "游戏选项",
+ "hudOpen": "打开",
+ "container": "集装箱",
+ "containerBulletproof": "防弹集装箱"
 }

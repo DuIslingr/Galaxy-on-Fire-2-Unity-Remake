@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "전조등 켜기 / 끄기",
  "boostToggle": "부스트 토글 (자유 비행)",
  "boostToggleHelp": "자유 비행에서는 EVERSPACE 2의 부스트 토글 설정처럼 키를 누르고 있는 대신 부스트 키를 한 번 누르면 시작, 다시 누르면 멈춥니다. 부스터가 비어 있을 때 누르면 아무 일도 없습니다.",
- "stationGameOptions": "게임 옵션"
+ "stationGameOptions": "게임 옵션",
+ "hudOpen": "열기",
+ "container": "컨테이너",
+ "containerBulletproof": "방탄 컨테이너"
 }

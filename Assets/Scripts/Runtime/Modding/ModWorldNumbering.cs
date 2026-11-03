@@ -208,6 +208,22 @@ namespace GoF2Remake.Modding
                 }
                 else throw new ModJsonException($"{where}: orbit \"wrecks\" is true, false or {{ \"count\", \"centre\", \"spread\" }}");
             }
+            // Remake (2026-11-03): closed containers, EVERSPACE 2's (World.LootContainer)
+            if (ModJson.Get(o, "containers") is JToken ct)
+            {
+                if (ct.Type == JTokenType.Boolean) s.containerCount = (bool)ct ? 6 : 0;
+                else if (ct is JObject c)
+                {
+                    foreach (var p in c.Properties())
+                        if (p.Name != "count" && p.Name != "centre" && p.Name != "center" && p.Name != "spread" && p.Name != "bulletproof")
+                            Report(mod, $"{where}: unknown containers field \"{p.Name}\" (ignored)");
+                    s.containerCount = Mathf.Clamp(ModJson.Int(c, "count", 6, StationsFile), 0, 40);
+                    s.containerCentre = Xyz(c, "centre", where) ?? Xyz(c, "center", where);
+                    if (ModJson.Has(c, "spread")) s.containerSpread = Mathf.Clamp(ModJson.Float(c, "spread", 40000f, StationsFile), 5000f, 400000f);
+                    if (ModJson.Has(c, "bulletproof")) s.containerBulletproof = Mathf.Clamp01(ModJson.Float(c, "bulletproof", 0.3f, StationsFile));
+                }
+                else throw new ModJsonException($"{where}: orbit \"containers\" is true, false or {{ \"count\", \"centre\", \"spread\", \"bulletproof\" }}");
+            }
             var ast = ModJson.Get(o, "asteroids");
             if (ast != null && ast.Type == JTokenType.Boolean) s.asteroids = (bool)ast;
             else if (ast is JObject a)

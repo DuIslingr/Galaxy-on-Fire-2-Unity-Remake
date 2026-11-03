@@ -526,6 +526,30 @@ namespace GoF2Remake.Tests
 
         [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\" or \"radiation\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 
+        // Remake (2026-11-03, EVERSPACE 2's item containers): a station's "orbit.containers" (World.LootContainer).
+        [Test]
+        public void AnOrbitsContainers()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'containers': { 'count': 9, 'centre': [1000, 0, 5000], 'spread': 20000, 'bulletproof': 0.5 } } }, " +
+                "{ 'override': 79, 'orbit': { 'containers': true } }, { 'override': 80, 'orbit': { 'containers': { 'count': 500, 'bulletproof': 3 } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var a = ModWorld.OrbitOf(78);
+            Assert.AreEqual(9, a.containerCount);
+            Assert.AreEqual(new Vector3(1000, 0, 5000), a.containerCentre);
+            Assert.AreEqual(20000f, a.containerSpread);
+            Assert.AreEqual(0.5f, a.containerBulletproof);
+            Assert.AreEqual(6, ModWorld.OrbitOf(79).containerCount, "true: the default six");
+            Assert.AreEqual(0.3f, ModWorld.OrbitOf(79).containerBulletproof, "a third of them bulletproof by default");
+            Assert.AreEqual(40, ModWorld.OrbitOf(80).containerCount, "at most 40");
+            Assert.AreEqual(1f, ModWorld.OrbitOf(80).containerBulletproof, "a share, at most all");
+            Assert.AreEqual(0, ModWorld.OrbitOf(81)?.containerCount ?? 0, "none unless asked for");
+            Assert.AreEqual(360f, GoF2Remake.World.LootContainer.OpenRangeM, 1e-3f, "ES2's 100 m interact radius x 3.6");
+        }
+
+        [Test] public void ContainersAreAFieldOrAFlag() => StringAssert.Contains("\"containers\" is true, false or", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': 3 } } ]"));
+
         [Test] public void WrecksAreAFieldOrAFlag() => StringAssert.Contains("\"wrecks\" is true, false or", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'wrecks': 3 } } ]"));
 
         [Test] public void PadsAreAList() => StringAssert.Contains("\"pads\" must be a list", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'pads': 3 } } ]"));

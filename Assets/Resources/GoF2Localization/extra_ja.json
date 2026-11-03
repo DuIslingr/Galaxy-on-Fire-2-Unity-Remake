@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "ヘッドライト オン / オフ",
  "boostToggle": "ブーストをトグルに（自由飛行）",
  "boostToggleHelp": "自由飛行では、EVERSPACE 2 のブーストトグル設定のように、キーを押し続ける代わりにブーストキーを一度押すと開始、もう一度押すと停止します。ブースターが空のときに押しても何も起きません。",
- "stationGameOptions": "ゲームオプション"
+ "stationGameOptions": "ゲームオプション",
+ "hudOpen": "開ける",
+ "container": "コンテナ",
+ "containerBulletproof": "防弾コンテナ"
 }

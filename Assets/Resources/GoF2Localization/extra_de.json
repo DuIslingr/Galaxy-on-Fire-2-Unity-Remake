@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "Scheinwerfer an / aus",
  "boostToggle": "Boost als Schalter (Freier Flug)",
  "boostToggleHelp": "Im freien Flug startet ein Druck auf die Boost-Taste den Boost und ein weiterer beendet ihn, statt die Taste zu halten, wie in EVERSPACE 2 mit der Einstellung Boost als Schalter. Ein Druck bei leerem Booster bewirkt nichts.",
- "stationGameOptions": "Spieloptionen"
+ "stationGameOptions": "Spieloptionen",
+ "hudOpen": "ÖFFNEN",
+ "container": "Container",
+ "containerBulletproof": "Kugelsicherer Container"
 }

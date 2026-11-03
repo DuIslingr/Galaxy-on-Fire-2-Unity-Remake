@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "Fari accesi / spenti",
  "boostToggle": "Boost a interruttore (volo libero)",
  "boostToggleHelp": "In volo libero una pressione del tasto boost lo avvia e un'altra lo ferma, invece di tenere premuto il tasto, come l'impostazione boost a interruttore di EVERSPACE 2. Una pressione con il booster vuoto non fa nulla.",
- "stationGameOptions": "Opzioni di gioco"
+ "stationGameOptions": "Opzioni di gioco",
+ "hudOpen": "APRI",
+ "container": "Container",
+ "containerBulletproof": "Container blindato"
 }

@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "Koplampen aan / uit",
  "boostToggle": "Boost als schakelaar (vrije vlucht)",
  "boostToggleHelp": "In vrije vlucht start één druk op de boosttoets de boost en een tweede stopt hem, in plaats van de toets ingedrukt te houden, zoals de instelling boost als schakelaar in EVERSPACE 2. Een druk bij een lege booster doet niets.",
- "stationGameOptions": "Spelopties"
+ "stationGameOptions": "Spelopties",
+ "hudOpen": "OPENEN",
+ "container": "Container",
+ "containerBulletproof": "Kogelvrije container"
 }

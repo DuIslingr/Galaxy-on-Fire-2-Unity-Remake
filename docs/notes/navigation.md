@@ -155,6 +155,18 @@ the player ship) and `NavigationView` (flight HUD).
   60000; a third as tall), each a freighter's loot roll or 1-5 Space Waste (item 99), kept until emptied (`Crate.keep`). Not
   in the alien orbit or interstellar space. ES2's wreck meshes aren't placed (only containers). The ES2 importer gives
   its wreck-field locations one; its outlaw strongholds are pirate-held orbits (`pirateHeld`: outposts and guards).
+- **Containers** (remake 2026-11-03, for mods; stations.json `orbit.containers` -> `ModWorld.OrbitSpec.containerCount /
+  containerCentre / containerSpread / containerBulletproof`, `World.LootContainer.SpawnOrbit` with the wreck field): after
+  EVERSPACE 2's BP_ItemContainer (EContainerType OpenOnHit: ReceiveAnyDamage by the player or within 2 km ->
+  OpenContainerAndDropItsLoot; OpenOnInteract, "Bulletproof Container", CanBeHit off; their InteractComponent:
+  InteractRadius 10000 cm, InteractChargeDuration 0, bMustBeOnScreen, from the native constructor), the game's container
+  model x3 as a radar object (`Target.RadarObjects`, neutral, lock plate "Container" / "Bulletproof container"): a shootable
+  one has 1 hp and opens when it dies (the junk's burst), a bulletproof one is `invulnerable`; the action key (`FlightHud`'s
+  prompt chain after mining: "OPEN", `LootContainer.InReach`, 360 m ahead of the ship) opens either. Opened, each stack
+  is a crate of its own (`Crate.keep`, launched x2); the opened bulletproof shell stays without its Target. Loot: a
+  freighter's roll (`WreckField.Loot`), two for a bulletproof one (remake pick: ES2's loot tables aren't on disk). Not done:
+  ES2's secure containers (OpenOnUnlocked, energized through conductors; the importer counts its armoured ones as
+  bulletproof), its loot menu (everything spills), the open animation.
 - **Hazard volumes** (remake 2026-11-03, for mods; stations.json `orbit.hazards` -> `ModWorld.HazardSpec`, `Flight.Hazards`
   plain, `World.HazardZones` on the player's ship, attached with the wreck field): after EVERSPACE 2's BP_HeatDamageVolume
   (DamagePerSecondMax 200 x (1 - d / SphereRadius)^DamageFalloffExponent 2 each DamageInterval 0.25 s; its overheat buildup

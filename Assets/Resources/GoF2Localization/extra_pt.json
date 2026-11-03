@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "Faróis ligados / desligados",
  "boostToggle": "Impulso como alternância (voo livre)",
  "boostToggleHelp": "Em voo livre, uma pressão na tecla de impulso inicia-o e outra pára-o, em vez de manter a tecla, como a definição de impulso alternado do EVERSPACE 2. Premir com o propulsor vazio não faz nada.",
- "stationGameOptions": "Opções de jogo"
+ "stationGameOptions": "Opções de jogo",
+ "hudOpen": "ABRIR",
+ "container": "Contêiner",
+ "containerBulletproof": "Contêiner blindado"
 }

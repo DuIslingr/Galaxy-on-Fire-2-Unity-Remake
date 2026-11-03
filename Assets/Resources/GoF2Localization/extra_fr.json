@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "Phares allumés / éteints",
  "boostToggle": "Boost en bascule (vol libre)",
  "boostToggleHelp": "En vol libre, une pression sur la touche de boost le lance et une autre l'arrête, au lieu de maintenir la touche, comme le réglage boost en bascule d'EVERSPACE 2. Une pression avec le booster vide ne fait rien.",
- "stationGameOptions": "Options du jeu"
+ "stationGameOptions": "Options du jeu",
+ "hudOpen": "OUVRIR",
+ "container": "Conteneur",
+ "containerBulletproof": "Conteneur blindé"
 }

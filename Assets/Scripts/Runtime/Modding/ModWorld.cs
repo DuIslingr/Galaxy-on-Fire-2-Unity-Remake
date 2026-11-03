@@ -239,6 +239,12 @@ namespace GoF2Remake.Modding
             public int wreckCount;
             public Vector3? wreckCentre;
             public float wreckSpread = 60000f;
+            /// <summary>Remake (2026-11-03, EVERSPACE 2's item containers): this many closed containers (0 = none) within
+            /// containerSpread (game units, a cube's side) of containerCentre, containerBulletproof of them bulletproof
+            /// (World.LootContainer).</summary>
+            public int containerCount;
+            public Vector3? containerCentre;
+            public float containerSpread = 40000f, containerBulletproof = 0.3f;
             /// <summary>false: no asteroid field.</summary>
             public bool? asteroids;
             public int? asteroidCount;
@@ -280,7 +286,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };

@@ -3262,5 +3262,8 @@
  "ctlHeadlights": "Reflektory wł. / wył.",
  "boostToggle": "Dopalacz jako przełącznik (lot swobodny)",
  "boostToggleHelp": "W locie swobodnym jedno naciśnięcie klawisza dopalacza go włącza, a drugie wyłącza, zamiast przytrzymywania, jak ustawienie dopalacza jako przełącznika w EVERSPACE 2. Naciśnięcie przy pustym dopalaczu nic nie robi.",
- "stationGameOptions": "Opcje gry"
+ "stationGameOptions": "Opcje gry",
+ "hudOpen": "OTWÓRZ",
+ "container": "Kontener",
+ "containerBulletproof": "Kuloodporny kontener"
 }
