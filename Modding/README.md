@@ -510,7 +510,10 @@ with escorts), `derelict` (20, a signal: drifting crates), `distress` (20, from 
 attack), `flyby` (10, a wing passing through; the drive keeps running). A signal is a waypoint ahead and to one side:
 fly or autopilot to it and it appears, cruise on and it fades after 3 minutes or 10 km. None come in the special orbits,
 the Void and supernova systems, Loma, a scripted orbit (a story or freelance mission, the Kaamo siege, the Supernova
-Challenge) or, in multiplayer, an orbit another player runs. `encounters.json` adds to the table and changes it:
+Challenge) or, in multiplayer, an orbit another player runs. Between the systems (a Khador Slipstream's crossing, single
+player) the same table rolls, and every encounter pulls the ship out of the slipstream: right there in deep space (the warp
+eases out, then it appears ahead) or at the nearest system (the ship falls out there and meets it on arrival); none comes
+while a system's orbit is already in sight. `encounters.json` adds to the table and changes it:
 
 ```json
 [
@@ -530,6 +533,7 @@ Challenge) or, in multiplayer, an orbit another player runs. `encounters.json` a
 | `minRank`, `security`, `freePlayOnly` | Only from that rank, only in systems of those security levels (0 Dangerous, 1 Risky, 2 Average, 3 Secure), only in free play. |
 | `ships` | How many: pirates, the trader's escorts, the derelict's crates, the distress call's raiders, the flyby's wing. |
 | `name` | The signal's name on the HUD (a string or per language, like an item's). |
+| `interstellar` | Where it pulls the ship out of the Khador Slipstream between the systems: `space` (met right there in deep space), `system` (at the nearest system, met on arrival), `either` (the default: one or the other) or `never`. The game's: pirates, derelict and flyby `space`, trader and distress `either`; a `quest` always goes to the system. |
 
 ### Multi-grab tractor beams
 

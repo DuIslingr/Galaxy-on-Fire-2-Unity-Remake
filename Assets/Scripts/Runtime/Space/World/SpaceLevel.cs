@@ -156,7 +156,8 @@ namespace GoF2Remake.World
         /// <summary>The warp holds everything: between the systems and until an arrival's has ended nobody fires or is hurt.</summary>
         /// <summary>How much of the HUD shows as the ship comes out of the Khador Slipstream's hole (Visuals.WarpSky).</summary>
         public float HudShown => warpSky != null ? warpSky.HudShown : 1f;
-        public bool WarpHolds => (Layout != null && Layout.interstellar) || (warpSky != null && warpSky.Arriving);
+        public bool WarpHolds => (Layout != null && Layout.interstellar && !(Navigation != null && Navigation.OutOfSlipstream && Navigation.PullOut <= 0f))
+                                 || (warpSky != null && warpSky.Arriving);   // remake: out of the slipstream, an encounter is met there
         /// <summary>The orbit's fog sprites; null between the systems.</summary>
         public SpaceDust Fog { get; private set; }
         public GameObject Station { get; private set; }
@@ -503,9 +504,11 @@ namespace GoF2Remake.World
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (GoF2Remake.Data.NetSession.Active && !NetAuthority), Wormhole,
                           warpArrival && !missionHere && !GoF2Remake.Data.NetSession.Active);
             // Remake: a cruise drive's encounters (NavigationCruiseDrive, CruiseEncounterSpawner): only where the traffic is this
-            // player's own and nothing scripted runs (a multiplayer orbit another player runs rolls none).
-            Navigation.EncountersAllowed = !ownPassive && !(GoF2Remake.Data.NetSession.Active && !NetAuthority) && !prologue
-                                           && CruiseEncounterRules.Allowed(db, station, Layout.systemIndex, Layout.alienOrbit);
+            // player's own and nothing scripted runs (a multiplayer orbit another player runs rolls none); between the systems
+            // (single player only) they pull the ship out of the slipstream (CruiseEncounters.Between).
+            Navigation.EncountersAllowed = interstellar ? !GoF2Remake.Data.NetSession.Active
+                                           : !ownPassive && !(GoF2Remake.Data.NetSession.Active && !NetAuthority) && !prologue
+                                             && CruiseEncounterRules.Allowed(db, station, Layout.systemIndex, Layout.alienOrbit);
             Navigation.SpawnEncounter = (entry, at, forward) => CruiseEncounterSpawner.Spawn(this, entry, at, forward);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
             Traffic.RadarHidden = () => Cutscene;

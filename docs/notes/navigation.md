@@ -119,6 +119,19 @@ the player ship) and `NavigationView` (flight HUD).
   the system's race (`NpcTables.RandomFreighter`) + 2 locals, derelict 2-4 junk crates with a freighter's loot roll (empty:
   energy cells), distress a local under attack by 1 + rank / 8 raiders, flyby 3 locals of a random race; names Extra
   `encounter*`. Modelled on No Man's Sky's pulse encounters and EVERSPACE 2's signals (behaviour only).
+  **Between the systems** (2026-11-03, the user: "encounters should pull you out either in their own space or the nearest
+  system"; `CruiseEncounters.Between`): the same table rolls on an interstellar leg (single player, as that space is), the
+  security the system left's, but not on the way out, on a dive into the Void, or while a system's orbit is built ahead
+  (`Navigation.ApproachRuns`, set by `InterstellarField`). Every entry pulls the ship out, the drive dropped and the
+  autopilot off ("X disengaged: Pirates"): **deep space** (`InSpace`): `OutOfSlipstream`, the warp eases out over
+  `PullOutMs` 2500 (`WarpSky.Strength`; `SpaceLevel.WarpHolds` holds fire and damage until it ends, and the drive is blocked),
+  then the encounter is there `AmbushAheadUnits` ahead; the warp comes back with the drive's ramp and the flag clears at
+  full cruise. **Nearest system** (`AtSystem`): "Pulled out of the slipstream at X" (Extra `interstellarPulledOut`), the
+  fall-out's way in (`Leave`), the entry carried in `Session.CarriedEncounter` and met ahead once the arrival's warp has
+  ended (`ArrivalHeld`), counted as that orbit's (`Came`: its cooldown); dropped if that orbit rolls none. Only to a system
+  `CruiseEncounterRules` allows, with no scripted arrival (`ScriptedArrival`) or story refusal (`PlanetJumpRefused`).
+  An entry's `interstellar`: pirates, derelict and flyby `space`, trader and distress either (50 / 50, deep space when the
+  system won't have it), a quest always the system (its graph needs an orbit), `never` keeps it out.
 - **Menu order** (`Hud::initHudMenu(3)`): outside the alien orbit Asteroid field, Station, Jumpgate, 573 **Waypoint** (a
   player route not finished: the autopilot follows the route, "Target: Waypoint"), "Destination: X"; then every named
   docking target (also in the alien orbit). The original's only restriction is no menu in mission type 0xb7 (the

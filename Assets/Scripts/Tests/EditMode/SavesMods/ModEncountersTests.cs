@@ -108,6 +108,26 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void InterstellarSaysWhereItPullsTheShipOut()
+        {
+            ModOn(@"[ { 'id': 'x', 'kind': 'trader', 'interstellar': 'System' }, { 'override': 'pirates', 'interstellar': 'never' } ]");
+            Assert.IsFalse(Installed(Mod).Broken, AllMessages(Installed(Mod)));
+            var all = ModEncounters.All();
+            Assert.AreEqual(CruiseEncounters.AtSystem, all.First(e => e.id == Mod + ":x").interstellar);
+            Assert.AreEqual(CruiseEncounters.Never, all.First(e => e.id == CruiseEncounters.Pirates).interstellar);
+            Assert.IsFalse(Installed(Mod).Warnings.Any(w => w.Contains("interstellar")), AllMessages(Installed(Mod)));
+        }
+
+        [Test]
+        public void InterstellarMustBeAPlace()
+        {
+            ModOn(@"[ { 'id': 'x', 'kind': 'flyby', 'interstellar': 'moon' } ]");
+            Assert.IsTrue(Installed(Mod).Broken);
+            StringAssert.Contains("interstellar", AllMessages(Installed(Mod)));
+            ModManager.SetEnabled(Mod, false);
+        }
+
+        [Test]
         public void SecurityMustBeLevels()
         {
             ModOn(@"[ { 'id': 'x', 'kind': 'flyby', 'security': [0, 7] } ]");

@@ -132,7 +132,7 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   (`Navigation.Kind.Slipstream`, `NavigationInterstellar`); no option, the item is the switch. The Khador charge and scene
   play (`SystemJump.toInterstellar`), then `Session.EnterInterstellar` reloads Space, read once in `SpaceLevel.Awake`:
   `InterstellarSpace.Clear` empties the orbit left (`OrbitLayout.interstellar`), which stays `Session.StationIndex`, so a
-  save or load is that orbit and the flag is never saved. No wingmen, traffic, story (`StorySpace`), encounters, wormholes;
+  save or load is that orbit and the flag is never saved. No wingmen, traffic, story (`StorySpace`), wormholes; a cruise encounter pulls the ship out (navigation.md "Between the systems");
   `plainOrbit` in `Awake` marks what an arena and this space both leave out. **Single player only** (2026-11-02, the user:
   "else disable the item in mp"): `InterstellarSpace.Drive` is null in a session, so no menu entry; the item still cruises in
   the orbits. It wasn't safe: a squadmate's Follow or a distress call from here set out for `InterstellarSpace.OrbitId`

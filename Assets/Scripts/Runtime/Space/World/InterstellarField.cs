@@ -140,6 +140,7 @@ namespace GoF2Remake.World
             approachBlend = Mathf.MoveTowards(approachBlend, near, BlendPerMs * dtMs);
             Shader.SetGlobalFloat("_SkyBlend", blended != null ? blend : 0f);
             if (approachBlend <= 0.001f && near <= 0f) { approach?.Remove(); approach = null; }
+            nav.ApproachRuns = approach != null || near > 0f;   // no encounter pulls the ship out with an orbit built ahead
             if (blended == null) return;
             var way = blended.Position - ship.position;
             if (way.sqrMagnitude < 1f) return;
