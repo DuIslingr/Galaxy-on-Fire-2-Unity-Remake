@@ -128,7 +128,8 @@ the player ship) and `NavigationView` (flight HUD).
   (`CruiseEncounterSpawner`; `EncounterWatch` pays `BattlePay` 1500 + 300 x rank when the battle's raiders are gone, runs the
   high-risk area's three waves and its crate, and stops unpaid past 15 km). Counts and pay are the remake's picks (ES2's
   spawn groups and reward tables aren't on disk). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
-  Minesweeper (mines), Scavenger Baiting, Incursion, Rift and Leviathan.
+  Minesweeper (mines), Scavenger Baiting, Incursion and Rift (Leviathan encounters are
+  left out on purpose).
 - **Menu order** (`Hud::initHudMenu(3)`): outside the alien orbit Asteroid field, Station, Jumpgate, 573 **Waypoint** (a
   player route not finished: the autopilot follows the route, "Target: Waypoint"), "Destination: X"; then every named
   docking target (also in the alien orbit). The original's only restriction is no menu in mission type 0xb7 (the
