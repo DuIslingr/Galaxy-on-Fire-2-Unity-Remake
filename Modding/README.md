@@ -932,7 +932,7 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 | `normal`, `normalScale` | Normal map. |
 | `tiling` | How many times the main textures (colour, normal, metallic, emission) repeat over the UVs (default 1): a plating texture laid over a big hull. |
 | `metallicSmoothness`, `metallic`, `smoothness` | Metallic (red) / smoothness (alpha) map; without a map `metallic` sets the metalness. |
-| `specularGlossiness`, `specularColor` | The specular workflow in place of metallic: a map of the specular colour (RGB, sRGB) and smoothness (alpha, times `smoothness`), or a specular colour `[r, g, b]` without a map. A coloured highlight and reflection over the diffuse, not a metal (Galaxy on Fire 3's hulls). A glTF model's `KHR_materials_pbrSpecularGlossiness` materials load the same way. |
+| `specularGlossiness`, `specularColor` | The specular workflow in place of metallic: a map of the specular colour (RGB, sRGB) and smoothness (alpha, times `smoothness`), or a specular colour `[r, g, b]` without a map. A coloured highlight and reflection over the diffuse, not a metal, lit the way Galaxy on Fire 3 lights its hulls (its Phong highlight, gloss as smoothness; the importer's maps carry GoF3's `Specular_Multiplier`). A glTF model's `KHR_materials_pbrSpecularGlossiness` materials load the same way. |
 | `emission`, `emissionColor`, `emissionIntensity` | Emission map and / or colour; above 1 it blooms. |
 | `alphaClip` | Cut the diffuse's alpha below this (decals). |
 | `opacity` | Below 1: glass (see-through, reflections stay bright). |
