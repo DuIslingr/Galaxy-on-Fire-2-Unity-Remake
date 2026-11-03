@@ -903,6 +903,8 @@ namespace GoF2Remake.Flight
         }
 
         void Say(string text, HudMessageKind kind = HudMessageKind.Normal) => Message?.Invoke(text, kind);
+        /// <summary>A HUD message from elsewhere (the cruise encounters' EncounterWatch).</summary>
+        public void Post(string text, HudMessageKind kind = HudMessageKind.Normal) => Say(text, kind);
 
         void Play(AudioClip clip)
         {

@@ -228,6 +228,11 @@ namespace GoF2Remake.Flight
                 CruiseEncounters.Derelict => Localization.Extra("encounterDerelict", "Debris field"),
                 CruiseEncounters.Distress => Localization.Extra("encounterDistress", "Distress call"),
                 CruiseEncounters.Flyby => Localization.Extra("encounterFlyby", "Passing wing"),
+                CruiseEncounters.Battle => Localization.Extra("encounterBattle", "Battle"),
+                CruiseEncounters.Stash => Localization.Extra("encounterStash", "Hidden stash"),
+                CruiseEncounters.Depot => Localization.Extra("encounterDepot", "Resource depot"),
+                CruiseEncounters.HighRisk => Localization.Extra("encounterHighRisk", "High-risk area"),
+                // (a trap passes for an unknown signal, as EVERSPACE 2's does)
                 _ => Localization.Extra("encounterUnknown", "Unknown signal"),
             };
         }

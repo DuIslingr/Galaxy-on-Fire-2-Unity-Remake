@@ -544,11 +544,11 @@ Challenge) or, in multiplayer, an orbit another player runs. `encounters.json` a
 | Field | Meaning |
 |---|---|
 | `id` | A new entry (its key is `mod:id`); or `override`: one of the game's (`pirates`, `trader`, `derelict`, `distress`, `flyby`) or another mod's `mod:id` to change. |
-| `kind` | `pirates`, `trader`, `derelict`, `distress`, `flyby`, or `quest` (starts the quest graph `quest` from the mod's `events/`, single player; the graph spawns, talks and sets waypoints itself). |
+| `kind` | `pirates`, `trader`, `derelict`, `distress`, `flyby`, or `quest` (starts the quest graph `quest` from the mod's `events/`, single player; the graph spawns, talks and sets waypoints itself). Five more, after EVERSPACE 2's encounters, only in a mod's entries (the game's own table doesn't have them): `battle` (a wing of the system's race fighting raiders; you are paid 1500 + 300 a rank credits when the raiders are gone), `trap` (passes for an unknown signal: raiders appear around you on arrival, sometimes a second group ahead), `stash` (one crate with three loot rolls), `depot` (crates of ore with a few raiders guarding them), `highrisk` (three waves of raiders, each when the last is gone, then a crate with three loot rolls and twice a battle's pay; flying off ends it). |
 | `weight` | Its share of the roll (0 = never; the game's add up to 100). |
 | `visible` | `true`: a signal the pilot may fly to; `false`: it appears at once (pirates, distress and flyby ambush, trader and derelict signal by default). |
 | `minRank`, `security`, `freePlayOnly` | Only from that rank, only in systems of those security levels (0 Dangerous, 1 Risky, 2 Average, 3 Secure), only in free play. |
-| `ships` | How many: pirates, the trader's escorts, the derelict's crates, the distress call's raiders, the flyby's wing. |
+| `ships` | How many: pirates, the trader's escorts, the derelict's crates, the distress call's raiders, the flyby's wing, the battle's raiders, the trap's raiders, the depot's crates, each high-risk wave. |
 | `name` | The signal's name on the HUD (a string or per language, like an item's). |
 
 ### Multi-grab tractor beams

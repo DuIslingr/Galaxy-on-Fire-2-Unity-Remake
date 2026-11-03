@@ -17,7 +17,9 @@ namespace GoF2Remake.Flight
     public class CruiseEncounters
     {
         public const string Pirates = "pirates", Trader = "trader", Derelict = "derelict", Distress = "distress", Flyby = "flyby", Quest = "quest";
-        public static readonly string[] Kinds = { Pirates, Trader, Derelict, Distress, Flyby, Quest };
+        /// <summary>Remake (2026-11-03, for mods; not in the game's own table): EVERSPACE 2's encounter types (World.CruiseEncounterSpawner).</summary>
+        public const string Battle = "battle", Trap = "trap", Stash = "stash", Depot = "depot", HighRisk = "highrisk";
+        public static readonly string[] Kinds = { Pirates, Trader, Derelict, Distress, Flyby, Quest, Battle, Trap, Stash, Depot, HighRisk };
 
         public class Entry
         {
