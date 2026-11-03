@@ -131,7 +131,16 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   shieldFactor 0), `Teleport` / `SpectralShift` (`BlinkDistance`: HullCollision.Sweep, the landmarks' volumes sampled, the
   asteroids as spheres; `Device.Blink`), `FusionHook` (both pulled by position each frame, speeds ramping by ES2's
   accelerations; another game's ship isn't moved), `QuantumTether` (Target.Damaged / Died), `Entangler` (the player's
-  Target.Damaged summed). `deviceRange2` (166). The legendary modes and masteries of these devices are left out. Not yet: the shots / beams / waves seen by the
+  Target.Damaged summed). `deviceRange2` (166). The legendary modes and masteries of these devices are left out.
+  Weapon debuffs (remake 2026-11-02, EVERSPACE 2's debuff conditions, decompiled BP_Condition_Debuff_Frozen (DisableControls),
+  _Webbed (linear / angular damping +2: a slow), _Destabilized (+0.2 incoming damage per token on every layer, intensity
+  stacking), _Corrosion (0.95 s timer) and _Infested (1 s timer), shield-piercing damage = the intensity; the launchers'
+  ApplyConditionClass: Cryo -> Frozen, Web -> Webbed, Destabilizer -> Destabilized, Corrosion -> Corrosion, Spore -> Confused,
+  Exorciser -> an Exorcism buildup (a slow at its end)): `Gun.slowFreeze` (167, `SlowBy`'s noTurn), `dotDamage` / `dotMs`
+  (168 / 169) and `vulnerablePercent` / `vulnerableMs` (170 / 171) on the player's direct hits on NPC ships
+  (`WeaponSystem.OnHit` -> `TargetDebuffs` running `Debuffs`: stacks, `Target.vulnerability` in `Target.Damage`). Not taken:
+  Confused (the spore's: NPCs turning on each other), the armour breaker (no condition: a plain missile in ES2's blueprint),
+  blasts and mines applying them (direct hits only). Not yet: the shots / beams / waves seen by the
   other players, the deflector against other players, NPC devices (GoF3's bosses), translations of the texts.
   `cloakCooldownMs` (attr 160) gives a cloak its own cooldown (`Cloak` constructor; GoF3's Hiroto Cloak 60 s, no cells).
 - **Shield injector** (227): an empty shield takes 30 t Blue Plasma (202, "-30t Blue Plasma") and refills at 0.15 per ms; sounds 2258 / 2257 / 2259.

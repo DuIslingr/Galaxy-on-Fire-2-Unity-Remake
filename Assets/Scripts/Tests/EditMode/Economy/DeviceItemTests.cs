@@ -46,6 +46,11 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(Gun.ShieldBypassAttr, ItemStats.IdOf("shieldBypass"));
             Assert.AreEqual(Gun.SlowMsAttr, ItemStats.IdOf("slowMs"));
             Assert.AreEqual(Gun.SlowPercentAttr, ItemStats.IdOf("slowPercent"));
+            Assert.AreEqual(Gun.SlowFreezeAttr, ItemStats.IdOf("slowFreeze"));
+            Assert.AreEqual(Gun.DotDamageAttr, ItemStats.IdOf("dotDamage"));
+            Assert.AreEqual(Gun.DotMsAttr, ItemStats.IdOf("dotMs"));
+            Assert.AreEqual(Gun.VulnerablePercentAttr, ItemStats.IdOf("vulnerablePercent"));
+            Assert.AreEqual(Gun.VulnerableMsAttr, ItemStats.IdOf("vulnerableMs"));
         }
 
         [Test]

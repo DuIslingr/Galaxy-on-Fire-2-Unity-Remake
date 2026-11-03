@@ -81,6 +81,9 @@ namespace GoF2Remake.Modding
             // the ship hit to slowPercent of its speed for slowMs (Target.SlowBy; turning still allowed): GoF3's
             // AbilityBypassShield and AbilitySlowdown.
             ["shieldBypass"] = 161, ["slowMs"] = 162, ["slowPercent"] = 163,
+            // EVERSPACE 2's weapon debuffs (2026-11-02; Flight.Gun, Flight.Debuffs): the slow freezes (no turning), damage over
+            // time past the shield, the damage the ship takes raised (stacking)
+            ["slowFreeze"] = 167, ["dotDamage"] = 168, ["dotMs"] = 169, ["vulnerablePercent"] = 170, ["vulnerableMs"] = 171,
             // items.json's statList names
             ["steerable"] = 15, ["handling"] = 17,
             ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,

@@ -333,6 +333,9 @@ energy cells.
 | `cloakCooldownMs` | 160 | A cloak's own cooldown in ms, in place of the difficulty's 5 to 12 seconds |
 | `shieldBypass` | 161 | 1: the weapon's hits go past the shield, straight to the armor and hull (the shield untouched) |
 | `slowMs`, `slowPercent` | 162, 163 | A hit slows the ship to `slowPercent` of its speed (default 50) for `slowMs`; it can still turn. The game's NPCs and other games' NPCs in multiplayer; not players |
+| `slowFreeze` | 167 | 1: the slow also stops the ship turning (EVERSPACE 2's frozen: controls disabled); with `slowPercent` 0 the ship hangs still |
+| `dotDamage`, `dotMs` | 168, 169 | A hit adds `dotDamage` every 0.95 s for `dotMs`, past the shield, counted as yours; hits stack (EVERSPACE 2's corrosion and infestation). NPC ships only |
+| `vulnerablePercent`, `vulnerableMs` | 170, 171 | A hit makes the ship take `vulnerablePercent` % more from every hit for `vulnerableMs`; hits stack, up to +100 % (EVERSPACE 2's destabilized). NPC ships only |
 | `device` | 150 | An active device's type (see [Devices](#devices)): 1 EMP wave, 2 EMP shot, 3 shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector |
 | `deviceCooldownMs` | 151 | Device: its cooldown after a run (default 60000) |
 | `deviceDurationMs` | 152 | Device: how long it runs: the slow on its targets, the strike charge's boost, the deflector (0 = at once) |

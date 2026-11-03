@@ -168,9 +168,19 @@ namespace GoF2Remake.UI
                 rows.Add((Localization.Extra("statShieldBypass", "Shields"), Localization.Extra("statShieldBypassOn", "Passes through")));
             else if ((it.TypeId == 0 || it.TypeId == 2) && Mathf.Abs(shieldFactor - 1f) > 0.001f)
                 rows.Add((Localization.Extra("statShieldDamage", "Damage to shields"), $"{Mathf.RoundToInt(shieldFactor * 100f)} %"));
+            static string Sec(int ms) => (ms / 1000f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " s";
             if (it.TypeId <= 2 && it.Attr(Flight.Gun.SlowMsAttr) > 0)
-                rows.Add((Localization.Extra("statSlow", "Slows the target"),
-                          $"{it.Attr(Flight.Gun.SlowPercentAttr, 50)} % · {(it.Attr(Flight.Gun.SlowMsAttr) / 1000f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)} s"));
+            {
+                if (it.Attr(Flight.Gun.SlowFreezeAttr) > 0)
+                    rows.Add((Localization.Extra("statFreeze", "Freezes the target"), $"{it.Attr(Flight.Gun.SlowPercentAttr, 50)} % · {Sec(it.Attr(Flight.Gun.SlowMsAttr))}"));
+                else
+                    rows.Add((Localization.Extra("statSlow", "Slows the target"), $"{it.Attr(Flight.Gun.SlowPercentAttr, 50)} % · {Sec(it.Attr(Flight.Gun.SlowMsAttr))}"));
+            }
+            // remake (2026-11-02): damage over time and the damage-taken increase (Flight.Debuffs)
+            if (it.TypeId <= 2 && it.Attr(Flight.Gun.DotDamageAttr) > 0 && it.Attr(Flight.Gun.DotMsAttr) > 0)
+                rows.Add((Localization.Extra("statDot", "Damage over time"), $"{it.Attr(Flight.Gun.DotDamageAttr)} / s · {Sec(it.Attr(Flight.Gun.DotMsAttr))}"));
+            if (it.TypeId <= 2 && it.Attr(Flight.Gun.VulnerablePercentAttr) > 0 && it.Attr(Flight.Gun.VulnerableMsAttr) > 0)
+                rows.Add((Localization.Extra("statVulnerable", "Target takes more damage"), $"+{it.Attr(Flight.Gun.VulnerablePercentAttr)} % · {Sec(it.Attr(Flight.Gun.VulnerableMsAttr))}"));
             int defense = it.Attr(Flight.PointDefense.Attribute);
             if (defense > 0)
                 rows.Add((Localization.Extra("statMissileDefense", "Shoots down missiles within"), $"{Mathf.RoundToInt(defense * Flight.Gun.MetersPerUnit)} m"));
