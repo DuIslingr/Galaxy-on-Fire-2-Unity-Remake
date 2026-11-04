@@ -4,6 +4,7 @@
 // EPawnType, its resolve drain, the mutator pick from the rift's and the boss's sets, the loot factor worked by hand.
 
 using GoF2Remake.Flight;
+using System.Linq;
 using NUnit.Framework;
 
 namespace GoF2Remake.Tests
@@ -68,6 +69,37 @@ namespace GoF2Remake.Tests
             r.BeginStage(0f, 0.99f);
             Assert.AreEqual(RiftRun.BossMutators[RiftRun.BossMutators.Length - 1], r.active[1], "the boss's stage: a boss mutator");
             CollectionAssert.DoesNotContain(RiftRun.Mutators, "mutator_two_bosses", "not a rift's in ES2's mutators.csv");
+        }
+
+        [Test]
+        public void TheMutatorsAreEsTwosRiftOnesAndBossOnes()
+        {
+            // mutators.csv: bAllowedInRifts 16, bAllowedOnlyForRiftBosses 6
+            Assert.AreEqual(16, RiftRun.Mutators.Length);
+            Assert.AreEqual(6, RiftRun.BossMutators.Length);
+            CollectionAssert.IsSubsetOf(new[] { RiftRun.MineDrop, RiftRun.Overheat, RiftRun.CorrosionField, RiftRun.BurstBulbs }, RiftRun.Mutators);
+            CollectionAssert.IsSubsetOf(new[] { RiftRun.BossEnergyShield, RiftRun.BossWebFields, RiftRun.BossApocalypse }, RiftRun.BossMutators);
+            CollectionAssert.IsEmpty(RiftRun.Mutators.Intersect(RiftRun.BossMutators));
+        }
+
+        [Test]
+        public void OverheatHalvesOneFreeSlotForItsDuration()
+        {
+            Overheat.Clear();
+            try
+            {
+                var s = Overheat.HeatRandom(slot => slot != Overheat.Slot.Booster, 0.99f);
+                Assert.AreEqual(Overheat.Slot.Shield, s, "the last free slot the ship has (no booster)");
+                Assert.AreEqual(0.5f, Overheat.Factor(Overheat.Slot.Shield));
+                Assert.AreEqual(1f, Overheat.Factor(Overheat.Slot.Primary));
+                Assert.AreNotEqual(Overheat.Slot.Shield, Overheat.HeatRandom(null, 0.99f), "a hot slot isn't picked again");
+                Overheat.Tick(Overheat.DurationS - 0.01f);
+                Assert.IsTrue(Overheat.Hot(Overheat.Slot.Shield));
+                Overheat.Tick(0.02f);
+                Assert.IsFalse(Overheat.Hot(Overheat.Slot.Shield), "cool after DurationS");
+                Assert.IsNull(Overheat.HeatRandom(_ => false, 0.5f), "nothing to overheat");
+            }
+            finally { Overheat.Clear(); }
         }
     }
 }

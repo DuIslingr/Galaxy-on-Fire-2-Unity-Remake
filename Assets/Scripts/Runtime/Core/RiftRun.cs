@@ -16,7 +16,7 @@
 //              bAllowedOnlyForRiftBosses; ES2's three portals each offer one and the pilot flies through one, here the rift
 //              picks): Mutators / BossMutators, those of ES2's the remake has; their values ES2's (its Signal Decoder items'
 //              mutator attributes)
-// The boss's strength is the remake's pick (ES2's comes from its NPC levelling).
+// The newer mutators' numbers below (Mines on Death to Apocalypse) are ES2's as well; World.RiftEncounter / RiftHazards do them.
 
 using System;
 using System.Collections.Generic;
@@ -46,20 +46,65 @@ namespace GoF2Remake.Flight
                             Nearsighted = "mutator_nearsighted",       // half the damage beyond NearsightedM
                             Farsighted = "mutator_farsighted",         // half the damage within FarsightedM
                             NoLock = "mutator_no_lock",                // the enemies can't be locked
-                            Vengeance = "mutator_vengeance";           // a detonator drone for every kill, at the pilot
+                            Vengeance = "mutator_vengeance",           // a detonator drone for every kill, at the pilot
+                            MineDrop = "mutator_mine_drop",            // Mines on Death: MinesMin..Max proximity mines from a dying enemy
+                            Overheat = "mutator_overheat",             // Overheated Systems: Flight.Overheat every Overheat.IntervalS
+                            CorrosionField = "mutator_corrosion_field",// Corrosive Death: a corrosion field where an enemy dies
+                            BurstBulbs = "mutator_burst_bulbs";        // Burst Bulbs: a growing bulb near the pilot, shoot it or it bursts
         public static readonly string[] Mutators = { HullRepair, SpeedBonus, EmpResistance, NamesHidden, HpHidden, ExplodeOnKill, HealOnKill,
-                                                     BuffOnKill, Nearsighted, Farsighted, NoLock, Vengeance };
+                                                     BuffOnKill, Nearsighted, Farsighted, NoLock, Vengeance, MineDrop, Overheat,
+                                                     CorrosionField, BurstBulbs };
         // ... and of the boss's: Quantum Mend (teleports every BossTimerMin..Max s and repairs, invulnerable, until hit), Evasive
-        // Drift (boosts away as often), Guardians (invulnerable while two guards it spawns live). Not here: Mines on Death,
-        // Overheated Systems, Corrosive Death, Burst Bulbs, Phase Barrier, Stasis Snares, Apocalypse.
+        // Drift (boosts away as often), Guardians (invulnerable while two guards it spawns live), Phase Barrier (a shell around it
+        // that stops shots from outside: fly in to hurt it), Stasis Snares (web bubbles around the pilot), Apocalypse (safe
+        // fields, then a blast over the whole stage). (ES2's mutators.csv marks no others for rift bosses.)
         public const string BossTeleportRepairs = "mutator_riftboss_teleportrepairs", BossBoost = "mutator_riftboss_boost",
-                            BossBodyguards = "mutator_riftboss_bodyguards";
-        public static readonly string[] BossMutators = { BossTeleportRepairs, BossBoost, BossBodyguards };
+                            BossBodyguards = "mutator_riftboss_bodyguards", BossEnergyShield = "mutator_riftboss_energyshield",
+                            BossWebFields = "mutator_riftboss_webfields", BossApocalypse = "mutator_riftboss_apocalypse";
+        public static readonly string[] BossMutators = { BossTeleportRepairs, BossBoost, BossBodyguards, BossEnergyShield, BossWebFields, BossApocalypse };
         public const float SpeedBonusShare = 0.5f, HealOnKillShare = 0.2f, BuffOnKillShare = 0.05f;
         public const int BuffOnKillMax = 10;
         /// <summary>Unity metres: ES2's 30000 / 50000 cm x the ES2 ships' 3.6.</summary>
         public const float NearsightedM = 300f * 3.6f, FarsightedM = 500f * 3.6f, SightedDamageFactor = 0.5f;
         public const float BossTimerMinS = 15f, BossTimerMaxS = 30f;
+
+        // ES2's numbers for the newer mutators (decompiled BP_Encounter_Rift and the actors it spawns), ES2 centimetres turned
+        // into Unity metres (x 0.01 x the ES2 ships' 3.6); damage as seconds of a raider's fire (ES2's Outlaw raider: 55 DPS).
+        /// <summary>Mines on Death (DropMinesAfterDeath, BP_ProximityMine_Base): RandomIntegerInRange(2, 3) mines 800 cm ahead of the
+        /// dying ship, flung at 10000 cm/s within 45 degrees of its heading (LinearDamping 0.2), armed after 1 s, gone after 9-11
+        /// s; one within 10000 cm sets it off, 0.5 s later it bursts (its blast's bounds 4000 cm) for 40 + 40 at the dead ship's
+        /// level; its hit sphere 800 cm.</summary>
+        public const int MinesMin = 2, MinesMax = 3;
+        public const float MineAheadM = 8f * 3.6f, MineFlingMs = 100f * 3.6f, MineConeDeg = 45f, MineDamping = 0.2f, MineArmS = 1f,
+                           MineLifeMinS = 9f, MineLifeMaxS = 11f, MineTriggerM = 100f * 3.6f, MineFuseS = 0.5f, MineBlastM = 40f * 3.6f,
+                           MineBlastSeconds = 80f / 55f, MineHitM = 8f * 3.6f;
+        /// <summary>Corrosive Death (BP_CorrosionField): 4000 cm for 7 s where a fighter dies, 7000 cm for 10 s where a bigger ship
+        /// does; inside, corrosion for 8 s (BP_Condition_Debuff_Corrosion: a tick every 0.95 s past the shield, intensity 5).</summary>
+        public const float CorrosionSmallM = 40f * 3.6f, CorrosionBigM = 70f * 3.6f, CorrosionSmallS = 7f, CorrosionBigS = 10f,
+                           CorrosionDebuffS = 8f, CorrosionTickS = 0.95f, CorrosionTickSeconds = 5f / 55f;
+        /// <summary>Burst Bulbs (SpawnBurstBulb, BP_Rift_Burst_Bulb): the first 10-15 s into the stage, the next as often, 200-800
+        /// m x 3.6 from the pilot; it grows from 1000 cm to GrowthFactor 10 times that over its Lifetime 8 s and bursts for 120 +
+        /// 160 (the pilot's level) within its explosion radius (the mutator's 300000 cm), unless the pilot destroys it first
+        /// (OnlyDestructibleByPlayer; GetScaledHitpoints(80), against a raider's hull 200 + armour 50 + shield 60).</summary>
+        public const float BulbFirstMinS = 10f, BulbFirstMaxS = 15f, BulbNearM = 200f * 3.6f, BulbFarM = 800f * 3.6f,
+                           BulbStartM = 10f * 3.6f, BulbGrowth = 10f, BulbLifeS = 8f, BulbBurstM = 3000f * 3.6f,
+                           BulbBurstSeconds = 280f / 55f, BulbHullShare = 80f / 310f;
+        /// <summary>Phase Barrier (BP_StasisBubble on the boss, fly-through, Vehicle_WeaponTargetOnly): its bounds' box x (2.6, 3.9,
+        /// 3.9), the first along its length.</summary>
+        public const float BarrierLength = 2.6f, BarrierWidth = 3.9f;
+        /// <summary>Stasis Snares (BP_DynamicActorField_WebBubbles around the pilot: NumActorsMax 20 within SpawnRadius 30000 cm;
+        /// BP_WebBubble 1500-3000 cm): a bubble touched webs the ship for 3 s (BP_Condition_Debuff_Webbed: the webber's slow) and
+        /// pops.</summary>
+        public const int SnaresMax = 20;
+        public const float SnareFieldM = 300f * 3.6f, SnareMinM = 15f * 3.6f, SnareMaxM = 30f * 3.6f, SnareWebS = 3f;
+        /// <summary>Apocalypse: every 12-22 s MinInvulnerableFields 8 to MaxInvulnerableFields 10 safe fields (BP_InvulnerableField,
+        /// 10000 cm, inside 5 s to build up: invincible) around the boss (500-2000 m x 3.6), 0-0.4 s apart; 8 s after the last a
+        /// blast from the boss (BP_ARC9000_Explosion_Apocalypse: 1000000 cm, no falloff) for 120 + 120 at its level; 7 s later the
+        /// fields fade.</summary>
+        public const int SafeFieldsMin = 8, SafeFieldsMax = 10;
+        public const float ApocalypseMinS = 12f, ApocalypseMaxS = 22f, SafeFieldM = 100f * 3.6f, SafeBuildupS = 5f,
+                           SafeNearM = 500f * 3.6f, SafeFarM = 2000f * 3.6f, SafeGapMaxS = 0.4f, ApocalypseCountdownS = 8f,
+                           ApocalypseBlastM = 10000f * 3.6f, ApocalypseBlastSeconds = 240f / 55f, SafeFadeS = 7f;
 
         public int Stages { get; }
         public int Stage { get; private set; }

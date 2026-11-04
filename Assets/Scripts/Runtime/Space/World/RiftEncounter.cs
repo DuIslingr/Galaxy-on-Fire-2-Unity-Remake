@@ -26,6 +26,17 @@
 // (NpcTables.Hull); without them the pirate boss's hull and guns.
 //   the boss's        Quantum Mend: every 15-30 s it teleports and repairs until hit; Evasive Drift: as often it boosts away;
 //                     Guardians: two guards, and while one lives it can't be hurt (again 15-30 s after they fall)
+// The newer mutators (2026-11-04, RiftRun's numbers, RiftHazards' objects, all ES2's):
+//   Mines on Death    a dying enemy drops RiftMines (their burst MineBlastSeconds of its gun's fire)
+//   Overheated Sys.   every Overheat.IntervalS one of the pilot's guns, missiles, shield or booster runs at half (Flight.Overheat)
+//   Corrosive Death   a corrosion field where an enemy dies (its ticks CorrosionTickSeconds of its gun's fire, past the shield)
+//   Burst Bulbs       a bulb grows near the pilot; shot down it's gone, else it bursts over the stage (BulbBurstSeconds of a
+//                     raider's fire); its hull BulbHullShare of a raider's
+//   Phase Barrier     the boss's shell (its hull's box x BarrierLength / BarrierWidth): the pilot's shots hurt it only from inside
+//   Stasis Snares     up to SnaresMax web bubbles around the pilot: touched, it webs the ship for SnareWebS and pops
+//   Apocalypse        every 12-22 s safe fields around the boss, then a countdown and a blast from it over the whole stage
+//                     (ApocalypseBlastSeconds of its gun's fire) that only a safe field held long enough keeps off
+// A stage's hazards go with it (ES2: the next location); Overheat cools down when the run ends.
 // Who fights (2026-11-04, the user: the mods' enemy fighters and races, and the Void): each stage its own side, as ES2's
 // portals lead to another place each stage: the pirates, the Void, or a hostile mod race with fighters of its own (Sides),
 // at random. A mod race flies its mods' ships; the pirates and the Void fly the game's, now and then a mod's of theirs (the
@@ -68,6 +79,13 @@ namespace GoF2Remake.World
         float bossTimerS;
         bool bossMending;
         int buffs;
+        Transform hazards;
+        float overheatS, bulbS = -1f, apocalypseS = -1f, countdownS = -1f, fadeS = -1f, safeGapS;
+        int safeToMake, countdownShown;
+        RiftBulb bulb;
+        GameObject barrier;
+        Vector3 barrierHalf;
+        readonly List<RiftField> snares = new List<RiftField>(), safeFields = new List<RiftField>();
 
         public RiftRun Run => run;
 
@@ -101,7 +119,12 @@ namespace GoF2Remake.World
         Vector3 Centre => new Vector3(centreGame.x, centreGame.y, -centreGame.z) * M;
         Vector3 Around(float units) => centreGame + new Vector3(Random.Range(-units, units), Random.Range(-units, units) * 0.5f, Random.Range(-units, units));
 
-        void OnDestroy() { if (Current == this) Current = null; }
+        void OnDestroy()
+        {
+            if (Current == this) Current = null;
+            Overheat.Clear();
+            if (boss != null) boss.Target.playerProof = false;
+        }
 
         void Post(string text) => level?.Navigation?.Post(text);
 
@@ -127,6 +150,13 @@ namespace GoF2Remake.World
             }
             foreach (var e in enemies) if (e != null && !e.Gone && e.Target.Alive) e.Vanish();   // (ES2: the next location)
             enemies.Clear(); kinds.Clear(); guards.Clear();
+            // the last stage's hazards are left behind with it
+            if (hazards != null) Destroy(hazards.gameObject);
+            hazards = new GameObject("Rift hazards").transform;
+            hazards.SetParent(transform, false);
+            snares.Clear(); safeFields.Clear(); bulb = null; barrier = null;
+            bulbS = Random.Range(RiftRun.BulbFirstMinS, RiftRun.BulbFirstMaxS);
+            apocalypseS = Random.Range(RiftRun.ApocalypseMinS, RiftRun.ApocalypseMaxS); countdownS = fadeS = -1f; safeToMake = 0;
             boss = null;
             bossMending = false;
             string mutator = run.active.Count > 0 ? MutatorName(run.active[run.active.Count - 1]) : null;
@@ -176,6 +206,8 @@ namespace GoF2Remake.World
                     t.damageFactor = half ? RiftRun.SightedDamageFactor : 1f;
                 }
             }
+            UpdateHazards(dt);
+            if (Current != this) return;
             if (run.IsBossStage) UpdateBoss(dt);
             else
                 for (int n = enemies.Count; n < run.MinAlive; n++) Spawn(Random.value < 0.2f ? RiftRun.Kind.Cruiser : RiftRun.Kind.Fighter, Around(SpawnSpread));
@@ -231,6 +263,16 @@ namespace GoF2Remake.World
                     o.Hp.maxHull = Mathf.RoundToInt(o.Hp.maxHull * (1f + RiftRun.BuffOnKillShare));
                     Repair(o, RiftRun.BuffOnKillShare);
                 }
+            }
+            float dps = e.GunDps > 0f ? e.GunDps : NpcTables.RaiderGunDps;
+            if (run.HasMutator(RiftRun.MineDrop))
+                for (int i = Random.Range(RiftRun.MinesMin, RiftRun.MinesMax + 1); i > 0; i--)
+                    RiftMine.Drop(level, hazards, at, e.transform.forward, RiftRun.MineBlastSeconds * dps);
+            if (run.HasMutator(RiftRun.CorrosionField))
+            {
+                bool big = kind == RiftRun.Kind.Cruiser || kind == RiftRun.Kind.Capital;
+                RiftField.Make(level, hazards, RiftField.Kind.Corrosion, at, big ? RiftRun.CorrosionBigM : RiftRun.CorrosionSmallM,
+                               big ? RiftRun.CorrosionBigS : RiftRun.CorrosionSmallS, RiftRun.CorrosionTickSeconds * dps);
             }
             if (run.HasMutator(RiftRun.Vengeance) && e.Role != NpcRoles.Role.Detonator)
             {
@@ -312,7 +354,133 @@ namespace GoF2Remake.World
             boss.Target.Damaged += (t, dmg, byNpc) => { if (bossMending && !byNpc) bossMending = false; };
             bossTimerS = Random.Range(RiftRun.BossTimerMinS, RiftRun.BossTimerMaxS);
             if (run.HasMutator(RiftRun.BossBodyguards)) SpawnGuards();
+            if (run.HasMutator(RiftRun.BossEnergyShield)) RaiseBarrier();
         }
+
+        /// <summary>Phase Barrier: an ellipsoid around the boss, its hull's box x BarrierLength along it, x BarrierWidth across.</summary>
+        void RaiseBarrier()
+        {
+            var box = new Bounds(Vector3.zero, Vector3.zero);
+            bool any = false;
+            foreach (var mf in boss.GetComponentsInChildren<MeshFilter>())
+            {
+                if (mf.sharedMesh == null) continue;
+                var b = mf.sharedMesh.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    var c = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    var local = boss.transform.InverseTransformPoint(mf.transform.TransformPoint(c));
+                    if (!any) { box = new Bounds(local, Vector3.zero); any = true; } else box.Encapsulate(local);
+                }
+            }
+            var ext = any ? box.extents : Vector3.one * Mathf.Max(20f, boss.Target.radius);
+            barrierHalf = Vector3.Scale(ext, new Vector3(RiftRun.BarrierWidth, RiftRun.BarrierWidth, RiftRun.BarrierLength));   // (Unity z the length)
+            barrier = RiftHazards.Sphere(boss.transform, boss.transform.TransformPoint(box.center), 0.5f, new Color(0.45f, 0.8f, 1f, 0.12f), "Phase barrier");
+            barrier.transform.localRotation = Quaternion.identity;
+            barrier.transform.localScale = barrierHalf * 2f;
+        }
+
+        /// <summary>Whether 'world' lies inside the boss's Phase Barrier.</summary>
+        bool InsideBarrier(Vector3 world)
+        {
+            var l = barrier.transform.parent.InverseTransformPoint(world) - barrier.transform.localPosition;
+            return (l.x * l.x) / (barrierHalf.x * barrierHalf.x) + (l.y * l.y) / (barrierHalf.y * barrierHalf.y) + (l.z * l.z) / (barrierHalf.z * barrierHalf.z) <= 1f;
+        }
+
+        /// <summary>The newer mutators' running parts (see the header): overheats, bulbs, the barrier, the snares, the
+        /// Apocalypse.</summary>
+        void UpdateHazards(float dt)
+        {
+            var p = RiftHazards.Player(level);
+            var at = p != null ? p.transform.position : Centre;
+            if (run.HasMutator(RiftRun.Overheat))
+            {
+                Overheat.Tick(dt);
+                if ((overheatS += dt) >= Overheat.IntervalS)
+                {
+                    overheatS -= Overheat.IntervalS;
+                    var ws = level.Player != null ? level.Player.GetComponent<WeaponSystem>() : null;
+                    var hp = p != null ? p.hitpoints : null;
+                    var hot = Overheat.HeatRandom(slot => slot switch
+                    {
+                        Overheat.Slot.Secondary => ws != null && ws.SelectedSecondary >= 0,
+                        Overheat.Slot.Shield => hp != null && hp.maxShield > 0,
+                        Overheat.Slot.Booster => level.Player != null && level.Player.Model.HasBooster,
+                        _ => true,
+                    }, Random.value);
+                    if (hot != null) Post(OverheatName(hot.Value));
+                }
+            }
+            if (run.HasMutator(RiftRun.BurstBulbs) && bulb == null && (bulbS -= dt) <= 0f)
+            {
+                bulbS = Random.Range(RiftRun.BulbFirstMinS, RiftRun.BulbFirstMaxS);
+                bulb = RiftBulb.Grow(level, hazards, at + Random.onUnitSphere * Random.Range(RiftRun.BulbNearM, RiftRun.BulbFarM),
+                                     NpcTables.Hull(0, 0) * RiftRun.BulbHullShare, RiftRun.BulbBurstSeconds * NpcTables.RaiderGunDps);
+                Post(Localization.Extra("riftBulb", "A Burst Bulb is growing: destroy it!"));
+            }
+            if (!run.IsBossStage || boss == null || !boss.Target.Alive) return;
+            if (barrier != null) boss.Target.playerProof = p == null || !InsideBarrier(p.transform.position);
+            if (run.HasMutator(RiftRun.BossWebFields) && p != null)
+            {
+                snares.RemoveAll(f => f == null);
+                for (int i = snares.Count - 1; i >= 0; i--)   // (left behind: they come again around the pilot, as ES2's field follows)
+                    if ((snares[i].transform.position - at).sqrMagnitude > RiftRun.SnareFieldM * RiftRun.SnareFieldM * 1.44f) { Destroy(snares[i].gameObject); snares.RemoveAt(i); }
+                while (snares.Count < RiftRun.SnaresMax)
+                {
+                    var spot = at + Random.onUnitSphere * Random.Range(RiftRun.SnareMaxM * 2f, RiftRun.SnareFieldM);
+                    snares.Add(RiftField.Make(level, hazards, RiftField.Kind.Web, spot, Random.Range(RiftRun.SnareMinM, RiftRun.SnareMaxM), 0f));
+                }
+            }
+            if (run.HasMutator(RiftRun.BossApocalypse)) UpdateApocalypse(dt, p);
+        }
+
+        void UpdateApocalypse(float dt, Target p)
+        {
+            if (safeToMake > 0)
+            {
+                if ((safeGapS -= dt) > 0f) return;
+                safeGapS = Random.Range(0f, RiftRun.SafeGapMaxS);
+                safeFields.Add(RiftField.Make(level, hazards, RiftField.Kind.Safe,
+                    boss.transform.position + Random.onUnitSphere * Random.Range(RiftRun.SafeNearM, RiftRun.SafeFarM), RiftRun.SafeFieldM, 0f));
+                if (--safeToMake == 0) { countdownS = RiftRun.ApocalypseCountdownS; countdownShown = -1; }
+                return;
+            }
+            if (countdownS >= 0f)
+            {
+                countdownS -= dt;
+                int left = Mathf.CeilToInt(countdownS);
+                if (left != countdownShown && left > 0) { countdownShown = left; Post(string.Format(Localization.Extra("riftApocalypse", "Apocalypse in {0}: get into a safe field!"), left)); }
+                if (countdownS > 0f) return;
+                countdownS = -1f;
+                bool safe = false;
+                foreach (var f in safeFields) if (f != null && f.Protecting) safe = true;
+                Explosion.Spawn(boss.transform.position, 6f);
+                if (!safe) RiftHazards.BlastPlayer(level, boss.transform.position, RiftRun.ApocalypseBlastM, RiftRun.ApocalypseBlastSeconds * (boss.GunDps > 0f ? boss.GunDps : NpcTables.RaiderGunDps), false);
+                fadeS = RiftRun.SafeFadeS;
+                return;
+            }
+            if (fadeS >= 0f)
+            {
+                if ((fadeS -= dt) > 0f) return;
+                fadeS = -1f;
+                foreach (var f in safeFields) if (f != null) Destroy(f.gameObject);
+                safeFields.Clear();
+                apocalypseS = Random.Range(RiftRun.ApocalypseMinS, RiftRun.ApocalypseMaxS);
+                return;
+            }
+            if ((apocalypseS -= dt) > 0f) return;
+            safeToMake = Random.Range(RiftRun.SafeFieldsMin, RiftRun.SafeFieldsMax + 1);
+            safeGapS = 0f;
+            Post(Localization.Extra("riftSafeFields", "Safe fields are forming!"));
+        }
+
+        static string OverheatName(Overheat.Slot s) => s switch
+        {
+            Overheat.Slot.Primary => Localization.Extra("overheatPrimary", "Primary weapons overheated!"),
+            Overheat.Slot.Secondary => Localization.Extra("overheatSecondary", "Secondary weapon overheated!"),
+            Overheat.Slot.Shield => Localization.Extra("overheatShield", "Shield overheated!"),
+            _ => Localization.Extra("overheatBooster", "Booster overheated!"),
+        };
 
         void SpawnGuards()
         {
@@ -379,6 +547,13 @@ namespace GoF2Remake.World
             RiftRun.BossTeleportRepairs => Localization.Extra("mutatorQuantumMend", "Quantum Mend"),
             RiftRun.BossBoost => Localization.Extra("mutatorEvasiveDrift", "Evasive Drift"),
             RiftRun.BossBodyguards => Localization.Extra("mutatorGuardians", "Guardians"),
+            RiftRun.MineDrop => Localization.Extra("mutatorMineDrop", "Mines on Death"),
+            RiftRun.Overheat => Localization.Extra("mutatorOverheat", "Overheated Systems"),
+            RiftRun.CorrosionField => Localization.Extra("mutatorCorrosionField", "Corrosive Death"),
+            RiftRun.BurstBulbs => Localization.Extra("mutatorBurstBulbs", "Burst Bulbs"),
+            RiftRun.BossEnergyShield => Localization.Extra("mutatorPhaseBarrier", "Phase Barrier"),
+            RiftRun.BossWebFields => Localization.Extra("mutatorStasisSnares", "Stasis Snares"),
+            RiftRun.BossApocalypse => Localization.Extra("mutatorApocalypse", "Apocalypse"),
             _ => id,
         };
     }
