@@ -209,6 +209,7 @@ namespace GoF2Remake.Modding
                 }
                 else throw new ModJsonException($"{where}: orbit \"wrecks\" is true, false or {{ \"count\", \"centre\", \"spread\" }}");
             }
+            if (ModJson.Has(o, "level")) s.level = Mathf.Clamp(ModJson.Int(o, "level", 0, StationsFile), 0, 30);   // remake: ES2's location level
             // Remake (2026-11-03): traffic lanes, EVERSPACE 2's spline traffic (World.TrafficLanes)
             if (ModJson.Get(o, "lanes") is JToken ln)
             {

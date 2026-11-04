@@ -576,6 +576,18 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(l[1].loop && l[1].twoLanes, "ES2's ClosedLoop and TwoLanes");
         }
 
+        // Remake (2026-11-04): an orbit's EVERSPACE 2 location level (its encounters' pay, CruiseEncounterSpawner.Es2Level).
+        [Test]
+        public void AnOrbitsLevel()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json", "[ { 'override': 78, 'orbit': { 'level': 17 } }, { 'override': 79, 'orbit': { 'level': 99 } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            Assert.AreEqual(17, ModWorld.OrbitOf(78).level);
+            Assert.AreEqual(30, ModWorld.OrbitOf(79).level, "ES2's MaxPlayerLevel at most");
+            Assert.AreEqual(1500, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(5), "800 + 4200 x 5 / 30, down to 50");
+        }
+
         [Test] public void ALaneNeedsTwoPoints() => StringAssert.Contains("a lane needs \"points\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'lanes': [ { 'points': [[0, 0, 0]] } ] } } ]"));
 
         [Test]

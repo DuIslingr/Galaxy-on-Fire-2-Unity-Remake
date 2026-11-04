@@ -26,7 +26,8 @@
 //             group the orbit never relaunches (Special)
 //   rift      a rift run (World.RiftEncounter, Flight.RiftRun: EVERSPACE 2's Ancient Rifts), "ships" its stages (default 4)
 // The counts are the remake's picks (ES2 places its groups by spawn_groups.CSV at a location's level). The pay is ES2's
-// (BattlePay); its location level here the station's tech level x 3 (Es2Level: GoF2's 1-10 over ES2's 1-30).
+// (BattlePay); its location level the orbit's "level" (stations.json: an ES2 location's own), else the station's tech level
+// x 3 (Es2Level: GoF2's 1-10 over ES2's 1-30).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -168,7 +169,12 @@ namespace GoF2Remake.World
         public const int MaxPlayerLevel = 30;
 
         /// <summary>The orbit as an ES2 location level: its station's tech level (1-10) x 3; 1 without a station.</summary>
-        public static int Es2Level(SpaceLevel level) => Mathf.Clamp((level != null && level.StationInfo != null ? level.StationInfo.techLevel : 0) * 3, 1, MaxPlayerLevel);
+        public static int Es2Level(SpaceLevel level)
+        {
+            var spec = level != null && level.Layout != null ? Modding.ModWorld.OrbitOf(level.Layout.stationIndex) : null;
+            if (spec != null && spec.level > 0) return Mathf.Clamp(spec.level, 1, MaxPlayerLevel);
+            return Mathf.Clamp((level != null && level.StationInfo != null ? level.StationInfo.techLevel : 0) * 3, 1, MaxPlayerLevel);
+        }
 
         public static NpcShip Raider(Traffic traffic, Vector3 gameAt) =>
             traffic.SpawnShip(new SpawnSpec { group = NpcGroup.Raider, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate),

@@ -129,7 +129,7 @@ the player ship) and `NavigationView` (flight HUD).
   CalculateRewardCredits): `battle`, `trap` (named as an unknown signal), `stash`, `depot`, `highrisk`, `lootdrone` (a
   mod's loot drone, `ModTraffic.PickLootDrone`, else a pirate fighter with `SpawnSpec.role` "lootDrone"; neutral as a pirate
   (`alwaysNeutral`), after ES2's Freelancer drone that never turns hostile; see the drone roles in npcs-and-combat.md)
-  (`CruiseEncounterSpawner`; `EncounterWatch` pays `BattlePay` when the battle's raiders are gone: ES2's own UMissionLib::CalculateRewardCredits, (800 + 4200 x level / MaxPlayerLevel 30) x RewardCreditsFactor 1, down to 50, the level the station's tech level x 3 (`Es2Level`); the high-risk area the same, runs the
+  (`CruiseEncounterSpawner`; `EncounterWatch` pays `BattlePay` when the battle's raiders are gone: ES2's own UMissionLib::CalculateRewardCredits, (800 + 4200 x level / MaxPlayerLevel 30) x RewardCreditsFactor 1, down to 50, the level the orbit's `level` (stations.json: an ES2 location's own, the importer's) or else the station's tech level x 3 (`Es2Level`); the high-risk area the same, runs the
   high-risk area's three waves and its crate of 8-14 loot rolls, ES2's HighRiskAreaBoss drops in its loot_types.CSV,
   `EncounterWatch.BossRolls*`, and stops unpaid past 15 km). Counts are the remake's picks (ES2 places its groups by
   spawn_groups.CSV at the location's level). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
@@ -198,7 +198,7 @@ the player ship) and `NavigationView` (flight HUD).
   TwoLanes with LaneOffset 2000 cm (x3.6 here, for the ships' size), ClosedLoop / DoUTurns, UnitHealth 50, RespawnDelay
   30 s, a destroyed unit TryTriggerWantedSystem(1); its units are SM_Traffic_* static meshes, physics-knocked when rammed):
   the ships are the lane's `ships` or the system race's fighters (`NpcTables.RandomFighter`), models only plus a Target of
-  `TrafficLanes.HitPoints` 30 (remake pick for 50 on ES2's scale) with no marker; destroyed: `Explosion.Spawn` x0.6,
+  `TrafficLanes.HitPoints` (ES2's UnitHealth 50 over its raider's 310 of a pirate raider's hull, `NpcTables.Hull(0, 0)`) with no marker; destroyed: `Explosion.Spawn` x0.6,
   `Standing.ApplyDelict(system race, 1)` unless an NPC did it, back after 30 s. Not done: ramming them aside, their engine
   sound, ES2's random glow colours and its traffic meshes.
 - **Hazard volumes** (remake 2026-11-03, for mods; stations.json `orbit.hazards` -> `ModWorld.HazardSpec`, `Flight.Hazards`
