@@ -1,7 +1,8 @@
 // ModEncountersTests.cs
 // Feature: Modding/README.md "Cruise drives" > encounters.json (ModEncounters): a mod's entries join the game's table with
 // "mod:id" ids and their fields, an "override" changes a built-in's weight / visibility / rank / security, a bad kind or a
-// quest without its graph breaks the mod, an unknown field or override is a warning.
+// quest without its graph breaks the mod, an unknown field or override is a warning; the mods' rifts are one encounter with
+// one pool of bosses.
 
 using System.Linq;
 using GoF2Remake.Flight;
@@ -85,6 +86,26 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(("x:big", 7.7f), (rift.bosses[0].ship, rift.bosses[0].raiders));
             Assert.AreEqual(8f, rift.bosses[1].raiders, "the default"); 
             Assert.AreEqual(3, ModEncounters.All().Find(e => e.kind == "highrisk").ships);
+        }
+
+        [Test]
+        public void RiftsOfSeveralModsShareOneEncounterAndPoolTheirBosses()
+        {
+            WriteMod("enc", Mod, "1.0", "", ("encounters.json", @"[ { 'id': 'r', 'kind': 'rift', 'weight': 4, 'minRank': 5, 'bosses': [ { 'ship': 'x:a', 'raiders': 7 } ] } ]"));
+            WriteMod("enc2", "t_enc2", "1.0", "", ("encounters.json",
+                @"[ { 'id': 'r2', 'kind': 'rift', 'weight': 9, 'bosses': [ { 'ship': 'y:b', 'raiders': 12 }, { 'ship': 'y:c' } ] }, { 'override': 't_enc2:r2', 'minRank': 2 } ]"));
+            ScanAndEnable(Mod, "t_enc2");
+            var all = ModEncounters.All();
+            var rifts = all.FindAll(e => e.kind == CruiseEncounters.Rift);
+            Assert.AreEqual(1, rifts.Count, "one rift encounter");
+            Assert.AreEqual(4, rifts[0].weight, "the first mod's chance");
+            CollectionAssert.AreEqual(new[] { "x:a", "y:b", "y:c" }, rifts[0].bosses.Select(b => b.ship).ToArray(), "one pool");
+            Assert.AreEqual(2, rifts[0].minRank, "an override of the merged id reaches the shared rift");
+            Assert.IsEmpty(Installed("t_enc2").Warnings, AllMessages(Installed("t_enc2")));
+            ModManager.SetEnabled(Mod, false);
+            var alone = ModEncounters.All().FindAll(e => e.kind == CruiseEncounters.Rift);
+            Assert.AreEqual((1, 9, 2), (alone.Count, alone[0].weight, alone[0].bosses.Count), "the other mod's rift on its own");
+            ModManager.SetEnabled("t_enc2", false);
         }
 
         [Test]
