@@ -9,9 +9,12 @@
 //                    the ES2 ships' 3.6), blows up: BlastSeconds of its gun's fire to every ship within BlastM (ES2's
 //                    ApplyESRadialDamage of its NPC levelling's HullDPSPrimary 50 + ShieldDPSPrimary 50 x its weapons'
 //                    damage factor, 100 m: against the ES2 raider's 31 + 24 DPS, 1.8 s of a gun) and itself (1e8 to its hull)
-//   webber           its hits on the player slow the player's ship to WebSpeedFactor for WebMs (ES2's
-//                    BP_Condition_Debuff_Webbed: +2 linear and angular physics damping against the ship's own acceleration,
-//                    which the remake has no drag for: the factor is a stand-in); the player only
+//   webber           its hits on the player slow the player's ship to WebSpeedFactor for WebMinMs..WebMaxMs (ES2's
+//                    BP_Weapon_Webber holds its target RandomFloatInRange(4, 5) s; BP_Condition_Debuff_Webbed adds +2 linear
+//                    and angular physics damping: against UShipMovementComponent's default AccelerationForward 8000 cm/s2
+//                    (its constructor) and the ships' cruise_speed 9000-10000 (items.CSV) the speed settles where
+//                    acceleration x (1 - (v / max)^3, its EaseAccelerationExponent) = damping x v: 0.4 of the top speed);
+//                    the player only
 //   shieldCharger    doesn't fire: repairs RepairShare of each allied ship's maximum hull a second within SupportM (ES2's
 //                    shield charge drones fire their "gun" at their wing, its NPC levelling ShieldDPSPrimary -16: 16 shield a
 //                    second; the remake's NPCs have only a hull, so against the raider's 310 hit points)
@@ -31,7 +34,7 @@
 //                    no damage)
 // ES2's amounts are on its scale of hit points; the remake's NPCs have GoF2's, so they go over as shares of the ES2 Outlaw
 // raider's (npc_leveling.CSV: hull 200 + armour 50 + shield 60 = Es2RaiderHp, HullDPSPrimary 31 + ShieldDPSPrimary 24 =
-// Es2RaiderDps). Only the webber's slow is a stand-in.
+// Es2RaiderDps).
 
 namespace GoF2Remake.Flight
 {
@@ -42,7 +45,7 @@ namespace GoF2Remake.Flight
         public const float FireRangeFactor = 2f;
         public const float Es2RaiderHp = 310f, Es2RaiderDps = 55f;
         public const float TriggerM = 20f * 3.6f, BlastM = 100f * 3.6f, BlastSeconds = 100f / Es2RaiderDps;
-        public const float WebMs = 4000f, WebSpeedFactor = 0.5f;
+        public const float WebMinMs = 4000f, WebMaxMs = 5000f, WebSpeedFactor = 0.4f;
         public const float SupportM = 1500f, RepairShare = 16f / Es2RaiderHp;
         public const float LinkDamageFactor = Es2RaiderHp / (Es2RaiderHp + 100f), LinkRepairShare = 5f / Es2RaiderHp;
         public const float AntiMissileM = 800f * 3.6f, AntiMissileReloadMs = 1000f / 4f;
