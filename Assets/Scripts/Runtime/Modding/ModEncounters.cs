@@ -8,9 +8,9 @@
 // ships, name, interstellar. A "quest" entry starts that quest graph (single player) when it comes; the graph does the rest.
 // "interstellar" is where it pulls the ship out between the systems: "space" (deep space), "system" (the nearest system's
 // orbit), "either" (the default: one or the other) or "never".
-// Rifts are one encounter whatever mods bring one (2026-11-04): the first active mod's "rift" entry is it (its weight, rank,
-// stages, ...); a later mod's "rift" entry only adds its "bosses" to that entry's pool, and an "override" of its id reaches
-// the shared one. So more mods with rifts mean more bosses to meet, not more rifts.
+// The rift is the remake's one entry (2026-11-04, CruiseEncounters.RiftEntry: its chance, rank and stages): a mod's "rift"
+// entry only adds its "bosses" to the shared pool (its other fields are ignored with a warning, the rift can't be
+// overridden), and the rift joins the table once a mod adds one. More mods with rifts mean more bosses, not more rifts.
 
 using System;
 using System.Collections.Generic;
@@ -41,10 +41,10 @@ namespace GoF2Remake.Modding
         static int revision = -1;
         static List<CruiseEncounters.Entry> all;
         static readonly Dictionary<string, Def> defByKey = new Dictionary<string, Def>(StringComparer.Ordinal);
-        static readonly Dictionary<string, string> riftAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // a merged rift's id -> the shared one's
+        static readonly string[] RiftOwnFields = { "weight", "visible", "minRank", "security", "freePlayOnly", "ships", "name", "interstellar" };
 
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { revision = -1; all = null; defByKey.Clear(); riftAliases.Clear(); }
+        static void ResetStatics() { revision = -1; all = null; defByKey.Clear(); }
 
         public static void Parse(ModInfo mod, List<Def> into)
         {
@@ -93,27 +93,33 @@ namespace GoF2Remake.Modding
             if (all != null && revision == ModManager.Revision) return all;
             revision = ModManager.Revision;
             defByKey.Clear();
-            riftAliases.Clear();
             var list = CruiseEncounters.BuiltIn();
             foreach (var mod in ModManager.Active)
                 foreach (var d in ModContent.Parse(mod).encounters)
                 {
                     if (d.overrideRef != null)
                     {
-                        string targetId = riftAliases.TryGetValue(d.overrideRef, out var shared) ? shared : d.overrideRef;
-                        var target = list.Find(e => string.Equals(e.id, targetId, StringComparison.OrdinalIgnoreCase));
+                        if (string.Equals(d.overrideRef, CruiseEncounters.Rift, StringComparison.OrdinalIgnoreCase))
+                        {
+                            mod.Warnings.Add($"{d.where}: the rift can't be overridden: its chance is the remake's, a mod's \"rift\" entry adds \"bosses\" (ignored)");
+                            continue;
+                        }
+                        var target = list.Find(e => string.Equals(e.id, d.overrideRef, StringComparison.OrdinalIgnoreCase));
                         if (target == null) { mod.Warnings.Add($"{d.where}: no encounter \"{d.overrideRef}\" to override (ignored)"); continue; }
                         Apply(d, target);
                         continue;
                     }
                     var e = new CruiseEncounters.Entry { id = d.key, kind = ModJson.Str(d.json, "kind").ToLowerInvariant(), quest = ModJson.Str(d.json, "quest") };
                     Apply(d, e);
-                    var rift = e.kind == CruiseEncounters.Rift ? list.Find(x => x.kind == CruiseEncounters.Rift) : null;
-                    if (rift != null)
+                    if (e.kind == CruiseEncounters.Rift)
                     {
-                        // one rift: this mod's bosses join the first's pool; its own id leads there for overrides
+                        // the remake's one rift: this mod only adds its bosses to the pool
+                        var rift = list.Find(x => x.id == CruiseEncounters.Rift);
+                        if (rift == null) list.Add(rift = CruiseEncounters.RiftEntry());
                         if (e.bosses != null) (rift.bosses ??= new List<CruiseEncounters.RiftBoss>()).AddRange(e.bosses);
-                        riftAliases[e.id] = rift.id;
+                        foreach (var f in RiftOwnFields)
+                            if (ModJson.Get(d.json, f) != null)
+                                d.mod.Warnings.Add($"{d.where}: \"{f}\" (ignored): the rift's chance and stages are the remake's, a mod's rift only adds \"bosses\"");
                         continue;
                     }
                     list.Add(e);

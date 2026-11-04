@@ -67,6 +67,11 @@ namespace GoF2Remake.Flight
             new Entry { id = Flyby, kind = Flyby, weight = 10, interstellar = InSpace },
         };
 
+        /// <summary>Remake (2026-11-04): the rift (World.RiftEncounter, EVERSPACE 2's Ancient Rifts), the remake's own entry and
+        /// chance: a signal from rank 5 (ES2's rifts open after its story's start), four stages, the last its boss's. Not in the
+        /// game's table: it joins it once a mod adds rift bosses (Modding.ModEncounters), and mods only add to its pool.</summary>
+        public static Entry RiftEntry() => new Entry { id = Rift, kind = Rift, weight = 4, visible = true, minRank = 5, ships = 4 };
+
         readonly List<Entry> table;
         float cruiseMs, sinceCheckMs, cooldownMs;
         public int Count { get; private set; }

@@ -1,8 +1,8 @@
 // ModEncountersTests.cs
 // Feature: Modding/README.md "Cruise drives" > encounters.json (ModEncounters): a mod's entries join the game's table with
 // "mod:id" ids and their fields, an "override" changes a built-in's weight / visibility / rank / security, a bad kind or a
-// quest without its graph breaks the mod, an unknown field or override is a warning; the mods' rifts are one encounter with
-// one pool of bosses.
+// quest without its graph breaks the mod, an unknown field or override is a warning; the rift is the remake's one entry and
+// the mods' rift entries only add bosses to its pool.
 
 using System.Linq;
 using GoF2Remake.Flight;
@@ -80,7 +80,7 @@ namespace GoF2Remake.Tests
             ModOn(@"[ { 'id': 'b', 'kind': 'battle' }, { 'id': 'h', 'kind': 'highrisk', 'ships': 3 }, { 'id': 'l', 'kind': 'lootdrone' }, " +
                   "{ 'id': 'r', 'kind': 'rift', 'bosses': [ { 'ship': 'x:big', 'raiders': 7.7 }, { 'ship': '14' } ] } ]");
             Assert.IsFalse(Installed(Mod).Broken, AllMessages(Installed(Mod)));
-            Assert.AreEqual(9, ModEncounters.All().Count);
+            Assert.AreEqual(9, ModEncounters.All().Count, "the three and the remake's rift");
             var rift = ModEncounters.All().Find(e => e.kind == "rift");
             Assert.AreEqual(2, rift.bosses.Count);
             Assert.AreEqual(("x:big", 7.7f), (rift.bosses[0].ship, rift.bosses[0].raiders));
@@ -89,23 +89,25 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
-        public void RiftsOfSeveralModsShareOneEncounterAndPoolTheirBosses()
+        public void TheRiftIsTheRemakesAndModsOnlyAddBosses()
         {
-            WriteMod("enc", Mod, "1.0", "", ("encounters.json", @"[ { 'id': 'r', 'kind': 'rift', 'weight': 4, 'minRank': 5, 'bosses': [ { 'ship': 'x:a', 'raiders': 7 } ] } ]"));
+            WriteMod("enc", Mod, "1.0", "", ("encounters.json", @"[ { 'id': 'r', 'kind': 'rift', 'bosses': [ { 'ship': 'x:a', 'raiders': 7 } ] } ]"));
             WriteMod("enc2", "t_enc2", "1.0", "", ("encounters.json",
-                @"[ { 'id': 'r2', 'kind': 'rift', 'weight': 9, 'bosses': [ { 'ship': 'y:b', 'raiders': 12 }, { 'ship': 'y:c' } ] }, { 'override': 't_enc2:r2', 'minRank': 2 } ]"));
+                @"[ { 'id': 'r2', 'kind': 'rift', 'weight': 9, 'bosses': [ { 'ship': 'y:b', 'raiders': 12 }, { 'ship': 'y:c' } ] }, { 'override': 'rift', 'weight': 50 } ]"));
             ScanAndEnable(Mod, "t_enc2");
             var all = ModEncounters.All();
             var rifts = all.FindAll(e => e.kind == CruiseEncounters.Rift);
             Assert.AreEqual(1, rifts.Count, "one rift encounter");
-            Assert.AreEqual(4, rifts[0].weight, "the first mod's chance");
+            var own = CruiseEncounters.RiftEntry();
+            Assert.AreEqual((CruiseEncounters.Rift, own.weight, own.minRank, own.ships), (rifts[0].id, rifts[0].weight, rifts[0].minRank, rifts[0].ships),
+                            "the remake's chance, rank and stages: neither a mod's weight nor an override changes them");
             CollectionAssert.AreEqual(new[] { "x:a", "y:b", "y:c" }, rifts[0].bosses.Select(b => b.ship).ToArray(), "one pool");
-            Assert.AreEqual(2, rifts[0].minRank, "an override of the merged id reaches the shared rift");
-            Assert.IsEmpty(Installed("t_enc2").Warnings, AllMessages(Installed("t_enc2")));
+            var warnings = string.Join(" | ", Installed("t_enc2").Warnings);
+            StringAssert.Contains("weight", warnings);
+            StringAssert.Contains("overridden", warnings);
             ModManager.SetEnabled(Mod, false);
-            var alone = ModEncounters.All().FindAll(e => e.kind == CruiseEncounters.Rift);
-            Assert.AreEqual((1, 9, 2), (alone.Count, alone[0].weight, alone[0].bosses.Count), "the other mod's rift on its own");
             ModManager.SetEnabled("t_enc2", false);
+            Assert.IsFalse(ModEncounters.All().Any(e => e.kind == CruiseEncounters.Rift), "no mod rift bosses, no rift");
         }
 
         [Test]
