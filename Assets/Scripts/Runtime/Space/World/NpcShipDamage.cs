@@ -49,11 +49,12 @@ namespace GoF2Remake.World
             ? new List<ItemStack>() : NpcTables.RollLoot(db, Spec.freighter);
 
         /// <summary>Remake mods: a mod ship's own drops (ships.json "traffic": { "loot", "lootDrops" }, Data.CustomLoot) added to
-        /// its cargo, each by its chance, at most lootDrops (0 = any); not for a mission's container or a ship without loot.</summary>
-        void AddOwnLoot()
+        /// its cargo, each by its chance, at most lootDrops (0 = any); not for a mission's container or a ship without loot, nor
+        /// a fixed crate (a pirate outpost's) unless 'capital' (World.CapitalShip, after it set the capital ship's crate).</summary>
+        public void AddOwnLoot(bool capital = false)
         {
             var t = (db?.Ship(Spec.ship) as CustomShipData)?.traffic;
-            if (t?.loot == null || t.loot.Length == 0 || Spec.noLoot || Spec.missionCrate >= 0 || Spec.lootItem >= 0) return;
+            if (t?.loot == null || t.loot.Length == 0 || Spec.noLoot || Spec.missionCrate >= 0 || (Spec.lootItem >= 0 && !capital)) return;
             int drops = 0;
             foreach (var e in t.loot)
             {

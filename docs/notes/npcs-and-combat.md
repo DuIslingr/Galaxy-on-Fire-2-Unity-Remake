@@ -437,4 +437,5 @@ battle spawns in 156 ms with its hulls.
   `lootDrops`, `CustomTraffic.loot` / `CustomLoot`, `NpcShip.AddOwnLoot` at Setup and Revive): after EVERSPACE 2's
   loot_npcs.csv (a blueprint, its drop count, then item / chance / amount range triples): each entry by its chance, at most
   lootDrops, added to the cargo (merged by item; several kinds: a crate a kind), also for the Void and Specter races, whose
-  cargo is empty; not for a mission container, a fixed crate or a no-loot spawn. Not done: ES2's jump charge effect and sound, its marker kept in range once found.
+  cargo is empty; not for a mission container, a fixed crate or a no-loot spawn. An enhanced capital ship rolls them again
+  after `CapitalShip` set its crate (`AddOwnLoot(capital: true)`), unless its npcships.json "loot" replaces the crate. Not done: ES2's jump charge effect and sound, its marker kept in range once found.
