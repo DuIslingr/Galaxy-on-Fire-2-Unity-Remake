@@ -413,7 +413,7 @@ battle spawns in 156 ms with its hulls.
   itself), BP_WebberDrone_Base + BP_Condition_Debuff_Webbed (linear / angular damping +2), BP_ShieldChargeDrone_Base and
   BP_AntiMissileDrone_Base (their guns allowed while their support abilities run: the native AI aims them at allies /
   missiles), BP_Outlaw_LinkDrone_Armor, BP_Outlaw_JumpSuppressorDrone (JumpSuppressorComponent enabled from BeginPlay until
-  it dies, its marker seen from 100 km)): sniper (fire range x2.5), detonator (no break-off or fire; within 72 m of its
+  it dies, its marker seen from 100 km)): sniper (fire range x2: ES2's sensing 4000 m against AESPawn's default 2000), detonator (no break-off or fire; within 72 m of its
   target: BlastSeconds 100 / 55 of its gun's fire (`NpcShip.GunDps`; ES2's ApplyESRadialDamage of its NPC levelling HullDPSPrimary
   50 + ShieldDPSPrimary 50 against the Outlaw raider's 31 + 24) to every ship and the player within 360 m, then its own hull,
   nobody's kill), webber (its
@@ -422,7 +422,7 @@ battle spawns in 156 ms with its hulls.
   raider's 200 + 50 + 60 hit points), armorLink (no fire; links its nearest ally in reach, ES2's one Link Parent Actor:
   `Target.damageFactor` 310 / 410 and 5 / 310 of its hull a second, ES2's BP_Condition_Buff_Armored_ArmorRepair +100
   maximum armour and +5 armour/s; left alone where another rule set a factor), antiMissile (no fire; `WeaponSystem.ShootDownMissile` on the player's
-  nearest homing missile within 2.9 km each second), jumpSuppressor (no fire; `NpcShip.JumpSuppressed` holds
+  nearest homing missile within 2.9 km every 250 ms, ES2's coil gun FireRate 4), jumpSuppressor (no fire; `NpcShip.JumpSuppressed` holds
   `SystemJump.StartCharging` with "Jump suppressed", the story's forced jumps excepted). ES2's metres x3.6 as its ships'.
   ES2's amounts on its hit point scale go over as shares of the Outlaw raider's (npc_leveling.CSV; `NpcRoles.Es2RaiderHp` /
   `Es2RaiderDps`). The webber's slow (ES2: +2 linear and angular physics damping against the ship's acceleration) is the one

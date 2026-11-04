@@ -3,7 +3,8 @@
 // "role" (ships.json "traffic": { "role" }; World.NpcShip runs them), after EVERSPACE 2's drone types (its EDroneType and the
 // drone blueprints, decompiled: BP_Outlaw_SniperDrone, BP_Outlaw_DetonatorDrone, BP_WebberDrone_Base with the webbed
 // condition, BP_ShieldChargeDrone_Base, BP_Outlaw_LinkDrone_Armor, BP_AntiMissileDrone_Base, BP_Outlaw_JumpSuppressorDrone):
-//   sniper           fires from FireRangeFactor times as far (ES2's sniper: sensing 4000 m, sniper aiming)
+//   sniper           fires from FireRangeFactor times as far (ES2's sniper: PawnSensingRadiusMeters 4000 against AESPawn's
+//                    default 2000, its constructor; a 4 km railgun, sniper aiming)
 //   detonator        doesn't fire or break off: flies into its target and, within TriggerM (ES2's 20 m trigger sphere x
 //                    the ES2 ships' 3.6), blows up: BlastSeconds of its gun's fire to every ship within BlastM (ES2's
 //                    ApplyESRadialDamage of its NPC levelling's HullDPSPrimary 50 + ShieldDPSPrimary 50 x its weapons'
@@ -18,7 +19,7 @@
 //                    LinkDamageFactor of its hits and repairs LinkRepairShare of its hull a second (ES2's
 //                    BP_Condition_Buff_Armored_ArmorRepair: +100 maximum armour, +5 armour a second, against the raider's 310)
 //   antiMissile      doesn't fire at ships: shoots down the player's missiles within AntiMissileM, one each
-//                    AntiMissileReloadMs (ES2's anti-missile drone: sensing 800 m, perfect aiming)
+//                    AntiMissileReloadMs (ES2's anti-missile drone: sensing 800 m, perfect aiming, its coil gun's FireRate 4)
 //   jumpSuppressor   doesn't fire: while one flies, hostile, in the orbit, the player's Khador Drive won't charge (ES2's
 //                    JumpSuppressorComponent, enabled from BeginPlay until the drone dies; its marker seen from 100 km)
 //   lootDrone        doesn't fire: carries LootMin..LootMax pieces of loot (one crate each) and runs. Once it is hit or the
@@ -38,13 +39,13 @@ namespace GoF2Remake.Flight
     {
         public enum Role { None, Sniper, Detonator, Webber, ShieldCharger, ArmorLink, AntiMissile, JumpSuppressor, LootDrone }
 
-        public const float FireRangeFactor = 2.5f;
+        public const float FireRangeFactor = 2f;
         public const float Es2RaiderHp = 310f, Es2RaiderDps = 55f;
         public const float TriggerM = 20f * 3.6f, BlastM = 100f * 3.6f, BlastSeconds = 100f / Es2RaiderDps;
         public const float WebMs = 4000f, WebSpeedFactor = 0.5f;
         public const float SupportM = 1500f, RepairShare = 16f / Es2RaiderHp;
         public const float LinkDamageFactor = Es2RaiderHp / (Es2RaiderHp + 100f), LinkRepairShare = 5f / Es2RaiderHp;
-        public const float AntiMissileM = 800f * 3.6f, AntiMissileReloadMs = 1000f;
+        public const float AntiMissileM = 800f * 3.6f, AntiMissileReloadMs = 1000f / 4f;
         public const int LootMin = 4, LootMax = 7;
         public const float FleeDelayMinMs = 5000f, FleeDelayMaxMs = 10000f, JumpChargeMs = 6000f;
 
