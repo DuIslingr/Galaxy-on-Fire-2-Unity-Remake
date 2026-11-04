@@ -546,6 +546,8 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(1f, ModWorld.OrbitOf(80).containerBulletproof, "a share, at most all");
             Assert.AreEqual(0, ModWorld.OrbitOf(81)?.containerCount ?? 0, "none unless asked for");
             Assert.AreEqual(360f, GoF2Remake.World.LootContainer.OpenRangeM, 1e-3f, "ES2's 100 m interact radius x 3.6");
+            Assert.AreEqual((1, 3), (GoF2Remake.World.LootContainer.RollsMin, GoF2Remake.World.LootContainer.RollsMax), "ES2's loot_types.CSV Container");
+            Assert.AreEqual((2, 4), (GoF2Remake.World.LootContainer.BulletproofRollsMin, GoF2Remake.World.LootContainer.BulletproofRollsMax), "... RareContainer");
         }
 
         // Remake (2026-11-03, EVERSPACE 2's spline traffic): a station's "orbit.lanes" (World.TrafficLanes).

@@ -420,7 +420,8 @@ battle spawns in 156 ms with its hulls.
   in reach, left alone where another rule set it), antiMissile (no fire; `WeaponSystem.ShootDownMissile` on the player's
   nearest homing missile within 2.9 km each second), jumpSuppressor (no fire; `NpcShip.JumpSuppressed` holds
   `SystemJump.StartCharging` with "Jump suppressed", the story's forced jumps excepted). ES2's metres x3.6 as its ships'.
-  The amounts ES2 keeps in NPC levelling data (blast, repair, slow strength, link share) are the remake's picks. Not done:
+  The amounts (blast, repair, slow strength, link share) are the remake's picks: ES2's npc_leveling.CSV has only each
+  NPC's DPS, hit points and XP, the rest are blueprint runtime attributes. Not done:
   the support drones' beams drawn, ES2's frost shield, defusal, stealth and split drones. Tests `NpcRoleTests`.
   lootDrone (2026-11-03, decompiled BP_LootDrone: NumLoot RandomIntegerInRange(4, 7), DropPercentages i / n x RandomFloat(1 -
   1 / n, 1 + 1 / n) clamped 0.05..1 checked on each health change, a piece (LootDrop.AddLootFromItems + DropLoot) and

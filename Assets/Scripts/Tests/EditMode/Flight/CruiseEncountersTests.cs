@@ -186,6 +186,7 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(1500, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(0));
             Assert.AreEqual(4500, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(10));
             Assert.IsFalse(GoF2Remake.World.EncounterWatch.AnyLeft(new List<GoF2Remake.World.NpcShip>()), "no raiders left: won");
+            Assert.AreEqual((8, 14), (GoF2Remake.World.EncounterWatch.BossRollsMin, GoF2Remake.World.EncounterWatch.BossRollsMax), "ES2's HighRiskAreaBoss drops");
         }
 
         [Test]

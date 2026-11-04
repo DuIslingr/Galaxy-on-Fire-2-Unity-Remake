@@ -130,8 +130,9 @@ the player ship) and `NavigationView` (flight HUD).
   mod's loot drone, `ModTraffic.PickLootDrone`, else a pirate fighter with `SpawnSpec.role` "lootDrone"; neutral as a pirate
   (`alwaysNeutral`), after ES2's Freelancer drone that never turns hostile; see the drone roles in npcs-and-combat.md)
   (`CruiseEncounterSpawner`; `EncounterWatch` pays `BattlePay` 1500 + 300 x rank when the battle's raiders are gone, runs the
-  high-risk area's three waves and its crate, and stops unpaid past 15 km). Counts and pay are the remake's picks (ES2's
-  spawn groups and reward tables aren't on disk). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
+  high-risk area's three waves and its crate of 8-14 loot rolls, ES2's HighRiskAreaBoss drops in its loot_types.CSV,
+  `EncounterWatch.BossRolls*`, and stops unpaid past 15 km). Counts and pay are the remake's picks (ES2 places its groups
+  by spawn_groups.CSV at the location's level and pays by CalculateRewardCredits in its code, in no table). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
   Minesweeper (mines), Scavenger Baiting, Incursion and Rift (Leviathan encounters are
   left out on purpose).
   The `stash` and `depot` crates stay until emptied (`Crate.keep`), not the crates' 60 s.
@@ -164,7 +165,8 @@ the player ship) and `NavigationView` (flight HUD).
   one has 1 hp and opens when it dies (the junk's burst), a bulletproof one is `invulnerable`; the action key (`FlightHud`'s
   prompt chain after mining: "OPEN", `LootContainer.InReach`, 360 m ahead of the ship) opens either. Opened, each stack
   is a crate of its own (`Crate.keep`, launched x2); the opened bulletproof shell stays without its Target. Loot: a
-  freighter's roll (`WreckField.Loot`), two for a bulletproof one (remake pick: ES2's loot tables aren't on disk). Not done:
+  freighter loot rolls (`WreckField.Loot`) by ES2's loot_types.CSV: a Container's 1-3 drops, a RareContainer's (the
+  bulletproof one here) 2-4 (`LootContainer.RollsMin` ...). Not done:
   ES2's secure containers (OpenOnUnlocked, energized through conductors; the importer counts its armoured ones as
   bulletproof), its loot menu (everything spills), the open animation.
 - **Traffic lanes** (remake 2026-11-03, for mods; stations.json `orbit.lanes` -> `ModWorld.LaneSpec`, `Flight.TrafficLane`

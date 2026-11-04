@@ -24,8 +24,8 @@
 //                    when it dies drops at once (ES2's BP_LootDrone: RandomIntegerInRange(4, 7), its DropPercentages, flee
 //                    delay 5..10 s, OrbitJumpChargeDuration 6 s, ApplyEMP's AbortJumpFocus, BP_Explosion_ProximityMine with
 //                    no damage)
-// The numbers ES2 keeps in its NPC levelling data or runtime attributes (the blast and repair amounts, the slow's strength,
-// the link's share) are the remake's picks.
+// The amounts (the blast and repair, the slow's strength, the link's share) are the remake's picks: ES2's npc_leveling.CSV
+// holds only each NPC's DPS, hit points and XP, the rest are its blueprints' runtime attributes.
 
 namespace GoF2Remake.Flight
 {
