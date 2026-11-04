@@ -51,8 +51,18 @@ namespace GoF2Remake.World
         bool lootAwake;
         float fleeMs = -1f, chargeMs = -1f;
 
+        /// <summary>Remake (World.RiftEncounter): a rift mutator's speed on this ship (Evasive, Strength in Death); 1 = none.</summary>
+        [System.NonSerialized] public float roleSpeedFactor = 1f;
+
+        /// <summary>Its gun's damage a second (0 without one): what the rift's blasts are measured in.</summary>
+        public float GunDps => gun != null ? gun.damage * 1000f / Mathf.Max(1f, NpcTables.GunReloadMs) : 0f;
+
+        /// <summary>Remake (a rift boss's Evasive Drift): a panic boost now, as after heavy damage.</summary>
+        public void BoostAway() { boostTimer = 10000f; panic = true; }
+
         void SetupRole(SpawnSpec spec)
         {
+            roleSpeedFactor = 1f;
             Role = NpcRoles.Parse(spec.role ?? (db?.Ship(spec.ship) as CustomShipData)?.traffic?.role);
             if (Role == NpcRoles.Role.JumpSuppressor && !suppressors.Contains(this)) suppressors.Add(this);
         }

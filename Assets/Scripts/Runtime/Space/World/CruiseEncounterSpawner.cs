@@ -24,6 +24,7 @@
 //             neutral, as a pirate (ES2's BP_LootDrone, placed at its locations: a Freelancer that never turns hostile, raises
 //             no wanted level and the other ships ignore; here no friendly-fire rules, and its kill is a pirate's), in the
 //             group the orbit never relaunches (Special)
+//   rift      a rift run (World.RiftEncounter, Flight.RiftRun: EVERSPACE 2's Ancient Rifts), "ships" its stages (default 4)
 // The counts are the remake's picks (ES2 places its groups by spawn_groups.CSV at a location's level). The pay is ES2's
 // (BattlePay); its location level here the station's tech level x 3 (Es2Level: GoF2's 1-10 over ES2's 1-30).
 
@@ -145,6 +146,9 @@ namespace GoF2Remake.World
                                                       role = ship >= 0 ? null : "lootDrone", alwaysNeutral = true, position = at });
                     break;
                 }
+                case CruiseEncounters.Rift:
+                    RiftEncounter.Start(level, at, e.ships);
+                    return;   // (it spawns its own and connects them)
                 default:
                     return;
             }

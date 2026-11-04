@@ -156,6 +156,28 @@ the player ship) and `NavigationView` (flight HUD).
   60000; a third as tall), each a freighter's loot roll or 1-5 Space Waste (item 99), kept until emptied (`Crate.keep`). Not
   in the alien orbit or interstellar space. ES2's wreck meshes aren't placed (only containers). The ES2 importer gives
   its wreck-field locations one; its outlaw strongholds are pirate-held orbits (`pirateHeld`: outposts and guards).
+- **Rifts** (remake 2026-11-04, for mods; encounter kind `rift`, `Flight.RiftRun` plain + `World.RiftEncounter`; the HUD's
+  transfer counter line shows `RiftEncounter.HudLine`): after EVERSPACE 2's Ancient Rifts, read in its code (decompiled
+  BP_Encounter_Rift and UGameplayLib::GetRandomRiftMutatorForNextStage, mutators.csv's LootQualityBonus / bAllowedInHighRiskAreas /
+  bAllowedInRifts / bAllowedOnlyForRiftBosses, attributes.CSV's mutator names and texts, the values on its Signal Decoder
+  items): stages (ships, default 4; the last the boss's) in the orbit where the signal was (ES2 jumps through portals into
+  new locations: here the stage's survivors vanish); a fight stage's target GetTargetKillPointCount 15, 21, 26, 30, 35, 35,
+  40, 40, 45, 45 + 0..5, MinEnemiesAlive trunc(x 0.4) raiders kept alive (a fifth strong fighters), kill points by
+  EPawnType (drone 0.5, fighter 1, cruiser 1.5, capital 2), resolve +0.10 / 0.12 / 0.15 / 0.20 a kill, drained 0.016/s
+  after RESOLVE_DELAY 10 s (not on the boss's stage); run dry, the stage goes on unmastered; one mutator a stage from the
+  second on, uniformly among the rift's not yet in play (the boss's stage among the boss's; ES2's three portals offer one
+  each and the pilot picks, here the rift does). Mutators done: Enemy Regen (GetScaledHitpoints(5)/s against a raider's 200:
+  2.5 % of the hull a second), Evasive (+50 % speed: `NpcShip.roleSpeedFactor`), No EMP (`SpawnSpec.empPoints`), Jarred
+  Sensors (the plate's race), Hidden Health (`plateNameOnly`), Explosive Death (50 kinetic + 70 energy against a raider's 31 +
+  24 DPS: 2.2 s of the dying ship's gun, `NpcShip.GunDps`, within its size clamp 20-50 m x 15 x 3.6, falling off), Repair On
+  Kill (20 %), Strength in Death (+5 % speed and hull, at most 10), Nearsighted / Farsighted (`Target.damageFactor` 0.5
+  beyond 1080 m / within 1800 m), No Lock (`untargetable`), Vengeance (a `detonator` role drone a kill, invulnerable with
+  Explosive Death); the boss's Quantum Mend (teleport every 15-30 s, repairing until hit), Evasive Drift (`NpcShip.BoostAway`
+  as often), Guardians (two strong fighters, the boss invulnerable while one lives). The boss: the pirate boss's hull
+  formula and guns. Won: a crate of loot_types.CSV's RiftBoss 14-18 rolls x `RiftRun.LootFactor` (0.5 + 0.5 x the
+  mastered share, after GetLootQuantityFactor) and `BattlePay`. Not done: Mines on Death (2-3 mines, 40 + 40, 100 m), Overheated
+  Systems, Corrosive Death, Burst Bulbs, Phase Barrier, Stasis Snares, Apocalypse; the portals' choice; ES2's lunacy,
+  nightmare mode and loot quality.
 - **Containers** (remake 2026-11-03, for mods; stations.json `orbit.containers` -> `ModWorld.OrbitSpec.containerCount /
   containerCentre / containerSpread / containerBulletproof`, `World.LootContainer.SpawnOrbit` with the wreck field): after
   EVERSPACE 2's BP_ItemContainer (EContainerType OpenOnHit: ReceiveAnyDamage by the player or within 2 km ->
