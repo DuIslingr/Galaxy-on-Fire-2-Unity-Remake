@@ -219,6 +219,10 @@ namespace GoF2Remake.Modding
             public float radius;
             /// <summary>Heat: the damage a second at the centre.</summary>
             public float dps;
+            /// <summary>Heat (2026-11-04): the damage a second at the centre as that many pirate raiders' gunfire
+            /// (NpcTables.RaiderGunDps; EVERSPACE 2's DamagePerSecondMax over its Outlaw raider's 55 DPS, both scaled by level
+            /// alike); over 'dps' when given.</summary>
+            public float raiderDps;
         }
 
         /// <summary>Remake (2026-11-03): an orbit's traffic lane (stations.json "orbit.lanes", World.TrafficLanes).</summary>

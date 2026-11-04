@@ -205,7 +205,9 @@ the player ship) and `NavigationView` (flight HUD).
   (DamagePerSecondMax 200 x (1 - d / SphereRadius)^DamageFalloffExponent 2 each DamageInterval 0.25 s; its overheat buildup
   into Scorching, equipment efficiency, not taken) and BP_RadiationField (BuildupDuration 5 s into
   BP_Condition_Debuff_Radiated: MaxHitpoints_Hull x 0.85 a token, TokenLimit 10, kept beyond the location, docking removes
-  it): `heat` (dps x falloff, through the shield, `Target.Damage` as an NPC hit), `radiation` (`Hazards.RadiationTokens`,
+  it): `heat` (dps x falloff, through the shield, `Target.Damage` as an NPC hit; `raiderDps` instead: that many x
+  `NpcTables.RaiderGunDps`, ES2's DamagePerSecondMax 200 being GetScaledDamage by the location level like its NPCs' DPS, so
+  200 / the Outlaw raider's 55), `radiation` (`Hazards.RadiationTokens`,
   the hull capped at maxHull x 0.85^n in every orbit, `StationLevel` clears it on docking). HUD lines on entering and per
   token. Not drawn (ES2's post-process tint). Not done: ES2's lightning fields (a storm effect), acid sacks, lightning
   plants and meltable ice (props with ES2's models).

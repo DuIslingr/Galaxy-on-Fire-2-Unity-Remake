@@ -512,11 +512,13 @@ namespace GoF2Remake.Tests
         public void AnOrbitsHazards()
         {
             WriteMod("w", "t_world", "1.0", "", ("stations.json",
-                "[ { 'override': 78, 'orbit': { 'hazards': [ { 'kind': 'heat', 'centre': [0, 0, 20000], 'radius': 8000, 'dps': 15 }, { 'kind': 'Radiation', 'centre': [5000, 0, 0] } ] } } ]"));
+                "[ { 'override': 78, 'orbit': { 'hazards': [ { 'kind': 'heat', 'centre': [0, 0, 20000], 'radius': 8000, 'dps': 15 }, { 'kind': 'Radiation', 'centre': [5000, 0, 0] }, { 'kind': 'heat', 'centre': [0, 0, 0], 'raiderDps': 3.6 } ] } } ]"));
             ScanAndEnable("t_world");
             Database.Load();
             var h = ModWorld.OrbitOf(78).hazards;
-            Assert.AreEqual(2, h.Count);
+            Assert.AreEqual(3, h.Count);
+            Assert.AreEqual(3.6f, h[2].raiderDps, 1e-5f, "as raiders' gunfire");
+            Assert.AreEqual(0f, h[0].raiderDps);
             Assert.AreEqual(ModWorld.HazardKind.Heat, h[0].kind);
             Assert.AreEqual(8000f, h[0].radius);
             Assert.AreEqual(15f, h[0].dps);
