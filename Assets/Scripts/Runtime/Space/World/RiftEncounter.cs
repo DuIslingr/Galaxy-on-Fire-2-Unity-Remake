@@ -20,6 +20,9 @@
 //   No Lock           they can't be locked (HUDMarker bLockable)
 //   Vengeance         every kill sends a detonator drone at the pilot (BP_Outlaw_DetonatorDrone: the remake's detonator role),
 //                     invulnerable with Explosive Death
+// The boss: one of the entry's "bosses" (EVERSPACE 2's rift bosses: GetBossClassAndLevel picks one of its destroyer, drone
+// carriers, Okkar corvette and Redeemer battleship), a mod's capital ship parked as one (ModCapitalShips.Spawn) or else a
+// fighter hull, its hull "raiders" x a pirate raider's (NpcTables.Hull); without them the pirate boss's hull and guns.
 //   the boss's        Quantum Mend: every 15-30 s it teleports and repairs until hit; Evasive Drift: as often it boosts away;
 //                     Guardians: two guards, and while one lives it can't be hurt (again 15-30 s after they fall)
 
@@ -49,6 +52,7 @@ namespace GoF2Remake.World
         RiftRun run;
         Vector3 centreGame;
         int es2Level;
+        List<CruiseEncounters.RiftBoss> bosses;
         readonly List<NpcShip> enemies = new List<NpcShip>();
         readonly Dictionary<NpcShip, RiftRun.Kind> kinds = new Dictionary<NpcShip, RiftRun.Kind>();
         readonly List<NpcShip> guards = new List<NpcShip>(), dead = new List<NpcShip>();
@@ -59,7 +63,7 @@ namespace GoF2Remake.World
 
         public RiftRun Run => run;
 
-        public static RiftEncounter Start(SpaceLevel level, Vector3 centreGame, int stages)
+        public static RiftEncounter Start(SpaceLevel level, Vector3 centreGame, int stages, List<CruiseEncounters.RiftBoss> bosses = null)
         {
             if (level == null || level.Traffic == null || Current != null) return null;
             var r = new GameObject("Rift").AddComponent<RiftEncounter>();
@@ -67,6 +71,7 @@ namespace GoF2Remake.World
             r.centreGame = centreGame;
             r.run = new RiftRun(stages > 0 ? stages : RiftRun.DefaultStages);
             r.es2Level = CruiseEncounterSpawner.Es2Level(level);
+            r.bosses = bosses;
             Current = r;
             r.BeginStage();
             return r;
@@ -253,6 +258,19 @@ namespace GoF2Remake.World
                 group = NpcGroup.Special, race = Standing.Pirate, ship = Modding.ModTraffic.PickBoss(NpcTables.StrongFighter(db, Standing.Pirate)),
                 position = Around(2000f), hitpoints = hull, speed = 3.5f, gunItem = gun, gunFactor = 2f, alwaysEnemy = true, noLoot = true,
             };
+            var pick = bosses != null && bosses.Count > 0 ? bosses[Random.Range(0, bosses.Count)] : null;
+            if (pick != null && Modding.ModContent.TryResolveShip(pick.ship, out int bossShip) && db.Ship(bossShip) != null)
+            {
+                int bossHull = Mathf.Max(1, Mathf.RoundToInt(NpcTables.Hull(0, 0) * pick.raiders));
+                if (Modding.ModCapitalShips.KindOf(bossShip) != null)
+                {
+                    spec = Modding.ModCapitalShips.Spawn(bossShip, Standing.Pirate, spec.position);
+                    spec.alwaysEnemy = true;
+                    spec.noLoot = true;
+                }
+                else spec.ship = bossShip;
+                spec.hitpoints = bossHull;
+            }
             if (run.HasMutator(RiftRun.EmpResistance)) spec.empPoints = 1000000;
             boss = level.Traffic.SpawnShip(spec);
             if (boss == null) { Finish(); return; }

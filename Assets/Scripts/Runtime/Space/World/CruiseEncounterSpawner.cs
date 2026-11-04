@@ -147,7 +147,7 @@ namespace GoF2Remake.World
                     break;
                 }
                 case CruiseEncounters.Rift:
-                    RiftEncounter.Start(level, at, e.ships);
+                    RiftEncounter.Start(level, at, e.ships, e.bosses);
                     return;   // (it spawns its own and connects them)
                 default:
                     return;

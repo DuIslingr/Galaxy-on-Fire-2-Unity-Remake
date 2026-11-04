@@ -32,7 +32,7 @@ namespace GoF2Remake.Modding
 
         static readonly HashSet<string> Fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "id", "override", "kind", "weight", "visible", "minRank", "security", "freePlayOnly", "quest", "ships", "name", "interstellar",
+            "id", "override", "kind", "weight", "visible", "minRank", "security", "freePlayOnly", "quest", "ships", "name", "interstellar", "bosses",
         };
 
         static int revision = -1;
@@ -117,6 +117,14 @@ namespace GoF2Remake.Modding
             e.minRank = ModJson.Int(o, "minRank", e.minRank, File);
             e.freePlayOnly = ModJson.Bool(o, "freePlayOnly", e.freePlayOnly, File);
             e.ships = ModJson.Int(o, "ships", e.ships, File);
+            if (ModJson.Get(o, "bosses") is JArray bl)   // a rift's (RiftEncounter)
+            {
+                e.bosses = new List<CruiseEncounters.RiftBoss>();
+                foreach (var b in bl)
+                    if (b is JObject bo && ModJson.Str(bo, "ship") is string ship)
+                        e.bosses.Add(new CruiseEncounters.RiftBoss { ship = ship, raiders = UnityEngine.Mathf.Clamp(ModJson.Float(bo, "raiders", 8f, File), 0.5f, 200f) });
+                if (e.bosses.Count == 0) e.bosses = null;
+            }
             if (ModJson.Str(o, "interstellar") is string between) e.interstellar = between.ToLowerInvariant();
             if (ModJson.Get(o, "security") is JArray sa)
             {

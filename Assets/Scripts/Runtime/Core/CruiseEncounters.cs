@@ -46,8 +46,13 @@ namespace GoF2Remake.Flight
             public string name;
             /// <summary>Between the systems: InSpace, AtSystem, Either (null) or Never.</summary>
             public string interstellar;
+            /// <summary>Kind "rift" (2026-11-04): the ships its boss may fly (one at random) and its hull in pirate raiders' hulls
+            /// (EVERSPACE 2's hit points over its Outlaw raider's 310); null = the pirate boss.</summary>
+            public List<RiftBoss> bosses;
             public bool StopsTheDrive => kind != Flyby && kind != Quest;
         }
+
+        public sealed class RiftBoss { public string ship; public float raiders = 8f; }
 
         public const float CheckIntervalMs = 5000f, MinCruiseMs = 6000f, CooldownMs = 90000f;
         public const int ChancePercent = 10, MaxPerOrbit = 2;

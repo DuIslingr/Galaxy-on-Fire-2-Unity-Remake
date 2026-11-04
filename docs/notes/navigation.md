@@ -173,8 +173,9 @@ the player ship) and `NavigationView` (flight HUD).
   Kill (20 %), Strength in Death (+5 % speed and hull, at most 10), Nearsighted / Farsighted (`Target.damageFactor` 0.5
   beyond 1080 m / within 1800 m), No Lock (`untargetable`), Vengeance (a `detonator` role drone a kill, invulnerable with
   Explosive Death); the boss's Quantum Mend (teleport every 15-30 s, repairing until hit), Evasive Drift (`NpcShip.BoostAway`
-  as often), Guardians (two strong fighters, the boss invulnerable while one lives). The boss: the pirate boss's hull
-  formula and guns. Won: a crate of loot_types.CSV's RiftBoss 14-18 rolls x `RiftRun.LootFactor` (0.5 + 0.5 x the
+  as often), Guardians (two strong fighters, the boss invulnerable while one lives). The boss: one of the entry's `bosses` (ES2's GetBossClassAndLevel picks its destroyer, drone carriers, Okkar corvette or
+  Redeemer battleship), a capital ship parked (`ModCapitalShips.Spawn`), its hull `raiders` x `NpcTables.Hull(0, 0)`; else the
+  pirate boss's hull formula and guns. Won: a crate of loot_types.CSV's RiftBoss 14-18 rolls x `RiftRun.LootFactor` (0.5 + 0.5 x the
   mastered share, after GetLootQuantityFactor) and `BattlePay`. Not done: Mines on Death (2-3 mines, 40 + 40, 100 m), Overheated
   Systems, Corrosive Death, Burst Bulbs, Phase Barrier, Stasis Snares, Apocalypse; the portals' choice; ES2's lunacy,
   nightmare mode and loot quality.
