@@ -414,14 +414,19 @@ battle spawns in 156 ms with its hulls.
   BP_AntiMissileDrone_Base (their guns allowed while their support abilities run: the native AI aims them at allies /
   missiles), BP_Outlaw_LinkDrone_Armor, BP_Outlaw_JumpSuppressorDrone (JumpSuppressorComponent enabled from BeginPlay until
   it dies, its marker seen from 100 km)): sniper (fire range x2.5), detonator (no break-off or fire; within 72 m of its
-  target: 10 x its gun's damage to every ship and the player within 360 m, then its own hull, nobody's kill), webber (its
+  target: BlastSeconds 100 / 55 of its gun's fire (`NpcShip.GunDps`; ES2's ApplyESRadialDamage of its NPC levelling HullDPSPrimary
+  50 + ShieldDPSPrimary 50 against the Outlaw raider's 31 + 24) to every ship and the player within 360 m, then its own hull,
+  nobody's kill), webber (its
   hits on the player: `Target.SlowBy` -> `ShipController.WebFactor` 0.5 for 4 s on the ship's moves), shieldCharger (no
-  fire; 5 %/s of the hull of same-race ships within 1.5 km), armorLink (no fire; `Target.damageFactor` 0.5 on those while
-  in reach, left alone where another rule set it), antiMissile (no fire; `WeaponSystem.ShootDownMissile` on the player's
+  fire; 16 / 310 of the hull a second of same-race ships within 1.5 km: ES2's charge drone's ShieldDPSPrimary -16 against the
+  raider's 200 + 50 + 60 hit points), armorLink (no fire; links its nearest ally in reach, ES2's one Link Parent Actor:
+  `Target.damageFactor` 310 / 410 and 5 / 310 of its hull a second, ES2's BP_Condition_Buff_Armored_ArmorRepair +100
+  maximum armour and +5 armour/s; left alone where another rule set a factor), antiMissile (no fire; `WeaponSystem.ShootDownMissile` on the player's
   nearest homing missile within 2.9 km each second), jumpSuppressor (no fire; `NpcShip.JumpSuppressed` holds
   `SystemJump.StartCharging` with "Jump suppressed", the story's forced jumps excepted). ES2's metres x3.6 as its ships'.
-  The amounts (blast, repair, slow strength, link share) are the remake's picks: ES2's npc_leveling.CSV has only each
-  NPC's DPS, hit points and XP, the rest are blueprint runtime attributes. Not done:
+  ES2's amounts on its hit point scale go over as shares of the Outlaw raider's (npc_leveling.CSV; `NpcRoles.Es2RaiderHp` /
+  `Es2RaiderDps`). The webber's slow (ES2: +2 linear and angular physics damping against the ship's acceleration) is the one
+  stand-in. Not done:
   the support drones' beams drawn, ES2's frost shield, defusal, stealth and split drones. Tests `NpcRoleTests`.
   lootDrone (2026-11-03, decompiled BP_LootDrone: NumLoot RandomIntegerInRange(4, 7), DropPercentages i / n x RandomFloat(1 -
   1 / n, 1 + 1 / n) clamped 0.05..1 checked on each health change, a piece (LootDrop.AddLootFromItems + DropLoot) and
