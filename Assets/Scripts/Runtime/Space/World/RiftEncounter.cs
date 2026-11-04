@@ -22,7 +22,8 @@
 //                     invulnerable with Explosive Death
 // The boss: one of the entry's "bosses" (EVERSPACE 2's rift bosses: GetBossClassAndLevel picks one of its destroyer, drone
 // carriers, Okkar corvette and Redeemer battleship), a mod's capital ship parked as one (ModCapitalShips.Spawn) or else a
-// fighter hull, its hull "raiders" x a pirate raider's (NpcTables.Hull); without them the pirate boss's hull and guns.
+// fighter hull with its entry's "weapon" / "secondary" (else the pirate boss's gun), its hull "raiders" x a pirate raider's
+// (NpcTables.Hull); without them the pirate boss's hull and guns.
 //   the boss's        Quantum Mend: every 15-30 s it teleports and repairs until hit; Evasive Drift: as often it boosts away;
 //                     Guardians: two guards, and while one lives it can't be hurt (again 15-30 s after they fall)
 // Who fights (2026-11-04, the user: the mods' enemy fighters and races, and the Void): each stage its own side, as ES2's
@@ -292,7 +293,14 @@ namespace GoF2Remake.World
                     spec.alwaysEnemy = true;
                     spec.noLoot = true;
                 }
-                else spec.ship = bossShip;
+                else
+                {
+                    spec.ship = bossShip;
+                    // its own gun and missiles (a capital ship fires its turrets), at the pirate boss's gunFactor
+                    if (pick.weapon != null && Modding.ModContent.TryResolveItem(pick.weapon, out int w) && db.Item(w) != null) spec.gunItem = w;
+                    if (pick.secondary != null && Modding.ModContent.TryResolveItem(pick.secondary, out int m) && db.Item(m) != null)
+                    { spec.secondaryItem = m; spec.secondaryFactor = spec.gunFactor; }
+                }
                 spec.hitpoints = bossHull;
             }
             if (run.HasMutator(RiftRun.EmpResistance)) spec.empPoints = 1000000;

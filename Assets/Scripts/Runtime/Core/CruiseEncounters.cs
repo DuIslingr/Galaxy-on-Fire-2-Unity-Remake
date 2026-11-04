@@ -52,9 +52,10 @@ namespace GoF2Remake.Flight
             public bool StopsTheDrive => kind != Flyby && kind != Quest;
         }
 
-        /// <summary>A rift boss: its ship, its hull in pirate raiders' hulls, and the race it flies for (a race word or a mod
-        /// race's "mod:id"; null = the stage's side), which its stage then is.</summary>
-        public sealed class RiftBoss { public string ship, race; public float raiders = 8f; }
+        /// <summary>A rift boss: its ship, its hull in pirate raiders' hulls, the race it flies for (a race word or a mod
+        /// race's "mod:id"; null = the stage's side), which its stage then is, and a fighter boss's gun and missiles (item
+        /// references; null = the pirate boss's gun, no missiles).</summary>
+        public sealed class RiftBoss { public string ship, race, weapon, secondary; public float raiders = 8f; }
 
         public const float CheckIntervalMs = 5000f, MinCruiseMs = 6000f, CooldownMs = 90000f;
         public const int ChancePercent = 10, MaxPerOrbit = 2;

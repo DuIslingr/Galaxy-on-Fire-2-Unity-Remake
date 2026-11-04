@@ -142,7 +142,7 @@ namespace GoF2Remake.Modding
                 e.bosses = new List<CruiseEncounters.RiftBoss>();
                 foreach (var b in bl)
                     if (b is JObject bo && ModJson.Str(bo, "ship") is string ship)
-                        e.bosses.Add(new CruiseEncounters.RiftBoss { ship = ship, race = ModJson.Str(bo, "race"), raiders = UnityEngine.Mathf.Clamp(ModJson.Float(bo, "raiders", 8f, File), 0.5f, 200f) });
+                        e.bosses.Add(new CruiseEncounters.RiftBoss { ship = ship, race = ModJson.Str(bo, "race"), weapon = ModJson.Str(bo, "weapon"), secondary = ModJson.Str(bo, "secondary"), raiders = UnityEngine.Mathf.Clamp(ModJson.Float(bo, "raiders", 8f, File), 0.5f, 200f) });
                 if (e.bosses.Count == 0) e.bosses = null;
             }
             if (ModJson.Str(o, "interstellar") is string between) e.interstellar = between.ToLowerInvariant();

@@ -93,7 +93,7 @@ namespace GoF2Remake.Tests
         {
             WriteMod("enc", Mod, "1.0", "", ("encounters.json", @"[ { 'id': 'r', 'kind': 'rift', 'bosses': [ { 'ship': 'x:a', 'raiders': 7 } ] } ]"));
             WriteMod("enc2", "t_enc2", "1.0", "", ("encounters.json",
-                @"[ { 'id': 'r2', 'kind': 'rift', 'weight': 9, 'bosses': [ { 'ship': 'y:b', 'raiders': 12, 'race': 'void' }, { 'ship': 'y:c' } ] }, { 'override': 'rift', 'weight': 50 } ]"));
+                @"[ { 'id': 'r2', 'kind': 'rift', 'weight': 9, 'bosses': [ { 'ship': 'y:b', 'raiders': 12, 'race': 'void', 'weapon': 'y:gun', 'secondary': '31' }, { 'ship': 'y:c' } ] }, { 'override': 'rift', 'weight': 50 } ]"));
             ScanAndEnable(Mod, "t_enc2");
             var all = ModEncounters.All();
             var rifts = all.FindAll(e => e.kind == CruiseEncounters.Rift);
@@ -104,6 +104,7 @@ namespace GoF2Remake.Tests
             CollectionAssert.AreEqual(new[] { "x:a", "y:b", "y:c" }, rifts[0].bosses.Select(b => b.ship).ToArray(), "one pool");
             Assert.AreEqual(null, rifts[0].bosses[0].race, "the stage's side");
             Assert.AreEqual("void", rifts[0].bosses[1].race, "the race a boss flies for");
+            Assert.AreEqual(("y:gun", "31"), (rifts[0].bosses[1].weapon, rifts[0].bosses[1].secondary), "a fighter boss's own gun and missiles");
             var warnings = string.Join(" | ", Installed("t_enc2").Warnings);
             StringAssert.Contains("weight", warnings);
             StringAssert.Contains("overridden", warnings);
