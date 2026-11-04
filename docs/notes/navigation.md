@@ -129,10 +129,10 @@ the player ship) and `NavigationView` (flight HUD).
   CalculateRewardCredits): `battle`, `trap` (named as an unknown signal), `stash`, `depot`, `highrisk`, `lootdrone` (a
   mod's loot drone, `ModTraffic.PickLootDrone`, else a pirate fighter with `SpawnSpec.role` "lootDrone"; neutral as a pirate
   (`alwaysNeutral`), after ES2's Freelancer drone that never turns hostile; see the drone roles in npcs-and-combat.md)
-  (`CruiseEncounterSpawner`; `EncounterWatch` pays `BattlePay` 1500 + 300 x rank when the battle's raiders are gone, runs the
+  (`CruiseEncounterSpawner`; `EncounterWatch` pays `BattlePay` when the battle's raiders are gone: ES2's own UMissionLib::CalculateRewardCredits, (800 + 4200 x level / MaxPlayerLevel 30) x RewardCreditsFactor 1, down to 50, the level the station's tech level x 3 (`Es2Level`); the high-risk area the same, runs the
   high-risk area's three waves and its crate of 8-14 loot rolls, ES2's HighRiskAreaBoss drops in its loot_types.CSV,
-  `EncounterWatch.BossRolls*`, and stops unpaid past 15 km). Counts and pay are the remake's picks (ES2 places its groups
-  by spawn_groups.CSV at the location's level and pays by CalculateRewardCredits in its code, in no table). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
+  `EncounterWatch.BossRolls*`, and stops unpaid past 15 km). Counts are the remake's picks (ES2 places its groups by
+  spawn_groups.CSV at the location's level). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
   Minesweeper (mines), Scavenger Baiting, Incursion and Rift (Leviathan encounters are
   left out on purpose).
   The `stash` and `depot` crates stay until emptied (`Crate.keep`), not the crates' 60 s.

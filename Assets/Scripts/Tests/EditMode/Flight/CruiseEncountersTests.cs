@@ -181,10 +181,12 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
-        public void ABattlePaysByRank()
+        public void AnEncounterPaysByEs2sFormula()
         {
-            Assert.AreEqual(1500, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(0));
-            Assert.AreEqual(4500, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(10));
+            Assert.AreEqual(800, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(0), "ES2's CalculateRewardCredits at level 0");
+            Assert.AreEqual(2200, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(10), "800 + 4200 x 10 / 30, down to 50");
+            Assert.AreEqual(5000, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(30));
+            Assert.AreEqual(5000, GoF2Remake.World.CruiseEncounterSpawner.BattlePay(60), "clamped at the top level");
             Assert.IsFalse(GoF2Remake.World.EncounterWatch.AnyLeft(new List<GoF2Remake.World.NpcShip>()), "no raiders left: won");
             Assert.AreEqual((8, 14), (GoF2Remake.World.EncounterWatch.BossRollsMin, GoF2Remake.World.EncounterWatch.BossRollsMax), "ES2's HighRiskAreaBoss drops");
         }
