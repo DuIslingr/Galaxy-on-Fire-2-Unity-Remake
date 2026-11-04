@@ -432,4 +432,9 @@ battle spawns in 156 ms with its hulls.
   found (hit, or the player in its detection box) it steers away from the player (`RoleFlees`, no break-off) and after the delay and charge
   `JumpOut` (state 6, gone with the rest, nobody's kill). Never a traffic fighter (`ModTraffic.Scan`); the cruise drive's
   `lootdrone` encounter flies it, neutral; the other ships leave it out of their enemy lists (`Traffic.ConnectPlayers`, ES2's
-  bIgnoredByAI). Not done: ES2's jump charge effect and sound, its marker kept in range once found.
+  bIgnoredByAI).
+- **A ship type's own drops** (remake 2026-11-04, for mods; ships.json `traffic.loot` [ { item, chance, min, max } ] and
+  `lootDrops`, `CustomTraffic.loot` / `CustomLoot`, `NpcShip.AddOwnLoot` at Setup and Revive): after EVERSPACE 2's
+  loot_npcs.csv (a blueprint, its drop count, then item / chance / amount range triples): each entry by its chance, at most
+  lootDrops, added to the cargo (merged by item; several kinds: a crate a kind), also for the Void and Specter races, whose
+  cargo is empty; not for a mission container, a fixed crate or a no-loot spawn. Not done: ES2's jump charge effect and sound, its marker kept in range once found.
