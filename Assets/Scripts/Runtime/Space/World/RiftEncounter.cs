@@ -25,6 +25,10 @@
 // fighter hull, its hull "raiders" x a pirate raider's (NpcTables.Hull); without them the pirate boss's hull and guns.
 //   the boss's        Quantum Mend: every 15-30 s it teleports and repairs until hit; Evasive Drift: as often it boosts away;
 //                     Guardians: two guards, and while one lives it can't be hurt (again 15-30 s after they fall)
+// Who fights (2026-11-04, the user: the mods' enemy fighters and races, and the Void): each stage its own side, as ES2's
+// portals lead to another place each stage: the pirates, the Void, or a hostile mod race with fighters of its own (Sides),
+// at random. A mod race flies its mods' ships; the pirates and the Void fly the game's, now and then a mod's of theirs (the
+// "Mod ships in traffic" chance, ModTraffic). The boss's stage is its boss's "race" when its entry names one, its guards too.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -57,6 +61,9 @@ namespace GoF2Remake.World
         readonly Dictionary<NpcShip, RiftRun.Kind> kinds = new Dictionary<NpcShip, RiftRun.Kind>();
         readonly List<NpcShip> guards = new List<NpcShip>(), dead = new List<NpcShip>();
         NpcShip boss;
+        CruiseEncounters.RiftBoss bossPick;
+        /// <summary>The stage's side (Sides).</summary>
+        int race = Standing.Pirate;
         float bossTimerS;
         bool bossMending;
         int buffs;
@@ -97,9 +104,26 @@ namespace GoF2Remake.World
 
         void Post(string text) => level?.Navigation?.Post(text);
 
+        /// <summary>The sides a rift stage may be: the pirates, the Void and the active mods' hostile races that have fighters.</summary>
+        public static List<int> Sides()
+        {
+            var l = new List<int> { Standing.Pirate, Standing.Void };
+            foreach (var d in Modding.ModRaces.All)
+                if (d.hostile && d.race >= 0 && Modding.ModTraffic.Candidates(d.race).Count > 0) l.Add(d.race);
+            return l;
+        }
+
         void BeginStage()
         {
             run.BeginStage(Random.value, Random.value);
+            var sides = Sides();
+            race = sides[Random.Range(0, sides.Count)];
+            bossPick = run.IsBossStage && bosses != null && bosses.Count > 0 ? bosses[Random.Range(0, bosses.Count)] : null;
+            if (bossPick?.race != null)
+            {
+                int r = Standing.RaceWord(bossPick.race);
+                if (r >= 0) race = r;
+            }
             foreach (var e in enemies) if (e != null && !e.Gone && e.Target.Alive) e.Vanish();   // (ES2: the next location)
             enemies.Clear(); kinds.Clear(); guards.Clear();
             boss = null;
@@ -166,8 +190,8 @@ namespace GoF2Remake.World
         NpcShip Spawn(RiftRun.Kind kind, Vector3 gameAt, string role = null)
         {
             var db = level.Database ?? Database.Shared;
-            int ship = kind == RiftRun.Kind.Cruiser ? NpcTables.StrongFighter(db, Standing.Pirate) : NpcTables.RandomFighter(Standing.Pirate);
-            var spec = new SpawnSpec { group = NpcGroup.Special, race = Standing.Pirate, ship = ship, alwaysEnemy = true, position = gameAt, role = role };
+            int ship = kind == RiftRun.Kind.Cruiser ? NpcTables.StrongFighter(db, race) : NpcTables.RandomFighter(race);
+            var spec = new SpawnSpec { group = NpcGroup.Special, race = race, ship = ship, alwaysEnemy = true, position = gameAt, role = role };
             if (run.HasMutator(RiftRun.EmpResistance)) spec.empPoints = 1000000;
             var s = level.Traffic.SpawnShip(spec);
             if (s == null) return null;
@@ -255,16 +279,16 @@ namespace GoF2Remake.World
             int gun = rank < 5 ? 23 : rank < 10 ? 15 : rank < 15 ? 26 : 21;
             var spec = new SpawnSpec
             {
-                group = NpcGroup.Special, race = Standing.Pirate, ship = Modding.ModTraffic.PickBoss(NpcTables.StrongFighter(db, Standing.Pirate)),
+                group = NpcGroup.Special, race = race, ship = Modding.ModTraffic.PickBoss(NpcTables.StrongFighter(db, race)),
                 position = Around(2000f), hitpoints = hull, speed = 3.5f, gunItem = gun, gunFactor = 2f, alwaysEnemy = true, noLoot = true,
             };
-            var pick = bosses != null && bosses.Count > 0 ? bosses[Random.Range(0, bosses.Count)] : null;
+            var pick = bossPick;
             if (pick != null && Modding.ModContent.TryResolveShip(pick.ship, out int bossShip) && db.Ship(bossShip) != null)
             {
                 int bossHull = Mathf.Max(1, Mathf.RoundToInt(NpcTables.Hull(0, 0) * pick.raiders));
                 if (Modding.ModCapitalShips.KindOf(bossShip) != null)
                 {
-                    spec = Modding.ModCapitalShips.Spawn(bossShip, Standing.Pirate, spec.position);
+                    spec = Modding.ModCapitalShips.Spawn(bossShip, race, spec.position);
                     spec.alwaysEnemy = true;
                     spec.noLoot = true;
                 }
@@ -321,7 +345,7 @@ namespace GoF2Remake.World
                     var have = cargo.Find(x => x.item == s.item);
                     if (have != null) have.amount += s.amount; else cargo.Add(new ItemStack(s.item, s.amount));
                 }
-            if (cargo.Count > 0) Crate.Spawn(boss != null ? boss.transform.position : Centre, cargo, Standing.Pirate, Crate.LookJunk).keep = true;
+            if (cargo.Count > 0) Crate.Spawn(boss != null ? boss.transform.position : Centre, cargo, race, Crate.LookJunk).keep = true;
             int pay = CruiseEncounterSpawner.BattlePay(es2Level);
             Session.Credits += pay;
             Post(string.Format(Localization.Extra("riftWon", "Rift closed: +{0} cr"), pay));

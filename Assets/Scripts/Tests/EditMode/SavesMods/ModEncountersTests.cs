@@ -93,7 +93,7 @@ namespace GoF2Remake.Tests
         {
             WriteMod("enc", Mod, "1.0", "", ("encounters.json", @"[ { 'id': 'r', 'kind': 'rift', 'bosses': [ { 'ship': 'x:a', 'raiders': 7 } ] } ]"));
             WriteMod("enc2", "t_enc2", "1.0", "", ("encounters.json",
-                @"[ { 'id': 'r2', 'kind': 'rift', 'weight': 9, 'bosses': [ { 'ship': 'y:b', 'raiders': 12 }, { 'ship': 'y:c' } ] }, { 'override': 'rift', 'weight': 50 } ]"));
+                @"[ { 'id': 'r2', 'kind': 'rift', 'weight': 9, 'bosses': [ { 'ship': 'y:b', 'raiders': 12, 'race': 'void' }, { 'ship': 'y:c' } ] }, { 'override': 'rift', 'weight': 50 } ]"));
             ScanAndEnable(Mod, "t_enc2");
             var all = ModEncounters.All();
             var rifts = all.FindAll(e => e.kind == CruiseEncounters.Rift);
@@ -102,12 +102,21 @@ namespace GoF2Remake.Tests
             Assert.AreEqual((CruiseEncounters.Rift, own.weight, own.minRank, own.ships), (rifts[0].id, rifts[0].weight, rifts[0].minRank, rifts[0].ships),
                             "the remake's chance, rank and stages: neither a mod's weight nor an override changes them");
             CollectionAssert.AreEqual(new[] { "x:a", "y:b", "y:c" }, rifts[0].bosses.Select(b => b.ship).ToArray(), "one pool");
+            Assert.AreEqual(null, rifts[0].bosses[0].race, "the stage's side");
+            Assert.AreEqual("void", rifts[0].bosses[1].race, "the race a boss flies for");
             var warnings = string.Join(" | ", Installed("t_enc2").Warnings);
             StringAssert.Contains("weight", warnings);
             StringAssert.Contains("overridden", warnings);
             ModManager.SetEnabled(Mod, false);
             ModManager.SetEnabled("t_enc2", false);
             Assert.IsFalse(ModEncounters.All().Any(e => e.kind == CruiseEncounters.Rift), "no mod rift bosses, no rift");
+        }
+
+        [Test]
+        public void WithoutModsARiftStageIsPiratesOrTheVoid()
+        {
+            ScanAndEnable();
+            CollectionAssert.AreEquivalent(new[] { GoF2Remake.Flight.Standing.Pirate, GoF2Remake.Flight.Standing.Void }, GoF2Remake.World.RiftEncounter.Sides());
         }
 
         [Test]
