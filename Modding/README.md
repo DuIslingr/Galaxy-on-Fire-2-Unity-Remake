@@ -891,8 +891,8 @@ its exhaust mounts (`slotType` 3, sized by `socketScale`) without flame meshes o
 `SpawnEngineGlow` / `SpawnEngineTrails`). A parked `battleship`'s engines idle (its flames, nozzle glow and glow at 60 % of
 full thrust): another ship's engine effects follow its speed, and a parked one has none. `"retreat": true` makes a capital
 ship jump away instead of being destroyed (EVERSPACE 2's Dreadnought): when its hull runs out it keeps 1 point, can't be harmed,
-holds its fire, its subsystems stop and its hangars' fighters jump out, and after a 4 second charge it jumps away in a Khador
-jump the size of the ship, its parts with it, leaving no wreck and nobody's kill; a mission's `alive("<name>")` drops to 0
+holds its fire and its subsystems stop; its hangars' fighters jump out from 3 seconds on, one by one, and after a 3 second
+charge it jumps away in a Khador jump the size of the ship (EVERSPACE 2's timing), its parts with it, leaving no wreck and nobody's kill; a mission's `alive("<name>")` drops to 0
 once it is gone. With a mission's `"repeat"` the encounter can come again.
 
 ### Camera, cockpit, damage smoke and explosion
