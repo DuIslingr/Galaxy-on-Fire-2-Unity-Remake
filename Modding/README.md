@@ -439,7 +439,7 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 6 Strike charge | Charged by `deviceCharge` points of damage the primary guns deal (its icon fills as it charges), then `deviceDurationMs` of their damage x `deviceDamagePercent` / 100 | charge, duration, damage percent |
 | 7 Deflector | For `deviceDurationMs` the enemy shots that would hit the ship fly back at their shooter, homing, at `deviceDamagePercent` % of their damage; beams are stopped | duration, damage percent |
 | 8 Sensor cloud | A cloud of `deviceRadius` around the ship for `deviceDurationMs`, grown over `deviceGrowMs`: while the ship flies inside it the enemies lose it, as under a cloak (they hold their fire, missiles lose their lock), like EVERSPACE 2's Smoke Bomb | radius, grow, duration |
-| 9 Hull repair | Repairs `deviceDamagePercent` % of the hull's maximum at once (EVERSPACE 2's Nano Injector); refused with nothing to repair | damage percent |
+| 9 Hull repair | Repairs `deviceDamagePercent` % of the hull's maximum at once (EVERSPACE 2's Nano Injector), or with a `deviceDurationMs` over that time (its Nanobots); refused with nothing to repair | damage percent, duration |
 | 10 Armour repair | Repairs `deviceDamagePercent` % of the armour's maximum at once (EVERSPACE 2's Armor Repair, 100 = to full); refused with nothing to repair | damage percent |
 | 11 Restock | `deviceAmmo` rounds more for the selected secondary weapon (EVERSPACE 2's Secondaries Restock); refused with none selected | ammo |
 | 12 Device charger | Every other device's cooldown ends at once (EVERSPACE 2's Device Charger); refused while none is cooling down | |
@@ -449,6 +449,9 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 16 Fusion hook | The hostile ship in the sights (within `deviceRadius`, 18 degrees of the nose) is grappled for up to `deviceDurationMs`: after 0.3 s you are pulled toward it (up to 800 m/s) and it toward you, until you are within 200 m, it leaves the hook's cone, or it dies (EVERSPACE 2's Fusion Hook) | radius, duration |
 | 17 Quantum tether | For `deviceDurationMs` the damage the locked ship takes is dealt to every hostile ship within `deviceRadius` of it too; when it dies the tether jumps to one of them (EVERSPACE 2's Quantum Tether) | radius, duration |
 | 18 Entangler | For `deviceDurationMs` the damage your ship takes is summed and, at the end, dealt to the locked ship (within `deviceRadius`) x `deviceDamagePercent` / 100, nothing if it died first (EVERSPACE 2's Quantum Entangler) | radius, duration, damage percent |
+| 19 Repair kit | One of your overheated items (a rift's Overheated Systems) works again at once (EVERSPACE 2's Nano Repair Kit); refused with none overheated | |
+| 20 Recovery | Lifts the debuffs on your ship: a web's slow, a rift's corrosion (EVERSPACE 2's System Recovery Routine); refused with none on | |
+| 21 Virus | Infects the locked ship (within `deviceRadius`); every `deviceGrowMs` (default 1 s) it spreads to the nearest hostile ship within `deviceRadius` of an infected one, up to 6; after `deviceDurationMs` every infected ship takes `deviceDamagePercent` % of a pirate raider's hull (EVERSPACE 2's Annihilator Virus) | radius, grow, duration, damage percent |
 
 A **consumable** device (`"deviceConsumable": 1`, EVERSPACE 2's consumables) is used up one unit per use and has no
 cooldown unless given one: the hangar stacks bought units like a secondary's ammo (mounting moves the whole stack,

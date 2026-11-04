@@ -98,6 +98,11 @@ namespace GoF2Remake.Tests
                 Overheat.Tick(0.02f);
                 Assert.IsFalse(Overheat.Hot(Overheat.Slot.Shield), "cool after DurationS");
                 Assert.IsNull(Overheat.HeatRandom(_ => false, 0.5f), "nothing to overheat");
+                Overheat.HeatRandom(null, 0f);
+                Assert.IsTrue(Overheat.AnyHot);
+                Assert.AreEqual(Overheat.Slot.Primary, Overheat.CoolRandom(0f), "a Nano Repair Kit cools one");
+                Assert.IsFalse(Overheat.AnyHot);
+                Assert.IsNull(Overheat.CoolRandom(0f));
             }
             finally { Overheat.Clear(); }
         }

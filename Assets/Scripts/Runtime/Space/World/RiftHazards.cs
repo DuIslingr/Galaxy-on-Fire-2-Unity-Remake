@@ -116,6 +116,17 @@ namespace GoF2Remake.World
 
         public bool Contains(Vector3 p) => (p - transform.position).sqrMagnitude < radius * radius;
 
+        System.Func<bool> corroded;
+
+        void Start()
+        {
+            if (kind != Kind.Corrosion) return;
+            corroded = () => corrodedS > 0f;
+            PlayerDebuffs.Register(corroded, () => corrodedS = 0f);   // (a System Recovery Routine lifts it)
+        }
+
+        void OnDestroy() { if (corroded != null) PlayerDebuffs.Unregister(corroded); }
+
         void Update()
         {
             float dt = Time.deltaTime;

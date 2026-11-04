@@ -48,6 +48,20 @@ namespace GoF2Remake.Flight
             return s;
         }
 
+        /// <summary>Whether any slot is overheated.</summary>
+        public static bool AnyHot { get { for (int i = 0; i < SlotCount; i++) if (leftS[i] > 0f) return true; return false; } }
+
+        /// <summary>One overheated slot, picked by 'random01', cool again (ES2's Nano Repair Kit); returns it, null when none is.</summary>
+        public static Slot? CoolRandom(float random01)
+        {
+            var hot = new System.Collections.Generic.List<Slot>();
+            for (int i = 0; i < SlotCount; i++) if (leftS[i] > 0f) hot.Add((Slot)i);
+            if (hot.Count == 0) return null;
+            var s = hot[Math.Min(hot.Count - 1, (int)(random01 * hot.Count))];
+            leftS[(int)s] = 0f;
+            return s;
+        }
+
         /// <summary>Everything cool again (the rift over, a new game).</summary>
         public static void Clear() => Array.Clear(leftS, 0, SlotCount);
     }
