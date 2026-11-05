@@ -160,6 +160,7 @@ namespace GoF2Remake.World
         /// <summary>Player::damage friendly-fire bookkeeping (§4.5), hits by the player only.</summary>
         void OnDamaged(Target t, int dmg, bool byNpc)
         {
+            if (dmg > 0 && dogfight != null && Target.Alive) dogfight.Hit();   // remake option: GoF3's evasive roll (NpcShipDogfight)
             if (!byNpc && mindControlMs > 0f) mindControlMs = 0f;   // remake mods: the player's hit breaks a mind control
             // Player::damage on a Most Wanted criminal (+0x3e): Level::attackWanted instead of the friendly-fire rules.
             if (!byNpc && Spec.wantedIndex >= 0) { traffic.AttackWanted(this, dmg); return; }

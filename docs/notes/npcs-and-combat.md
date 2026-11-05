@@ -67,6 +67,24 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   Left to the original: story and freelance mission orbits, a script's only enemy (`SetOnlyEnemy`), mission ships, a
   turned ship (it goes for the player who shot it), the Specters, the fleet battles' fighters (their own nearest pick),
   wingmen, turrets, the multiplayer remote players' pick. Off = the original exactly.
+- **GoF3 dogfighting** (remake option, 2026-11-05, the GoF3 roadmap's G6 after a survey of libgofm.so's AI; Options >
+  Gameplay "NPC dogfighting", `Settings.NpcDogfight`, a session rule in two bits, `SessionRules.DogfightOf`: Original /
+  GoF3 on mod hulls (default: ships.json `"traffic": { "ai": "gof3" }`, `CustomTraffic.ai`) / GoF3 for all; a dedicated
+  server has no flag for it and keeps the default): `Flight.Gof3Dogfight` (Core, rules) run by `NpcShipDogfight`
+  (`UpdateDogfight` after the targeting, `DogfightAim` in `Steer`, `DogfightRoll` for the model's spin and side step,
+  `OnDamaged` -> `Hit`). GoF3's AIJob_Fight as modes: Approach (8-13 s, firing; ends inside the 8000 break-off box, which
+  then no longer circles) -> VeerOff (5-6 s away, a quarter along the target's heading) or 30 % Idle (2 s across it);
+  Chase (AIJob_ChasePrey: behind the target within 1500 x 11.4, 8 s at 1.6x on a slot 3000 behind, firing once lined up;
+  15 s cooldown); Tease (AIJob_Tease: every 10 s, 40 %, within 800 x 11.4 and in front of its nose: 4-6 s 180 x 11.4 ahead
+  of it, holding fire). The aim leads (the target's smoothed velocity x the shot's flight time, `gunSpeed`) with a miss of
+  up to 1000 units settling to 0 over 0.5 s each run. The roll (NPCBankingSystem::updateEvade): per hit by
+  `EvadeChance(Session.Difficulty)` (Easy 0, Normal 0.15, Hard 0.25, Extreme 0.33; Most Wanted and pirate-event bosses
+  0.66), 1.8 s, `Target.invulnerable` for 1.5 s (cleared only if it set it), 3 s locked after; the model spins only, so
+  other players see the path, not the spin. Not for wingmen, freighters, turrets, fixed objects, capital ships, an event
+  order or a mind-controlled ship. GoF3's distances x `Gof3Dogfight.DistanceScale` 11.4 (the devices' factor). Left out:
+  GoF3's attacker budget (the remake's Smarter NPC targeting is the same rule), formations and flocking, the bursts and
+  weapon choice, the speed control, Dive (bosses), Flee (gated off in GoF3's data). Tests `Gof3DogfightTests`,
+  `SettingsTests.TheDogfightingModeTravelsInTwoBits`. Untested in Play mode.
 - **Turned ships pick at any range** (`PlayerFighter::update` 0xf131e / 0xf1444, `NpcShip.TakesAtAnyRange`): a turned
   ship (`turnedEnemy`, Player+0xe0) of any race but the pirates' takes the player outside its ±50 000 box when it picks
   (not attacking, or the re-roll's random tries); the 5 s re-roll still drops a pick outside the box, and as it leaves

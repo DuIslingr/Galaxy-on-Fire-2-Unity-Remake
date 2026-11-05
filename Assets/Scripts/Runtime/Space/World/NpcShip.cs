@@ -276,6 +276,12 @@ namespace GoF2Remake.World
         /// its crew's radio lines (wingmen.json, Data.WingmanCrew; null = silent like the game's), its face on the radio,
         /// its call for help made (until its hull is mended).</summary>
         WingmanDevice wingDevice;
+        /// <summary>Remake option (Settings.NpcDogfight, NpcShipDogfight): GoF3's way of fighting (null = GoF2's), the target it
+        /// last saw, where and how fast, and the roll's invulnerability (set by it, so cleared by it).</summary>
+        Gof3Dogfight dogfight;
+        Target dogTarget;
+        Vector3 dogTargetLast, dogTargetVel;
+        bool rollInvulnerable;
         WingmanCrew wingCrew;
         int[] wingFace;
         bool wingHelpSaid;
@@ -412,6 +418,7 @@ namespace GoF2Remake.World
                 NpcDevices.Attach(this, owner, wanted.devices);
             }
             SetupRole(spec);   // remake mods: its traffic role (NpcShipRoles)
+            SetupDogfight(spec, database);   // remake option: GoF3's way of fighting (NpcShipDogfight)
             Target.displayName = !string.IsNullOrEmpty(spec.name) ? spec.name : spec.nameText >= 0 ? Localization.Get(spec.nameText) : null;
             if (spec.speed > 0f) speed = baseSpeed = spec.speed;
             alwaysEnemy = spec.alwaysEnemy;
@@ -647,6 +654,7 @@ namespace GoF2Remake.World
             boostTimer += dtMs;
             if (mindControlMs > 0f) UpdateMindControlled(dtMs);
             else if (IsWingman) { UpdateWingman(); UpdateWingmanCrew(dtMs); } else UpdateTargeting();
+            UpdateDogfight(dtMs);   // remake option (NpcShipDogfight)
             if (IsJumper && followingWaypoint) { jumpMs += dtMs; if (jumpMs >= 20000f) { jumpMs = 0f; Current = State.JumpingOut; } }
             else jumpMs = 0f;
             UpdateBoost(dtMs);
