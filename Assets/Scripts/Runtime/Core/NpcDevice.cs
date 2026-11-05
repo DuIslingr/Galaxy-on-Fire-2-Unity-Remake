@@ -13,7 +13,7 @@ namespace GoF2Remake.Flight
 {
     public class NpcDeviceSpec
     {
-        public enum Kind { Teleport, FrontShield, BackShield, EnergyAbsorber, RadarJammer, FlashGrenade, MindControl, BombSpreader, MineLayer, Cloud, ShadowClone, Minions }
+        public enum Kind { Teleport, FrontShield, BackShield, EnergyAbsorber, RadarJammer, FlashGrenade, MindControl, BombSpreader, MineLayer, Cloud, ShadowClone, Minions, Wormhole }
 
         public Kind kind;
         public float durationMs = 5000f, cooldownMs = 15000f;
@@ -51,6 +51,11 @@ namespace GoF2Remake.Flight
         // units out; while any lives the ship's hits lose 'blockShare' (the drones' shield on it); gone when the run ends
         public int count = 2;
         public float hullShare = 0.2f, radius = 100f * 11.4f;
+        // Wormhole: GoF3's DeviceConfigurationDynamicWormholeGenerator (Khador's; DynamicWormholeEntity: Lifetime 5 s,
+        // wormholeRadius 60, exitDistanceFromOwner 150, spawned at the owner's (0, 0, 50): 50 behind it): a hole of 'radius'
+        // 'layBehind' its tail for 'lifeMs'; the player's ship flying in comes out 'exitDistance' in front of its nose,
+        // heading as it was (in its sights)
+        public float exitDistance = 150f * 11.4f;
 
         /// <summary>It drops mines (or clouds) while it runs (DueBombs).</summary>
         public bool Lays => kind == Kind.BombSpreader || kind == Kind.MineLayer || kind == Kind.Cloud;

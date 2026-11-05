@@ -24,6 +24,8 @@
 //                  limited time can fight like the original. They are easily destroyed"), gone when the run ends or it dies
 //   minions        'count' shield drones circling it 'radius' out, a beam from each to it ("Shooting down the annoying stupid
 //                  drones will leave the shield weak"): while one lives its hits lose 'blockPercent'; gone when the run ends
+//   wormhole       a hole behind its tail; the player flying in comes out in front of its nose ("if a foolish pilot flies
+//                  into the singularity, they'll end up right in the cross hairs of the ship using this weapon"; World.NpcWormhole)
 // The single player's game only: in multiplayer the authority runs them for its own player (the others see the teleport).
 
 using System.Collections.Generic;
@@ -124,6 +126,9 @@ namespace GoF2Remake.World
                 case NpcDeviceSpec.Kind.Minions:
                     SpawnMinions(s);
                     Say(string.Format(Localization.Extra("bossMinions", "{0} launched shield drones: shoot them down!"), name)); break;
+                case NpcDeviceSpec.Kind.Wormhole:
+                    NpcWormhole.Open(level, s.spec, transform);
+                    Say(string.Format(Localization.Extra("bossWormhole", "{0} opened a wormhole behind it: don't fly in!"), name)); break;
                 case NpcDeviceSpec.Kind.Cloud:
                     Say(string.Format(Localization.Extra("bossCloud", "{0} released a cloud: keep out of it!"), name)); break;
             }

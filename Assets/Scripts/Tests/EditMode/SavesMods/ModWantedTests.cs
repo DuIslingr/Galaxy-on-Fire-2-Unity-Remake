@@ -83,12 +83,13 @@ namespace GoF2Remake.Tests
                 "{ 'type': 'mineLayer', 'bombEveryMs': 1500, 'damage': 300, 'hull': 80, 'seekSpeed': 500, 'slowMs': 2000, 'slowPercent': 20 }, " +
                 "{ 'type': 'cloud', 'durationMs': 100, 'cooldownMs': 24900, 'hullPercent': 2 }, " +
                 "{ 'type': 'shadowClone', 'onHit': true, 'durationMs': 999999 }, { 'type': 'minions', 'count': 4, 'hullPercentOfShip': 10, 'radius': 2000 }, " +
+                "{ 'type': 'wormhole', 'range': [1140, 2280], 'facing': 30, 'notAhead': 90 }, " +
                 "{ 'type': 'warp' }, { 'type': '3' } ] }, " +
                 "{ 'id': 'none', 'name': 'None', 'ship': 5, 'devices': [ { 'type': 'nope' } ] } ]"));
             ScanAndEnable("t_dev");
             var db = Database.Load();
             var d = db.Wanted.Find(x => x.key == "t_dev:boss").devices;
-            Assert.AreEqual(7, d.Count, "the unknown types left out (a number isn't a type)");
+            Assert.AreEqual(8, d.Count, "the unknown types left out (a number isn't a type)");
             Assert.AreEqual(Flight.NpcDeviceSpec.Kind.Teleport, d[0].kind);
             Assert.AreEqual(15000f, d[0].everyMs);
             Assert.AreEqual(0.5f, d[0].chance, 1e-4f);
@@ -123,6 +124,10 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0.1f, d[6].hullShare, 1e-4f);
             Assert.AreEqual(2000f, d[6].radius);
             Assert.AreEqual(1f, d[6].blockShare, "the drones stop every hit by default");
+            Assert.AreEqual(Flight.NpcDeviceSpec.Kind.Wormhole, d[7].kind);
+            Assert.AreEqual(60f * 11.4f, d[7].radius, 1e-2f, "a wormhole's default: GoF3's wormholeRadius");
+            Assert.AreEqual(50f * 11.4f, d[7].layBehind, 1e-2f, "50 behind its tail");
+            Assert.AreEqual(150f * 11.4f, d[7].exitDistance, 1e-2f);
             Assert.IsNull(db.Wanted.Find(x => x.key == "t_dev:none").devices, "none valid: none");
             string messages = AllMessages(Installed("t_dev"));
             StringAssert.Contains("unknown device field \"colour\"", messages);

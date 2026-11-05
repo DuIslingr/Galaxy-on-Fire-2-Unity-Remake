@@ -114,10 +114,13 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   DeviceConfigurationCloning, Khador's: `Traffic.SpawnShip` copies of its SpawnSpec, hull x hullShare, no loot, no
   devices; `NpcShip.Vanish` at the run's end or its death) and minions (DeviceConfigurationShieldingMinions, Sh'gaal's:
   `Target`s in `Target.RadarObjects` circling it with a LineRenderer beam each; `Filter` takes blockShare off while one
-  lives; local to the authority, unlike the clones, which are ordinary NPCs to the other players too). Only the orbit's
-  authority runs `NpcShip`s (clients show proxies), so its own player alone is jammed, blinded or betrayed. Not done:
-  GoF3's insanity, Khador's dynamic wormhole, Mortak's smart bombs (no configuration), the shields' and absorber's own
-  look (only a HUD line says it is up). Tests `NpcDeviceTests`, `ModWantedTests`.
+  lives; local to the authority, unlike the clones, which are ordinary NPCs to the other players too), wormhole
+  (Khador's DynamicWormholeGenerator: `World.NpcWormhole`, the mouth layBehind its tail for lifeMs; the local player
+  within its radius goes to exitDistance ahead of the ship's nose by `SpaceLevel.WarpPlayer`, the pose and the chase
+  camera only, not `MovePlayer`'s arrival camera and Void wormhole). Only the orbit's authority runs `NpcShip`s (clients
+  show proxies), so its own player alone is jammed, blinded or betrayed. Not done: GoF3's insanity, Mortak's smart bombs
+  (no configuration), the shields' and absorber's own look (only a HUD line says it is up). Tests `NpcDeviceTests`,
+  `ModWantedTests`.
 - **Devices** (remake, for mods: Galaxy on Fire 3's player devices, the GoF3 Ships importer's items; `Flight.Device` plain
   C# + `Flight.Slow`, `PlayerDevices` / `PlayerDevicesEffects`; Modding/README.md "Devices"): a mounted item with
   `device` (attr 150, 1-7; 150-160, past the tractor beam's 136 / 137) on a seatless cabin, its own one-per-ship kind per type (`Shop.KindOf` = `Device.KindBase`
