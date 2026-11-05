@@ -212,6 +212,15 @@ the player ship) and `NavigationView` (flight HUD).
   the hull capped at maxHull x 0.85^n in every orbit, `StationLevel` clears it on docking). HUD lines on entering and per
   token. Not drawn (ES2's post-process tint). Not done: ES2's lightning fields (a storm effect), acid sacks, lightning
   plants and meltable ice (props with ES2's models).
+- **Ambience zones** (remake 2026-11-05, for mods; stations.json `orbit.ambience` -> `ModWorld.AmbienceSpec`,
+  `World.OrbitAmbience`, attached with the hazards): after EVERSPACE 2's BP_MusicTrigger OverrideAmbience (its inner /
+  outer spheres round stations, factories, cargo wrecks, wreck fields: a SoundCue looping one of its waves by
+  SoundNodeRandom, a SoundNodeDelay of DelayMin..Max over a SoundNodeRandom of adds mixed in at its InputVolume). Each zone:
+  two 2D AudioSources (its loop from a random start, its adds as PlayOneShot), volume x `OrbitAmbience.Weight` (1 within
+  `radius` of `centre`, fading to 0 over half the radius more; no centre: everywhere) x `Settings.SfxVolume`; the clips are
+  the mods' (a loop `ModMusic.Track`, kept compressed, else `ModSounds.Named`, decoded; the adds sounds), looked up each
+  frame until loaded. ES2's planet-side ambiences don't apply (GoF2
+  never lands). Test `ModWorldTests.AnOrbitsAmbienceZones`.
 - **Menu order** (`Hud::initHudMenu(3)`): outside the alien orbit Asteroid field, Station, Jumpgate, 573 **Waypoint** (a
   player route not finished: the autopilot follows the route, "Target: Waypoint"), "Destination: X"; then every named
   docking target (also in the alien orbit). The original's only restriction is no menu in mission type 0xb7 (the

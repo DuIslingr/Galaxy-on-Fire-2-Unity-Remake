@@ -195,6 +195,30 @@ namespace GoF2Remake.Modding
                 }
                 if (s.hazards.Count == 0) s.hazards = null;
             }
+            // Remake (2026-11-05): ambience zones, EVERSPACE 2's (World.OrbitAmbience)
+            if (ModJson.Get(o, "ambience") is JToken amb)
+            {
+                if (!(amb is JArray ambList)) throw new ModJsonException($"{where}: orbit \"ambience\" must be a list [ {{ \"loops\", \"adds\", \"centre\", \"radius\" }} ]");
+                s.ambience = new List<AmbienceSpec>();
+                foreach (var e in ambList)
+                {
+                    if (!(e is JObject a)) throw new ModJsonException($"{where}: an ambience zone is {{ \"loops\", \"adds\", ... }}");
+                    foreach (var p in a.Properties())
+                        if (Array.IndexOf(AmbienceFields, p.Name) < 0) Report(mod, $"{where}: unknown ambience field \"{p.Name}\" (ignored)");
+                    var loops = ModJson.Strings(a, "loops");
+                    if (loops.Count == 0 && ModJson.Str(a, "loop") is string one) loops.Add(one);
+                    if (loops.Count == 0) { Report(mod, $"{where}: an ambience zone without \"loops\" (left out)"); continue; }
+                    var z = new AmbienceSpec { loops = loops, adds = ModJson.Strings(a, "adds") };
+                    z.volume = Mathf.Clamp(ModJson.Float(a, "volume", 1f, StationsFile), 0f, 2f);
+                    z.addVolume = Mathf.Clamp(ModJson.Float(a, "addVolume", 0.3f, StationsFile), 0f, 2f);
+                    var every = ModJson.Get(a, "addEveryMs") as JArray;
+                    if (every != null && every.Count == 2) { z.addMinMs = Mathf.Max(500f, (float)every[0]); z.addMaxMs = Mathf.Max(z.addMinMs, (float)every[1]); }
+                    z.centre = Xyz(a, "centre", where) ?? Xyz(a, "center", where);
+                    z.radius = Mathf.Clamp(ModJson.Float(a, "radius", z.radius, StationsFile), 1000f, 400000f);
+                    s.ambience.Add(z);
+                }
+                if (s.ambience.Count == 0) s.ambience = null;
+            }
             // Remake (2026-11-03): a wreck field, EVERSPACE 2's (World.WreckField)
             if (ModJson.Get(o, "wrecks") is JToken wr)
             {
@@ -481,6 +505,8 @@ namespace GoF2Remake.Modding
             r.Sort();
             return r;
         }
+        static readonly string[] AmbienceFields = { "loops", "loop", "adds", "volume", "addVolume", "addEveryMs", "centre", "center", "radius" };
+
         /// <summary>The calm space music a mod gave the station's system (null: the game's).</summary>
         public static AudioClip SpaceMusic(int station)
         {

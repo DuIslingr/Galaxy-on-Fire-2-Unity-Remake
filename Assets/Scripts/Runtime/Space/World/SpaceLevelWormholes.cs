@@ -411,6 +411,7 @@ namespace GoF2Remake.World
             if (!Layout.interstellar && !Layout.alienOrbit) LootContainer.SpawnOrbit(db, Layout);   // ... and its containers
             TrafficLanes.Attach(this, db);   // ... and its traffic lanes
             HazardZones.Attach(this);   // remake mods: the orbit's heat / radiation volumes, a radiated hull's cap
+            OrbitAmbience.Attach(this);   // remake mods: the orbit's ambience zones
             if (Radar != null) Radar.Clouds = GasClouds;   // the spectral filters' markers and lock
             Extender = TimeExtender.Attach(root, db);
 

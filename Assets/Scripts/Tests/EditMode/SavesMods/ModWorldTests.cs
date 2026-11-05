@@ -526,6 +526,31 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(20000f, h[1].radius, "the default radius");
         }
 
+        [Test]
+        public void AnOrbitsAmbienceZones()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'ambience': [ { 'loops': ['outlaw_1', 'outlaw_2'], 'centre': [0, 0, 20000], 'radius': 10000, 'volume': 0.85 }, " +
+                "  { 'loop': 'factory', 'adds': ['clank_1', 'clank_2'], 'addVolume': 0.1, 'addEveryMs': [4000, 10000], 'echo': 1 }, { 'adds': ['x'] } ] } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var a = ModWorld.OrbitOf(78).ambience;
+            Assert.AreEqual(2, a.Count, "a zone without loops left out");
+            Assert.AreEqual(new[] { "outlaw_1", "outlaw_2" }, a[0].loops.ToArray());
+            Assert.AreEqual(0.85f, a[0].volume, 1e-5f);
+            Assert.AreEqual(new[] { "factory" }, a[1].loops.ToArray(), "\"loop\": one");
+            Assert.IsNull(a[1].centre, "no centre: the whole orbit");
+            Assert.AreEqual(4000f, a[1].addMinMs);
+            Assert.AreEqual(10000f, a[1].addMaxMs);
+            Assert.AreEqual(1f, GoF2Remake.World.OrbitAmbience.Weight(a[1], new Vector3(99999f, 0f, 0f)), "everywhere");
+            Assert.AreEqual(1f, GoF2Remake.World.OrbitAmbience.Weight(a[0], new Vector3(0f, 0f, 25000f)), "within its radius");
+            Assert.AreEqual(0.5f, GoF2Remake.World.OrbitAmbience.Weight(a[0], new Vector3(0f, 0f, 32500f)), 1e-4f, "halfway through the fade");
+            Assert.AreEqual(0f, GoF2Remake.World.OrbitAmbience.Weight(a[0], new Vector3(0f, 0f, 40000f)), "past it");
+            string messages = AllMessages(Installed("t_world"));
+            StringAssert.Contains("unknown ambience field \"echo\"", messages);
+            StringAssert.Contains("without \"loops\"", messages);
+        }
+
         [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\" or \"radiation\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 
         // Remake (2026-11-03, EVERSPACE 2's item containers): a station's "orbit.containers" (World.LootContainer).

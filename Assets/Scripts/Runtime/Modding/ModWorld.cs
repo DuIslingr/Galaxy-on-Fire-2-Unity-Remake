@@ -240,8 +240,22 @@ namespace GoF2Remake.Modding
             public bool loop = true, twoLanes = true;
         }
 
+        /// <summary>Remake (2026-11-05, EVERSPACE 2's ambience zones, BP_MusicTrigger's OverrideAmbience): a sound bed in an orbit
+        /// (stations.json "orbit.ambience", World.OrbitAmbience): one of 'loops' looping, one of 'adds' now and then.</summary>
+        public sealed class AmbienceSpec
+        {
+            /// <summary>Mod sound names (sounds/): one picked at random loops; 'adds' are one-shots every addMinMs..addMaxMs.</summary>
+            public List<string> loops, adds;
+            public float volume = 1f, addVolume = 0.3f, addMinMs = 8000f, addMaxMs = 15000f;
+            /// <summary>Game units; null = the whole orbit. Full volume within 'radius', fading out over half of it more.</summary>
+            public Vector3? centre;
+            public float radius = 30000f;
+        }
+
         public sealed class OrbitSpec
         {
+            /// <summary>Remake (2026-11-05, EVERSPACE 2's ambience zones): null = none.</summary>
+            public List<AmbienceSpec> ambience;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's spline traffic): null = none.</summary>
             public List<LaneSpec> lanes;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's heat volumes and radiation fields): null = none.</summary>
@@ -310,7 +324,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };
