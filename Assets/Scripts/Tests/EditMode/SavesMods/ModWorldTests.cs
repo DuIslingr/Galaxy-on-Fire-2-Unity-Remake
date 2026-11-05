@@ -551,6 +551,24 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("without \"loops\"", messages);
         }
 
+        [Test]
+        public void AnOrbitsGasClouds()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'gasClouds': { 'plasma': 202, 'clouds': [ [40000, 0, 60000], [-30000, 5000, 90000], [1, 2] ], 'colour': 'blue' } } }, " +
+                "  { 'override': 79, 'orbit': { 'gasClouds': { 'clouds': [] } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var g = ModWorld.OrbitOf(78).gasClouds;
+            Assert.AreEqual("202", g.plasma, "a number: the GoF2 plasma item");
+            Assert.AreEqual(2, g.clouds.Count, "the malformed one left out");
+            Assert.AreEqual(new Vector3(-30000f, 5000f, 90000f), g.clouds[1]);
+            Assert.IsNull(ModWorld.OrbitOf(79)?.gasClouds, "no clouds: GoF2's own roll");
+            string messages = AllMessages(Installed("t_world"));
+            StringAssert.Contains("unknown gasClouds field \"colour\"", messages);
+            StringAssert.Contains("a gas cloud is [x, y, z]", messages);
+        }
+
         [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\" or \"radiation\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 
         // Remake (2026-11-03, EVERSPACE 2's item containers): a station's "orbit.containers" (World.LootContainer).

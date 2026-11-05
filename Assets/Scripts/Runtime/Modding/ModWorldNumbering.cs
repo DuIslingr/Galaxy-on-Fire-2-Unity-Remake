@@ -195,6 +195,19 @@ namespace GoF2Remake.Modding
                 }
                 if (s.hazards.Count == 0) s.hazards = null;
             }
+            // Remake (2026-11-05): gas clouds at their places, EVERSPACE 2's plasma fields (World.GasCloudField)
+            if (ModJson.Get(o, "gasClouds") is JToken gc)
+            {
+                if (!(gc is JObject g)) throw new ModJsonException($"{where}: orbit \"gasClouds\" is {{ \"plasma\", \"clouds\": [ [x, y, z], ... ] }}");
+                foreach (var p in g.Properties())
+                    if (p.Name != "plasma" && p.Name != "clouds") Report(mod, $"{where}: unknown gasClouds field \"{p.Name}\" (ignored)");
+                var spec = new GasCloudSpec { plasma = ModJson.Get(g, "plasma") is JToken plasmaRef ? (plasmaRef.Type == JTokenType.Integer ? ((int)plasmaRef).ToString() : (string)plasmaRef) : null, clouds = new List<Vector3>() };
+                if (ModJson.Get(g, "clouds") is JArray cl)
+                    foreach (var c in cl)
+                        if (c is JArray v && v.Count == 3) spec.clouds.Add(new Vector3((float)v[0], (float)v[1], (float)v[2]));
+                        else Report(mod, $"{where}: a gas cloud is [x, y, z] (left out)");
+                if (spec.clouds.Count > 0) s.gasClouds = spec;
+            }
             // Remake (2026-11-05): ambience zones, EVERSPACE 2's (World.OrbitAmbience)
             if (ModJson.Get(o, "ambience") is JToken amb)
             {

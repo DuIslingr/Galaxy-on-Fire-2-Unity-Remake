@@ -113,6 +113,9 @@ against the FEV's LGCY data, see "Sound").
   swirl showed; attr 49 speed, 51 range; a spark in its sight takes "toward the turret" as its own direction and keeps
   it after, #79; the crosshair blue 0x1f5e, red 0x1f5d only while a live spark is in range, #78) and collects within 800
   (one sound at a time, messages summed over 600 ms).
+  Remake mods (2026-11-05, EVERSPACE 2's plasma fields): stations.json `orbit.gasClouds` (`ModWorld.GasCloudSpec`:
+  `plasma` an item reference, `clouds` places) -> `GasCloudField.SpawnOwn`: those clouds of that plasma (else
+  `TopPlasma`'s) instead of the roll; the spectral filter and alien orbit rules stay. Test `ModWorldTests.AnOrbitsGasClouds`.
 - **Most Wanted** (`WantedBoard` plain C#, `Session.Wanted`, the Missions window's Most Wanted tab; save v7): criminals activate
   and move between stations (`WantedBoard.Move` on arrivals); in their orbit the criminal and escorts (`TrafficPlan.AddWanted`:
   hull 15 x min(rank, 20) + hp + 180, speed 4.5, its own gun x4) hide until locked; the storyline criminals surrender below 1/3
