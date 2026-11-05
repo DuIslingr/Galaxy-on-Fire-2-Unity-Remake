@@ -16,6 +16,10 @@
 //   bombSpreader   a proximity mine behind it every 'bombEveryMs' while it runs, flung within 45 degrees (GoF3's spreadAngle;
 //                  the rifts' RiftMine), each blasting the player's ship for 'damage' ("most of these devices scatter a
 //                  large amount of mines")
+//   mineLayer      a mine 'layBehind' its tail every 'bombEveryMs' while it runs (GoF3's boss mine layers: minesPerBurst
+//                  'timeBetweenMines' apart), each chasing the player and going off near them (World.SeekerMine)
+//   cloud          a cloud 'layBehind' its tail (GoF3's smart bombs' effect zones: Mudshark's nanobite fog) that slows the
+//                  player's ship inside it and eats its hull (World.NpcCloud)
 // The single player's game only: in multiplayer the authority runs them for its own player (the others see the teleport).
 
 using System.Collections.Generic;
@@ -70,7 +74,10 @@ namespace GoF2Remake.World
             {
                 if (s.Step(dt, view, Random.value, out bool flashed)) Begin(s, player);
                 if (flashed && player != null && player.Alive) Flash(s, player);
-                for (int i = 0; i < s.DueBombs; i++) RiftMine.Drop(level, null, transform.position, -transform.forward, s.spec.damage);
+                for (int i = 0; i < s.DueBombs; i++)
+                    if (s.spec.kind == NpcDeviceSpec.Kind.MineLayer) SeekerMine.Lay(level, s.spec, transform.position - transform.forward * (s.spec.layBehind * M));
+                    else if (s.spec.kind == NpcDeviceSpec.Kind.Cloud) NpcCloud.Lay(level, s.spec, transform.position - transform.forward * (s.spec.layBehind * M));
+                    else RiftMine.Drop(level, null, transform.position, -transform.forward, s.spec.damage);
             }
         }
 
@@ -97,7 +104,10 @@ namespace GoF2Remake.World
                     foreach (var w in wingmen) w.MindControl(s.spec.durationMs);
                     Say(string.Format(Localization.Extra("bossMindControl", "{0} took over your wingmen! Hit them to wake them up."), name)); break;
                 case NpcDeviceSpec.Kind.BombSpreader:
+                case NpcDeviceSpec.Kind.MineLayer:
                     Say(string.Format(Localization.Extra("bossBombSpreader", "{0} is laying mines!"), name)); break;
+                case NpcDeviceSpec.Kind.Cloud:
+                    Say(string.Format(Localization.Extra("bossCloud", "{0} released a cloud: keep out of it!"), name)); break;
             }
         }
 

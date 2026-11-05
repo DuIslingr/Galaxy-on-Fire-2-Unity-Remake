@@ -2,7 +2,8 @@
 // Feature: docs/notes/combat-equipment.md "Boss devices", Modding/README.md "Most Wanted": a criminal's device (Flight.NpcDevice,
 // after GoF3's boss devices): its events fire it (a hit, an interval x its chance) while its conditions on the player hold
 // (range, angles); without an event the conditions alone; then its run, then its cooldown; the flash goes off after its
-// delay, weaker the further the player looks away; the shields stop only their side; the bomb spreader's mines.
+// delay, weaker the further the player looks away; the shields stop only their side; the bomb spreader's and the mine
+// layer's mines.
 
 using GoF2Remake.Flight;
 using NUnit.Framework;
@@ -79,6 +80,27 @@ namespace GoF2Remake.Tests
             for (int i = 0; i < 400; i++) { s.Step(20f, Near(), 0f, out _); bombs += s.DueBombs; }
             Assert.AreEqual(5, bombs, "0, 1.2, 2.4, 3.6, 4.8 s: none at the end of its 6 s");
             Assert.IsFalse(s.Active);
+        }
+
+        [Test]
+        public void TheMineLayerLaysItsBurstInRangeThenWaitsOutItsCooldown()
+        {
+            // GoF3's D'rak: 2 mines 1.5 s apart (the importer's 1600 ms run), every 18 s, the player 2280-17100 units off
+            var s = new NpcDeviceState(new NpcDeviceSpec
+            {
+                kind = NpcDeviceSpec.Kind.MineLayer, durationMs = 1600f, bombEveryMs = 1500f, cooldownMs = 16400f, rangeMin = 2280f, rangeMax = 17100f,
+            });
+            Assert.IsTrue(s.spec.Lays);
+            Assert.IsFalse(s.Step(16f, Near(1000f), 0f, out _), "too close");
+            Assert.IsTrue(s.Step(16f, Near(5000f), 0f, out _));
+            int mines = s.DueBombs;
+            for (int i = 0; i < 100; i++) { s.Step(20f, Near(5000f), 0f, out _); mines += s.DueBombs; }
+            Assert.AreEqual(2, mines, "the burst: at the start and 1.5 s on");
+            bool again = false;
+            for (int i = 0; i < 790 && !again; i++) again = s.Step(20f, Near(5000f), 0f, out _);
+            Assert.IsFalse(again, "cooling down");
+            for (int i = 0; i < 20 && !again; i++) again = s.Step(20f, Near(5000f), 0f, out _);
+            Assert.IsTrue(again, "the next burst 18 s after the first");
         }
 
         [Test]

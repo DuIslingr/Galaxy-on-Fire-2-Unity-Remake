@@ -2103,6 +2103,8 @@ the campaign). A save keeps each one's state by its key, so adding or removing o
 | `flashGrenade` | Flashes `delayMs` (default 3000) after the throw: white over your view for its `durationMs`, `strength` percent (default 100) looking straight at it, nothing from 90 degrees away. |
 | `mindControl` | Your wingmen turn on you; each comes back to its senses when you hit it. |
 | `bombSpreader` | Drops a proximity mine behind it at the start and every `bombEveryMs` (default 1200), flung within 45 degrees; each blasts your ship for `damage` (default 350, GoF2's AMR Saber) when you come near. |
+| `mineLayer` | Lays a mine `layBehind` (default 855) game units behind its tail at the start and every `bombEveryMs` while it runs (a burst: GoF3's boss mine layers). Each mine chases you within `seekRange` (default 11400) at `seekSpeed` game units a second (default 456) and goes off within `triggerRadius` (default 969) or after `lifeMs` (default 5000): it blasts your ship within `blastRadius` (default 1938) for `damage` and slows it by `slowPercent` for `slowMs` (default none). Shoot it down first: it takes `hull` (default 60) points. |
+| `cloud` | Leaves a cloud `cloudRadius` (default 5700) game units wide `layBehind` its tail (GoF3's smart bombs), at the start and every `bombEveryMs` while it runs, lasting `lifeMs` (default 12000). Inside it your ship keeps only `100 - slowPercent` % of its speed (default 50) and loses `hullPercent` of its hull a second (default none), past the shield. |
 
 Each runs `durationMs` (default 5000), then cools down for `cooldownMs` (default 15000). When it starts: `onHit` (true: when
 hit) and `everyMs` (every so often, `chance` percent of the time, default 100) fire it; `range` (`[ least, most ]` game

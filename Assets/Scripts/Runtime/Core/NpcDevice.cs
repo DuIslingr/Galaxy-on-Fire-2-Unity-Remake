@@ -13,7 +13,7 @@ namespace GoF2Remake.Flight
 {
     public class NpcDeviceSpec
     {
-        public enum Kind { Teleport, FrontShield, BackShield, EnergyAbsorber, RadarJammer, FlashGrenade, MindControl, BombSpreader }
+        public enum Kind { Teleport, FrontShield, BackShield, EnergyAbsorber, RadarJammer, FlashGrenade, MindControl, BombSpreader, MineLayer, Cloud }
 
         public Kind kind;
         public float durationMs = 5000f, cooldownMs = 15000f;
@@ -30,8 +30,23 @@ namespace GoF2Remake.Flight
         public float blockShare = 1f;              // the shields: the share of a hit stopped
         public float shieldDeg = 90f;              // the shields: hits coming within this angle of the nose (the tail) are stopped
         public float healShare = 0.5f;             // EnergyAbsorber: the hull mended by this share of what it soaks
-        public float bombEveryMs = 1200f;          // BombSpreader: a mine this often while it runs (the first at the start)
-        public float damage = 350f;                // BombSpreader: a mine's blast (GoF2's AMR Saber)
+        public float bombEveryMs = 1200f;          // BombSpreader, MineLayer: a mine this often while it runs (the first at the start)
+        public float damage = 350f;                // BombSpreader, MineLayer: a mine's blast (GoF2's AMR Saber)
+        // MineLayer: GoF3's boss mine layers (ArmingSmartBomb; its mine a MovingBomb, Mine_04_A01_UB01_D'rak's numbers, GoF3's
+        // distances x 11.4): a mine 'layBehind' units behind the ship chases the player within 'seekRange' at 'seekSpeed'
+        // (BasicMoveToTarget), goes off within 'triggerRadius' or after 'lifeMs', blasting 'blastRadius' for 'damage'
+        // (slowing the ship by 'slowShare' for 'slowMs': the layer's AbilitySlowdown); 'hull' points shoot it down
+        public float hull = 60f, lifeMs = 5000f, seekSpeed = 40f * 11.4f, seekRange = 1000f * 11.4f;
+        public float triggerRadius = 85f * 11.4f, blastRadius = 170f * 11.4f, layBehind = 75f * 11.4f;
+        public float slowMs, slowShare;
+        // Cloud: GoF3's smart bombs' effect zones (EffectZone: basicEffectZoneRadius, Lifetime, applyBuffsOnEnter; Mudshark's
+        // EffectZoneNanobite_Mudshark_Boss_Weapon): a cloud of 'cloudRadius' units laid 'layBehind' its tail (like a mine,
+        // every 'bombEveryMs' while it runs) lasts 'lifeMs'; inside it the player's ship keeps 1 - 'slowShare' of its speed
+        // and loses 'hullPercent' of its hull a second (BuffDamageOverTime's damagePercentagePerInterval)
+        public float cloudRadius = 500f * 11.4f, hullPercent;
+
+        /// <summary>It drops mines (or clouds) while it runs (DueBombs).</summary>
+        public bool Lays => kind == Kind.BombSpreader || kind == Kind.MineLayer || kind == Kind.Cloud;
 
         public bool HasEvent => onHit || everyMs > 0f;
     }
@@ -52,7 +67,7 @@ namespace GoF2Remake.Flight
         public bool Ready => activeMs <= 0f && cooldownMs <= 0f;
         /// <summary>FlashGrenade: thrown, the flash still to come (ms).</summary>
         public bool Pending => delayMs > 0f;
-        /// <summary>BombSpreader: the mines to drop after the last Step.</summary>
+        /// <summary>BombSpreader, MineLayer: the mines to drop after the last Step.</summary>
         public int DueBombs { get; private set; }
 
         /// <summary>What the ship sees of the player this frame (Step's conditions).</summary>
@@ -74,7 +89,7 @@ namespace GoF2Remake.Flight
             if (delayMs > 0f && (delayMs -= dtMs) <= 0f) flashed = true;
             if (activeMs > 0f)
             {
-                if (spec.kind == NpcDeviceSpec.Kind.BombSpreader && spec.bombEveryMs > 0f)
+                if (spec.Lays && spec.bombEveryMs > 0f)
                     for (bombMs -= dtMs; bombMs <= 0f && activeMs - dtMs > 0f; bombMs += spec.bombEveryMs) DueBombs++;
                 if ((activeMs -= dtMs) <= 0f) cooldownMs = spec.cooldownMs;
                 return false;
@@ -87,7 +102,7 @@ namespace GoF2Remake.Flight
             if (!evt || !Conditions(v)) return false;
             activeMs = System.Math.Max(1f, spec.durationMs);
             if (spec.kind == NpcDeviceSpec.Kind.FlashGrenade) delayMs = System.Math.Max(1f, spec.delayMs);
-            if (spec.kind == NpcDeviceSpec.Kind.BombSpreader) { DueBombs = 1; bombMs = spec.bombEveryMs; }
+            if (spec.Lays) { DueBombs = 1; bombMs = spec.bombEveryMs; }
             return true;
         }
 

@@ -104,8 +104,14 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   of what is left), mind control (`NpcShip.MindControl` on `Traffic.LivingWingmen`: `UpdateMindControlled` makes the
   player its target, `UpdateRelations` hostile; the player's hit ends it in `OnDamaged`; the player is already in a
   wingman's enemy list, so its shots hit), bomb spreader (`NpcDeviceState.DueBombs`: one at the start, then every
-  bombEveryMs while it runs; the rifts' `RiftMine` behind the ship). Only the orbit's authority runs `NpcShip`s (clients
-  show proxies), so its own player alone is jammed, blinded or betrayed. Not done: GoF3's insanity and smart bombs, the
+  bombEveryMs while it runs; the rifts' `RiftMine` behind the ship), mine layer (2026-11-05, GoF3's boss mine layers,
+  ArmingSmartBomb + MovingBomb: the same DueBombs, `NpcDeviceSpec.Lays`; `World.SeekerMine` layBehind the tail chases the
+  player within seekRange at seekSpeed, goes off within triggerRadius or after lifeMs, blasts blastRadius for damage and
+  slows by slowShare for slowMs; a `Target` of its own, untargetable, so the player shoots it down for its hull and the
+  NPCs leave it), cloud (2026-11-05, GoF3's smart bombs' EffectZone, Mudshark's nanobite fog: `World.NpcCloud`, a sphere
+  of cloudRadius for lifeMs; inside, `Target.SlowBy` kept up 250 ms at a time and hullPercent of maxHp a second past the
+  shield). Only the orbit's authority runs `NpcShip`s (clients
+  show proxies), so its own player alone is jammed, blinded or betrayed. Not done: GoF3's insanity, Mortak's smart bombs (no configuration), the
   shields' and absorber's own look (only a HUD line says it is up). Tests `NpcDeviceTests`, `ModWantedTests`.
 - **Devices** (remake, for mods: Galaxy on Fire 3's player devices, the GoF3 Ships importer's items; `Flight.Device` plain
   C# + `Flight.Slow`, `PlayerDevices` / `PlayerDevicesEffects`; Modding/README.md "Devices"): a mounted item with

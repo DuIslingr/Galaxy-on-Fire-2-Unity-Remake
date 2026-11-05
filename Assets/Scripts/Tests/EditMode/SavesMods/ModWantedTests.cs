@@ -80,12 +80,14 @@ namespace GoF2Remake.Tests
                 "{ 'type': 'teleport', 'everyMs': 15000, 'chance': 50, 'distance': [2000, 1000], 'cooldownMs': 15000 }, " +
                 "{ 'type': 'FrontShield', 'durationMs': 10000, 'ahead': 30, 'shieldAngle': 70, 'blockPercent': 90 }, " +
                 "{ 'type': 'flashGrenade', 'range': [0, 1500], 'facing': 80, 'strength': 70, 'colour': 'red' }, " +
+                "{ 'type': 'mineLayer', 'bombEveryMs': 1500, 'damage': 300, 'hull': 80, 'seekSpeed': 500, 'slowMs': 2000, 'slowPercent': 20 }, " +
+                "{ 'type': 'cloud', 'durationMs': 100, 'cooldownMs': 24900, 'hullPercent': 2 }, " +
                 "{ 'type': 'warp' }, { 'type': '3' } ] }, " +
                 "{ 'id': 'none', 'name': 'None', 'ship': 5, 'devices': [ { 'type': 'nope' } ] } ]"));
             ScanAndEnable("t_dev");
             var db = Database.Load();
             var d = db.Wanted.Find(x => x.key == "t_dev:boss").devices;
-            Assert.AreEqual(3, d.Count, "the unknown types left out (a number isn't a type)");
+            Assert.AreEqual(5, d.Count, "the unknown types left out (a number isn't a type)");
             Assert.AreEqual(Flight.NpcDeviceSpec.Kind.Teleport, d[0].kind);
             Assert.AreEqual(15000f, d[0].everyMs);
             Assert.AreEqual(0.5f, d[0].chance, 1e-4f);
@@ -98,6 +100,20 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(3000f, d[2].delayMs, "the flash's default delay");
             Assert.AreEqual(1500f, d[2].rangeMax);
             Assert.AreEqual(0.7f, d[2].strength, 1e-4f);
+            Assert.AreEqual(Flight.NpcDeviceSpec.Kind.MineLayer, d[3].kind);
+            Assert.AreEqual(1500f, d[3].bombEveryMs);
+            Assert.AreEqual(300f, d[3].damage);
+            Assert.AreEqual(80f, d[3].hull);
+            Assert.AreEqual(500f, d[3].seekSpeed);
+            Assert.AreEqual(1000f * 11.4f, d[3].seekRange, 1e-2f, "GoF3's detection radius by default");
+            Assert.AreEqual(2000f, d[3].slowMs);
+            Assert.AreEqual(0.2f, d[3].slowShare, 1e-4f);
+            Assert.AreEqual(Flight.NpcDeviceSpec.Kind.Cloud, d[4].kind);
+            Assert.IsTrue(d[4].Lays);
+            Assert.AreEqual(12000f, d[4].lifeMs, "a cloud's default: Mudshark's 12 s");
+            Assert.AreEqual(0.5f, d[4].slowShare, 1e-4f, "a cloud's default: half speed");
+            Assert.AreEqual(500f * 11.4f, d[4].cloudRadius, 1e-2f);
+            Assert.AreEqual(2f, d[4].hullPercent);
             Assert.IsNull(db.Wanted.Find(x => x.key == "t_dev:none").devices, "none valid: none");
             string messages = AllMessages(Installed("t_dev"));
             StringAssert.Contains("unknown device field \"colour\"", messages);
