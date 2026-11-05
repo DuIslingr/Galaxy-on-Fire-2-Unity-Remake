@@ -537,6 +537,9 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   by item, then items.json category, then kind; `NpcShip.Setup` sets `Target.PlayerWeaponFactor`, which `Target.Damage`
   applies to a hit not by an NPC from `lastPlayerWeapon` (every player hit sets it first; `PlayerTurret` now too). A
   remote player's hit arrives as an NPC's on the authority, so only its own player's weapons see it.
+  "turrets" (2026-11-05, the GoF3 bosses' Backfire / Tank Turrets): turret items (category 8 / 35) for its ship's turret
+  mounts, `WantedData.turrets` -> `SpawnSpec.turretItems` (`TrafficPlan.AddWanted`; null = the type's `npcTurrets`, [] =
+  none; more than the mounts warns), fired by `NpcMountedTurrets` at the item's own damage (no x4 like its gun).
 - **Crates** (remake, 2026-11-02, the user's request for GoF3's loot containers; `ModCrates`, test `ModCratesTests`): ships.json
   `crate` (a glTF file) / `crateSize` (game units) on `CustomShipData`. Each file loads once at mod load (`ModLoading`,
   hidden DontDestroyOnLoad templates); `Crate.Model` draws a container (look 0) with it when it is loaded, fitted to the

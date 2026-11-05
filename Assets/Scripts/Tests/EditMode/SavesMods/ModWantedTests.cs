@@ -105,6 +105,24 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TurretsAreTurretItemsForItsShipsMounts()
+        {
+            WriteMod("w", "t_tur", "1.0", "", ("wanted.json",
+                "[ { 'id': 'armed', 'name': 'Armed', 'ship': 7, 'turrets': [48, 2, 'nope:x', 49] }, " +
+                "{ 'id': 'bare', 'name': 'Bare', 'ship': 7, 'turrets': [] }, { 'id': 'plain', 'name': 'Plain', 'ship': 7 } ]"));
+            ScanAndEnable("t_tur");
+            var db = Database.Load();
+            Assert.AreEqual(1, db.MountsOf(7, 2).Count, "ship 7 has one turret mount");
+            CollectionAssert.AreEqual(new[] { 48, 49 }, db.Wanted.Find(x => x.key == "t_tur:armed").turrets, "not a turret / no item: left out");
+            Assert.AreEqual(0, db.Wanted.Find(x => x.key == "t_tur:bare").turrets.Count, "[] = none");
+            Assert.IsNull(db.Wanted.Find(x => x.key == "t_tur:plain").turrets, "none given: its ship type's");
+            string messages = AllMessages(Installed("t_tur"));
+            StringAssert.Contains("is no turret", messages);
+            StringAssert.Contains("nope:x is no item", messages);
+            StringAssert.Contains("its ship has 1 turret mounts", messages);
+        }
+
+        [Test]
         public void InFreePlayOnlyTheModsAreOnTheBoard()
         {
             var db = Load();

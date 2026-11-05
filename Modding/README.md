@@ -2045,6 +2045,7 @@ until locked, and its death pays the bounty.
 | `music` | A track of a mod's [music](#music) folder that plays while it fights (default: the game's Most Wanted music). |
 | `damageTaken` | How much of your weapons' damage it takes, in percent: `{ "primary": 70, "secondary": 96, "Laser": 140, "my_mod:boss_bane": 200 }`. A key is a weapon kind (`primary`, `secondary`, `turret`), a weapon category as the shop names it (`Laser`, `Blaster`, `Auto-cannon`, `Thermo`, `Scatter gun`, `Rocket`, ...) or an item; the most specific one counts (the item, then its category, then its kind), anything unlisted takes 100. Other players' hits in multiplayer take all of it. |
 | `devices` | Boss devices it uses in the fight (see below). |
+| `turrets` | Turret items on its ship's own turret mounts, the first on the first: `[ 48, "my_mod:flak" ]` (default: what its ship type carries, its `npcTurrets`; `[]` none). More than the ship has mounts for are left off, with a warning. |
 | `requiredBounties` | How many of this board's mod criminals must be dead first (default 0). The game's criminals count apart. |
 | `systems` | The systems it travels in (numbers or `"mod_id:id"`), else any the player can see. |
 | `route` | `[ least, most ]` systems a trip crosses (default `[ 2, 4 ]`; `[ 1, 1 ]` keeps it in one system). |

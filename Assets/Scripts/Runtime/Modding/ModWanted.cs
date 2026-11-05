@@ -24,7 +24,7 @@ namespace GoF2Remake.Modding
         {
             "id", "name", "description", "board", "race", "ship", "weapon", "secondary", "hitpoints", "reward", "loot", "lootAmount",
             "wingmen", "requiredBounties", "available", "systems", "route", "character", "portraitParts", "gender",
-            "escorts", "music", "taunt", "damageTaken", "devices",
+            "escorts", "music", "taunt", "damageTaken", "devices", "turrets",
         };
 
         /// <summary>Database.Load (ModContent.Apply, after the ships, items and systems are numbered): every active mod's
@@ -123,6 +123,7 @@ namespace GoF2Remake.Modding
             w.taunt = ModContent.TranslatedText(mod, $"wanted.{id}.taunt", ModJson.Text(o, "taunt"));
             if (ModJson.Get(o, "damageTaken") is JToken dt) w.damageTaken = ReadDamageTaken(db, mod, dt, where);
             if (ModJson.Get(o, "devices") is JToken dv) w.devices = ReadDevices(mod, dv, where);
+            if (ModJson.Get(o, "turrets") is JToken tu) w.turrets = ReadTurrets(db, mod, tu, w.ship, where);
             if (ModJson.Get(o, "portraitParts") is JArray pp && pp.Count == 5) w.portraitParts = new[] { (int)pp[0], (int)pp[1], (int)pp[2], (int)pp[3], (int)pp[4] };
             else w.portraitParts = new[] { Mathf.Clamp(w.race, 0, 3), 0, w.male ? 0 : 1, 0, 0 };
             if (w.character != null && ModCharacters.Find(w.character) == null)
@@ -210,6 +211,28 @@ namespace GoF2Remake.Modding
             }
             Warn(mod, $"{ModJson.Where(t, File)}: \"{field}\" is [ least, most ] (ignored)");
             return (lo, hi);
+        }
+
+        /// <summary>"turrets": [ item, ... ], the turret items (category 8 / 35, numbers or "mod:id") on its ship's turret mounts,
+        /// the n-th on the n-th (World.NpcMountedTurrets), in place of what its ship type carries (ships.json "npcTurrets");
+        /// [] = none. More than the ship's mounts: the rest left off.</summary>
+        static List<int> ReadTurrets(Database db, ModInfo mod, JToken t, int ship, string where)
+        {
+            if (!(t is JArray list)) throw new ModJsonException($"{where}: \"turrets\" is a list of turret items");
+            var items = new List<int>();
+            foreach (var e in list)
+            {
+                if (!ModContent.TryResolveItem(e.ToString(), out int i) || db.Item(i) == null)
+                { Warn(mod, $"{ModJson.Where(e, File)}: \"turrets\" {e} is no item (left out)"); continue; }
+                var it = db.Item(i);
+                if (it.categoryId != 8 && it.categoryId != 35)
+                { Warn(mod, $"{ModJson.Where(e, File)}: \"turrets\" {it.name} ({i}) is no turret (left out)"); continue; }
+                items.Add(i);
+            }
+            int mounts = db.MountsOf(ship, 2).Count;
+            if (items.Count > mounts)
+                Warn(mod, $"{where}: \"turrets\" lists {items.Count} turrets, its ship has {mounts} turret mounts (the rest is left off)");
+            return items;
         }
 
         static int Item(Database db, JObject o, string field, string where, int fallback)

@@ -497,6 +497,7 @@ namespace GoF2Remake.Data
         [System.NonSerialized] public string key, description, character, available, availableWhere, music, taunt;
         [System.NonSerialized] public DamageTaken damageTaken;
         [System.NonSerialized] public List<NpcDeviceSpec> devices;
+        [System.NonSerialized] public List<int> turrets;   // its turret items (null = its ship type's, Database.NpcTurrets)
         [System.NonSerialized] public int[] systems, escorts;
         [System.NonSerialized] public int routeMin = 2, routeMax = 4, secondary = -1;
         [System.NonSerialized] public Modding.ModInfo mod;
