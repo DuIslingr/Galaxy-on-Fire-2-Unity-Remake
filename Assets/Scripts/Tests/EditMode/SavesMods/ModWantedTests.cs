@@ -82,12 +82,13 @@ namespace GoF2Remake.Tests
                 "{ 'type': 'flashGrenade', 'range': [0, 1500], 'facing': 80, 'strength': 70, 'colour': 'red' }, " +
                 "{ 'type': 'mineLayer', 'bombEveryMs': 1500, 'damage': 300, 'hull': 80, 'seekSpeed': 500, 'slowMs': 2000, 'slowPercent': 20 }, " +
                 "{ 'type': 'cloud', 'durationMs': 100, 'cooldownMs': 24900, 'hullPercent': 2 }, " +
+                "{ 'type': 'shadowClone', 'onHit': true, 'durationMs': 999999 }, { 'type': 'minions', 'count': 4, 'hullPercentOfShip': 10, 'radius': 2000 }, " +
                 "{ 'type': 'warp' }, { 'type': '3' } ] }, " +
                 "{ 'id': 'none', 'name': 'None', 'ship': 5, 'devices': [ { 'type': 'nope' } ] } ]"));
             ScanAndEnable("t_dev");
             var db = Database.Load();
             var d = db.Wanted.Find(x => x.key == "t_dev:boss").devices;
-            Assert.AreEqual(5, d.Count, "the unknown types left out (a number isn't a type)");
+            Assert.AreEqual(7, d.Count, "the unknown types left out (a number isn't a type)");
             Assert.AreEqual(Flight.NpcDeviceSpec.Kind.Teleport, d[0].kind);
             Assert.AreEqual(15000f, d[0].everyMs);
             Assert.AreEqual(0.5f, d[0].chance, 1e-4f);
@@ -114,6 +115,14 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0.5f, d[4].slowShare, 1e-4f, "a cloud's default: half speed");
             Assert.AreEqual(500f * 11.4f, d[4].cloudRadius, 1e-2f);
             Assert.AreEqual(2f, d[4].hullPercent);
+            Assert.AreEqual(Flight.NpcDeviceSpec.Kind.ShadowClone, d[5].kind);
+            Assert.AreEqual(2, d[5].count, "Khador's two clones by default");
+            Assert.AreEqual(0.2f, d[5].hullShare, 1e-4f);
+            Assert.AreEqual(Flight.NpcDeviceSpec.Kind.Minions, d[6].kind);
+            Assert.AreEqual(4, d[6].count);
+            Assert.AreEqual(0.1f, d[6].hullShare, 1e-4f);
+            Assert.AreEqual(2000f, d[6].radius);
+            Assert.AreEqual(1f, d[6].blockShare, "the drones stop every hit by default");
             Assert.IsNull(db.Wanted.Find(x => x.key == "t_dev:none").devices, "none valid: none");
             string messages = AllMessages(Installed("t_dev"));
             StringAssert.Contains("unknown device field \"colour\"", messages);

@@ -13,7 +13,7 @@ namespace GoF2Remake.Flight
 {
     public class NpcDeviceSpec
     {
-        public enum Kind { Teleport, FrontShield, BackShield, EnergyAbsorber, RadarJammer, FlashGrenade, MindControl, BombSpreader, MineLayer, Cloud }
+        public enum Kind { Teleport, FrontShield, BackShield, EnergyAbsorber, RadarJammer, FlashGrenade, MindControl, BombSpreader, MineLayer, Cloud, ShadowClone, Minions }
 
         public Kind kind;
         public float durationMs = 5000f, cooldownMs = 15000f;
@@ -44,6 +44,13 @@ namespace GoF2Remake.Flight
         // every 'bombEveryMs' while it runs) lasts 'lifeMs'; inside it the player's ship keeps 1 - 'slowShare' of its speed
         // and loses 'hullPercent' of its hull a second (BuffDamageOverTime's damagePercentagePerInterval)
         public float cloudRadius = 500f * 11.4f, hullPercent;
+        // ShadowClone: GoF3's DeviceConfigurationCloning (Khador: cloneCount 2, Ship_A02_BB01_ONLY_FOR_CLONING with 21 % of its
+        // hull + shield): 'count' copies of the ship with 'hullShare' of its hull, flying and firing as it does until shot
+        // down; gone when the run ends or the ship dies. Minions: DeviceConfigurationShieldingMinions (Sh'gaal: minionCount 5,
+        // minRadius 100, a Minion of 300 hull, 7 % of its own): 'count' drones of 'hullShare' of its hull circling it 'radius'
+        // units out; while any lives the ship's hits lose 'blockShare' (the drones' shield on it); gone when the run ends
+        public int count = 2;
+        public float hullShare = 0.2f, radius = 100f * 11.4f;
 
         /// <summary>It drops mines (or clouds) while it runs (DueBombs).</summary>
         public bool Lays => kind == Kind.BombSpreader || kind == Kind.MineLayer || kind == Kind.Cloud;

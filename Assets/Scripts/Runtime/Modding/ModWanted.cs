@@ -159,11 +159,11 @@ namespace GoF2Remake.Modding
             "type", "durationMs", "cooldownMs", "onHit", "everyMs", "chance", "range", "ahead", "notAhead", "facing",
             "delayMs", "strength", "distance", "blockPercent", "shieldAngle", "healPercent", "bombEveryMs", "damage",
             "hull", "lifeMs", "seekSpeed", "seekRange", "triggerRadius", "blastRadius", "layBehind", "slowMs", "slowPercent",
-            "cloudRadius", "hullPercent",
+            "cloudRadius", "hullPercent", "count", "hullPercentOfShip", "radius",
         };
 
         /// <summary>"devices": [ { "type": "teleport" | "frontShield" | "backShield" | "energyAbsorber" | "radarJammer" |
-        /// "flashGrenade" | "mindControl" | "bombSpreader" | "mineLayer" | "cloud", the run, its triggers and its numbers }, ... ] (Flight.NpcDeviceSpec);
+        /// "flashGrenade" | "mindControl" | "bombSpreader" | "mineLayer" | "cloud" | "shadowClone" | "minions", the run, its triggers and its numbers }, ... ] (Flight.NpcDeviceSpec);
         /// null when none is valid.</summary>
         internal static List<NpcDeviceSpec> ReadDevices(ModInfo mod, JToken t, string where)
         {
@@ -177,7 +177,7 @@ namespace GoF2Remake.Modding
                     if (!DeviceFields.Contains(p.Name)) Warn(mod, $"{ModJson.Where(p, File)}: unknown device field \"{p.Name}\" (ignored)");
                 string type = ModJson.Str(o, "type");
                 if (!Enum.TryParse(type ?? "", true, out NpcDeviceSpec.Kind kind) || int.TryParse(type, out _))
-                { Warn(mod, $"{at}: device \"type\" {type ?? "(missing)"} is none of teleport, frontShield, backShield, energyAbsorber, radarJammer, flashGrenade, mindControl, bombSpreader, mineLayer, cloud (left out)"); continue; }
+                { Warn(mod, $"{at}: device \"type\" {type ?? "(missing)"} is none of teleport, frontShield, backShield, energyAbsorber, radarJammer, flashGrenade, mindControl, bombSpreader, mineLayer, cloud, shadowClone, minions (left out)"); continue; }
                 var s = new NpcDeviceSpec { kind = kind };
                 s.durationMs = Mathf.Clamp(ModJson.Float(o, "durationMs", s.durationMs, File), 1f, 600000f);
                 s.cooldownMs = Mathf.Clamp(ModJson.Float(o, "cooldownMs", s.cooldownMs, File), 0f, 600000f);
@@ -207,6 +207,10 @@ namespace GoF2Remake.Modding
                 s.slowShare = Mathf.Clamp01(ModJson.Float(o, "slowPercent", kind == NpcDeviceSpec.Kind.Cloud ? 50f : 0f, File) / 100f);
                 s.cloudRadius = Mathf.Clamp(ModJson.Float(o, "cloudRadius", s.cloudRadius, File), 100f, 100000f);
                 s.hullPercent = Mathf.Clamp(ModJson.Float(o, "hullPercent", 0f, File), 0f, 100f);
+                bool minions = kind == NpcDeviceSpec.Kind.Minions;
+                s.count = Mathf.Clamp(ModJson.Int(o, "count", minions ? 5 : 2, File), 1, 12);
+                s.hullShare = Mathf.Clamp(ModJson.Float(o, "hullPercentOfShip", minions ? 7f : 20f, File), 1f, 100f) / 100f;
+                s.radius = Mathf.Clamp(ModJson.Float(o, "radius", s.radius, File), 200f, 50000f);
                 specs.Add(s);
             }
             return specs.Count > 0 ? specs : null;

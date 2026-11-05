@@ -20,6 +20,10 @@
 //                  'timeBetweenMines' apart), each chasing the player and going off near them (World.SeekerMine)
 //   cloud          a cloud 'layBehind' its tail (GoF3's smart bombs' effect zones: Mudshark's nanobite fog) that slows the
 //                  player's ship inside it and eats its hull (World.NpcCloud)
+//   shadowClone    'count' copies of it with 'hullPercentOfShip' of its hull ("two clones of the original ship that for a
+//                  limited time can fight like the original. They are easily destroyed"), gone when the run ends or it dies
+//   minions        'count' shield drones circling it 'radius' out, a beam from each to it ("Shooting down the annoying stupid
+//                  drones will leave the shield weak"): while one lives its hits lose 'blockPercent'; gone when the run ends
 // The single player's game only: in multiplayer the authority runs them for its own player (the others see the teleport).
 
 using System.Collections.Generic;
@@ -39,6 +43,10 @@ namespace GoF2Remake.World
         Traffic traffic;
         SpaceLevel level;
         readonly List<NpcDeviceState> states = new List<NpcDeviceState>();
+        readonly Dictionary<NpcDeviceState, List<NpcShip>> clones = new Dictionary<NpcDeviceState, List<NpcShip>>();
+        readonly Dictionary<NpcDeviceState, List<Target>> minions = new Dictionary<NpcDeviceState, List<Target>>();
+        static Material beamLook;
+        float orbitDeg;
         bool hit;
 
         public static NpcDevices Attach(NpcShip ship, Traffic traffic, List<NpcDeviceSpec> specs)
@@ -56,7 +64,7 @@ namespace GoF2Remake.World
 
         void Update()
         {
-            if (ship == null || ship.Target == null || !ship.Target.Alive) { enabled = false; return; }
+            if (ship == null || ship.Target == null || !ship.Target.Alive) { ClearAll(); enabled = false; return; }
             var player = traffic != null ? traffic.Player : null;
             var view = new NpcDeviceState.View { hit = hit };
             hit = false;
@@ -73,13 +81,17 @@ namespace GoF2Remake.World
             foreach (var s in states)
             {
                 if (s.Step(dt, view, Random.value, out bool flashed)) Begin(s, player);
+                if (!s.Active) Clear(s);
                 if (flashed && player != null && player.Alive) Flash(s, player);
                 for (int i = 0; i < s.DueBombs; i++)
                     if (s.spec.kind == NpcDeviceSpec.Kind.MineLayer) SeekerMine.Lay(level, s.spec, transform.position - transform.forward * (s.spec.layBehind * M));
                     else if (s.spec.kind == NpcDeviceSpec.Kind.Cloud) NpcCloud.Lay(level, s.spec, transform.position - transform.forward * (s.spec.layBehind * M));
                     else RiftMine.Drop(level, null, transform.position, -transform.forward, s.spec.damage);
             }
+            UpdateMinions(dt);
         }
+
+        void OnDestroy() => ClearAll();
 
         void Begin(NpcDeviceState s, Target player)
         {
@@ -106,6 +118,12 @@ namespace GoF2Remake.World
                 case NpcDeviceSpec.Kind.BombSpreader:
                 case NpcDeviceSpec.Kind.MineLayer:
                     Say(string.Format(Localization.Extra("bossBombSpreader", "{0} is laying mines!"), name)); break;
+                case NpcDeviceSpec.Kind.ShadowClone:
+                    SpawnClones(s);
+                    Say(string.Format(Localization.Extra("bossShadowClone", "{0} split into clones: find the real one!"), name)); break;
+                case NpcDeviceSpec.Kind.Minions:
+                    SpawnMinions(s);
+                    Say(string.Format(Localization.Extra("bossMinions", "{0} launched shield drones: shoot them down!"), name)); break;
                 case NpcDeviceSpec.Kind.Cloud:
                     Say(string.Format(Localization.Extra("bossCloud", "{0} released a cloud: keep out of it!"), name)); break;
             }
@@ -135,13 +153,133 @@ namespace GoF2Remake.World
             if (a > 0.02f) ScreenFlash.Start(a, s.spec.durationMs);
         }
 
-        /// <summary>Target.HitFilter: the shields stop what comes at their side, the absorber soaks everything.</summary>
+        /// <summary>Copies of the ship beside it: its hull, guns and speed, 'hullShare' of its hull, no loot.</summary>
+        void SpawnClones(NpcDeviceState s)
+        {
+            if (traffic == null) return;
+            Clear(s);
+            var src = ship.Spec;
+            var list = new List<NpcShip>();
+            for (int i = 0; i < s.spec.count; i++)
+            {
+                float side = (i % 2 == 0 ? 1f : -1f) * (1 + i / 2) * 60f;   // (metres, alternately right and left)
+                var at = transform.position + transform.right * side;
+                var clone = traffic.SpawnShip(new SpawnSpec
+                {
+                    group = NpcGroup.Escort, race = src.race, ship = src.ship, name = src.name, nameText = src.nameText,
+                    hitpoints = Mathf.Max(1, Mathf.RoundToInt(ship.Hp.maxHull * s.spec.hullShare)), speed = src.speed,
+                    gunItem = src.gunItem, gunFactor = src.gunFactor, secondaryItem = src.secondaryItem, secondaryFactor = src.secondaryFactor,
+                    turretItems = src.turretItems != null ? new List<int>(src.turretItems) : null,
+                    noLoot = true, alwaysEnemy = true, position = new Vector3(at.x, at.y, -at.z) / M,
+                });
+                if (clone == null) continue;
+                clone.transform.rotation = transform.rotation;
+                Explosion.Spawn(at, 0.4f, false);
+                list.Add(clone);
+            }
+            clones[s] = list;
+        }
+
+        /// <summary>Shield drones round the ship, shootable by the player (a radar object each), a beam to the ship.</summary>
+        void SpawnMinions(NpcDeviceState s)
+        {
+            Clear(s);
+            var list = new List<Target>();
+            for (int i = 0; i < s.spec.count; i++)
+            {
+                var go = RiftHazards.Sphere(null, transform.position, 4f, new Color(0.3f, 0.8f, 1f, 0.9f), "Shield drone");
+                var t = go.AddComponent<Target>();
+                t.maxHp = t.hp = Mathf.Max(1f, ship.Hp.maxHull * s.spec.hullShare);
+                t.radius = 8f;
+                t.hostileToPlayer = true;
+                t.untargetable = true;   // (the NPCs' guns leave it alone)
+                t.customDeath = true;
+                t.displayName = Localization.Extra("shieldDrone", "Shield drone");
+                t.plateNameOnly = t.plateNoIcon = true;
+                Target.RadarObjects.Add(t);
+                var line = go.AddComponent<LineRenderer>();
+                line.positionCount = 2;
+                line.startWidth = line.endWidth = 0.6f;
+                line.useWorldSpace = true;
+                if (beamLook == null)
+                {
+                    var shader = Shader.Find("Sprites/Default");
+                    if (shader != null) beamLook = new Material(shader) { name = "Shield drone beam" };
+                }
+                line.sharedMaterial = beamLook;
+                line.startColor = line.endColor = new Color(0.3f, 0.8f, 1f, 0.5f);
+                line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                Explosion.Spawn(transform.position, 0.2f, false);
+                list.Add(t);
+            }
+            minions[s] = list;
+        }
+
+        /// <summary>The drones circle the ship (one ring, evenly spaced, turning); a shot-down one bursts.</summary>
+        void UpdateMinions(float dtMs)
+        {
+            if (minions.Count == 0) return;
+            orbitDeg = Mathf.Repeat(orbitDeg + dtMs * 0.03f, 360f);
+            foreach (var kv in minions)
+            {
+                var list = kv.Value;
+                for (int i = list.Count - 1; i >= 0; i--)
+                    if (list[i] == null || !list[i].Alive) { Burst(list[i]); list.RemoveAt(i); }
+                for (int i = 0; i < list.Count; i++)
+                {
+                    float a = (orbitDeg + 360f * i / list.Count) * Mathf.Deg2Rad;
+                    var p = transform.position + (transform.right * Mathf.Cos(a) + transform.up * Mathf.Sin(a)) * (kv.Key.spec.radius * M);
+                    list[i].transform.position = p;
+                    var line = list[i].GetComponent<LineRenderer>();
+                    if (line != null) { line.SetPosition(0, p); line.SetPosition(1, transform.position); }
+                }
+            }
+        }
+
+        bool Shielded()
+        {
+            foreach (var kv in minions) if (kv.Key.Active && kv.Value.Count > 0) return true;
+            return false;
+        }
+
+        static void Burst(Target t)
+        {
+            if (t == null) return;
+            Explosion.Spawn(t.transform.position, 0.4f);
+            Target.RadarObjects.Remove(t);
+            Destroy(t.gameObject);
+        }
+
+        /// <summary>A run's clones and drones go (the run ended).</summary>
+        void Clear(NpcDeviceState s)
+        {
+            if (clones.TryGetValue(s, out var cl))
+            {
+                foreach (var c in cl)
+                    if (c != null && c.Target != null && c.Target.Alive) { Explosion.Spawn(c.transform.position, 0.4f, false); c.Vanish(); }
+                clones.Remove(s);
+            }
+            if (minions.TryGetValue(s, out var mi))
+            {
+                foreach (var t in mi) Burst(t);
+                minions.Remove(s);
+            }
+        }
+
+        void ClearAll()
+        {
+            foreach (var s in states) Clear(s);
+        }
+
+        /// <summary>Target.HitFilter: the shields stop what comes at their side, the absorber soaks everything, the drones
+        /// shield the ship while one lives.</summary>
         float Filter(float amount, Vector3 hitVector)
         {
             if (amount <= 0f) return amount;
             foreach (var s in states)
             {
                 if (!s.Active) continue;
+                if (s.spec.kind == NpcDeviceSpec.Kind.Minions && Shielded()) amount *= 1f - s.spec.blockShare;
                 if (s.spec.kind == NpcDeviceSpec.Kind.EnergyAbsorber)
                 {
                     var hp = ship.Hp;

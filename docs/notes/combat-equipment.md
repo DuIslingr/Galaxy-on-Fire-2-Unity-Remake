@@ -92,27 +92,32 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   a seatless cabin (base 91, cabinSize 0: stackable, no other effect). Tests `PointDefenseTests`. Verified in Play mode
   (a Teneta with the Berger AGT and the ES2 item, a hostile Vossk battleship 700 m off): 12 missiles of its salvos shot
   down in a minute. Not tested in multiplayer.
-- **Boss devices** (remake, 2026-11-04, the GoF3 roadmap's bosses: GoF3's DeviceEquip / DeviceBehaviorConfigurationUniversal,
-  their lore BD_*_Lore; Modding/README.md "Most Wanted"): wanted.json "devices" (`ModWanted.ReadDevices`) as
-  `Flight.NpcDeviceSpec` on `WantedData.devices`; `NpcShip.Setup` adds `World.NpcDevices` to the criminal's ship. Plain C#
-  `NpcDeviceState.Step`: events (onHit, everyMs x chance) OR, conditions (range, ahead, notAhead, facing) AND, no event =
-  the conditions alone; run, then the cooldown (from the run's end). Effects: teleport (outside the player's front 60 deg,
-  nose on them, `Explosion` flashes), front / back shield and energy absorber through `Target.HitFilter` (the hit's
-  direction from the bullet velocity; the absorber mends the hull, GoF2's NPCs have no shield), radar jammer
-  (`Flight.RadarJam`: `Navigation.RadarOff`, `CombatRadar` drops the lock, `CombatView` hides the markers), flash grenade
-  (`Flight.ScreenFlash`, `FlightHud`'s white layer, opacity x cos of the player's look off the ship, fading by the square
-  of what is left), mind control (`NpcShip.MindControl` on `Traffic.LivingWingmen`: `UpdateMindControlled` makes the
-  player its target, `UpdateRelations` hostile; the player's hit ends it in `OnDamaged`; the player is already in a
-  wingman's enemy list, so its shots hit), bomb spreader (`NpcDeviceState.DueBombs`: one at the start, then every
-  bombEveryMs while it runs; the rifts' `RiftMine` behind the ship), mine layer (2026-11-05, GoF3's boss mine layers,
-  ArmingSmartBomb + MovingBomb: the same DueBombs, `NpcDeviceSpec.Lays`; `World.SeekerMine` layBehind the tail chases the
-  player within seekRange at seekSpeed, goes off within triggerRadius or after lifeMs, blasts blastRadius for damage and
-  slows by slowShare for slowMs; a `Target` of its own, untargetable, so the player shoots it down for its hull and the
-  NPCs leave it), cloud (2026-11-05, GoF3's smart bombs' EffectZone, Mudshark's nanobite fog: `World.NpcCloud`, a sphere
-  of cloudRadius for lifeMs; inside, `Target.SlowBy` kept up 250 ms at a time and hullPercent of maxHp a second past the
-  shield). Only the orbit's authority runs `NpcShip`s (clients
-  show proxies), so its own player alone is jammed, blinded or betrayed. Not done: GoF3's insanity, Mortak's smart bombs (no configuration), the
-  shields' and absorber's own look (only a HUD line says it is up). Tests `NpcDeviceTests`, `ModWantedTests`.
+- **Boss devices** (remake, 2026-11-04, the GoF3 roadmap's bosses: GoF3's DeviceEquip /
+  DeviceBehaviorConfigurationUniversal, their lore BD_*_Lore; Modding/README.md "Most Wanted"): wanted.json "devices"
+  (`ModWanted.ReadDevices`) as `Flight.NpcDeviceSpec` on `WantedData.devices`; `NpcShip.Setup` adds `World.NpcDevices`
+  to the criminal's ship. Plain C# `NpcDeviceState.Step`: events (onHit, everyMs x chance) OR, conditions (range, ahead,
+  notAhead, facing) AND, no event = the conditions alone; run, then the cooldown (from the run's end). Effects: teleport
+  (outside the player's front 60 deg, nose on them, `Explosion` flashes), front / back shield and energy absorber
+  through `Target.HitFilter` (the hit's direction from the bullet velocity; the absorber mends the hull, GoF2's NPCs
+  have no shield), radar jammer (`Flight.RadarJam`: `Navigation.RadarOff`, `CombatRadar` drops the lock, `CombatView`
+  hides the markers), flash grenade (`Flight.ScreenFlash`, `FlightHud`'s white layer, opacity x cos of the player's look
+  off the ship, fading by the square of what is left), mind control (`NpcShip.MindControl` on `Traffic.LivingWingmen`:
+  `UpdateMindControlled` makes the player its target, `UpdateRelations` hostile; the player's hit ends it in
+  `OnDamaged`; the player is already in a wingman's enemy list, so its shots hit), bomb spreader
+  (`NpcDeviceState.DueBombs`: one at the start, then every bombEveryMs while it runs; the rifts' `RiftMine` behind the
+  ship), mine layer (2026-11-05, GoF3's boss mine layers, ArmingSmartBomb + MovingBomb: the same DueBombs,
+  `NpcDeviceSpec.Lays`; `World.SeekerMine` layBehind the tail chases the player within seekRange at seekSpeed, goes off
+  within triggerRadius or after lifeMs, blasts blastRadius for damage and slows by slowShare for slowMs; a `Target` of
+  its own, untargetable, so the player shoots it down for its hull and the NPCs leave it), cloud (2026-11-05, GoF3's
+  smart bombs' EffectZone, Mudshark's nanobite fog: `World.NpcCloud`, a sphere of cloudRadius for lifeMs; inside,
+  `Target.SlowBy` kept up 250 ms at a time and hullPercent of maxHp a second past the shield), shadow clone (GoF3's
+  DeviceConfigurationCloning, Khador's: `Traffic.SpawnShip` copies of its SpawnSpec, hull x hullShare, no loot, no
+  devices; `NpcShip.Vanish` at the run's end or its death) and minions (DeviceConfigurationShieldingMinions, Sh'gaal's:
+  `Target`s in `Target.RadarObjects` circling it with a LineRenderer beam each; `Filter` takes blockShare off while one
+  lives; local to the authority, unlike the clones, which are ordinary NPCs to the other players too). Only the orbit's
+  authority runs `NpcShip`s (clients show proxies), so its own player alone is jammed, blinded or betrayed. Not done:
+  GoF3's insanity, Khador's dynamic wormhole, Mortak's smart bombs (no configuration), the shields' and absorber's own
+  look (only a HUD line says it is up). Tests `NpcDeviceTests`, `ModWantedTests`.
 - **Devices** (remake, for mods: Galaxy on Fire 3's player devices, the GoF3 Ships importer's items; `Flight.Device` plain
   C# + `Flight.Slow`, `PlayerDevices` / `PlayerDevicesEffects`; Modding/README.md "Devices"): a mounted item with
   `device` (attr 150, 1-7; 150-160, past the tractor beam's 136 / 137) on a seatless cabin, its own one-per-ship kind per type (`Shop.KindOf` = `Device.KindBase`
