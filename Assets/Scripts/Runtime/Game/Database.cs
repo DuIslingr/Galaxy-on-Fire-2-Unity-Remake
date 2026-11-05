@@ -242,6 +242,9 @@ namespace GoF2Remake.Data
         /// extent, game units) says otherwise; none = the race's.</summary>
         public string crate;
         public float crateSize;
+        /// <summary>Remake mods (after Galaxy on Fire 3's wingmen): the device a hired wingman flying this hull uses: "repair",
+        /// "ammo" or "charged" (Flight.WingmanDevice); none = none, like the game's wingmen.</summary>
+        public string wingmanDevice;
     }
 
     /// <summary>Remake mods: EVERSPACE 2's per-ship switches of its engine effects (a ship blueprint's SpawnEngineGlow /
@@ -554,6 +557,8 @@ namespace GoF2Remake.Data
         }
         public List<WeaponMountSet> WeaponMounts = new List<WeaponMountSet>();
         public List<WantedData> Wanted = new List<WantedData>();
+        /// <summary>Remake mods (wingmen.json, Modding.ModWingmen): the crews the bars' wingmen offers may fly, each mod's.</summary>
+        public List<WingmanCrew> WingmanCrews = new List<WingmanCrew>();
         /// <summary>Remake, for mods (ships.json "npcTurrets", Modding.ModContent): the turret items the NPC ships of a type carry
         /// on its turret mounts (World.NpcMountedTurrets, the hangar's parked ships), by ship index. The original's NPC ships
         /// carry none.</summary>

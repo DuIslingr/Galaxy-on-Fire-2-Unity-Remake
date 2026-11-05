@@ -272,6 +272,13 @@ namespace GoF2Remake.World
 
         // wingman (KIPlayer+0xd8 / +0xdc / +0xe0 / +0xe4)
         public bool IsWingman { get; private set; }
+        /// <summary>Remake mods: its hull's wingman device (ships.json "wingmanDevice", Flight.WingmanDevice; null = none),
+        /// its crew's radio lines (wingmen.json, Data.WingmanCrew; null = silent like the game's), its face on the radio,
+        /// its call for help made (until its hull is mended).</summary>
+        WingmanDevice wingDevice;
+        WingmanCrew wingCrew;
+        int[] wingFace;
+        bool wingHelpSaid;
         /// <summary>Remake mods (NpcDevices: a boss's mind control): ms left of attacking the player (a wingman turned on its
         /// leader), 0 = itself.</summary>
         float mindControlMs;
@@ -639,7 +646,7 @@ namespace GoF2Remake.World
             reselectTimer += dtMs;
             boostTimer += dtMs;
             if (mindControlMs > 0f) UpdateMindControlled(dtMs);
-            else if (IsWingman) UpdateWingman(); else UpdateTargeting();
+            else if (IsWingman) { UpdateWingman(); UpdateWingmanCrew(dtMs); } else UpdateTargeting();
             if (IsJumper && followingWaypoint) { jumpMs += dtMs; if (jumpMs >= 20000f) { jumpMs = 0f; Current = State.JumpingOut; } }
             else jumpMs = 0f;
             UpdateBoost(dtMs);

@@ -235,6 +235,7 @@ namespace GoF2Remake.Modding
             "camera", "cockpit", "smoke", "explosionScale",   // how the ship is seen (ModShipView)
             "subsystems", "shieldMaterial", "shieldedDamage", "engineStyle", "es2Engine", "hullFactor", "retreat",   // a capital ship's subsystems (World.CapitalSubsystems)
             "crate", "crateSize",   // its loot container's model (ModCrates)
+            "wingmanDevice",   // a hired wingman's device in it (ModWingmen, Flight.WingmanDevice)
         };
 
         static void ParseShips(ModInfo mod, Parsed p)

@@ -811,6 +811,7 @@ styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way 
 | `available` | Optional. A [condition](#conditions) that must hold before it is sold anywhere (dealers and lounges), and before NPCs fly it. |
 | `sounds` | Optional. The ship's own engine and boost sounds, see [Ship sounds](#ship-sounds). |
 | `crate`, `crateSize` | Optional. The loot container a ship of this type leaves when it is destroyed or robbed with a tractor beam: a `.glb` / `.gltf` file in the mod, drawn in place of its race's container and as big as that container, unless `crateSize` gives its largest extent in game units (the game's containers are about 400). Ships may share a file; the first one's `crateSize` counts. None = its race's container. |
+| `wingmanDevice` | Optional. What a hired wingman flying this ship uses (Galaxy on Fire 3's wingmen): `"repair"` (Hull Repair: with your hull under 40 %, a quarter of it mended over 3 seconds), `"ammo"` (Ammo Supply: 5 more rounds of your selected secondary weapon when you are down to one or none) or `"charged"` (Charged Shots: its own shots do x1.75 for 5 seconds while it attacks); 55 seconds between uses. The HUD says when it does. None = nothing, like the game's wingmen. See [Wingmen](#wingmen). |
 | `integrated` | Optional, also in an `override`. Equipment built into the hull, like the Kothar ships' Khador Drive (Cronus, Typhon, Nemesis) and the Specter's / Scimitar's cloak: `{ "khadorDrive": true, "cloak": true }`. `khadorDrive`: the ship can make Khador jumps without the drive in a slot (it still needs energy cells). `cloak`: `true` (the U'tool's stats), a cloak item (a number or `"mod:id"`, e.g. `96`) whose stats it has, or `false`; a cloak the player mounts replaces it, and with the Gameplay option "Cloak bay on cloaking ships" it goes into the built-in cloak's bay instead of a slot. `false` takes an original ship's away. `items`: any equipment built in, a list of item numbers, `"mod:id"` keys or `{ "item": ..., "amount": n }` (a secondary weapon's starting ammo, default 10), e.g. `"items": [46, { "item": 36, "amount": 20 }, 54]`. Built-in items work like mounted ones but take no slot, show on the hangar's Ship tab under "Built into the ship", and can't be demounted, sold or stored; they stay with the ship type when the player changes ships. A one-per-ship item the player fits (a shield, armor, a booster, a scanner, a drill, a cloak...) takes the built-in one's place without a slot, and the built-in one is back when it is demounted; built-in weapons and turrets add to the ship's own slots. A built-in launcher's missiles are refilled by buying more; a one-off item that is used up (an emergency system) is back at the next docking. An empty list takes them away. |
 
 Ship and station materials are lit physically (URP Lit): they reflect the system's sky by their smoothness (the
@@ -1998,6 +1999,34 @@ player owns it and has no ship of that type stored), the equipment moving over a
 A blueprint is obtained once: once the player knows it, every source stops offering it. A seller already standing in a bar
 has nothing left ("I don't have anything left, sorry."), a derelict hacked afterwards is empty, and no second data container
 is dropped while one with it still floats in the orbit. It can be built from as often as the player likes.
+
+## Wingmen
+
+The Space Lounges' wingmen offers can fly your ships: a `wingmen.json` in the mod (one object) makes a crew of them.
+
+```json
+{
+    "chance": 40,
+    "ships": [ "falcon", "my_mod:hawk" ],
+    "radio": {
+        "kill": [ "Scratched one!", "Got one!" ],
+        "lost": [ "We've lost a wingman." ],
+        "help": [ "Help me, I can't shake him off!" ],
+        "thanks": [ "Nice shot!" ],
+        "warn": [ "Enemy behind you!" ],
+        "playerDown": [ "Pull out, you're on fire!" ]
+    }
+}
+```
+
+| Field | |
+|---|---|
+| `chance` | % of the bars' wingmen offers whose crew flies your ships (default 40). With several mods' crews each is rolled in turn, in load order; the first that comes up flies, else the game's way (a fighter of the agent's race, the same one for a name every time). |
+| `ships` | The ships they fly (`"mod:id"`, your own by their `id`, or numbers). Default: your ships with a `wingmanDevice`. Each pilot gets one of those of the agent's race, else any of them; the agent and its friends may fly different ones. |
+| `radio` | Lines a wingman in one of these ships says in the flight HUD's radio box, with its name and face: `kill` (it destroyed a ship; now and then), `lost` (another of them was shot down), `help` (its hull under a third), `thanks` (you destroyed a ship that was after it), `warn` (an enemy after you within 1.5 km behind you; then quiet for 30 seconds), `playerDown` (your hull under a fifth; once until it is back over half). A list of lines (one at random) or one line; at most one line every 12 seconds, and none over other radio calls. |
+
+A ship's `wingmanDevice` (see [ships.json](#shipsjson)) works whenever a hired wingman flies it, with or without a
+`wingmen.json`. The crew's ships are saved with the contract; a ship no longer there is replaced the game's way.
 
 ## Most Wanted
 
