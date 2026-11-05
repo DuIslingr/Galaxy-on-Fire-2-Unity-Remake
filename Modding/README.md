@@ -2044,6 +2044,7 @@ until locked, and its death pays the bounty.
 | `taunt` | What it says over the radio, with its face, when it is uncovered (translate with `wanted.<id>.taunt`). |
 | `music` | A track of a mod's [music](#music) folder that plays while it fights (default: the game's Most Wanted music). |
 | `damageTaken` | How much of your weapons' damage it takes, in percent: `{ "primary": 70, "secondary": 96, "Laser": 140, "my_mod:boss_bane": 200 }`. A key is a weapon kind (`primary`, `secondary`, `turret`), a weapon category as the shop names it (`Laser`, `Blaster`, `Auto-cannon`, `Thermo`, `Scatter gun`, `Rocket`, ...) or an item; the most specific one counts (the item, then its category, then its kind), anything unlisted takes 100. Other players' hits in multiplayer take all of it. |
+| `devices` | Boss devices it uses in the fight (see below). |
 | `requiredBounties` | How many of this board's mod criminals must be dead first (default 0). The game's criminals count apart. |
 | `systems` | The systems it travels in (numbers or `"mod_id:id"`), else any the player can see. |
 | `route` | `[ least, most ]` systems a trip crosses (default `[ 2, 4 ]`; `[ 1, 1 ]` keeps it in one system). |
@@ -2052,6 +2053,30 @@ until locked, and its death pays the bounty.
 
 A mod's criminals appear in free play as well as in the campaign (the game's own, from the Supernova add-on's story, stay in
 the campaign). A save keeps each one's state by its key, so adding or removing other mods doesn't move it.
+
+**Boss devices.** `"devices"` is a list of the tricks a criminal pulls in its fight (after Galaxy on Fire 3's bosses):
+
+```json
+"devices": [
+    { "type": "teleport", "everyMs": 15000, "distance": [ 1100, 2300 ], "cooldownMs": 15000 },
+    { "type": "backShield", "onHit": true, "everyMs": 10000, "durationMs": 10000, "cooldownMs": 10000 },
+    { "type": "flashGrenade", "range": [ 0, 17000 ], "facing": 80, "delayMs": 3000, "durationMs": 7000, "cooldownMs": 15000 }
+]
+```
+
+| `type` | What it does while it runs |
+|---|---|
+| `teleport` | Vanishes and comes out `distance` (`[ least, most ]` game units, default 1200-2400) from you, never in front of you, nose on you. |
+| `frontShield`, `backShield` | Stops `blockPercent` (default 100) of every hit coming within `shieldAngle` degrees (default 90) of its nose / tail: fly round it. |
+| `energyAbsorber` | Takes no damage; mends its hull by `healPercent` (default 50) of what it soaks. |
+| `radarJammer` | Your radar locks nothing and shows no ships. |
+| `flashGrenade` | Flashes `delayMs` (default 3000) after the throw: white over your view for its `durationMs`, `strength` percent (default 100) looking straight at it, nothing from 90 degrees away. |
+
+Each runs `durationMs` (default 5000), then cools down for `cooldownMs` (default 15000). When it starts: `onHit` (true: when
+hit) and `everyMs` (every so often, `chance` percent of the time, default 100) fire it; `range` (`[ least, most ]` game
+units to you), `ahead` (you within so many degrees of its nose), `notAhead` (you outside them) and `facing` (your nose within
+so many degrees of it) must all hold when given. With neither `onHit` nor `everyMs` it starts as soon as the others hold.
+In multiplayer the game running the orbit's ships plays them for its own player.
 
 ## Hangars and bars
 

@@ -73,6 +73,38 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void DevicesAreReadWithTheirTriggersAndNumbers()
+        {
+            WriteMod("w", "t_dev", "1.0", "", ("wanted.json",
+                "[ { 'id': 'boss', 'name': 'Boss', 'ship': 5, 'devices': [ " +
+                "{ 'type': 'teleport', 'everyMs': 15000, 'chance': 50, 'distance': [2000, 1000], 'cooldownMs': 15000 }, " +
+                "{ 'type': 'FrontShield', 'durationMs': 10000, 'ahead': 30, 'shieldAngle': 70, 'blockPercent': 90 }, " +
+                "{ 'type': 'flashGrenade', 'range': [0, 1500], 'facing': 80, 'strength': 70, 'colour': 'red' }, " +
+                "{ 'type': 'warp' }, { 'type': '3' } ] }, " +
+                "{ 'id': 'none', 'name': 'None', 'ship': 5, 'devices': [ { 'type': 'nope' } ] } ]"));
+            ScanAndEnable("t_dev");
+            var db = Database.Load();
+            var d = db.Wanted.Find(x => x.key == "t_dev:boss").devices;
+            Assert.AreEqual(3, d.Count, "the unknown types left out (a number isn't a type)");
+            Assert.AreEqual(Flight.NpcDeviceSpec.Kind.Teleport, d[0].kind);
+            Assert.AreEqual(15000f, d[0].everyMs);
+            Assert.AreEqual(0.5f, d[0].chance, 1e-4f);
+            Assert.AreEqual(1000f, d[0].distanceMin, "sorted");
+            Assert.AreEqual(2000f, d[0].distanceMax);
+            Assert.AreEqual(Flight.NpcDeviceSpec.Kind.FrontShield, d[1].kind, "any case");
+            Assert.AreEqual(30f, d[1].aheadDeg);
+            Assert.AreEqual(70f, d[1].shieldDeg);
+            Assert.AreEqual(0.9f, d[1].blockShare, 1e-4f);
+            Assert.AreEqual(3000f, d[2].delayMs, "the flash's default delay");
+            Assert.AreEqual(1500f, d[2].rangeMax);
+            Assert.AreEqual(0.7f, d[2].strength, 1e-4f);
+            Assert.IsNull(db.Wanted.Find(x => x.key == "t_dev:none").devices, "none valid: none");
+            string messages = AllMessages(Installed("t_dev"));
+            StringAssert.Contains("unknown device field \"colour\"", messages);
+            StringAssert.Contains("warp", messages);
+        }
+
+        [Test]
         public void InFreePlayOnlyTheModsAreOnTheBoard()
         {
             var db = Load();

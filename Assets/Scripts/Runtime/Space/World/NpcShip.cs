@@ -394,8 +394,13 @@ namespace GoF2Remake.World
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
             Target.SlowBy = (ms, factor, noTurn) => { if (Target.Alive && !Target.phased) slow.Apply(ms, factor, noTurn); };
             // remake mods: a Most Wanted criminal's weak and strong spots against the player's weapons ("damageTaken")
-            if (spec.wantedIndex >= 0 && spec.wantedIndex < database.Wanted.Count && database.Wanted[spec.wantedIndex].damageTaken is DamageTaken taken)
-                Target.PlayerWeaponFactor = item => taken.Factor(database.Item(item));
+            // and its devices (NpcDevices)
+            if (spec.wantedIndex >= 0 && spec.wantedIndex < database.Wanted.Count)
+            {
+                var wanted = database.Wanted[spec.wantedIndex];
+                if (wanted.damageTaken is DamageTaken taken) Target.PlayerWeaponFactor = item => taken.Factor(database.Item(item));
+                NpcDevices.Attach(this, owner, wanted.devices);
+            }
             SetupRole(spec);   // remake mods: its traffic role (NpcShipRoles)
             Target.displayName = !string.IsNullOrEmpty(spec.name) ? spec.name : spec.nameText >= 0 ? Localization.Get(spec.nameText) : null;
             if (spec.speed > 0f) speed = baseSpeed = spec.speed;

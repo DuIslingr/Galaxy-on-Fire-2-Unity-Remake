@@ -153,6 +153,9 @@ namespace GoF2Remake.Flight
         /// <summary>Remake mods (Data.DamageTaken: a Most Wanted criminal's "damageTaken"): the player's hits x this of the item
         /// that dealt them (lastPlayerWeapon, which every player hit sets first); null = all of it.</summary>
         [NonSerialized] public Func<int, float> PlayerWeaponFactor;
+        /// <summary>Remake mods (World.NpcDevices: a boss's front / back shield, its energy absorber): every hit's damage through
+        /// this, with the hit's direction (the bullet's velocity; zero when it has none), before the pools.</summary>
+        [NonSerialized] public Func<float, Vector3, float> HitFilter;
         /// <summary>KIPlayer+0x18: a named ship's name (the lock plate shows it instead of race and hull), null = none.</summary>
         [NonSerialized] public string displayName;
         /// <summary>A crate is waiting to be salvaged from this (dead) ship: the radar may lock it.</summary>
@@ -185,6 +188,7 @@ namespace GoF2Remake.Flight
             if (playerProof && !byNpc) return;
             if (vulnerability > 0f) amount *= 1f + vulnerability;   // remake: a weapon's vulnerability (TargetDebuffs)
             if (!byNpc && PlayerWeaponFactor != null && lastPlayerWeapon >= 0) amount *= PlayerWeaponFactor(lastPlayerWeapon);
+            if (HitFilter != null) amount = HitFilter(amount, hitVector);
             if (RemoteDamage != null) { RemoteDamage(amount, hitVector, byNpc, shieldFactor); return; }
             // (a weak spot passes on what it takes, not the overkill of the hit that destroys it)
             if (forwardTo != null && forwardTo != this && forwardFactor > 0f && forwardTo.Alive)

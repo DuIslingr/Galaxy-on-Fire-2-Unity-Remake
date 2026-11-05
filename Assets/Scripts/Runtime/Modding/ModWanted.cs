@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using GoF2Remake.Data;
+using GoF2Remake.Flight;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -23,7 +24,7 @@ namespace GoF2Remake.Modding
         {
             "id", "name", "description", "board", "race", "ship", "weapon", "secondary", "hitpoints", "reward", "loot", "lootAmount",
             "wingmen", "requiredBounties", "available", "systems", "route", "character", "portraitParts", "gender",
-            "escorts", "music", "taunt", "damageTaken",
+            "escorts", "music", "taunt", "damageTaken", "devices",
         };
 
         /// <summary>Database.Load (ModContent.Apply, after the ships, items and systems are numbered): every active mod's
@@ -121,6 +122,7 @@ namespace GoF2Remake.Modding
             }
             w.taunt = ModContent.TranslatedText(mod, $"wanted.{id}.taunt", ModJson.Text(o, "taunt"));
             if (ModJson.Get(o, "damageTaken") is JToken dt) w.damageTaken = ReadDamageTaken(db, mod, dt, where);
+            if (ModJson.Get(o, "devices") is JToken dv) w.devices = ReadDevices(mod, dv, where);
             if (ModJson.Get(o, "portraitParts") is JArray pp && pp.Count == 5) w.portraitParts = new[] { (int)pp[0], (int)pp[1], (int)pp[2], (int)pp[3], (int)pp[4] };
             else w.portraitParts = new[] { Mathf.Clamp(w.race, 0, 3), 0, w.male ? 0 : 1, 0, 0 };
             if (w.character != null && ModCharacters.Find(w.character) == null)
@@ -149,6 +151,62 @@ namespace GoF2Remake.Modding
                 else Warn(mod, $"{ModJson.Where(p, File)}: \"damageTaken\" {p.Name} is no weapon kind, category or item (ignored)");
             }
             return taken.Any ? taken : null;
+        }
+
+        static readonly HashSet<string> DeviceFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "type", "durationMs", "cooldownMs", "onHit", "everyMs", "chance", "range", "ahead", "notAhead", "facing",
+            "delayMs", "strength", "distance", "blockPercent", "shieldAngle", "healPercent",
+        };
+
+        /// <summary>"devices": [ { "type": "teleport" | "frontShield" | "backShield" | "energyAbsorber" | "radarJammer" |
+        /// "flashGrenade", the run, its triggers and its numbers }, ... ] (Flight.NpcDeviceSpec); null when none is valid.</summary>
+        internal static List<NpcDeviceSpec> ReadDevices(ModInfo mod, JToken t, string where)
+        {
+            if (!(t is JArray list)) throw new ModJsonException($"{where}: \"devices\" is a list [ {{ \"type\": ... }}, ... ]");
+            var specs = new List<NpcDeviceSpec>();
+            foreach (var d in list)
+            {
+                string at = ModJson.Where(d, File);
+                if (!(d is JObject o)) { Warn(mod, $"{at}: each device is an object {{ \"type\": ... }} (left out)"); continue; }
+                foreach (var p in o.Properties())
+                    if (!DeviceFields.Contains(p.Name)) Warn(mod, $"{ModJson.Where(p, File)}: unknown device field \"{p.Name}\" (ignored)");
+                string type = ModJson.Str(o, "type");
+                if (!Enum.TryParse(type ?? "", true, out NpcDeviceSpec.Kind kind) || int.TryParse(type, out _))
+                { Warn(mod, $"{at}: device \"type\" {type ?? "(missing)"} is none of teleport, frontShield, backShield, energyAbsorber, radarJammer, flashGrenade (left out)"); continue; }
+                var s = new NpcDeviceSpec { kind = kind };
+                s.durationMs = Mathf.Clamp(ModJson.Float(o, "durationMs", s.durationMs, File), 1f, 600000f);
+                s.cooldownMs = Mathf.Clamp(ModJson.Float(o, "cooldownMs", s.cooldownMs, File), 0f, 600000f);
+                s.onHit = ModJson.Bool(o, "onHit", false, File);
+                s.everyMs = Mathf.Clamp(ModJson.Float(o, "everyMs", 0f, File), 0f, 600000f);
+                s.chance = Mathf.Clamp01(ModJson.Float(o, "chance", 100f, File) / 100f);
+                (s.rangeMin, s.rangeMax) = Pair(mod, o, "range", 0f, 0f);
+                s.aheadDeg = Mathf.Clamp(ModJson.Float(o, "ahead", 0f, File), 0f, 180f);
+                s.notAheadDeg = Mathf.Clamp(ModJson.Float(o, "notAhead", 0f, File), 0f, 180f);
+                s.facingDeg = Mathf.Clamp(ModJson.Float(o, "facing", 0f, File), 0f, 180f);
+                s.delayMs = Mathf.Clamp(ModJson.Float(o, "delayMs", kind == NpcDeviceSpec.Kind.FlashGrenade ? 3000f : 0f, File), 0f, 60000f);
+                s.strength = Mathf.Clamp01(ModJson.Float(o, "strength", 100f, File) / 100f);
+                (s.distanceMin, s.distanceMax) = Pair(mod, o, "distance", s.distanceMin, s.distanceMax);
+                s.blockShare = Mathf.Clamp01(ModJson.Float(o, "blockPercent", 100f, File) / 100f);
+                s.shieldDeg = Mathf.Clamp(ModJson.Float(o, "shieldAngle", s.shieldDeg, File), 1f, 180f);
+                s.healShare = Mathf.Clamp(ModJson.Float(o, "healPercent", 50f, File) / 100f, 0f, 10f);
+                specs.Add(s);
+            }
+            return specs.Count > 0 ? specs : null;
+        }
+
+        /// <summary>[ least, most ] (game units), sorted; the fallback when it is missing or not two numbers (warned).</summary>
+        static (float, float) Pair(ModInfo mod, JObject o, string field, float lo, float hi)
+        {
+            var t = ModJson.Get(o, field);
+            if (t == null) return (lo, hi);
+            if (t is JArray a && a.Count == 2 && a[0].Type is JTokenType.Integer or JTokenType.Float && a[1].Type is JTokenType.Integer or JTokenType.Float)
+            {
+                float x = Mathf.Max(0f, (float)a[0]), y = Mathf.Max(0f, (float)a[1]);
+                return (Mathf.Min(x, y), Mathf.Max(x, y));
+            }
+            Warn(mod, $"{ModJson.Where(t, File)}: \"{field}\" is [ least, most ] (ignored)");
+            return (lo, hi);
         }
 
         static int Item(Database db, JObject o, string field, string where, int fallback)

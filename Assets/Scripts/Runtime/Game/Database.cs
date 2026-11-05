@@ -492,9 +492,11 @@ namespace GoF2Remake.Data
         // Remake mods (Modding.ModWanted, a mod's wanted.json): its key ("mod_id:id"; null = the game's), its own texts and
         // face (a mod character), the systems it roams (null = anywhere), its trips' length in systems, a rocket launcher, and
         // when it is on its board ("available", a condition); its escorts' ships (null = the race's fighters), its own fight
-        // music (a mod track) and what it says when uncovered; what it takes of the player's weapons' damage (null = all).
+        // music (a mod track) and what it says when uncovered; what it takes of the player's weapons' damage (null = all) and
+        // its devices (Flight.NpcDeviceSpec, World.NpcDevices; null = none).
         [System.NonSerialized] public string key, description, character, available, availableWhere, music, taunt;
         [System.NonSerialized] public DamageTaken damageTaken;
+        [System.NonSerialized] public List<NpcDeviceSpec> devices;
         [System.NonSerialized] public int[] systems, escorts;
         [System.NonSerialized] public int routeMin = 2, routeMax = 4, secondary = -1;
         [System.NonSerialized] public Modding.ModInfo mod;

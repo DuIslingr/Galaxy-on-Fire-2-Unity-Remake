@@ -1,0 +1,135 @@
+// NpcDevices.cs
+// Remake (2026-11-04, for mods, after Galaxy on Fire 3's boss devices; the GoF3 Ships importer's bosses): a Most Wanted
+// criminal's devices (wanted.json "devices", Flight.NpcDeviceSpec / NpcDeviceState for when each starts), on its ship while it
+// flies against the player. What each does (GoF3's boss device lore, BD_*_Lore):
+//   teleport       it vanishes and comes out 'distance' from the player, outside the player's front 60 degrees, nose on
+//                  them ("They teleport nearby, lined up for a devastating series of blasts"); a flash at both ends
+//   frontShield,   while it runs, a hit from within 'shieldAngle' of the nose (the tail) is stopped ("blocking almost 100% of
+//   backShield     all primary and secondary weapon damage. Can be defeated by attacking from a different vector")
+//   energyAbsorber while it runs every hit is soaked, the hull mended by 'healPercent' of it ("It absorbs any and all weapon
+//                  energy ... Then it redirects this energy into shield regeneration": GoF2's ships have no shield)
+//   radarJammer    the player's radar for its time (Flight.RadarJam: no lock, no ship markers)
+//   flashGrenade   thrown, it flashes 'delayMs' later: white over the player's view (Flight.ScreenFlash) for its time, as
+//                  strong as the player looks at it (none from 90 degrees away)
+// The single player's game only: in multiplayer the authority runs them for its own player (the others see the teleport).
+
+using System.Collections.Generic;
+using GoF2Remake.Data;
+using GoF2Remake.Flight;
+using GoF2Remake.Visuals;
+using UnityEngine;
+
+namespace GoF2Remake.World
+{
+    public class NpcDevices : MonoBehaviour
+    {
+        const float M = 0.05f;
+        const float TeleportFrontDeg = 60f;
+
+        NpcShip ship;
+        Traffic traffic;
+        readonly List<NpcDeviceState> states = new List<NpcDeviceState>();
+        bool hit;
+
+        public static NpcDevices Attach(NpcShip ship, Traffic traffic, List<NpcDeviceSpec> specs)
+        {
+            if (specs == null || specs.Count == 0) return null;
+            var d = ship.gameObject.AddComponent<NpcDevices>();
+            d.ship = ship;
+            d.traffic = traffic;
+            foreach (var s in specs) d.states.Add(new NpcDeviceState(s));
+            ship.Target.Damaged += (t, dmg, byNpc) => d.hit = true;
+            ship.Target.HitFilter = d.Filter;
+            return d;
+        }
+
+        void Update()
+        {
+            if (ship == null || ship.Target == null || !ship.Target.Alive) { enabled = false; return; }
+            var player = traffic != null ? traffic.Player : null;
+            var view = new NpcDeviceState.View { hit = hit };
+            hit = false;
+            if (player != null && player.Alive && player.isActiveAndEnabled && ship.Target.hostileToPlayer && !ship.Asleep
+                && ship.Current == NpcShip.State.Fly && !ship.Hp.empDisabled)
+            {
+                var d = player.transform.position - transform.position;
+                view.playerNear = true;
+                view.distance = d.magnitude / M;
+                view.offNoseDeg = Vector3.Angle(transform.forward, d);
+                view.playerFacingDeg = Vector3.Angle(player.transform.forward, -d);
+            }
+            float dt = Time.deltaTime * 1000f;
+            foreach (var s in states)
+            {
+                if (s.Step(dt, view, Random.value, out bool flashed)) Begin(s, player);
+                if (flashed && player != null && player.Alive) Flash(s, player);
+            }
+        }
+
+        void Begin(NpcDeviceState s, Target player)
+        {
+            string name = ship.Target.displayName ?? Standing.RaceName(ship.Race);
+            switch (s.spec.kind)
+            {
+                case NpcDeviceSpec.Kind.Teleport: Teleport(s.spec, player); break;
+                case NpcDeviceSpec.Kind.FrontShield:
+                    Say(string.Format(Localization.Extra("bossFrontShield", "{0}: front shield up"), name)); break;
+                case NpcDeviceSpec.Kind.BackShield:
+                    Say(string.Format(Localization.Extra("bossBackShield", "{0}: back shield up"), name)); break;
+                case NpcDeviceSpec.Kind.EnergyAbsorber:
+                    Say(string.Format(Localization.Extra("bossEnergyAbsorber", "{0}: energy absorber on. Hold your fire!"), name)); break;
+                case NpcDeviceSpec.Kind.RadarJammer:
+                    RadarJam.Start(s.spec.durationMs);
+                    Say(Localization.Extra("bossRadarJammer", "Radar jammed!")); break;
+                case NpcDeviceSpec.Kind.FlashGrenade:
+                    Say(string.Format(Localization.Extra("bossFlashGrenade", "{0} threw a flash grenade: look away!"), name)); break;
+            }
+        }
+
+        void Say(string text) => traffic?.Warn(text);
+
+        /// <summary>Out 'distance' from the player in a direction outside their front 60 degrees, nose on them.</summary>
+        void Teleport(NpcDeviceSpec spec, Target player)
+        {
+            if (player == null) return;
+            var p = player.transform.position;
+            var dir = Random.onUnitSphere;
+            for (int i = 0; i < 12 && Vector3.Angle(player.transform.forward, dir) < TeleportFrontDeg; i++) dir = Random.onUnitSphere;
+            if (Vector3.Angle(player.transform.forward, dir) < TeleportFrontDeg) dir = -player.transform.forward;
+            var to = p + dir * (Random.Range(spec.distanceMin, spec.distanceMax) * M);
+            Explosion.Spawn(transform.position, 0.4f, false);
+            transform.SetPositionAndRotation(to, Quaternion.LookRotation(p - to, player.transform.up));
+            Explosion.Spawn(to, 0.4f);
+        }
+
+        void Flash(NpcDeviceState s, Target player)
+        {
+            Explosion.Spawn(transform.position, 0.3f);
+            float facing = Vector3.Angle(player.transform.forward, transform.position - player.transform.position);
+            float a = s.FlashOpacity(facing);
+            if (a > 0.02f) ScreenFlash.Start(a, s.spec.durationMs);
+        }
+
+        /// <summary>Target.HitFilter: the shields stop what comes at their side, the absorber soaks everything.</summary>
+        float Filter(float amount, Vector3 hitVector)
+        {
+            if (amount <= 0f) return amount;
+            foreach (var s in states)
+            {
+                if (!s.Active) continue;
+                if (s.spec.kind == NpcDeviceSpec.Kind.EnergyAbsorber)
+                {
+                    var hp = ship.Hp;
+                    if (hp != null && s.spec.healShare > 0f)
+                    {
+                        hp.hull = Mathf.Min(hp.maxHull, hp.hull + Mathf.Max(1, Mathf.RoundToInt(amount * s.spec.healShare)));
+                        ship.Target.hp = hp.hull;
+                    }
+                    return 0f;
+                }
+                if (hitVector.sqrMagnitude > 1e-6f) amount *= s.ShieldPass(Vector3.Angle(transform.forward, -hitVector));
+            }
+            return amount;
+        }
+    }
+}

@@ -228,6 +228,7 @@ namespace GoF2Remake.Flight
             // Remake: a ship gone off the lock (another player cloaking, a hidden proxy) loses a lock already held too; the
             // missiles homing on it lose theirs for good (Gun).
             if (Locked != null && (!Locked.Alive || !Locked.gameObject.activeInHierarchy || Locked.untargetable || Locked.cloaked)) Locked = null;
+            if (RadarJam.Active) Locked = null;   // remake: a boss's radar jammer (the scanner holds nothing)
             if (weapons != null) weapons.LockTarget = Locked;
             // PlayerEgo::isInTurretMode: the turret view neither locks ships nor keeps the tractor beam pulling.
             bool turretView = weapons != null && weapons.TurretView;
