@@ -2261,6 +2261,21 @@ limited to a station like the others), with the player as `@trigger` and the wre
 In multiplayer the wreck is in the games it was spawned for (each player of `@a` gets their own); the other players see it
 but can't dock at it. Spawn it for one player (`@trigger`, `@p`) when a squad shares the orbit.
 
+**Pickups.** The `pickup` step (the command `pickup @a <station> <x y z> [unmarked] [named <name>]`) puts a glowing orb at
+those coordinates of an orbit, its name on the HUD (`"marked": false` leaves the name off, for a field of many). It is only
+shown: to collect it, put an **On** "near" at the same point (a radius of 100 m or more: the game checks four times a
+second, and racing ships are fast) whose steps remove it (`"action": "remove"` with its name; `"clear"` takes them all) and
+count it. The mission's end clears them. The GoF3 Ships mod's races are made this way:
+
+```json
+{ "type": "pickup", "station": "{st}", "at": "0 4000 30000", "name": "Checkpoint" },
+{ "type": "on", "trigger": "near", "station": "{st}", "at": "0 4000 30000", "radius": 150, "steps": [
+    { "type": "if", "condition": "cp == 0", "then": [
+        { "type": "set", "variable": "cp", "value": "1" },
+        { "type": "pickup", "action": "remove", "name": "Checkpoint" },
+        { "type": "sound", "sound": "boost" } ] } ] }
+```
+
 **Wormholes.** The `wormhole` step (the **Open Wormhole** node; the command `wormhole @a <station> [x y z] to <station | void>
 [for <seconds>]`) opens a wormhole like the Void's in a station's orbit, at the coordinates or about 4 km out beside the station's launch path (keep your own spot 2 km, 40000 units, off the line
 straight ahead of the station, x 0 / y 0: ships launch along it and would be pulled in):
@@ -2335,7 +2350,7 @@ the default; `@trigger` the player a When block is about; any selector). The ste
 |---|---|
 | Story | `dialog` (pages: speaker, text, voice), `radio` (speaker, text, voice), `objective` (text, station), `title` (title, subtitle, seconds), `note` (text: a comment) |
 | Flow | `wait` (seconds), `waituntil` (condition, timeout), `if` (condition, `then`, `else`), `while` (condition, `steps`), `repeat` (count, as, `steps`), `parallel` (`steps`: beside the rest), `every` (seconds, `steps`), `on` (trigger: died, docked, launched, kill, cleared, entered, near, respawned, hacked, pad (docked at a station's pad outside), joined, left, pvpkill; station; near: at "x y z", radius; `steps`), `ask` / `vote` (question, speaker, seconds, `answers`: [{ text, steps }]; a vote's `none` runs when nobody voted), `random` (`branches`: [{ weight, steps }]), `set` (variable, value), `checkpoint` (name), `startquest` (mission), `startevent` (event, settings), `complete` (reward, title), `fail` (title), `stop` |
-| Places | `goto` (station, `dock` true: docked there, false: in its orbit, objective), `waypoint` (station, at), `wormhole` (station, at, to, void, seconds; no station: closed), `target` (station), `questorbit` (station, on), `system` (system, action: show / hide / reset), `restrict` (what: jumps / docking / all / khador (only the Khador Drive) / off), `respawn` (station, at, spread, delay), `teleport` (station, dock, at) |
+| Places | `goto` (station, `dock` true: docked there, false: in its orbit, objective), `waypoint` (station, at), `pickup` (action: show / remove / clear, station, at, name, marked: see below), `wormhole` (station, at, to, void, seconds; no station: closed), `target` (station), `questorbit` (station, on), `system` (system, action: show / hide / reset), `restrict` (what: jumps / docking / all / khador (only the Khador Drive) / off), `respawn` (station, at, spread, delay), `teleport` (station, dock, at) |
 | Ships | `fight` (station, ships: ship / count / race / behaviour, name, quiet; ends when none is left), `spawn` (ship, count, race, behaviour, name, at, turrets, hull, guns: their hull and gun damage x that), `spawntype` (npc: an [NPC ship type](#npc-ships) like `pirate_boss` or `mod_id:id`, name, at), `wreck` (race, name, at: a hackable freighter wreck), `shipgoto` (ship, to, speed, radius, fight, then), `shiproute` (ship, route "place / place", loop, ...), `shipfollow` (ship, leader, offset, escort, speed), `shipattack` (ship, target), `shipaction` (ship, action: hold / resume / jump / dock / flee, seconds), `provoke` (race, within) |
 | The player | `reward` (credits, items, title), `give` (item, amount, mount), `cargo` (item, amount, station: waits until the hold has it; `take`: then handed in, out of the hold), `take` (item, amount: empty for all, mounted: the mounted ones too, e.g. the Khador Drive), `credits` (amount), `ship` (hull, own), `lend` (hull, keep, back: see [Loaner ships](#loaner-ships)), `heal`, `ammo`, `kill`, `reveal`, `peace` |
 | Cutscenes | `cutscene` (letterbox, freeze, invulnerable), `camera` (from, to, seconds, look, follow, fov, shake), `chasecamera`, `cutsceneend`, `fade` (direction: out / in / clear, seconds, colour), `letterbox` (on) |
@@ -2385,7 +2400,9 @@ ship: `player 0 0 20000` is far ahead of it), `ship <name> [x y z]`. A place rel
 the order arrives (a route doesn't move along with them); Follow and Attack keep after their ship.
 
 To wait for a ship, two values work in **Wait Until** / **If** (an **Expression** node): `alive(Blue Wing)` (how many of
-them still fly) and `distance(Blue Wing, 0, 0, 30000)` (game units from the nearest of them to that point, -1 when none).
+them still fly) and `distance(Blue Wing, 0, 0, 30000)` (game units from the nearest of them to that point, -1 when none);
+`distance(player, 0, 0, 30000)` is the same for the event's players alive in space, so a graph can ask a player to stay near
+a point (an **Every** that counts the seconds while it is 2000 or less: a scan).
 A ship that docked, jumped out, vanished or fled is gone but nobody's kill, and an event's ships never come back by
 themselves (the orbit's own fighters relaunch from the station, a graph's don't).
 
