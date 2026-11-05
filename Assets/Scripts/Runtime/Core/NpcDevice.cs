@@ -13,7 +13,7 @@ namespace GoF2Remake.Flight
 {
     public class NpcDeviceSpec
     {
-        public enum Kind { Teleport, FrontShield, BackShield, EnergyAbsorber, RadarJammer, FlashGrenade }
+        public enum Kind { Teleport, FrontShield, BackShield, EnergyAbsorber, RadarJammer, FlashGrenade, MindControl, BombSpreader }
 
         public Kind kind;
         public float durationMs = 5000f, cooldownMs = 15000f;
@@ -30,6 +30,8 @@ namespace GoF2Remake.Flight
         public float blockShare = 1f;              // the shields: the share of a hit stopped
         public float shieldDeg = 90f;              // the shields: hits coming within this angle of the nose (the tail) are stopped
         public float healShare = 0.5f;             // EnergyAbsorber: the hull mended by this share of what it soaks
+        public float bombEveryMs = 1200f;          // BombSpreader: a mine this often while it runs (the first at the start)
+        public float damage = 350f;                // BombSpreader: a mine's blast (GoF2's AMR Saber)
 
         public bool HasEvent => onHit || everyMs > 0f;
     }
@@ -38,7 +40,7 @@ namespace GoF2Remake.Flight
     public class NpcDeviceState
     {
         public readonly NpcDeviceSpec spec;
-        float activeMs, cooldownMs, intervalMs, delayMs;
+        float activeMs, cooldownMs, intervalMs, delayMs, bombMs;
 
         public NpcDeviceState(NpcDeviceSpec spec)
         {
@@ -50,6 +52,8 @@ namespace GoF2Remake.Flight
         public bool Ready => activeMs <= 0f && cooldownMs <= 0f;
         /// <summary>FlashGrenade: thrown, the flash still to come (ms).</summary>
         public bool Pending => delayMs > 0f;
+        /// <summary>BombSpreader: the mines to drop after the last Step.</summary>
+        public int DueBombs { get; private set; }
 
         /// <summary>What the ship sees of the player this frame (Step's conditions).</summary>
         public struct View
@@ -66,9 +70,12 @@ namespace GoF2Remake.Flight
         public bool Step(float dtMs, in View v, float random01, out bool flashed)
         {
             flashed = false;
+            DueBombs = 0;
             if (delayMs > 0f && (delayMs -= dtMs) <= 0f) flashed = true;
             if (activeMs > 0f)
             {
+                if (spec.kind == NpcDeviceSpec.Kind.BombSpreader && spec.bombEveryMs > 0f)
+                    for (bombMs -= dtMs; bombMs <= 0f && activeMs - dtMs > 0f; bombMs += spec.bombEveryMs) DueBombs++;
                 if ((activeMs -= dtMs) <= 0f) cooldownMs = spec.cooldownMs;
                 return false;
             }
@@ -80,6 +87,7 @@ namespace GoF2Remake.Flight
             if (!evt || !Conditions(v)) return false;
             activeMs = System.Math.Max(1f, spec.durationMs);
             if (spec.kind == NpcDeviceSpec.Kind.FlashGrenade) delayMs = System.Math.Max(1f, spec.delayMs);
+            if (spec.kind == NpcDeviceSpec.Kind.BombSpreader) { DueBombs = 1; bombMs = spec.bombEveryMs; }
             return true;
         }
 
@@ -107,6 +115,6 @@ namespace GoF2Remake.Flight
         public float FlashOpacity(float facingDeg) =>
             facingDeg >= 90f ? 0f : spec.strength * (float)System.Math.Cos(facingDeg * System.Math.PI / 180.0);
 
-        public void Reset() { activeMs = cooldownMs = delayMs = 0f; intervalMs = spec.everyMs; }
+        public void Reset() { activeMs = cooldownMs = delayMs = bombMs = 0f; intervalMs = spec.everyMs; DueBombs = 0; }
     }
 }

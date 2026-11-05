@@ -272,6 +272,9 @@ namespace GoF2Remake.World
 
         // wingman (KIPlayer+0xd8 / +0xdc / +0xe0 / +0xe4)
         public bool IsWingman { get; private set; }
+        /// <summary>Remake mods (NpcDevices: a boss's mind control): ms left of attacking the player (a wingman turned on its
+        /// leader), 0 = itself.</summary>
+        float mindControlMs;
         /// <summary>PlayerFixedObject::getDockingType (ObjectDocking.DropOff / Pickup / Hackable, 0 = not dockable); level
         /// scripts change it.</summary>
         public int DockingType { get; set; }
@@ -635,7 +638,8 @@ namespace GoF2Remake.World
             }
             reselectTimer += dtMs;
             boostTimer += dtMs;
-            if (IsWingman) UpdateWingman(); else UpdateTargeting();
+            if (mindControlMs > 0f) UpdateMindControlled(dtMs);
+            else if (IsWingman) UpdateWingman(); else UpdateTargeting();
             if (IsJumper && followingWaypoint) { jumpMs += dtMs; if (jumpMs >= 20000f) { jumpMs = 0f; Current = State.JumpingOut; } }
             else jumpMs = 0f;
             UpdateBoost(dtMs);

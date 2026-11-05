@@ -11,6 +11,11 @@
 //   radarJammer    the player's radar for its time (Flight.RadarJam: no lock, no ship markers)
 //   flashGrenade   thrown, it flashes 'delayMs' later: white over the player's view (Flight.ScreenFlash) for its time, as
 //                  strong as the player looks at it (none from 90 degrees away)
+//   mindControl    the player's wingmen turn on them for its time, each until the player hits it ("Can cause wingmen to
+//                  attack their leader ... Shooting them can get them to regain their senses"; NpcShip.MindControl)
+//   bombSpreader   a proximity mine behind it every 'bombEveryMs' while it runs, flung within 45 degrees (GoF3's spreadAngle;
+//                  the rifts' RiftMine), each blasting the player's ship for 'damage' ("most of these devices scatter a
+//                  large amount of mines")
 // The single player's game only: in multiplayer the authority runs them for its own player (the others see the teleport).
 
 using System.Collections.Generic;
@@ -28,6 +33,7 @@ namespace GoF2Remake.World
 
         NpcShip ship;
         Traffic traffic;
+        SpaceLevel level;
         readonly List<NpcDeviceState> states = new List<NpcDeviceState>();
         bool hit;
 
@@ -37,6 +43,7 @@ namespace GoF2Remake.World
             var d = ship.gameObject.AddComponent<NpcDevices>();
             d.ship = ship;
             d.traffic = traffic;
+            d.level = FindAnyObjectByType<SpaceLevel>();
             foreach (var s in specs) d.states.Add(new NpcDeviceState(s));
             ship.Target.Damaged += (t, dmg, byNpc) => d.hit = true;
             ship.Target.HitFilter = d.Filter;
@@ -63,6 +70,7 @@ namespace GoF2Remake.World
             {
                 if (s.Step(dt, view, Random.value, out bool flashed)) Begin(s, player);
                 if (flashed && player != null && player.Alive) Flash(s, player);
+                for (int i = 0; i < s.DueBombs; i++) RiftMine.Drop(level, null, transform.position, -transform.forward, s.spec.damage);
             }
         }
 
@@ -83,6 +91,13 @@ namespace GoF2Remake.World
                     Say(Localization.Extra("bossRadarJammer", "Radar jammed!")); break;
                 case NpcDeviceSpec.Kind.FlashGrenade:
                     Say(string.Format(Localization.Extra("bossFlashGrenade", "{0} threw a flash grenade: look away!"), name)); break;
+                case NpcDeviceSpec.Kind.MindControl:
+                    var wingmen = traffic != null ? traffic.LivingWingmen : null;
+                    if (wingmen == null || wingmen.Count == 0) break;
+                    foreach (var w in wingmen) w.MindControl(s.spec.durationMs);
+                    Say(string.Format(Localization.Extra("bossMindControl", "{0} took over your wingmen! Hit them to wake them up."), name)); break;
+                case NpcDeviceSpec.Kind.BombSpreader:
+                    Say(string.Format(Localization.Extra("bossBombSpreader", "{0} is laying mines!"), name)); break;
             }
         }
 

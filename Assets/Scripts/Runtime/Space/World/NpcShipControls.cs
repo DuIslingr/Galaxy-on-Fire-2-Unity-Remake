@@ -150,6 +150,28 @@ namespace GoF2Remake.World
         // ---- wingman ------------------------------------------------------------------------------------------
 
         /// <summary>KIPlayer::setWingman(true, slot) + the createWingmen setup; 'armed' false in a Challenge.</summary>
+        /// <summary>Remake mods (NpcDevices, after GoF3's boss Mind Control: "Can cause wingmen to attack their leader ...
+        /// Shooting them can get them to regain their senses"): it turns on the player for 'ms', until the player hits it.</summary>
+        public void MindControl(float ms)
+        {
+            if (Current != State.Fly || !Target.Alive) return;
+            mindControlMs = Mathf.Max(mindControlMs, ms);
+        }
+
+        public bool MindControlled => mindControlMs > 0f;
+
+        /// <summary>Under mind control: the player its target, until the time is up.</summary>
+        void UpdateMindControlled(float dtMs)
+        {
+            mindControlMs = Mathf.Max(0f, mindControlMs - dtMs);
+            var player = traffic != null ? traffic.Player : null;
+            if (player == null || !player.Alive) { mindControlMs = 0f; return; }
+            target = player;
+            targetPos = player.transform.position;
+            attacking = true;
+            followingWaypoint = false;
+        }
+
         public void MakeWingman(int slot, bool armed)
         {
             IsWingman = true;

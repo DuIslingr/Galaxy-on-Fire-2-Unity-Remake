@@ -157,6 +157,7 @@ namespace GoF2Remake.World
         /// <summary>Player::damage friendly-fire bookkeeping (§4.5), hits by the player only.</summary>
         void OnDamaged(Target t, int dmg, bool byNpc)
         {
+            if (!byNpc && mindControlMs > 0f) mindControlMs = 0f;   // remake mods: the player's hit breaks a mind control
             // Player::damage on a Most Wanted criminal (+0x3e): Level::attackWanted instead of the friendly-fire rules.
             if (!byNpc && Spec.wantedIndex >= 0) { traffic.AttackWanted(this, dmg); return; }
             // Player::damage 0xafd80: hitting a pirate in Loma arms and alarms them all and revokes the toll.

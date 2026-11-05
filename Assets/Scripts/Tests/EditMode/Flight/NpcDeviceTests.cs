@@ -2,7 +2,7 @@
 // Feature: docs/notes/combat-equipment.md "Boss devices", Modding/README.md "Most Wanted": a criminal's device (Flight.NpcDevice,
 // after GoF3's boss devices): its events fire it (a hit, an interval x its chance) while its conditions on the player hold
 // (range, angles); without an event the conditions alone; then its run, then its cooldown; the flash goes off after its
-// delay, weaker the further the player looks away; the shields stop only their side.
+// delay, weaker the further the player looks away; the shields stop only their side; the bomb spreader's mines.
 
 using GoF2Remake.Flight;
 using NUnit.Framework;
@@ -67,6 +67,18 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0.8f, s.FlashOpacity(0f), 1e-4f);
             Assert.AreEqual(0.4f, s.FlashOpacity(60f), 1e-4f);
             Assert.AreEqual(0f, s.FlashOpacity(95f), "looking away");
+        }
+
+        [Test]
+        public void TheBombSpreaderDropsAMineAtTheStartAndThenEveryInterval()
+        {
+            var s = new NpcDeviceState(new NpcDeviceSpec { kind = NpcDeviceSpec.Kind.BombSpreader, durationMs = 6000f, bombEveryMs = 1200f });
+            Assert.IsTrue(s.Step(16f, Near(), 0f, out _));
+            int bombs = s.DueBombs;
+            Assert.AreEqual(1, bombs, "one at the start");
+            for (int i = 0; i < 400; i++) { s.Step(20f, Near(), 0f, out _); bombs += s.DueBombs; }
+            Assert.AreEqual(5, bombs, "0, 1.2, 2.4, 3.6, 4.8 s: none at the end of its 6 s");
+            Assert.IsFalse(s.Active);
         }
 
         [Test]

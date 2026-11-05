@@ -101,9 +101,12 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   direction from the bullet velocity; the absorber mends the hull, GoF2's NPCs have no shield), radar jammer
   (`Flight.RadarJam`: `Navigation.RadarOff`, `CombatRadar` drops the lock, `CombatView` hides the markers), flash grenade
   (`Flight.ScreenFlash`, `FlightHud`'s white layer, opacity x cos of the player's look off the ship, fading by the square
-  of what is left). Only the orbit's authority runs `NpcShip`s (clients show proxies), so its own player alone is jammed
-  or blinded. Not done: mind control (wingmen turning on the player), bomb spreader, insanity, smart bombs, the shields'
-  and absorber's own look (only a HUD line says it is up). Tests `NpcDeviceTests`, `ModWantedTests`.
+  of what is left), mind control (`NpcShip.MindControl` on `Traffic.LivingWingmen`: `UpdateMindControlled` makes the
+  player its target, `UpdateRelations` hostile; the player's hit ends it in `OnDamaged`; the player is already in a
+  wingman's enemy list, so its shots hit), bomb spreader (`NpcDeviceState.DueBombs`: one at the start, then every
+  bombEveryMs while it runs; the rifts' `RiftMine` behind the ship). Only the orbit's authority runs `NpcShip`s (clients
+  show proxies), so its own player alone is jammed, blinded or betrayed. Not done: GoF3's insanity and smart bombs, the
+  shields' and absorber's own look (only a HUD line says it is up). Tests `NpcDeviceTests`, `ModWantedTests`.
 - **Devices** (remake, for mods: Galaxy on Fire 3's player devices, the GoF3 Ships importer's items; `Flight.Device` plain
   C# + `Flight.Slow`, `PlayerDevices` / `PlayerDevicesEffects`; Modding/README.md "Devices"): a mounted item with
   `device` (attr 150, 1-7; 150-160, past the tractor beam's 136 / 137) on a seatless cabin, its own one-per-ship kind per type (`Shop.KindOf` = `Device.KindBase`

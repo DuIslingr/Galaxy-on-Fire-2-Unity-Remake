@@ -156,11 +156,12 @@ namespace GoF2Remake.Modding
         static readonly HashSet<string> DeviceFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "type", "durationMs", "cooldownMs", "onHit", "everyMs", "chance", "range", "ahead", "notAhead", "facing",
-            "delayMs", "strength", "distance", "blockPercent", "shieldAngle", "healPercent",
+            "delayMs", "strength", "distance", "blockPercent", "shieldAngle", "healPercent", "bombEveryMs", "damage",
         };
 
         /// <summary>"devices": [ { "type": "teleport" | "frontShield" | "backShield" | "energyAbsorber" | "radarJammer" |
-        /// "flashGrenade", the run, its triggers and its numbers }, ... ] (Flight.NpcDeviceSpec); null when none is valid.</summary>
+        /// "flashGrenade" | "mindControl" | "bombSpreader", the run, its triggers and its numbers }, ... ] (Flight.NpcDeviceSpec);
+        /// null when none is valid.</summary>
         internal static List<NpcDeviceSpec> ReadDevices(ModInfo mod, JToken t, string where)
         {
             if (!(t is JArray list)) throw new ModJsonException($"{where}: \"devices\" is a list [ {{ \"type\": ... }}, ... ]");
@@ -173,7 +174,7 @@ namespace GoF2Remake.Modding
                     if (!DeviceFields.Contains(p.Name)) Warn(mod, $"{ModJson.Where(p, File)}: unknown device field \"{p.Name}\" (ignored)");
                 string type = ModJson.Str(o, "type");
                 if (!Enum.TryParse(type ?? "", true, out NpcDeviceSpec.Kind kind) || int.TryParse(type, out _))
-                { Warn(mod, $"{at}: device \"type\" {type ?? "(missing)"} is none of teleport, frontShield, backShield, energyAbsorber, radarJammer, flashGrenade (left out)"); continue; }
+                { Warn(mod, $"{at}: device \"type\" {type ?? "(missing)"} is none of teleport, frontShield, backShield, energyAbsorber, radarJammer, flashGrenade, mindControl, bombSpreader (left out)"); continue; }
                 var s = new NpcDeviceSpec { kind = kind };
                 s.durationMs = Mathf.Clamp(ModJson.Float(o, "durationMs", s.durationMs, File), 1f, 600000f);
                 s.cooldownMs = Mathf.Clamp(ModJson.Float(o, "cooldownMs", s.cooldownMs, File), 0f, 600000f);
@@ -190,6 +191,8 @@ namespace GoF2Remake.Modding
                 s.blockShare = Mathf.Clamp01(ModJson.Float(o, "blockPercent", 100f, File) / 100f);
                 s.shieldDeg = Mathf.Clamp(ModJson.Float(o, "shieldAngle", s.shieldDeg, File), 1f, 180f);
                 s.healShare = Mathf.Clamp(ModJson.Float(o, "healPercent", 50f, File) / 100f, 0f, 10f);
+                s.bombEveryMs = Mathf.Clamp(ModJson.Float(o, "bombEveryMs", s.bombEveryMs, File), 100f, 60000f);
+                s.damage = Mathf.Clamp(ModJson.Float(o, "damage", s.damage, File), 0f, 100000f);
                 specs.Add(s);
             }
             return specs.Count > 0 ? specs : null;

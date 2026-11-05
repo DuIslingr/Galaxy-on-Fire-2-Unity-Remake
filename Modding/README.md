@@ -2071,6 +2071,8 @@ the campaign). A save keeps each one's state by its key, so adding or removing o
 | `energyAbsorber` | Takes no damage; mends its hull by `healPercent` (default 50) of what it soaks. |
 | `radarJammer` | Your radar locks nothing and shows no ships. |
 | `flashGrenade` | Flashes `delayMs` (default 3000) after the throw: white over your view for its `durationMs`, `strength` percent (default 100) looking straight at it, nothing from 90 degrees away. |
+| `mindControl` | Your wingmen turn on you; each comes back to its senses when you hit it. |
+| `bombSpreader` | Drops a proximity mine behind it at the start and every `bombEveryMs` (default 1200), flung within 45 degrees; each blasts your ship for `damage` (default 350, GoF2's AMR Saber) when you come near. |
 
 Each runs `durationMs` (default 5000), then cools down for `cooldownMs` (default 15000). When it starts: `onHit` (true: when
 hit) and `everyMs` (every so often, `chance` percent of the time, default 100) fire it; `range` (`[ least, most ]` game
