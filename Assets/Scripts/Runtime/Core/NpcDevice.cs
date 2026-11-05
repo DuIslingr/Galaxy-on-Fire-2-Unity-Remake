@@ -44,6 +44,16 @@ namespace GoF2Remake.Flight
         // every 'bombEveryMs' while it runs) lasts 'lifeMs'; inside it the player's ship keeps 1 - 'slowShare' of its speed
         // and loses 'hullPercent' of its hull a second (BuffDamageOverTime's damagePercentagePerInterval)
         public float cloudRadius = 500f * 11.4f, hullPercent;
+        // Cloud: also 'shieldPercent' of the player's shield a second (GoF3's sphere mines: BuffShieldDamageOverTime)
+        public float shieldPercent;
+        // Who carries it (GoF3's SW_DL_* loadouts by danger level): the player's rank within minRank..maxRank (0 = no
+        // bound) and 'share' of the hull's NPCs, rolled as each one spawns (NpcDevices.Attach)
+        public int minRank, maxRank;
+        public float share = 1f;
+
+        /// <summary>This NPC carries it: the rank in range and 'roll01' (0..1) within its share.</summary>
+        public bool Carried(int rank, float roll01) =>
+            (minRank <= 0 || rank >= minRank) && (maxRank <= 0 || rank <= maxRank) && roll01 < share;
         // ShadowClone: GoF3's DeviceConfigurationCloning (Khador: cloneCount 2, Ship_A02_BB01_ONLY_FOR_CLONING with 21 % of its
         // hull + shield): 'count' copies of the ship with 'hullShare' of its hull, flying and firing as it does until shot
         // down; gone when the run ends or the ship dies. Minions: DeviceConfigurationShieldingMinions (Sh'gaal: minionCount 5,

@@ -104,6 +104,17 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ADeviceIsCarriedByRankAndShare()
+        {
+            var sphere = new NpcDeviceSpec { kind = NpcDeviceSpec.Kind.Cloud, minRank = 8, maxRank = 15, share = 0.5f };
+            Assert.IsFalse(sphere.Carried(7, 0f), "below its ranks");
+            Assert.IsTrue(sphere.Carried(8, 0.49f));
+            Assert.IsFalse(sphere.Carried(8, 0.5f), "outside its share");
+            Assert.IsFalse(sphere.Carried(16, 0f), "above its ranks");
+            Assert.IsTrue(new NpcDeviceSpec().Carried(0, 0.999f), "no bounds, every NPC");
+        }
+
+        [Test]
         public void AShieldStopsOnlyItsSideAndOnlyWhileItRuns()
         {
             var front = new NpcDeviceState(new NpcDeviceSpec { kind = NpcDeviceSpec.Kind.FrontShield, durationMs = 1000f, shieldDeg = 60f });

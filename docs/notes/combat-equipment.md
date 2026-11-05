@@ -123,7 +123,9 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   (2026-11-05, GoF3's kamikazes): ships.json "traffic": { "devices" } read by `ModContent` with `ModWanted.ReadDevices`
   (file "ships.json") onto `CustomTraffic.devices` (NonSerialized); `NpcShip.Setup` attaches them to any NPC of the hull
   but wingmen and a boss's clones (`SpawnSpec.noDevices`), `NpcDevices.Say` only for a criminal; a negative layBehind
-  lays the mine ahead (thrown). Tests `NpcDeviceTests`, `ModWantedTests`,
+  lays the mine ahead (thrown). `NpcDeviceSpec.Carried` (minRank / maxRank against `Session.Rank`, share rolled at
+  Attach: GoF3's SW_DL_* loadouts by danger level) picks which devices an NPC carries; a cloud's shieldPercent drains
+  `Hitpoints.shield` alone (GoF3's sphere mines). Tests `NpcDeviceTests`, `ModWantedTests`,
   `ModCapitalShipsTests.ATrafficHullsOwnDevices`.
 - **Devices** (remake, for mods: Galaxy on Fire 3's player devices, the GoF3 Ships importer's items; `Flight.Device` plain
   C# + `Flight.Slow`, `PlayerDevices` / `PlayerDevicesEffects`; Modding/README.md "Devices"): a mounted item with

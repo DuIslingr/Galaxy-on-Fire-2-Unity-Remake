@@ -59,14 +59,20 @@ namespace GoF2Remake.Tests
             string dir = WriteMod("c", "t_kam", "1.0", "", ("ships.json",
                 "[ { 'id': 'kamikaze', 'name': 'K', 'race': 0, 'model': 'big.glb', 'traffic': { 'role': 'detonator', 'devices': [ " +
                 "    { 'type': 'mineLayer', 'bombEveryMs': 4000, 'range': [3420, 28500] }, { 'type': 'mineLayer', 'layBehind': -114 }, " +
-                "    { 'type': 'frontShield', 'blockPercent': 67, 'glow': 1 } ] } }," +
+                "    { 'type': 'frontShield', 'blockPercent': 67, 'glow': 1 }, " +
+                "    { 'type': 'cloud', 'slowPercent': 0, 'shieldPercent': 70, 'minRank': 8, 'maxRank': 15, 'share': 40 } ] } }," +
                 "  { 'id': 'plain', 'name': 'P', 'race': 0, 'model': 'big.glb', 'traffic': { 'role': 'sniper' } } ]"));
             WriteFile(dir, "big.glb", Dummy);
             ScanAndEnable("t_kam");
             Database.Load();
             var t = CustomShips.Get(ModContent.ShipIndexOf("t_kam:kamikaze")).traffic;
             Assert.AreEqual("detonator", t.role, "the rest of the traffic block stays");
-            Assert.AreEqual(3, t.devices.Count);
+            Assert.AreEqual(4, t.devices.Count);
+            Assert.AreEqual(0f, t.devices[3].slowShare, "a cloud that doesn't slow");
+            Assert.AreEqual(70f, t.devices[3].shieldPercent);
+            Assert.AreEqual(8, t.devices[3].minRank);
+            Assert.AreEqual(15, t.devices[3].maxRank);
+            Assert.AreEqual(0.4f, t.devices[3].share, 1e-4f);
             Assert.AreEqual(Flight.NpcDeviceSpec.Kind.MineLayer, t.devices[0].kind);
             Assert.AreEqual(4000f, t.devices[0].bombEveryMs);
             Assert.AreEqual(28500f, t.devices[0].rangeMax);

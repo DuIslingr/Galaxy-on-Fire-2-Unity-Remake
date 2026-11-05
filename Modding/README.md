@@ -2104,7 +2104,7 @@ the campaign). A save keeps each one's state by its key, so adding or removing o
 | `mindControl` | Your wingmen turn on you; each comes back to its senses when you hit it. |
 | `bombSpreader` | Drops a proximity mine behind it at the start and every `bombEveryMs` (default 1200), flung within 45 degrees; each blasts your ship for `damage` (default 350, GoF2's AMR Saber) when you come near. |
 | `mineLayer` | Lays a mine `layBehind` (default 855) game units behind its tail at the start and every `bombEveryMs` while it runs (a burst: GoF3's boss mine layers). Each mine chases you within `seekRange` (default 11400) at `seekSpeed` game units a second (default 456) and goes off within `triggerRadius` (default 969) or after `lifeMs` (default 5000): it blasts your ship within `blastRadius` (default 1938) for `damage` and slows it by `slowPercent` for `slowMs` (default none). Shoot it down first: it takes `hull` (default 60) points. |
-| `cloud` | Leaves a cloud `cloudRadius` (default 5700) game units wide `layBehind` its tail (GoF3's smart bombs), at the start and every `bombEveryMs` while it runs, lasting `lifeMs` (default 12000). Inside it your ship keeps only `100 - slowPercent` % of its speed (default 50) and loses `hullPercent` of its hull a second (default none), past the shield. |
+| `cloud` | Leaves a cloud `cloudRadius` (default 5700) game units wide `layBehind` its tail (GoF3's smart bombs), at the start and every `bombEveryMs` while it runs, lasting `lifeMs` (default 12000). Inside it your ship keeps only `100 - slowPercent` % of its speed (default 50) and loses `hullPercent` of its hull a second (default none), past the shield, and `shieldPercent` of its shield a second (default none). |
 | `shadowClone` | Splits off `count` copies of itself (default 2) with `hullPercentOfShip` of its hull (default 20), flying and firing as it does; they go when the run ends (`durationMs`) or it dies. |
 | `wormhole` | Opens a wormhole `radius` game units wide (default 684) `layBehind` its tail (default 570) for `lifeMs` (default 5000): fly into it and you come out `exitDistance` (default 1710) in front of its nose, still heading as you were, right in its sights. |
 | `minions` | Launches `count` shield drones (default 5) circling it `radius` game units out (default 1140), each with `hullPercentOfShip` of its hull (default 7). While any of them lives, its hits lose `blockPercent` (default 100): shoot the drones down first. They go when the run ends. |
@@ -2113,6 +2113,8 @@ Each runs `durationMs` (default 5000), then cools down for `cooldownMs` (default
 hit) and `everyMs` (every so often, `chance` percent of the time, default 100) fire it; `range` (`[ least, most ]` game
 units to you), `ahead` (you within so many degrees of its nose), `notAhead` (you outside them) and `facing` (your nose within
 so many degrees of it) must all hold when given. With neither `onHit` nor `everyMs` it starts as soon as the others hold.
+`minRank` / `maxRank` give it only while your rank is within them, and `share` (percent, default 100) to only that part of
+the ship's NPCs (rolled as each one comes): a traffic hull's NPCs can carry different devices.
 In multiplayer the game running the orbit's ships plays them for its own player.
 
 ## Hangars and bars

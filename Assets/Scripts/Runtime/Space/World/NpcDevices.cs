@@ -55,6 +55,10 @@ namespace GoF2Remake.World
         public static NpcDevices Attach(NpcShip ship, Traffic traffic, List<NpcDeviceSpec> specs)
         {
             if (specs == null || specs.Count == 0) return null;
+            // who carries which: by the player's rank and each device's share of the hull's NPCs (GoF3's loadouts)
+            var carried = specs.FindAll(s => s.Carried(Session.Rank, Random.value));
+            if (carried.Count == 0) return null;
+            specs = carried;
             var d = ship.gameObject.AddComponent<NpcDevices>();
             d.ship = ship;
             d.traffic = traffic;

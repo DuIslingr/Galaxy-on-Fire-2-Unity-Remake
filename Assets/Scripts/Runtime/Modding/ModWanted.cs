@@ -160,6 +160,7 @@ namespace GoF2Remake.Modding
             "delayMs", "strength", "distance", "blockPercent", "shieldAngle", "healPercent", "bombEveryMs", "damage",
             "hull", "lifeMs", "seekSpeed", "seekRange", "triggerRadius", "blastRadius", "layBehind", "slowMs", "slowPercent",
             "cloudRadius", "hullPercent", "count", "hullPercentOfShip", "radius", "exitDistance",
+            "shieldPercent", "minRank", "maxRank", "share",
         };
 
         /// <summary>"devices": [ { "type": "teleport" | "frontShield" | "backShield" | "energyAbsorber" | "radarJammer" |
@@ -208,6 +209,10 @@ namespace GoF2Remake.Modding
                 s.slowShare = Mathf.Clamp01(ModJson.Float(o, "slowPercent", kind == NpcDeviceSpec.Kind.Cloud ? 50f : 0f, file) / 100f);
                 s.cloudRadius = Mathf.Clamp(ModJson.Float(o, "cloudRadius", s.cloudRadius, file), 100f, 100000f);
                 s.hullPercent = Mathf.Clamp(ModJson.Float(o, "hullPercent", 0f, file), 0f, 100f);
+                s.shieldPercent = Mathf.Clamp(ModJson.Float(o, "shieldPercent", 0f, file), 0f, 1000f);
+                s.minRank = Mathf.Max(0, ModJson.Int(o, "minRank", 0, file));
+                s.maxRank = Mathf.Max(0, ModJson.Int(o, "maxRank", 0, file));
+                s.share = Mathf.Clamp01(ModJson.Float(o, "share", 100f, file) / 100f);
                 bool minions = kind == NpcDeviceSpec.Kind.Minions;
                 s.count = Mathf.Clamp(ModJson.Int(o, "count", minions ? 5 : 2, file), 1, 12);
                 s.hullShare = Mathf.Clamp(ModJson.Float(o, "hullPercentOfShip", minions ? 7f : 20f, file), 1f, 100f) / 100f;
