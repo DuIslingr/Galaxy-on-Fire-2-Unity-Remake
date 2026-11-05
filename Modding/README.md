@@ -1618,7 +1618,7 @@ New star systems and their stations. Both are lists: `"id"` adds one, `"override
 | `sunColor` | `[r, g, b]` from 0 to 1: the colour and strength of the sunlight on ships and stations. Default: the light of its `sky`. |
 | `skybox` | Its own sky, see [Skies](#skies). Default: the nebula of its `sky` and the game's stars. |
 | `jumpgate` | Its own jumpgate model in its gate orbit: `{ "model": "models/gate.glb", "size": 15000, "yaw": 0, "radius": 7500, "materials": [...] }`. `model` a glTF / GLB in the mod (like a station's) or a game model (`"gof2:jumpgate_vossk_anim"`); `size` its largest extent in game units (default 15000; the game's gates are about 15000, the Vossk one 22500); `yaw` degrees about its up axis (ships fly through it along its front, the model's +Z); `radius` how near a ship must come to jump, and its collision sphere (default half its size); `materials` like [ships.json's](#materials). Default: its race's gate. A gate of your own has no jump flash (the game's gates play one as a ship goes through). |
-| `spaceMusic`, `stationMusic` | A mod's track (see [Music](#music)). |
+| `spaceMusic`, `stationMusic`, `battleMusic` | A mod's track (see [Music](#music)); `battleMusic` one or three. |
 
 Changing a system (`"override"`): `name`, `security`, `visible`, `available`, `sky`, `sunTexture`, `sunColor`, `skybox`, `jumpgate`, the music, and `gates` (added to its routes; links original systems too).
 
@@ -2544,6 +2544,10 @@ Put tracks in the mod's `music` folder (`.ogg`, `.wav` or `.mp3`):
 
 `spaceMusic` is the calm music in the system's orbits and `stationMusic` the music docked at its stations. A station's own
 `"music"` in stations.json beats its system's. Both work in an `override` of an original system or station too.
+
+`battleMusic` is the music of the system's fights: one track for all of them, or three, `["low", "medium", "full"]`, for
+the game's three battle tracks (1-2 enemies around, 3-4, 5 or more). Fights with the Void, Specters or a Most Wanted
+criminal keep their own music.
 
 ## Sound effects
 
