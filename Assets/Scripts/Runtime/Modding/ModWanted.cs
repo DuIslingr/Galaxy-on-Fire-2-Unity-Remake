@@ -23,7 +23,7 @@ namespace GoF2Remake.Modding
         {
             "id", "name", "description", "board", "race", "ship", "weapon", "secondary", "hitpoints", "reward", "loot", "lootAmount",
             "wingmen", "requiredBounties", "available", "systems", "route", "character", "portraitParts", "gender",
-            "escorts", "music", "taunt",
+            "escorts", "music", "taunt", "damageTaken",
         };
 
         /// <summary>Database.Load (ModContent.Apply, after the ships, items and systems are numbered): every active mod's
@@ -120,6 +120,7 @@ namespace GoF2Remake.Modding
                 w.music = null;
             }
             w.taunt = ModContent.TranslatedText(mod, $"wanted.{id}.taunt", ModJson.Text(o, "taunt"));
+            if (ModJson.Get(o, "damageTaken") is JToken dt) w.damageTaken = ReadDamageTaken(db, mod, dt, where);
             if (ModJson.Get(o, "portraitParts") is JArray pp && pp.Count == 5) w.portraitParts = new[] { (int)pp[0], (int)pp[1], (int)pp[2], (int)pp[3], (int)pp[4] };
             else w.portraitParts = new[] { Mathf.Clamp(w.race, 0, 3), 0, w.male ? 0 : 1, 0, 0 };
             if (w.character != null && ModCharacters.Find(w.character) == null)
@@ -128,6 +129,26 @@ namespace GoF2Remake.Modding
                 w.character = null;
             }
             return w;
+        }
+
+        /// <summary>"damageTaken": { "primary" | "secondary" | "turret" | a weapon category | an item: percent, ... } (Data.DamageTaken);
+        /// null when it changes nothing.</summary>
+        internal static DamageTaken ReadDamageTaken(Database db, ModInfo mod, JToken t, string where)
+        {
+            if (!(t is JObject o)) throw new ModJsonException($"{where}: \"damageTaken\" is {{ \"primary\": percent, \"Laser\": percent, \"<item>\": percent, ... }}");
+            var taken = new DamageTaken();
+            foreach (var p in o.Properties())
+            {
+                if (p.Value.Type != JTokenType.Integer && p.Value.Type != JTokenType.Float)
+                { Warn(mod, $"{ModJson.Where(p, File)}: \"damageTaken\" {p.Name} must be a percentage (ignored)"); continue; }
+                float f = Mathf.Clamp((float)p.Value, 0f, 1000f) / 100f;
+                int kind = Array.FindIndex(DamageTaken.Kinds, k => k.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
+                if (kind >= 0) taken.SetKind(kind, f);
+                else if (db.Items.Exists(i => p.Name.Equals(i.category, StringComparison.OrdinalIgnoreCase))) taken.SetCategory(p.Name, f);
+                else if (ModContent.TryResolveItem(p.Name, out int item) && db.Item(item) != null) taken.SetItem(item, f);
+                else Warn(mod, $"{ModJson.Where(p, File)}: \"damageTaken\" {p.Name} is no weapon kind, category or item (ignored)");
+            }
+            return taken.Any ? taken : null;
         }
 
         static int Item(Database db, JObject o, string field, string where, int fallback)

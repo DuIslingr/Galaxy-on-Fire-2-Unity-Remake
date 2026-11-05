@@ -51,6 +51,28 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void DamageTakenGoesByTheItemThenItsCategoryThenItsKind()
+        {
+            WriteMod("w", "t_weak", "1.0", "", ("wanted.json",
+                "[ { 'id': 'weak', 'name': 'Weak', 'ship': 5, " +
+                "'damageTaken': { 'primary': 70, 'secondary': 96, 'laser': 140, '2': 120, 'nope': 50, 'turret': 'x' } }, " +
+                "{ 'id': 'plain', 'name': 'Plain', 'ship': 5, 'damageTaken': { 'primary': 100 } } ]"));
+            ScanAndEnable("t_weak");
+            var db = Database.Load();
+            var taken = db.Wanted.Find(x => x.key == "t_weak:weak").damageTaken;
+            Assert.IsNotNull(taken);
+            Assert.AreEqual(1.2f, taken.Factor(db.Item(2)), 1e-4f, "the item itself first");
+            Assert.AreEqual(1.4f, taken.Factor(db.Item(0)), 1e-4f, "then its category (any case)");
+            Assert.AreEqual(0.7f, taken.Factor(db.Item(12)), 1e-4f, "then its kind: a blaster is a primary");
+            Assert.AreEqual(0.96f, taken.Factor(db.Item(31)), 1e-4f, "a rocket is a secondary");
+            Assert.AreEqual(1f, taken.Factor(null), "not a weapon of the player's");
+            Assert.IsNull(db.Wanted.Find(x => x.key == "t_weak:plain").damageTaken, "nothing changed: none");
+            string messages = AllMessages(Installed("t_weak"));
+            StringAssert.Contains("nope is no weapon kind", messages);
+            StringAssert.Contains("turret must be a percentage", messages);
+        }
+
+        [Test]
         public void InFreePlayOnlyTheModsAreOnTheBoard()
         {
             var db = Load();

@@ -2043,6 +2043,7 @@ until locked, and its death pays the bounty.
 | `escorts` | Their ships: one ship or a list the escorts take in turn (default: fighters of its race). |
 | `taunt` | What it says over the radio, with its face, when it is uncovered (translate with `wanted.<id>.taunt`). |
 | `music` | A track of a mod's [music](#music) folder that plays while it fights (default: the game's Most Wanted music). |
+| `damageTaken` | How much of your weapons' damage it takes, in percent: `{ "primary": 70, "secondary": 96, "Laser": 140, "my_mod:boss_bane": 200 }`. A key is a weapon kind (`primary`, `secondary`, `turret`), a weapon category as the shop names it (`Laser`, `Blaster`, `Auto-cannon`, `Thermo`, `Scatter gun`, `Rocket`, ...) or an item; the most specific one counts (the item, then its category, then its kind), anything unlisted takes 100. Other players' hits in multiplayer take all of it. |
 | `requiredBounties` | How many of this board's mod criminals must be dead first (default 0). The game's criminals count apart. |
 | `systems` | The systems it travels in (numbers or `"mod_id:id"`), else any the player can see. |
 | `route` | `[ least, most ]` systems a trip crosses (default `[ 2, 4 ]`; `[ 1, 1 ]` keeps it in one system). |

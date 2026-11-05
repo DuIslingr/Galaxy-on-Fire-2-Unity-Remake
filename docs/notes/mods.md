@@ -532,7 +532,11 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   `StationMenuDockingChecks.CheckWanted` runs its trips in free play but the Quineros hints stay campaign-only. The
   original save export stops at the first mod entry. "escorts" (ships the wingmen take in turn, `TrafficPlan.AddWanted`),
   "taunt" (said in its name after the uncover line, `Traffic.CriminalSays`), "music" (a mod track for the wanted
-  category 4, `UpdateMusic`; an unknown track warns). `ModWantedTests`.
+  category 4, `UpdateMusic`; an unknown track warns). `ModWantedTests`. "damageTaken" (2026-11-04, the GoF3 roadmap's
+  bosses: GoF3's StrengthAndWeaknessSystem::modifyDamage adds damage x (weakness - strength)): `Data.DamageTaken`, percent
+  by item, then items.json category, then kind; `NpcShip.Setup` sets `Target.PlayerWeaponFactor`, which `Target.Damage`
+  applies to a hit not by an NPC from `lastPlayerWeapon` (every player hit sets it first; `PlayerTurret` now too). A
+  remote player's hit arrives as an NPC's on the authority, so only its own player's weapons see it.
 - **Crates** (remake, 2026-11-02, the user's request for GoF3's loot containers; `ModCrates`, test `ModCratesTests`): ships.json
   `crate` (a glTF file) / `crateSize` (game units) on `CustomShipData`. Each file loads once at mod load (`ModLoading`,
   hidden DontDestroyOnLoad templates); `Crate.Model` draws a container (look 0) with it when it is loaded, fitted to the
