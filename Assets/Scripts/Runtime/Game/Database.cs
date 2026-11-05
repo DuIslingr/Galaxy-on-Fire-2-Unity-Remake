@@ -318,6 +318,9 @@ namespace GoF2Remake.Data
         /// <summary>Remake (2026-11-05, the GoF3 roadmap's G6): "gof3" = its NPC fighters fight Galaxy on Fire 3's way
         /// (Flight.Gof3Dogfight) while Options > Gameplay "NPC dogfighting" is "GoF3 on mod hulls" (the default); else GoF2's.</summary>
         public string ai;
+        /// <summary>Remake (2026-11-05, GoF3's kamikazes): the devices its NPCs use when hostile to the player, as a Most
+        /// Wanted criminal's (wanted.json "devices", Modding.ModWanted.ReadDevices); read apart from JsonUtility, null = none.</summary>
+        [System.NonSerialized] public System.Collections.Generic.List<Flight.NpcDeviceSpec> devices;
         /// <summary>Remake (2026-11-04): what its NPCs drop besides their cargo (EVERSPACE 2's loot_npcs.csv): each entry by its
         /// chance, at most lootDrops of them (0 = any number); a Void ship's too, which carries no cargo. Null = none.</summary>
         public CustomLoot[] loot;

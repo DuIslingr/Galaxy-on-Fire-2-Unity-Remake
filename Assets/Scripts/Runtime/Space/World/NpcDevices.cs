@@ -26,6 +26,7 @@
 //                  drones will leave the shield weak"): while one lives its hits lose 'blockPercent'; gone when the run ends
 //   wormhole       a hole behind its tail; the player flying in comes out in front of its nose ("if a foolish pilot flies
 //                  into the singularity, they'll end up right in the cross hairs of the ship using this weapon"; World.NpcWormhole)
+// Also a mod traffic hull's ("traffic": { "devices" }, GoF3's kamikazes): the same, without the HUD lines.
 // The single player's game only: in multiplayer the authority runs them for its own player (the others see the teleport).
 
 using System.Collections.Generic;
@@ -134,7 +135,8 @@ namespace GoF2Remake.World
             }
         }
 
-        void Say(string text) => traffic?.Warn(text);
+        /// <summary>A criminal's HUD line (a traffic hull's devices go without: there may be many of them).</summary>
+        void Say(string text) { if (ship.Spec.wantedIndex >= 0) traffic?.Warn(text); }
 
         /// <summary>Out 'distance' from the player in a direction outside their front 60 degrees, nose on them.</summary>
         void Teleport(NpcDeviceSpec spec, Target player)
@@ -175,7 +177,7 @@ namespace GoF2Remake.World
                     hitpoints = Mathf.Max(1, Mathf.RoundToInt(ship.Hp.maxHull * s.spec.hullShare)), speed = src.speed,
                     gunItem = src.gunItem, gunFactor = src.gunFactor, secondaryItem = src.secondaryItem, secondaryFactor = src.secondaryFactor,
                     turretItems = src.turretItems != null ? new List<int>(src.turretItems) : null,
-                    noLoot = true, alwaysEnemy = true, position = new Vector3(at.x, at.y, -at.z) / M,
+                    noLoot = true, alwaysEnemy = true, noDevices = true, position = new Vector3(at.x, at.y, -at.z) / M,
                 });
                 if (clone == null) continue;
                 clone.transform.rotation = transform.rotation;

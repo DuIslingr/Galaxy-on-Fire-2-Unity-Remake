@@ -417,6 +417,9 @@ namespace GoF2Remake.World
                 if (wanted.damageTaken is DamageTaken taken) Target.PlayerWeaponFactor = item => taken.Factor(database.Item(item));
                 NpcDevices.Attach(this, owner, wanted.devices);
             }
+            // remake mods (GoF3's kamikazes): a traffic hull's own devices ("traffic": { "devices" }), not on wingmen
+            else if (spec.group != NpcGroup.Wingman && !spec.noDevices && (database.Ship(spec.ship) as CustomShipData)?.traffic?.devices is List<NpcDeviceSpec> devices)
+                NpcDevices.Attach(this, owner, devices);
             SetupRole(spec);   // remake mods: its traffic role (NpcShipRoles)
             SetupDogfight(spec, database);   // remake option: GoF3's way of fighting (NpcShipDogfight)
             Target.displayName = !string.IsNullOrEmpty(spec.name) ? spec.name : spec.nameText >= 0 ? Localization.Get(spec.nameText) : null;

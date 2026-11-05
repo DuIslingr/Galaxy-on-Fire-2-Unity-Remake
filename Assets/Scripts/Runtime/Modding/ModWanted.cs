@@ -165,61 +165,61 @@ namespace GoF2Remake.Modding
         /// <summary>"devices": [ { "type": "teleport" | "frontShield" | "backShield" | "energyAbsorber" | "radarJammer" |
         /// "flashGrenade" | "mindControl" | "bombSpreader" | "mineLayer" | "cloud" | "shadowClone" | "minions" | "wormhole", the run, its triggers and its numbers }, ... ] (Flight.NpcDeviceSpec);
         /// null when none is valid.</summary>
-        internal static List<NpcDeviceSpec> ReadDevices(ModInfo mod, JToken t, string where)
+        internal static List<NpcDeviceSpec> ReadDevices(ModInfo mod, JToken t, string where, string file = File)
         {
             if (!(t is JArray list)) throw new ModJsonException($"{where}: \"devices\" is a list [ {{ \"type\": ... }}, ... ]");
             var specs = new List<NpcDeviceSpec>();
             foreach (var d in list)
             {
-                string at = ModJson.Where(d, File);
+                string at = ModJson.Where(d, file);
                 if (!(d is JObject o)) { Warn(mod, $"{at}: each device is an object {{ \"type\": ... }} (left out)"); continue; }
                 foreach (var p in o.Properties())
-                    if (!DeviceFields.Contains(p.Name)) Warn(mod, $"{ModJson.Where(p, File)}: unknown device field \"{p.Name}\" (ignored)");
+                    if (!DeviceFields.Contains(p.Name)) Warn(mod, $"{ModJson.Where(p, file)}: unknown device field \"{p.Name}\" (ignored)");
                 string type = ModJson.Str(o, "type");
                 if (!Enum.TryParse(type ?? "", true, out NpcDeviceSpec.Kind kind) || int.TryParse(type, out _))
                 { Warn(mod, $"{at}: device \"type\" {type ?? "(missing)"} is none of teleport, frontShield, backShield, energyAbsorber, radarJammer, flashGrenade, mindControl, bombSpreader, mineLayer, cloud, shadowClone, minions, wormhole (left out)"); continue; }
                 var s = new NpcDeviceSpec { kind = kind };
-                s.durationMs = Mathf.Clamp(ModJson.Float(o, "durationMs", s.durationMs, File), 1f, 600000f);
-                s.cooldownMs = Mathf.Clamp(ModJson.Float(o, "cooldownMs", s.cooldownMs, File), 0f, 600000f);
-                s.onHit = ModJson.Bool(o, "onHit", false, File);
-                s.everyMs = Mathf.Clamp(ModJson.Float(o, "everyMs", 0f, File), 0f, 600000f);
-                s.chance = Mathf.Clamp01(ModJson.Float(o, "chance", 100f, File) / 100f);
-                (s.rangeMin, s.rangeMax) = Pair(mod, o, "range", 0f, 0f);
-                s.aheadDeg = Mathf.Clamp(ModJson.Float(o, "ahead", 0f, File), 0f, 180f);
-                s.notAheadDeg = Mathf.Clamp(ModJson.Float(o, "notAhead", 0f, File), 0f, 180f);
-                s.facingDeg = Mathf.Clamp(ModJson.Float(o, "facing", 0f, File), 0f, 180f);
-                s.delayMs = Mathf.Clamp(ModJson.Float(o, "delayMs", kind == NpcDeviceSpec.Kind.FlashGrenade ? 3000f : 0f, File), 0f, 60000f);
-                s.strength = Mathf.Clamp01(ModJson.Float(o, "strength", 100f, File) / 100f);
-                (s.distanceMin, s.distanceMax) = Pair(mod, o, "distance", s.distanceMin, s.distanceMax);
-                s.blockShare = Mathf.Clamp01(ModJson.Float(o, "blockPercent", 100f, File) / 100f);
-                s.shieldDeg = Mathf.Clamp(ModJson.Float(o, "shieldAngle", s.shieldDeg, File), 1f, 180f);
-                s.healShare = Mathf.Clamp(ModJson.Float(o, "healPercent", 50f, File) / 100f, 0f, 10f);
-                s.bombEveryMs = Mathf.Clamp(ModJson.Float(o, "bombEveryMs", s.bombEveryMs, File), 100f, 60000f);
-                s.damage = Mathf.Clamp(ModJson.Float(o, "damage", s.damage, File), 0f, 100000f);
-                s.hull = Mathf.Clamp(ModJson.Float(o, "hull", s.hull, File), 1f, 100000f);
-                s.lifeMs = Mathf.Clamp(ModJson.Float(o, "lifeMs", kind == NpcDeviceSpec.Kind.Cloud ? 12000f : s.lifeMs, File), 500f, 120000f);
-                s.seekSpeed = Mathf.Clamp(ModJson.Float(o, "seekSpeed", s.seekSpeed, File), 0f, 20000f);
-                s.seekRange = Mathf.Clamp(ModJson.Float(o, "seekRange", s.seekRange, File), 0f, 200000f);
-                s.triggerRadius = Mathf.Clamp(ModJson.Float(o, "triggerRadius", s.triggerRadius, File), 50f, 50000f);
-                s.blastRadius = Mathf.Clamp(ModJson.Float(o, "blastRadius", s.blastRadius, File), 50f, 50000f);
+                s.durationMs = Mathf.Clamp(ModJson.Float(o, "durationMs", s.durationMs, file), 1f, 600000f);
+                s.cooldownMs = Mathf.Clamp(ModJson.Float(o, "cooldownMs", s.cooldownMs, file), 0f, 600000f);
+                s.onHit = ModJson.Bool(o, "onHit", false, file);
+                s.everyMs = Mathf.Clamp(ModJson.Float(o, "everyMs", 0f, file), 0f, 600000f);
+                s.chance = Mathf.Clamp01(ModJson.Float(o, "chance", 100f, file) / 100f);
+                (s.rangeMin, s.rangeMax) = Pair(mod, file, o, "range", 0f, 0f);
+                s.aheadDeg = Mathf.Clamp(ModJson.Float(o, "ahead", 0f, file), 0f, 180f);
+                s.notAheadDeg = Mathf.Clamp(ModJson.Float(o, "notAhead", 0f, file), 0f, 180f);
+                s.facingDeg = Mathf.Clamp(ModJson.Float(o, "facing", 0f, file), 0f, 180f);
+                s.delayMs = Mathf.Clamp(ModJson.Float(o, "delayMs", kind == NpcDeviceSpec.Kind.FlashGrenade ? 3000f : 0f, file), 0f, 60000f);
+                s.strength = Mathf.Clamp01(ModJson.Float(o, "strength", 100f, file) / 100f);
+                (s.distanceMin, s.distanceMax) = Pair(mod, file, o, "distance", s.distanceMin, s.distanceMax);
+                s.blockShare = Mathf.Clamp01(ModJson.Float(o, "blockPercent", 100f, file) / 100f);
+                s.shieldDeg = Mathf.Clamp(ModJson.Float(o, "shieldAngle", s.shieldDeg, file), 1f, 180f);
+                s.healShare = Mathf.Clamp(ModJson.Float(o, "healPercent", 50f, file) / 100f, 0f, 10f);
+                s.bombEveryMs = Mathf.Clamp(ModJson.Float(o, "bombEveryMs", s.bombEveryMs, file), 100f, 60000f);
+                s.damage = Mathf.Clamp(ModJson.Float(o, "damage", s.damage, file), 0f, 100000f);
+                s.hull = Mathf.Clamp(ModJson.Float(o, "hull", s.hull, file), 1f, 100000f);
+                s.lifeMs = Mathf.Clamp(ModJson.Float(o, "lifeMs", kind == NpcDeviceSpec.Kind.Cloud ? 12000f : s.lifeMs, file), 500f, 120000f);
+                s.seekSpeed = Mathf.Clamp(ModJson.Float(o, "seekSpeed", s.seekSpeed, file), 0f, 20000f);
+                s.seekRange = Mathf.Clamp(ModJson.Float(o, "seekRange", s.seekRange, file), 0f, 200000f);
+                s.triggerRadius = Mathf.Clamp(ModJson.Float(o, "triggerRadius", s.triggerRadius, file), 50f, 50000f);
+                s.blastRadius = Mathf.Clamp(ModJson.Float(o, "blastRadius", s.blastRadius, file), 50f, 50000f);
                 bool hole = kind == NpcDeviceSpec.Kind.Wormhole;
-                s.layBehind = Mathf.Clamp(ModJson.Float(o, "layBehind", hole ? 50f * 11.4f : s.layBehind, File), 0f, 20000f);
-                s.slowMs = Mathf.Clamp(ModJson.Float(o, "slowMs", 0f, File), 0f, 60000f);
-                s.slowShare = Mathf.Clamp01(ModJson.Float(o, "slowPercent", kind == NpcDeviceSpec.Kind.Cloud ? 50f : 0f, File) / 100f);
-                s.cloudRadius = Mathf.Clamp(ModJson.Float(o, "cloudRadius", s.cloudRadius, File), 100f, 100000f);
-                s.hullPercent = Mathf.Clamp(ModJson.Float(o, "hullPercent", 0f, File), 0f, 100f);
+                s.layBehind = Mathf.Clamp(ModJson.Float(o, "layBehind", hole ? 50f * 11.4f : s.layBehind, file), -20000f, 20000f);   // (< 0: ahead, thrown)
+                s.slowMs = Mathf.Clamp(ModJson.Float(o, "slowMs", 0f, file), 0f, 60000f);
+                s.slowShare = Mathf.Clamp01(ModJson.Float(o, "slowPercent", kind == NpcDeviceSpec.Kind.Cloud ? 50f : 0f, file) / 100f);
+                s.cloudRadius = Mathf.Clamp(ModJson.Float(o, "cloudRadius", s.cloudRadius, file), 100f, 100000f);
+                s.hullPercent = Mathf.Clamp(ModJson.Float(o, "hullPercent", 0f, file), 0f, 100f);
                 bool minions = kind == NpcDeviceSpec.Kind.Minions;
-                s.count = Mathf.Clamp(ModJson.Int(o, "count", minions ? 5 : 2, File), 1, 12);
-                s.hullShare = Mathf.Clamp(ModJson.Float(o, "hullPercentOfShip", minions ? 7f : 20f, File), 1f, 100f) / 100f;
-                s.radius = Mathf.Clamp(ModJson.Float(o, "radius", hole ? 60f * 11.4f : s.radius, File), 200f, 50000f);
-                s.exitDistance = Mathf.Clamp(ModJson.Float(o, "exitDistance", s.exitDistance, File), 0f, 50000f);
+                s.count = Mathf.Clamp(ModJson.Int(o, "count", minions ? 5 : 2, file), 1, 12);
+                s.hullShare = Mathf.Clamp(ModJson.Float(o, "hullPercentOfShip", minions ? 7f : 20f, file), 1f, 100f) / 100f;
+                s.radius = Mathf.Clamp(ModJson.Float(o, "radius", hole ? 60f * 11.4f : s.radius, file), 200f, 50000f);
+                s.exitDistance = Mathf.Clamp(ModJson.Float(o, "exitDistance", s.exitDistance, file), 0f, 50000f);
                 specs.Add(s);
             }
             return specs.Count > 0 ? specs : null;
         }
 
         /// <summary>[ least, most ] (game units), sorted; the fallback when it is missing or not two numbers (warned).</summary>
-        static (float, float) Pair(ModInfo mod, JObject o, string field, float lo, float hi)
+        static (float, float) Pair(ModInfo mod, string file, JObject o, string field, float lo, float hi)
         {
             var t = ModJson.Get(o, field);
             if (t == null) return (lo, hi);
@@ -228,7 +228,7 @@ namespace GoF2Remake.Modding
                 float x = Mathf.Max(0f, (float)a[0]), y = Mathf.Max(0f, (float)a[1]);
                 return (Mathf.Min(x, y), Mathf.Max(x, y));
             }
-            Warn(mod, $"{ModJson.Where(t, File)}: \"{field}\" is [ least, most ] (ignored)");
+            Warn(mod, $"{ModJson.Where(t, file)}: \"{field}\" is [ least, most ] (ignored)");
             return (lo, hi);
         }
 

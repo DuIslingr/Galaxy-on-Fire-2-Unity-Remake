@@ -119,8 +119,12 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   within its radius goes to exitDistance ahead of the ship's nose by `SpaceLevel.WarpPlayer`, the pose and the chase
   camera only, not `MovePlayer`'s arrival camera and Void wormhole). Only the orbit's authority runs `NpcShip`s (clients
   show proxies), so its own player alone is jammed, blinded or betrayed. Not done: GoF3's insanity, Mortak's smart bombs
-  (no configuration), the shields' and absorber's own look (only a HUD line says it is up). Tests `NpcDeviceTests`,
-  `ModWantedTests`.
+  (no configuration), the shields' and absorber's own look (only a HUD line says it is up). Traffic hulls too
+  (2026-11-05, GoF3's kamikazes): ships.json "traffic": { "devices" } read by `ModContent` with `ModWanted.ReadDevices`
+  (file "ships.json") onto `CustomTraffic.devices` (NonSerialized); `NpcShip.Setup` attaches them to any NPC of the hull
+  but wingmen and a boss's clones (`SpawnSpec.noDevices`), `NpcDevices.Say` only for a criminal; a negative layBehind
+  lays the mine ahead (thrown). Tests `NpcDeviceTests`, `ModWantedTests`,
+  `ModCapitalShipsTests.ATrafficHullsOwnDevices`.
 - **Devices** (remake, for mods: Galaxy on Fire 3's player devices, the GoF3 Ships importer's items; `Flight.Device` plain
   C# + `Flight.Slow`, `PlayerDevices` / `PlayerDevicesEffects`; Modding/README.md "Devices"): a mounted item with
   `device` (attr 150, 1-7; 150-160, past the tractor beam's 136 / 137) on a seatless cabin, its own one-per-ship kind per type (`Shop.KindOf` = `Device.KindBase`
