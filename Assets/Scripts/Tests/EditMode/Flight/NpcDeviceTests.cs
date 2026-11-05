@@ -104,6 +104,16 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void APhaseStartsOnceTheHullIsLowEnough()
+        {
+            var s = new NpcDeviceState(new NpcDeviceSpec { kind = NpcDeviceSpec.Kind.Minions, hullBelow = 0.66f, durationMs = 1000f });
+            var v = Near(); v.hull = 0.9f;
+            Assert.IsFalse(s.Step(16f, v, 0f, out _), "its hull still above two thirds");
+            v.hull = 0.6f;
+            Assert.IsTrue(s.Step(16f, v, 0f, out _), "under it: the phase starts");
+        }
+
+        [Test]
         public void ADeviceIsCarriedByRankAndShare()
         {
             var sphere = new NpcDeviceSpec { kind = NpcDeviceSpec.Kind.Cloud, minRank = 8, maxRank = 15, share = 0.5f };

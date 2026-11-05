@@ -82,7 +82,7 @@ namespace GoF2Remake.Tests
                 "{ 'type': 'flashGrenade', 'range': [0, 1500], 'facing': 80, 'strength': 70, 'colour': 'red' }, " +
                 "{ 'type': 'mineLayer', 'bombEveryMs': 1500, 'damage': 300, 'hull': 80, 'seekSpeed': 500, 'slowMs': 2000, 'slowPercent': 20 }, " +
                 "{ 'type': 'cloud', 'durationMs': 100, 'cooldownMs': 24900, 'hullPercent': 2 }, " +
-                "{ 'type': 'shadowClone', 'onHit': true, 'durationMs': 999999 }, { 'type': 'minions', 'count': 4, 'hullPercentOfShip': 10, 'radius': 2000 }, " +
+                "{ 'type': 'shadowClone', 'onHit': true, 'durationMs': 999999 }, { 'type': 'minions', 'count': 4, 'hullPercentOfShip': 10, 'radius': 2000, 'hullBelow': 66 }, " +
                 "{ 'type': 'wormhole', 'range': [1140, 2280], 'facing': 30, 'notAhead': 90 }, " +
                 "{ 'type': 'warp' }, { 'type': '3' } ] }, " +
                 "{ 'id': 'none', 'name': 'None', 'ship': 5, 'devices': [ { 'type': 'nope' } ] } ]"));
@@ -123,6 +123,7 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(4, d[6].count);
             Assert.AreEqual(0.1f, d[6].hullShare, 1e-4f);
             Assert.AreEqual(2000f, d[6].radius);
+            Assert.AreEqual(0.66f, d[6].hullBelow, 1e-4f, "a phase below two thirds of its hull");
             Assert.AreEqual(1f, d[6].blockShare, "the drones stop every hit by default");
             Assert.AreEqual(Flight.NpcDeviceSpec.Kind.Wormhole, d[7].kind);
             Assert.AreEqual(60f * 11.4f, d[7].radius, 1e-2f, "a wormhole's default: GoF3's wormholeRadius");

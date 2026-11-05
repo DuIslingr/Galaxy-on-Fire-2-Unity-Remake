@@ -160,7 +160,7 @@ namespace GoF2Remake.Modding
             "delayMs", "strength", "distance", "blockPercent", "shieldAngle", "healPercent", "bombEveryMs", "damage",
             "hull", "lifeMs", "seekSpeed", "seekRange", "triggerRadius", "blastRadius", "layBehind", "slowMs", "slowPercent",
             "cloudRadius", "hullPercent", "count", "hullPercentOfShip", "radius", "exitDistance",
-            "shieldPercent", "minRank", "maxRank", "share",
+            "shieldPercent", "minRank", "maxRank", "share", "hullBelow",
         };
 
         /// <summary>"devices": [ { "type": "teleport" | "frontShield" | "backShield" | "energyAbsorber" | "radarJammer" |
@@ -189,6 +189,7 @@ namespace GoF2Remake.Modding
                 s.aheadDeg = Mathf.Clamp(ModJson.Float(o, "ahead", 0f, file), 0f, 180f);
                 s.notAheadDeg = Mathf.Clamp(ModJson.Float(o, "notAhead", 0f, file), 0f, 180f);
                 s.facingDeg = Mathf.Clamp(ModJson.Float(o, "facing", 0f, file), 0f, 180f);
+                s.hullBelow = Mathf.Clamp01(ModJson.Float(o, "hullBelow", 0f, file) / 100f);
                 s.delayMs = Mathf.Clamp(ModJson.Float(o, "delayMs", kind == NpcDeviceSpec.Kind.FlashGrenade ? 3000f : 0f, file), 0f, 60000f);
                 s.strength = Mathf.Clamp01(ModJson.Float(o, "strength", 100f, file) / 100f);
                 (s.distanceMin, s.distanceMax) = Pair(mod, file, o, "distance", s.distanceMin, s.distanceMax);

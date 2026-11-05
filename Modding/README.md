@@ -2111,8 +2111,8 @@ the campaign). A save keeps each one's state by its key, so adding or removing o
 
 Each runs `durationMs` (default 5000), then cools down for `cooldownMs` (default 15000). When it starts: `onHit` (true: when
 hit) and `everyMs` (every so often, `chance` percent of the time, default 100) fire it; `range` (`[ least, most ]` game
-units to you), `ahead` (you within so many degrees of its nose), `notAhead` (you outside them) and `facing` (your nose within
-so many degrees of it) must all hold when given. With neither `onHit` nor `everyMs` it starts as soon as the others hold.
+units to you), `ahead` (you within so many degrees of its nose), `notAhead` (you outside them), `facing` (your nose within
+so many degrees of it) and `hullBelow` (its own hull at or under so many percent: a second phase) must all hold when given. With neither `onHit` nor `everyMs` it starts as soon as the others hold.
 `minRank` / `maxRank` give it only while your rank is within them, and `share` (percent, default 100) to only that part of
 the ship's NPCs (rolled as each one comes): a traffic hull's NPCs can carry different devices.
 In multiplayer the game running the orbit's ships plays them for its own player.

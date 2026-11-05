@@ -73,7 +73,7 @@ namespace GoF2Remake.World
         {
             if (ship == null || ship.Target == null || !ship.Target.Alive) { ClearAll(); enabled = false; return; }
             var player = traffic != null ? traffic.Player : null;
-            var view = new NpcDeviceState.View { hit = hit };
+            var view = new NpcDeviceState.View { hit = hit, hull = ship.Hp != null ? ship.Hp.HullFraction : 1f };
             hit = false;
             if (player != null && player.Alive && player.isActiveAndEnabled && ship.Target.hostileToPlayer && !ship.Asleep
                 && ship.Current == NpcShip.State.Fly && !ship.Hp.empDisabled)

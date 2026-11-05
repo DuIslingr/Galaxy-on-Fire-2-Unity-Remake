@@ -23,6 +23,8 @@ namespace GoF2Remake.Flight
         public float rangeMin, rangeMax;           // game units, the player's distance
         public float aheadDeg, notAheadDeg;        // the player within / outside this angle of the ship's nose
         public float facingDeg;                    // the player's nose within this angle of the ship
+        public float hullBelow;                    // the ship's own hull at or under this share (0..1; 0 = off): a phase
+                                                   // (EVERSPACE 2's bosses on their shield / armour depleted)
         // the effects
         public float delayMs;                      // FlashGrenade: from the throw to the flash
         public float strength = 1f;                // FlashGrenade: the flash's opacity looking straight at it (0..1)
@@ -100,6 +102,7 @@ namespace GoF2Remake.Flight
             public float distance;        // game units
             public float offNoseDeg;      // the player's direction against the ship's nose
             public float playerFacingDeg; // the player's nose against the direction to the ship
+            public float hull;            // the ship's hull share left (0..1)
         }
 
         /// <summary>Advances 'dtMs'; true when the device starts now ('random01' a roll in [0, 1) for the interval's chance).
@@ -135,6 +138,7 @@ namespace GoF2Remake.Flight
             if (spec.aheadDeg > 0f && v.offNoseDeg > spec.aheadDeg) return false;
             if (spec.notAheadDeg > 0f && v.offNoseDeg <= spec.notAheadDeg) return false;
             if (spec.facingDeg > 0f && v.playerFacingDeg > spec.facingDeg) return false;
+            if (spec.hullBelow > 0f && v.hull > spec.hullBelow) return false;
             return true;
         }
 
