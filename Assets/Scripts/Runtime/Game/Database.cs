@@ -325,6 +325,21 @@ namespace GoF2Remake.Data
         /// chance, at most lootDrops of them (0 = any number); a Void ship's too, which carries no cargo. Null = none.</summary>
         public CustomLoot[] loot;
         public int lootDrops;
+        /// <summary>Remake (2026-11-05, GoF3's NPC loadouts): a second weapon its NPCs may carry, the first entry carried
+        /// (CustomSecondary.Carried) at its spawn (World.NpcShip); null = none, as the game's NPCs.</summary>
+        public CustomSecondary[] secondaries;
+    }
+
+    /// <summary>A ships.json "traffic.secondaries" entry: 'item' (a reference, "31" or "mod:id"), carried while the player's
+    /// rank is within minRank..maxRank (0 = no bound) by 'share' % of the hull's NPCs, its damage x 'factor'.</summary>
+    [System.Serializable] public class CustomSecondary
+    {
+        public string item;
+        public int minRank, maxRank;
+        public float share = 100f, factor = 1f;
+
+        public bool Carried(int rank, float roll01) =>
+            (minRank <= 0 || rank >= minRank) && (maxRank <= 0 || rank <= maxRank) && roll01 * 100f < share;
     }
 
     /// <summary>A ships.json "traffic.loot" entry: 'item' (a reference, "155" or "mod:id"), its chance 0..1, min..max of it.</summary>

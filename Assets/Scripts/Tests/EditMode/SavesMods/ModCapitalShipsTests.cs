@@ -61,7 +61,8 @@ namespace GoF2Remake.Tests
                 "    { 'type': 'mineLayer', 'bombEveryMs': 4000, 'range': [3420, 28500] }, { 'type': 'mineLayer', 'layBehind': -114 }, " +
                 "    { 'type': 'frontShield', 'blockPercent': 67, 'glow': 1 }, " +
                 "    { 'type': 'cloud', 'slowPercent': 0, 'shieldPercent': 70, 'minRank': 8, 'maxRank': 15, 'share': 40 } ] } }," +
-                "  { 'id': 'plain', 'name': 'P', 'race': 0, 'model': 'big.glb', 'traffic': { 'role': 'sniper' } } ]"));
+                "  { 'id': 'plain', 'name': 'P', 'race': 0, 'model': 'big.glb', 'traffic': { 'role': 'sniper', " +
+                "    'secondaries': [ { 'item': '31', 'minRank': 6, 'maxRank': 17, 'share': 25 }, { 'item': '33', 'minRank': 18 } ] } } ]"));
             WriteFile(dir, "big.glb", Dummy);
             ScanAndEnable("t_kam");
             Database.Load();
@@ -78,7 +79,15 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(28500f, t.devices[0].rangeMax);
             Assert.AreEqual(-114f, t.devices[1].layBehind, "below 0: thrown ahead");
             Assert.AreEqual(0.67f, t.devices[2].blockShare, 1e-4f);
-            Assert.IsNull(CustomShips.Get(ModContent.ShipIndexOf("t_kam:plain")).traffic.devices);
+            var plain = CustomShips.Get(ModContent.ShipIndexOf("t_kam:plain")).traffic;
+            Assert.IsNull(plain.devices);
+            Assert.AreEqual(2, plain.secondaries.Length);
+            Assert.AreEqual("31", plain.secondaries[0].item);
+            Assert.IsFalse(plain.secondaries[0].Carried(5, 0f), "below its ranks");
+            Assert.IsTrue(plain.secondaries[0].Carried(6, 0.2f));
+            Assert.IsFalse(plain.secondaries[0].Carried(6, 0.3f), "outside its quarter");
+            Assert.IsTrue(plain.secondaries[1].Carried(20, 0.99f), "100 % by default");
+            Assert.AreEqual(1f, plain.secondaries[1].factor);
             StringAssert.Contains("unknown device field \"glow\"", AllMessages(Installed("t_kam")));
             StringAssert.Contains("ships.json", AllMessages(Installed("t_kam")), "the warning names the ships file");
         }

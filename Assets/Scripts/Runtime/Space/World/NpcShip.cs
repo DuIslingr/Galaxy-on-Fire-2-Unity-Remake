@@ -506,6 +506,20 @@ namespace GoF2Remake.World
             if (spec.turretAssembly == null && spec.fixedObject == null && modelGo != null)
                 mounted = NpcMountedTurrets.Build(this, db, spec.ship, spec.turretItems ?? db.NpcTurretsOf(spec.ship), model, fxRoot, GunHit);
             if (spec.secondaryItem >= 0 && gun != null) SetSecondaryGun(spec.secondaryItem, spec.secondaryFactor);
+            else if (gun != null && spec.group != NpcGroup.Wingman && !spec.noDevices) SetOwnSecondary(db, spec);
+        }
+
+        /// <summary>Remake mods (GoF3's NPC loadouts): its hull's "traffic": { "secondaries" }, the first one it carries.</summary>
+        void SetOwnSecondary(Database db, SpawnSpec spec)
+        {
+            var list = (db?.Ship(spec.ship) as CustomShipData)?.traffic?.secondaries;
+            if (list == null) return;
+            foreach (var s in list)
+            {
+                if (s == null || !s.Carried(Session.Rank, Random.value)) continue;
+                if (Modding.ModContent.TryResolveItem(s.item, out int item) && db.Item(item) != null) SetSecondaryGun(item, Mathf.Max(0f, s.factor));
+                return;
+            }
         }
 
         static void Setup3D(AudioSource s)

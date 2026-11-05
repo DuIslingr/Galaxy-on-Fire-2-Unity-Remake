@@ -364,6 +364,9 @@ battle spawns in 156 ms with its hulls.
   40) become RocketGuns (speed 8, 10 000 ms, reload 3000; sorts 5 / 40 home on the ship's current target after 1000 ms,
   `RocketGun::seekEnemy`); a second gun slot toggles every 20 000 ms (`PlayerFighter+0x2e0`): the Wanted flying ships
   45-48 (G'liissk x4), Harval at 157 / 158 (item 7 x3 + Shesha x4).
+  Remake mods (2026-11-05, GoF3's NPC loadouts SW_DL_*): ships.json "traffic": { "secondaries" } (`CustomSecondary`,
+  JsonUtility): `NpcShip.SetOwnSecondary` gives a traffic NPC (not a wingman, nor a boss's clone) the first entry it
+  carries (rank within minRank..maxRank, share % rolled at spawn) as its second gun at x factor, when its spec has none.
 - **Missile warning and evasion** (remake; the original has neither): any homing missile (Missile, ClusterMissile,
   Thermo kinds) locked on a boosting or cloaked player loses its lock for good and flies straight on (`Gun.Update`:
   `Bullet.lockLost`, `Target.ShakesMissiles` = `boosting` || `cloaked`, set by `ShipController` / `PlayerCloak` for the
