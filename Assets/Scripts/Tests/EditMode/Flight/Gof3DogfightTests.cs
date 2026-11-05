@@ -106,5 +106,18 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0.66f, Gof3Dogfight.EvadeChance(0.5f, true), "a boss");
             Assert.AreEqual(0f, Gof3Dogfight.EvadeChance(0f, true));
         }
+
+        [Test]
+        public void TheVFillsBothWingsInTurnAndTheSpeedClosesOnTheSlot()
+        {
+            Assert.AreEqual((1, 1), Gof3Dogfight.VSlot(0));
+            Assert.AreEqual((1, -1), Gof3Dogfight.VSlot(1));
+            Assert.AreEqual((2, 1), Gof3Dogfight.VSlot(2));
+            Assert.AreEqual((3, -1), Gof3Dogfight.VSlot(5));
+            Assert.AreEqual(1f, Gof3Dogfight.FormationSpeed(0f), "on its slot");
+            Assert.AreEqual(1.25f, Gof3Dogfight.FormationSpeed(1f), 1e-5f, "a spacing behind: a quarter faster");
+            Assert.AreEqual(1.5f, Gof3Dogfight.FormationSpeed(10f), "far behind: at most 1.5 x");
+            Assert.AreEqual(0.6f, Gof3Dogfight.FormationSpeed(-10f), "far ahead: at least 0.6 x");
+        }
     }
 }

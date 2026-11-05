@@ -279,6 +279,9 @@ namespace GoF2Remake.World
         /// <summary>Remake option (Settings.NpcDogfight, NpcShipDogfight): GoF3's way of fighting (null = GoF2's), the target it
         /// last saw, where and how fast, and the roll's invulnerability (set by it, so cleared by it).</summary>
         Gof3Dogfight dogfight;
+        NpcShip formationLeader;
+        int formationIndex = -1;
+        float formationLookupMs;
         Target dogTarget;
         Vector3 dogTargetLast, dogTargetVel;
         bool rollInvulnerable;

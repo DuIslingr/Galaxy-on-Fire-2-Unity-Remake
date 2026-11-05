@@ -141,5 +141,13 @@ namespace GoF2Remake.Flight
         }
 
         float Range(float a, float b) => a + (b - a) * random();
+
+        /// <summary>GoF3's V formation: follower 'index' (0, 1, ...) flies 'row' spacings behind the leader and 'side' (1
+        /// right, -1 left) x row spacings out, the two wings filled in turn.</summary>
+        public static (int row, int side) VSlot(int index) => (index / 2 + 1, index % 2 == 0 ? 1 : -1);
+
+        /// <summary>A follower's speed x this to keep its slot: 'behind' how far the slot is ahead of it along the leader's
+        /// heading (negative: it overshot), in slot spacings; 1.5 x catching up, 0.6 x easing off.</summary>
+        public static float FormationSpeed(float behindSpacings) => System.Math.Clamp(1f + behindSpacings / 4f, 0.6f, 1.5f);
     }
 }

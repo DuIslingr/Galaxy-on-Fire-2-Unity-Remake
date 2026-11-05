@@ -57,6 +57,8 @@ namespace GoF2Remake.World
             // remake option (NpcShipDogfight): GoF3's attack runs, veer-offs, tease and chase, its led aim
             bool dog = Dogfighting, dogHold = false;
             if (dog) aimPos = DogfightAim(aimPos, out dogHold);
+            float formationSpeed = 1f;
+            if (!dog && FormationSlot(dtMs, out var slot, out formationSpeed)) aimPos = slot;   // (GoF3's V formations)
             var dir = aimPos - transform.position;
             if (RoleFlees) dir = transform.position - FleeFrom.transform.position;   // (remake: a loot drone runs, NpcShipRoles)
             // PlayerFighter::update's fly state: the player docked at an object (PlayerEgo::isDockedToDockingPoint) is circled
@@ -133,7 +135,7 @@ namespace GoF2Remake.World
             if (model != null) model.localRotation = Quaternion.AngleAxis(bank * Mathf.PI / 4096f * Mathf.Rad2Deg + barrel, Vector3.forward);
             if (levelling) Roll(dtMs);
 
-            float dogSpeed = dog ? dogfight.SpeedFactor : 1f;
+            float dogSpeed = dog ? dogfight.SpeedFactor : formationSpeed;
             if (!Hp.empDisabled) transform.position += transform.forward * speed * slow.SpeedFactor * roleSpeedFactor * dogSpeed * dtMs * M + sideStep;   // (remake: a rift's)
         }
 
