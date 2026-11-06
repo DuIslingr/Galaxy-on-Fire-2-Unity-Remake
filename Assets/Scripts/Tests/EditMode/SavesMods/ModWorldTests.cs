@@ -569,6 +569,20 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("a gas cloud is [x, y, z]", messages);
         }
 
+        [Test]
+        public void AnOrbitsOwnLocalsAndRaiders()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'locals': ['vossk', 2], 'raiders': ['pirates'] } }, { 'override': 79, 'orbit': { 'raiders': ['nobody'] } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            int system = Database.Shared.Stations.Find(s => s.index == 78).system;
+            Assert.AreEqual(new[] { 1, 2 }, ModWorld.Locals(system, 78).ToArray(), "race words and numbers");
+            Assert.AreEqual(new[] { 8 }, ModWorld.Raiders(system, 78).ToArray());
+            Assert.IsNull(ModWorld.Locals(system, 77), "another orbit: its system's (none here)");
+            Assert.IsNull(ModWorld.Raiders(Database.Shared.Stations.Find(s => s.index == 79).system, 79), "no race resolved: the system's");
+        }
+
         [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\" or \"radiation\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 
         // Remake (2026-11-03, EVERSPACE 2's item containers): a station's "orbit.containers" (World.LootContainer).

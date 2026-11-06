@@ -266,6 +266,10 @@ namespace GoF2Remake.Modding
         {
             /// <summary>Remake (2026-11-05, EVERSPACE 2's plasma fields): null = GoF2's own roll.</summary>
             public GasCloudSpec gasClouds;
+            /// <summary>Remake (2026-11-05, EVERSPACE 2's location_spawns): the orbit's local fighters' and raiders' races (race
+            /// words, numbers or mod races, resolved when used: ModWorld.Locals / Raiders), beating the system's; null = its.</summary>
+            public List<string> locals, raiders;
+            public ModInfo owner;
             /// <summary>Remake (2026-11-05, EVERSPACE 2's ambience zones): null = none.</summary>
             public List<AmbienceSpec> ambience;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's spline traffic): null = none.</summary>
@@ -336,7 +340,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };

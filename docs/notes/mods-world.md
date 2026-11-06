@@ -157,7 +157,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   unnamed = enemies if either is hostile or the other is pirates / Void / Specters, else neutral). `Standing` handles them
   everywhere the game races go (Toward / IsEnemy / IsFriend / ApplyKill / ApplyDelict / EnemyRaceOf / RaceName /
   RaceWord). systems.json `race` may name one, `"traffic": "mod"` (`ModWorld.ModTrafficOnly`: no game freighters, no
-  pirate events), `locals`, `raiders` (`TrafficPlan`); ships.json `race` / `traffic.races` (resolved in
+  pirate events), `locals`, `raiders` (`TrafficPlan`; stations.json `orbit.locals` / `orbit.raiders` beat them in that
+  orbit, 2026-11-05, EVERSPACE 2's location_spawns: `ModWorld.Locals(system, station)` / `Raiders`, resolved when used
+  with the orbit's `owner` mod, also the hangar's parked ships in a mod-only system); ships.json `race` / `traffic.races` (resolved in
   `ModContent.ShipData`: JsonUtility can't read strings into ints; an unknown one is a mod warning, once:
   `ShipDef.refsReported`); a mod race's fighters always fly mods' ships (`ModTraffic.Pick` chance 1,
   `ModCapitalShips.ChanceFor`). Lounge diplomats in a mod race's system (`AgentGenerator.AddModRaceDiplomats`,

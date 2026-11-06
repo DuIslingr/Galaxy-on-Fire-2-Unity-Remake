@@ -195,6 +195,10 @@ namespace GoF2Remake.Modding
                 }
                 if (s.hazards.Count == 0) s.hazards = null;
             }
+            // Remake (2026-11-05): who flies here, EVERSPACE 2's location_spawns (TrafficPlan, through Locals / Raiders)
+            if (ModJson.Has(o, "locals")) s.locals = ModJson.Strings(o, "locals");
+            if (ModJson.Has(o, "raiders")) s.raiders = ModJson.Strings(o, "raiders");
+            if (s.locals != null || s.raiders != null) s.owner = mod;
             // Remake (2026-11-05): gas clouds at their places, EVERSPACE 2's plasma fields (World.GasCloudField)
             if (ModJson.Get(o, "gasClouds") is JToken gc)
             {
@@ -504,6 +508,20 @@ namespace GoF2Remake.Modding
         public static List<int> Locals(int system) => systemLocals.TryGetValue(system, out var l) ? l : null;
         /// <summary>systems.json "raiders": the races / mod races that raid the system (null: the game's rule).</summary>
         public static List<int> Raiders(int system) => systemRaiders.TryGetValue(system, out var l) ? l : null;
+        /// <summary>The station's orbit's "locals" (stations.json "orbit.locals"), else its system's.</summary>
+        public static List<int> Locals(int system, int station) => OrbitRaces(station, true) ?? Locals(system);
+        /// <summary>The station's orbit's "raiders" (stations.json "orbit.raiders"), else its system's.</summary>
+        public static List<int> Raiders(int system, int station) => OrbitRaces(station, false) ?? Raiders(system);
+
+        static List<int> OrbitRaces(int station, bool locals)
+        {
+            var o = OrbitOf(station);
+            var refs = o == null ? null : locals ? o.locals : o.raiders;
+            if (refs == null) return null;
+            var l = new List<int>();
+            foreach (var r in refs) if (ModRaces.TryResolve(r, o.owner, out int race)) l.Add(race);
+            return l.Count > 0 ? l : null;
+        }
         /// <summary>stations.json "subtitle": what the place is ("Satellite Ruins"), under its name on the star map; null without.</summary>
         public static string Subtitle(int station) => stationSubtitle.TryGetValue(station, out var s) ? s : null;
         /// <summary>stations.json "description": the place's lore, on the star map and in its system's news ticker; null without.</summary>
