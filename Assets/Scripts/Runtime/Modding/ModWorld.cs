@@ -318,6 +318,10 @@ namespace GoF2Remake.Modding
             public int asteroidType = -1;
             /// <summary>The ores (item, chance weight), null: the system's by distance like the game's.</summary>
             public List<(int item, int chance)> ores;
+            /// <summary>Remake (2026-11-05, EVERSPACE 2's asteroid meshes): glTF / GLB files in the mod drawn for its asteroids
+            /// (one at random each, as big as the game's asteroid; mining unchanged) with their "materials"; null = the game's.</summary>
+            public List<string> asteroidModels;
+            public List<CustomShipMaterial> asteroidMaterials = new List<CustomShipMaterial>();
             public bool? fog;
             public Color? fogColor;
             public float? fogEnd;
@@ -351,7 +355,7 @@ namespace GoF2Remake.Modding
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "count", "centre", "center", "spread", "type", "ores" };
+            { "count", "centre", "center", "spread", "type", "ores" , "models", "materials" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };
 
         /// <summary>A system's own sky (systems.json "skybox"; OrbitBuilder.SetupSky, GoF2/SpaceSky's mod images).</summary>

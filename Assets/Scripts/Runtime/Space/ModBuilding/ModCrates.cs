@@ -77,6 +77,20 @@ namespace GoF2Remake.Modding
             return go;
         }
 
+        /// <summary>A copy of model 'key' fitted to 'extent' (Unity, its largest side); null while it isn't loaded (an orbit's
+        /// asteroids: OrbitBuilder fits it to the game asteroid it stands in for).</summary>
+        public static GameObject InstantiateFitted(string key, Vector3 at, Quaternion rotation, float extent, Transform parent)
+        {
+            if (string.IsNullOrEmpty(key) || loadedRevision != ModManager.Revision) { Preload(); return null; }
+            if (!templates.TryGetValue(key, out var template) || template == null) return null;
+            var go = Object.Instantiate(template, at, rotation, parent);
+            if (extent > 0f && extents.TryGetValue(key, out float have) && have > 1e-6f) go.transform.localScale = Vector3.one * (extent / have);
+            return go;
+        }
+
+        /// <summary>The largest side of a hierarchy's mesh bounds (Unity, as it stands).</summary>
+        public static float ExtentOf(GameObject root) => root != null ? LargestExtent(root) : 0f;
+
         /// <summary>The largest extent of race 'race''s container (Unity), what a mod crate is fitted to.</summary>
         static float RaceExtent(int race)
         {

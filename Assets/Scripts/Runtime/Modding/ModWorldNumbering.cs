@@ -334,6 +334,13 @@ namespace GoF2Remake.Modding
                 if (ModJson.Has(a, "count")) s.asteroidCount = Mathf.Clamp(ModJson.Int(a, "count", 60, StationsFile), 0, 300);
                 s.asteroidCentre = Xyz(a, "centre", where) ?? Xyz(a, "center", where);
                 if (ModJson.Has(a, "spread")) s.asteroidSpread = Mathf.Clamp(ModJson.Float(a, "spread", 100000f, StationsFile), 5000f, 500000f);
+                foreach (var path in ModJson.Strings(a, "models"))
+                {
+                    if (!mod.Source.Exists(path)) { Report(mod, $"{where}: asteroids model \"{path}\" isn't in the mod (left out)"); continue; }
+                    (s.asteroidModels ??= new List<string>()).Add(path);
+                }
+                if (ModJson.Get(a, "materials") is JArray amats)
+                    foreach (var m in amats) s.asteroidMaterials.Add(JsonUtility.FromJson<CustomShipMaterial>(m.ToString()));
                 if (ModJson.Str(a, "type") is string type)
                 {
                     s.asteroidType = Array.FindIndex(AsteroidTypes, x => x.Equals(type, StringComparison.OrdinalIgnoreCase));
@@ -528,7 +535,8 @@ namespace GoF2Remake.Modding
         public static List<int> Locals(int system) => systemLocals.TryGetValue(system, out var l) ? l : null;
         /// <summary>systems.json "raiders": the races / mod races that raid the system (null: the game's rule).</summary>
         public static List<int> Raiders(int system) => systemRaiders.TryGetValue(system, out var l) ? l : null;
-        /// <summary>Every orbit's container models (stations.json "orbit.containers" "model" / "bulletproofModel") with their mods.</summary>
+        /// <summary>Every orbit's container and asteroid models (stations.json "orbit.containers" "model" / "bulletproofModel",
+        /// "orbit.asteroids" "models") with their mods and materials: ModCrates loads them.</summary>
         public static List<(ModInfo mod, string path, List<CustomShipMaterial> materials)> ContainerModels()
         {
             Database.Load();   // (the orbits are read with the database, as the station models are: Models)
@@ -538,6 +546,7 @@ namespace GoF2Remake.Modding
                 if (o?.owner == null) continue;
                 if (o.containerModel != null) l.Add((o.owner, o.containerModel, o.containerMaterials));
                 if (o.containerProofModel != null) l.Add((o.owner, o.containerProofModel, o.containerMaterials));
+                if (o.asteroidModels != null) foreach (var p in o.asteroidModels) l.Add((o.owner, p, o.asteroidMaterials));   // (and its asteroids')
             }
             return l;
         }
