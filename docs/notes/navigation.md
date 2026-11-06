@@ -207,6 +207,15 @@ the player ship) and `NavigationView` (flight HUD).
   the mod crates (`ModWorld.ContainerModels` -> `ModCrates.LoadAll`; "<mod id>|<path>" keys), `LootContainer.Spawn`'s
   modelKey through `Crate.Model`, fitted to the race's container x `ModelScale`; `containers.materials` (ships.json's form)
   applied to the template as on a station model (`ModCrates.ApplyMaterials`). Test `AnOrbitsContainerModels`.
+  Cloaked containers (2026-11-06, EVERSPACE 2's BP_Activity_InvisibleContainer / BP_InvisibleItemContainer, es2_re kismet):
+  `containers.cloaked` (`OrbitSpec.containerCloaked`, at most 10 places, on top of `count`) are bulletproof ones (ES2's
+  OpenOnInteract) with a rare container's rolls, first in line for the fixed loot, under the cloak (BP_Condition_Buff_Cloaked:
+  `NpcCloak` with `anySurface`, any shader's texture) within `LootContainer.ShimmerM` (2 km) of the camera and not drawn
+  beyond (the cloak's opaque texture stays off), no marker or lock (`Target.cloaked`, out of `RadarObjects`, skipped by
+  `InReach`) until `Reveal`. `World.CloakedContainers` on the player's ship: within `NearbyM` (BP_Activity_Detect_Base's
+  DistanceToPlayer 200 000 cm, at the places' 1:1 scale) "Container nearby" once (its WarningHeaderText), within `RevealM`
+  (the container's InteractRadius 4000 cm x 3.6, below `OpenRangeM`) the marker (ShowMarker); opened, "Container found"
+  (FoundContainer) and the empty shell shows. Left out: ES2's success sound, the location-secret count. Not tried in game.
 - **Traffic lanes** (remake 2026-11-03, for mods; stations.json `orbit.lanes` -> `ModWorld.LaneSpec`, `Flight.TrafficLane`
   plain (a Catmull-Rom path walked by distance, 16 chords a segment; open paths turn over at their ends),
   `World.TrafficLanes` attached with the containers): after EVERSPACE 2's BP_SplineTraffic (Count 10, BaseSpeed 8000 cm/s,

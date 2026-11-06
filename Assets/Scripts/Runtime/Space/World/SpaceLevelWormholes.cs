@@ -423,6 +423,7 @@ namespace GoF2Remake.World
             TrafficLanes.Attach(this, db);   // ... and its traffic lanes
             StationLife.Attach(this);   // ... and its station's life (worker drones)
             HazardZones.Attach(this);   // remake mods: the orbit's heat / radiation volumes, a radiated hull's cap
+            CloakedContainers.Attach(this);   // remake mods: finding the orbit's cloaked containers
             OrbitAmbience.Attach(this);   // remake mods: the orbit's ambience zones
             OrbitStorm.Attach(this);   // remake mods: the orbit's lightning storm
             OrbitMinefield.Attach(this);   // remake mods: the orbit's minefields (by security, rank and share)

@@ -354,7 +354,7 @@ namespace GoF2Remake.Modding
                 {
                     foreach (var p in c.Properties())
                         if (p.Name != "count" && p.Name != "centre" && p.Name != "center" && p.Name != "spread" && p.Name != "bulletproof" && p.Name != "loot"
-                            && p.Name != "model" && p.Name != "bulletproofModel" && p.Name != "materials")
+                            && p.Name != "model" && p.Name != "bulletproofModel" && p.Name != "materials" && p.Name != "cloaked")
                             Report(mod, $"{where}: unknown containers field \"{p.Name}\" (ignored)");
                     s.containerCount = Mathf.Clamp(ModJson.Int(c, "count", 6, StationsFile), 0, 40);
                     s.containerCentre = Xyz(c, "centre", where) ?? Xyz(c, "center", where);
@@ -365,6 +365,21 @@ namespace GoF2Remake.Modding
                         if (!(ModJson.Str(c, field) is string path)) continue;
                         if (mod.Source.Exists(path)) set(path);
                         else Report(mod, $"{where}: containers \"{field}\" \"{path}\" isn't in the mod (the race's container)");
+                    }
+                    if (ModJson.Get(c, "cloaked") is JToken cl)
+                    {
+                        if (!(cl is JArray clList)) throw new ModJsonException($"{where}: containers \"cloaked\" is a list of places [ [x, y, z], ... ]");
+                        s.containerCloaked = new List<Vector3>();
+                        foreach (var e in clList)
+                        {
+                            if (e is JArray xyz && xyz.Count == 3 && xyz.All(v => v.Type == JTokenType.Integer || v.Type == JTokenType.Float))
+                            {
+                                if (s.containerCloaked.Count < 10) s.containerCloaked.Add(new Vector3((float)xyz[0], (float)xyz[1], (float)xyz[2]));
+                                else { Report(mod, $"{where}: at most 10 cloaked containers (the rest left out)"); break; }
+                            }
+                            else Report(mod, $"{where}: a cloaked container's place is [x, y, z] (left out)");
+                        }
+                        if (s.containerCloaked.Count == 0) s.containerCloaked = null;
                     }
                     if (ModJson.Get(c, "materials") is JArray cmats)
                         foreach (var m in cmats) s.containerMaterials.Add(JsonUtility.FromJson<CustomShipMaterial>(m.ToString()));

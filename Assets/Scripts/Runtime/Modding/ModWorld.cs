@@ -381,6 +381,9 @@ namespace GoF2Remake.Modding
             /// (World.LootContainer).</summary>
             public int containerCount;
             public Vector3? containerCentre;
+            /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_Activity_InvisibleContainer): cloaked containers at these places (game
+            /// units), on top of containerCount: unseen and unmarked until the ship is near (World.CloakedContainers); null = none.</summary>
+            public List<Vector3> containerCloaked;
             public float containerSpread = 40000f, containerBulletproof = 0.3f;
             /// <summary>Remake (2026-11-05, EVERSPACE 2's unique loot): fixed items in its containers, each entry once a game
             /// (Session.FixedLootTaken); null = none.</summary>

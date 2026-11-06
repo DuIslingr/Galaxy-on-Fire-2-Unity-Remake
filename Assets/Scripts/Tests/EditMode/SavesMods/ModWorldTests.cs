@@ -719,6 +719,21 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("unknown minefield field \"fuse\"", AllMessages(Installed("t_world")));
         }
 
+        [Test]
+        public void AnOrbitsCloakedContainers()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'containers': { 'count': 0, 'cloaked': [ [100, 0, -200], [1, 2], 'x', [5, 6, 7] ] } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var o = ModWorld.OrbitOf(78);
+            Assert.AreEqual(0, o.containerCount);
+            Assert.AreEqual(new[] { new UnityEngine.Vector3(100, 0, -200), new UnityEngine.Vector3(5, 6, 7) }, o.containerCloaked.ToArray());
+            StringAssert.Contains("a cloaked container's place is [x, y, z]", AllMessages(Installed("t_world")));
+        }
+
+        [Test] public void CloakedContainersAreAList() => StringAssert.Contains("containers \"cloaked\" is a list", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'cloaked': true } } } ]"));
+
         [Test] public void AMinefieldNeedsACentre() => StringAssert.Contains("a minefield needs \"centre\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'minefields': [ { 'kind': 'web' } ] } } ]"));
         [Test] public void AMinefieldKindIsNotANumber() => StringAssert.Contains("a minefield's \"kind\" is", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'minefields': [ { 'kind': '2', 'centre': [0, 0, 0] } ] } } ]"));
 

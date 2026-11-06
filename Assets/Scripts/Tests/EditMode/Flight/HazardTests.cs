@@ -73,6 +73,15 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ACloakedContainerShowsItselfOnlyUpClose()
+        {
+            Assert.AreEqual(2, GoF2Remake.World.CloakedContainers.Stage(100f), "within ES2's InteractRadius 40 m x 3.6: the marker comes on");
+            Assert.AreEqual(1, GoF2Remake.World.CloakedContainers.Stage(1500f), "within the activity's 2 km: CONTAINER NEARBY");
+            Assert.AreEqual(0, GoF2Remake.World.CloakedContainers.Stage(2500f));
+            Assert.Less(GoF2Remake.World.CloakedContainers.RevealM, GoF2Remake.World.LootContainer.OpenRangeM, "revealed before it can be opened");
+        }
+
+        [Test]
         public void MinefieldsAreLaidOnlyWhereTheirSpecAllows()
         {
             var spec = new GoF2Remake.Modding.ModWorld.MinefieldSpec();   // defaults: security 1 or lower, rank 4 or more, half the visits
