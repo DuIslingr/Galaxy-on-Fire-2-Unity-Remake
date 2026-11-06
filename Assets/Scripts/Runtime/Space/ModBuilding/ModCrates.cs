@@ -4,8 +4,8 @@
 // NetCrate's model key). Each file loads once (ships sharing it share the template), in the background with the other mod
 // models when the mods change (Preload; ModLoading), into a hidden DontDestroyOnLoad holder; a crate made before its model
 // is there shows the race's container. Instantiate fits the copy to the race's container (its largest extent) unless the
-// entry gives "crateSize" (game units). A crate's model key is "<mod id>|<path>". The orbits' containers' models
-// (stations.json "orbit.containers" "model" / "bulletproofModel", ModWorld.ContainerModels) load with them.
+// entry gives "crateSize" (game units). A crate's model key is "<mod id>|<path>". The orbits' containers', asteroids' and
+// wrecks' models (stations.json "orbit.containers" / "asteroids" / "wrecks", ModWorld.ContainerModels) load with them.
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -91,6 +91,19 @@ namespace GoF2Remake.Modding
         /// <summary>The largest side of a hierarchy's mesh bounds (Unity, as it stands).</summary>
         public static float ExtentOf(GameObject root) => root != null ? LargestExtent(root) : 0f;
 
+        /// <summary>Model 'key''s largest side as loaded (Unity, before any fitting); 0 while it isn't loaded.</summary>
+        public static float ExtentOf(string key) => !string.IsNullOrEmpty(key) && loadedRevision == ModManager.Revision && extents.TryGetValue(key, out float e) ? e : 0f;
+
+        /// <summary>A hierarchy's mesh bounds in its root's space, its root's scale applied (an orbit's wreck hulls: their
+        /// collision box, turned with them).</summary>
+        public static Bounds LocalBounds(GameObject root)
+        {
+            var b = RootBounds(root, out bool any);
+            if (!any) return new Bounds();
+            var s = root.transform.localScale;
+            return new Bounds(Vector3.Scale(b.center, s), Vector3.Scale(b.size, s));
+        }
+
         /// <summary>The largest extent of race 'race''s container (Unity), what a mod crate is fitted to.</summary>
         static float RaceExtent(int race)
         {
@@ -105,7 +118,13 @@ namespace GoF2Remake.Modding
         /// <summary>The largest side of a hierarchy's mesh bounds in its root's space (scale 1).</summary>
         static float LargestExtent(GameObject root)
         {
-            var b = new Bounds(); bool any = false;
+            var b = RootBounds(root, out bool any);
+            return any ? Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z)) : 0f;
+        }
+
+        static Bounds RootBounds(GameObject root, out bool any)
+        {
+            var b = new Bounds(); any = false;
             var toRoot = root.transform.worldToLocalMatrix;
             foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
             {
@@ -119,7 +138,7 @@ namespace GoF2Remake.Modding
                     if (!any) { b = new Bounds(p, Vector3.zero); any = true; } else b.Encapsulate(p);
                 }
             }
-            return any ? Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z)) : 0f;
+            return b;
         }
 
         /// <summary>Which ship has which crate (the active mods' ships.json "crate"), again when the mods change.</summary>

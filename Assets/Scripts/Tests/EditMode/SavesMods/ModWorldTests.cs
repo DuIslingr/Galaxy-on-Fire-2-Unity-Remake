@@ -630,6 +630,24 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("asteroids model \"gone.glb\" isn't in the mod", AllMessages(Installed("t_world")));
         }
 
+        [Test]
+        public void AnOrbitsWreckModels()
+        {
+            string dir = WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'wrecks': { 'count': 10, 'models': ['hull_a.glb', 'gone.glb'], 'hulks': 4, 'size': 12000, 'materials': [ { 'material': 'Hull', 'color': [0.5, 0.5, 0.5] } ] } } } ]"));
+            WriteFile(dir, "hull_a.glb", Dummy);
+            ScanAndEnable("t_world");
+            Database.Load();
+            var o = ModWorld.OrbitOf(78);
+            Assert.AreEqual(new[] { "hull_a.glb" }, o.wreckModels.ToArray(), "the missing one left out");
+            Assert.AreEqual(4, o.wreckHulks);
+            Assert.AreEqual(12000f, o.wreckSize);
+            Assert.AreEqual(1, o.wreckMaterials.Count);
+            Assert.AreEqual(1, ModWorld.ContainerModels().FindAll(m => m.path == "hull_a.glb").Count, "loaded with the mod crates");
+            StringAssert.Contains("wrecks model \"gone.glb\" isn't in the mod", AllMessages(Installed("t_world")));
+            Assert.IsFalse(AllMessages(Installed("t_world")).Contains("unknown wrecks field"));
+        }
+
         [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\" or \"radiation\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 
         // Remake (2026-11-03, EVERSPACE 2's item containers): a station's "orbit.containers" (World.LootContainer).

@@ -154,8 +154,14 @@ the player ship) and `NavigationView` (flight HUD).
   field locations (Wreck Field, Ghost Fleet, Warship Remains: war wrecks among loot containers), each visit lays out
   `count` (1-60, default 12) wreck containers (the junk crate look) at random in the field's cube (`spread`, default
   60000; a third as tall), each a freighter's loot roll or 1-5 Space Waste (item 99), kept until emptied (`Crate.keep`). Not
-  in the alien orbit or interstellar space. ES2's wreck meshes aren't placed (only containers). The ES2 importer gives
-  its wreck-field locations one; its outlaw strongholds are pirate-held orbits (`pirateHeld`: outposts and guards).
+  in the alien orbit or interstellar space. Wreck hulls (2026-11-05, `models` / `materials` / `hulks` / `size` ->
+  `wreckModels` ...; `WreckField.SpawnHulks`): `hulks` (default 2 x the models, at most 8) of the mod's glTF models among
+  the containers, the largest model `size` game units at its largest side (default 8000) and the others in proportion
+  as authored (x0.85-1.15; `ModCrates.ExtentOf(key)`), turned at random, placed by a
+  `System.Random` seeded by the station (the same for every player), each an `Obstacle` with one box of its bounds
+  (`ModCrates.LocalBounds`, `rotates`: turned with it); loaded with the mod crates (`ModWorld.ContainerModels`), none
+  placed before they are (`ModCrates.Ready`). The ES2 importer gives its wreck-field locations one, with ES2's wreck
+  meshes; its outlaw strongholds are pirate-held orbits (`pirateHeld`: outposts and guards).
 - **Rifts** (remake 2026-11-04, for mods; encounter kind `rift`, `Flight.RiftRun` plain + `World.RiftEncounter`; the HUD's
   transfer counter line shows `RiftEncounter.HudLine`): after EVERSPACE 2's Ancient Rifts, read in its code (decompiled
   BP_Encounter_Rift and UGameplayLib::GetRandomRiftMutatorForNextStage, mutators.csv's LootQualityBonus / bAllowedInHighRiskAreas /

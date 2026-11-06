@@ -242,12 +242,22 @@ namespace GoF2Remake.Modding
                 else if (wr is JObject w)
                 {
                     foreach (var p in w.Properties())
-                        if (p.Name != "count" && p.Name != "centre" && p.Name != "center" && p.Name != "spread") Report(mod, $"{where}: unknown wrecks field \"{p.Name}\" (ignored)");
+                        if (!WreckFields.Contains(p.Name)) Report(mod, $"{where}: unknown wrecks field \"{p.Name}\" (ignored)");
                     s.wreckCount = Mathf.Clamp(ModJson.Int(w, "count", 12, StationsFile), 0, 60);
                     s.wreckCentre = Xyz(w, "centre", where) ?? Xyz(w, "center", where);
                     if (ModJson.Has(w, "spread")) s.wreckSpread = Mathf.Clamp(ModJson.Float(w, "spread", 60000f, StationsFile), 5000f, 400000f);
+                    // Remake (2026-11-05): the field's own wreck hulls (World.WreckField)
+                    foreach (var path in ModJson.Strings(w, "models"))
+                    {
+                        if (!mod.Source.Exists(path)) { Report(mod, $"{where}: wrecks model \"{path}\" isn't in the mod (left out)"); continue; }
+                        (s.wreckModels ??= new List<string>()).Add(path);
+                    }
+                    if (ModJson.Get(w, "materials") is JArray wmats)
+                        foreach (var m in wmats) s.wreckMaterials.Add(JsonUtility.FromJson<CustomShipMaterial>(m.ToString()));
+                    if (ModJson.Has(w, "hulks")) s.wreckHulks = Mathf.Clamp(ModJson.Int(w, "hulks", 6, StationsFile), 0, 30);
+                    if (ModJson.Has(w, "size")) s.wreckSize = Mathf.Clamp(ModJson.Float(w, "size", 8000f, StationsFile), 500f, 60000f);
                 }
-                else throw new ModJsonException($"{where}: orbit \"wrecks\" is true, false or {{ \"count\", \"centre\", \"spread\" }}");
+                else throw new ModJsonException($"{where}: orbit \"wrecks\" is true, false or {{ \"count\", \"centre\", \"spread\", \"models\"... }}");
             }
             if (ModJson.Has(o, "level")) s.level = Mathf.Clamp(ModJson.Int(o, "level", 0, StationsFile), 0, 30);   // remake: ES2's location level
             // Remake (2026-11-03): traffic lanes, EVERSPACE 2's spline traffic (World.TrafficLanes)
@@ -535,8 +545,8 @@ namespace GoF2Remake.Modding
         public static List<int> Locals(int system) => systemLocals.TryGetValue(system, out var l) ? l : null;
         /// <summary>systems.json "raiders": the races / mod races that raid the system (null: the game's rule).</summary>
         public static List<int> Raiders(int system) => systemRaiders.TryGetValue(system, out var l) ? l : null;
-        /// <summary>Every orbit's container and asteroid models (stations.json "orbit.containers" "model" / "bulletproofModel",
-        /// "orbit.asteroids" "models") with their mods and materials: ModCrates loads them.</summary>
+        /// <summary>Every orbit's container, asteroid and wreck models (stations.json "orbit.containers" "model" /
+        /// "bulletproofModel", "orbit.asteroids" / "orbit.wrecks" "models") with their mods and materials: ModCrates loads them.</summary>
         public static List<(ModInfo mod, string path, List<CustomShipMaterial> materials)> ContainerModels()
         {
             Database.Load();   // (the orbits are read with the database, as the station models are: Models)
@@ -547,6 +557,7 @@ namespace GoF2Remake.Modding
                 if (o.containerModel != null) l.Add((o.owner, o.containerModel, o.containerMaterials));
                 if (o.containerProofModel != null) l.Add((o.owner, o.containerProofModel, o.containerMaterials));
                 if (o.asteroidModels != null) foreach (var p in o.asteroidModels) l.Add((o.owner, p, o.asteroidMaterials));   // (and its asteroids')
+                if (o.wreckModels != null) foreach (var p in o.wreckModels) l.Add((o.owner, p, o.wreckMaterials));   // (and its wrecks')
             }
             return l;
         }

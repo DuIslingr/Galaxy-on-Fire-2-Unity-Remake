@@ -294,6 +294,13 @@ namespace GoF2Remake.Modding
             public int level;
             public Vector3? wreckCentre;
             public float wreckSpread = 60000f;
+            /// <summary>Remake (2026-11-05, EVERSPACE 2's wreck meshes): glTF / GLB wreck hulls in the mod laid among the wreck
+            /// containers (wreckHulks of them, one at random each; the largest model wreckSize game units at its largest side, the
+            /// others in proportion as authored) with their "materials"; null = containers only.</summary>
+            public List<string> wreckModels;
+            public List<CustomShipMaterial> wreckMaterials = new List<CustomShipMaterial>();
+            public int wreckHulks = -1;   // (-1: as many as the models x 2, at most 8)
+            public float wreckSize = 8000f;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's item containers): this many closed containers (0 = none) within
             /// containerSpread (game units, a cube's side) of containerCentre, containerBulletproof of them bulletproof
             /// (World.LootContainer).</summary>
@@ -354,6 +361,8 @@ namespace GoF2Remake.Modding
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders" };
+        static readonly HashSet<string> WreckFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "count", "centre", "center", "spread", "models", "materials", "hulks", "size" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "type", "ores" , "models", "materials" };
         static readonly string[] AsteroidTypes = { "rock", "void", "ice", "magma" };
