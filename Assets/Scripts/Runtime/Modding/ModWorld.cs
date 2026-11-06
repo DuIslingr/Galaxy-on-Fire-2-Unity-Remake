@@ -269,6 +269,7 @@ namespace GoF2Remake.Modding
             /// <summary>Remake (2026-11-05, EVERSPACE 2's location_spawns): the orbit's local fighters' and raiders' races (race
             /// words, numbers or mod races, resolved when used: ModWorld.Locals / Raiders), beating the system's; null = its.</summary>
             public List<string> locals, raiders;
+            /// <summary>The mod whose stations.json gave the orbit (its races' and models' references).</summary>
             public ModInfo owner;
             /// <summary>Remake (2026-11-05, EVERSPACE 2's ambience zones): null = none.</summary>
             public List<AmbienceSpec> ambience;
@@ -299,6 +300,14 @@ namespace GoF2Remake.Modding
             public int containerCount;
             public Vector3? containerCentre;
             public float containerSpread = 40000f, containerBulletproof = 0.3f;
+            /// <summary>Remake (2026-11-05, EVERSPACE 2's unique loot): fixed items in its containers, each entry once a game
+            /// (Session.FixedLootTaken); null = none.</summary>
+            public List<(string item, int amount)> containerLoot;
+            /// <summary>Remake (2026-11-05, EVERSPACE 2's container meshes): glTF / GLB files in the mod for its containers and its
+            /// bulletproof ones (Modding.ModCrates, fitted to the race's container), null = the race's container.</summary>
+            public string containerModel, containerProofModel;
+            /// <summary>Their materials, like ships.json's (by the model's mesh / material names); empty = the model's own.</summary>
+            public List<CustomShipMaterial> containerMaterials = new List<CustomShipMaterial>();
             /// <summary>false: no asteroid field.</summary>
             public bool? asteroids;
             public int? asteroidCount;

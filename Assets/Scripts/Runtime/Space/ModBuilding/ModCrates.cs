@@ -4,7 +4,8 @@
 // NetCrate's model key). Each file loads once (ships sharing it share the template), in the background with the other mod
 // models when the mods change (Preload; ModLoading), into a hidden DontDestroyOnLoad holder; a crate made before its model
 // is there shows the race's container. Instantiate fits the copy to the race's container (its largest extent) unless the
-// entry gives "crateSize" (game units). A crate's model key is "<mod id>|<path>".
+// entry gives "crateSize" (game units). A crate's model key is "<mod id>|<path>". The orbits' containers' models
+// (stations.json "orbit.containers" "model" / "bulletproofModel", ModWorld.ContainerModels) load with them.
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -21,6 +22,7 @@ namespace GoF2Remake.Modding
 
         static readonly Dictionary<string, GameObject> templates = new Dictionary<string, GameObject>();
         static readonly Dictionary<string, float> extents = new Dictionary<string, float>();   // a template's largest extent (Unity)
+        static readonly Dictionary<string, List<CustomShipMaterial>> materials = new Dictionary<string, List<CustomShipMaterial>>();   // an orbit container model's own
         static readonly Dictionary<int, string> shipKeys = new Dictionary<int, string>();
         static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();   // a key's "crateSize" (game units)
         static readonly Dictionary<int, float> raceExtents = new Dictionary<int, float>();
@@ -124,7 +126,7 @@ namespace GoF2Remake.Modding
         static async Task LoadAll(int rev)
         {
             foreach (var t in templates.Values) if (t != null) Object.Destroy(t);
-            templates.Clear(); extents.Clear(); raceExtents.Clear();
+            templates.Clear(); extents.Clear(); raceExtents.Clear(); materials.Clear();
             foreach (var i in imports) i.Dispose();
             imports.Clear();
             var files = new Dictionary<string, ModInfo>();
@@ -132,6 +134,11 @@ namespace GoF2Remake.Modding
             {
                 foreach (var (mod, ship) in ModContent.ActiveShips())
                     if (ship != null && !string.IsNullOrEmpty(ship.crate)) files[mod.Id + "|" + ship.crate] = mod;
+                foreach (var (mod, path, mats) in ModWorld.ContainerModels())   // (the orbits' containers, with their materials)
+                {
+                    files[mod.Id + "|" + path] = mod;
+                    if (mats != null && mats.Count > 0) materials[mod.Id + "|" + path] = mats;
+                }
             }
             catch (System.Exception e) { Debug.LogException(e); }
             if (files.Count > 0)
@@ -174,10 +181,28 @@ namespace GoF2Remake.Modding
                 if (!await ModGltf.InstantiateMain(import, root.transform)) { Object.Destroy(root); Warn(mod, $"{path}: no scene to show"); return; }
                 if (rev != ModManager.Revision || holder == null) { Object.Destroy(root); return; }
                 foreach (var c in root.GetComponentsInChildren<Collider>(true)) Object.Destroy(c);
+                if (materials.TryGetValue(key, out var specs)) ApplyMaterials(mod, root, specs, $"{mod.Id}:{path}");
                 templates[key] = root;
                 extents[key] = LargestExtent(root);
             }
             catch (System.Exception e) { Warn(mod, $"{path}: {e.Message}"); }
+        }
+
+        /// <summary>An orbit container model's "materials" (like a station model's: ModStations), by mesh / material name.</summary>
+        static void ApplyMaterials(ModInfo mod, GameObject root, List<CustomShipMaterial> specs, string label)
+        {
+            var mats = new Material[specs.Count];
+            for (int i = 0; i < mats.Length; i++)
+                mats[i] = ModMaterials.FromSpec(mod, specs[i], !string.IsNullOrEmpty(specs[i].material) ? $"{label} {specs[i].material}" : $"{label} {specs[i].mesh}{specs[i].submesh}");
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var mesh = ModShipBuilder.MeshOf(r);
+                var assigned = r.sharedMaterials;
+                int count = Mathf.Max(1, mesh != null ? mesh.subMeshCount : assigned.Length);
+                if (assigned.Length != count) System.Array.Resize(ref assigned, count);
+                for (int sub = 0; sub < count; sub++) { var m = ModShipBuilder.MaterialFor(specs, mats, r.name, sub, assigned[sub] != null ? assigned[sub].name : null); if (m != null) assigned[sub] = m; }
+                r.sharedMaterials = assigned;
+            }
         }
 
         static void Warn(ModInfo mod, string message)

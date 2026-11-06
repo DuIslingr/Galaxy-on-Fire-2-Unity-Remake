@@ -134,7 +134,7 @@ namespace GoF2Remake.Modding
             if (!(t is JObject o)) throw new ModJsonException($"{where}: \"orbit\" must be an object {{ \"station\": ..., \"asteroids\": ... }}");
             foreach (var p in o.Properties())
                 if (!OrbitFields.Contains(p.Name)) Report(mod, $"{where}: unknown orbit field \"{p.Name}\" (ignored)");
-            var s = new OrbitSpec();
+            var s = new OrbitSpec { owner = mod };
             if (ModJson.Get(o, "station") is JToken st)
             {
                 if (st.Type == JTokenType.Boolean) s.station = (bool)st ? 1 : 0;
@@ -198,7 +198,6 @@ namespace GoF2Remake.Modding
             // Remake (2026-11-05): who flies here, EVERSPACE 2's location_spawns (TrafficPlan, through Locals / Raiders)
             if (ModJson.Has(o, "locals")) s.locals = ModJson.Strings(o, "locals");
             if (ModJson.Has(o, "raiders")) s.raiders = ModJson.Strings(o, "raiders");
-            if (s.locals != null || s.raiders != null) s.owner = mod;
             // Remake (2026-11-05): gas clouds at their places, EVERSPACE 2's plasma fields (World.GasCloudField)
             if (ModJson.Get(o, "gasClouds") is JToken gc)
             {
@@ -295,14 +294,35 @@ namespace GoF2Remake.Modding
                 else if (ct is JObject c)
                 {
                     foreach (var p in c.Properties())
-                        if (p.Name != "count" && p.Name != "centre" && p.Name != "center" && p.Name != "spread" && p.Name != "bulletproof")
+                        if (p.Name != "count" && p.Name != "centre" && p.Name != "center" && p.Name != "spread" && p.Name != "bulletproof" && p.Name != "loot"
+                            && p.Name != "model" && p.Name != "bulletproofModel" && p.Name != "materials")
                             Report(mod, $"{where}: unknown containers field \"{p.Name}\" (ignored)");
                     s.containerCount = Mathf.Clamp(ModJson.Int(c, "count", 6, StationsFile), 0, 40);
                     s.containerCentre = Xyz(c, "centre", where) ?? Xyz(c, "center", where);
                     if (ModJson.Has(c, "spread")) s.containerSpread = Mathf.Clamp(ModJson.Float(c, "spread", 40000f, StationsFile), 5000f, 400000f);
                     if (ModJson.Has(c, "bulletproof")) s.containerBulletproof = Mathf.Clamp01(ModJson.Float(c, "bulletproof", 0.3f, StationsFile));
+                    foreach (var (field, set) in new (string, Action<string>)[] { ("model", v => s.containerModel = v), ("bulletproofModel", v => s.containerProofModel = v) })
+                    {
+                        if (!(ModJson.Str(c, field) is string path)) continue;
+                        if (mod.Source.Exists(path)) set(path);
+                        else Report(mod, $"{where}: containers \"{field}\" \"{path}\" isn't in the mod (the race's container)");
+                    }
+                    if (ModJson.Get(c, "materials") is JArray cmats)
+                        foreach (var m in cmats) s.containerMaterials.Add(JsonUtility.FromJson<CustomShipMaterial>(m.ToString()));
+                    if (ModJson.Get(c, "loot") is JArray fixedLoot)
+                    {
+                        s.containerLoot = new List<(string, int)>();
+                        foreach (var e in fixedLoot)
+                        {
+                            string item = e is JObject eo ? (ModJson.Get(eo, "item") is JToken it ? (it.Type == JTokenType.Integer ? ((int)it).ToString() : (string)it) : null)
+                                        : e.Type == JTokenType.Integer ? ((int)e).ToString() : e.Type == JTokenType.String ? (string)e : null;
+                            if (item == null) { Report(mod, $"{where}: a container loot entry is {{ \"item\", \"amount\" }} (left out)"); continue; }
+                            s.containerLoot.Add((item, e is JObject ao ? Mathf.Max(1, ModJson.Int(ao, "amount", 1, StationsFile)) : 1));
+                        }
+                        if (s.containerLoot.Count == 0) s.containerLoot = null;
+                    }
                 }
-                else throw new ModJsonException($"{where}: orbit \"containers\" is true, false or {{ \"count\", \"centre\", \"spread\", \"bulletproof\" }}");
+                else throw new ModJsonException($"{where}: orbit \"containers\" is true, false or {{ \"count\", \"centre\", \"spread\", \"bulletproof\", \"loot\" }}");
             }
             var ast = ModJson.Get(o, "asteroids");
             if (ast != null && ast.Type == JTokenType.Boolean) s.asteroids = (bool)ast;
@@ -508,6 +528,20 @@ namespace GoF2Remake.Modding
         public static List<int> Locals(int system) => systemLocals.TryGetValue(system, out var l) ? l : null;
         /// <summary>systems.json "raiders": the races / mod races that raid the system (null: the game's rule).</summary>
         public static List<int> Raiders(int system) => systemRaiders.TryGetValue(system, out var l) ? l : null;
+        /// <summary>Every orbit's container models (stations.json "orbit.containers" "model" / "bulletproofModel") with their mods.</summary>
+        public static List<(ModInfo mod, string path, List<CustomShipMaterial> materials)> ContainerModels()
+        {
+            Database.Load();   // (the orbits are read with the database, as the station models are: Models)
+            var l = new List<(ModInfo, string, List<CustomShipMaterial>)>();
+            foreach (var o in orbits.Values)
+            {
+                if (o?.owner == null) continue;
+                if (o.containerModel != null) l.Add((o.owner, o.containerModel, o.containerMaterials));
+                if (o.containerProofModel != null) l.Add((o.owner, o.containerProofModel, o.containerMaterials));
+            }
+            return l;
+        }
+
         /// <summary>The station's orbit's "locals" (stations.json "orbit.locals"), else its system's.</summary>
         public static List<int> Locals(int system, int station) => OrbitRaces(station, true) ?? Locals(system);
         /// <summary>The station's orbit's "raiders" (stations.json "orbit.raiders"), else its system's.</summary>

@@ -192,6 +192,14 @@ the player ship) and `NavigationView` (flight HUD).
   bulletproof one here) 2-4 (`LootContainer.RollsMin` ...). Not done:
   ES2's secure containers (OpenOnUnlocked, energized through conductors; the importer counts its armoured ones as
   bulletproof), its loot menu (everything spills), the open animation.
+  Fixed loot (2026-11-05, EVERSPACE 2's unique_loot.csv): `containers.loot` (`OrbitSpec.containerLoot`, item references
+  and amounts) on top of the rolls, an entry a container in turn (the bulletproof ones first), skipped once its key
+  (`LootContainer.FixedLootKey`: station:entry) is in `Session.FixedLootTaken`, saved as `fixedLootTaken`, added when its
+  container opens. Test `ModWorldTests.AnOrbitsFixedContainerLoot`. Models (2026-11-05, ES2's SK_Container_Generic_*):
+  `containers.model` / `bulletproofModel` (`OrbitSpec.containerModel` / `containerProofModel`, checked in the mod) load with
+  the mod crates (`ModWorld.ContainerModels` -> `ModCrates.LoadAll`; "<mod id>|<path>" keys), `LootContainer.Spawn`'s
+  modelKey through `Crate.Model`, fitted to the race's container x `ModelScale`; `containers.materials` (ships.json's form)
+  applied to the template as on a station model (`ModCrates.ApplyMaterials`). Test `AnOrbitsContainerModels`.
 - **Traffic lanes** (remake 2026-11-03, for mods; stations.json `orbit.lanes` -> `ModWorld.LaneSpec`, `Flight.TrafficLane`
   plain (a Catmull-Rom path walked by distance, 16 chords a segment; open paths turn over at their ends),
   `World.TrafficLanes` attached with the containers): after EVERSPACE 2's BP_SplineTraffic (Count 10, BaseSpeed 8000 cm/s,

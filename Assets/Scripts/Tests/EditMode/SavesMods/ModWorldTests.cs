@@ -583,6 +583,37 @@ namespace GoF2Remake.Tests
             Assert.IsNull(ModWorld.Raiders(Database.Shared.Stations.Find(s => s.index == 79).system, 79), "no race resolved: the system's");
         }
 
+        [Test]
+        public void AnOrbitsFixedContainerLoot()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'containers': { 'count': 3, 'loot': [ { 'item': 155, 'amount': 4 }, '201', { 'amount': 2 } ] } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var l = ModWorld.OrbitOf(78).containerLoot;
+            Assert.AreEqual(2, l.Count, "an entry without an item left out");
+            Assert.AreEqual(("155", 4), l[0]);
+            Assert.AreEqual(("201", 1), l[1], "a bare reference: one");
+            Assert.AreEqual("78:1", GoF2Remake.World.LootContainer.FixedLootKey(78, 1));
+            StringAssert.Contains("a container loot entry is", AllMessages(Installed("t_world")));
+        }
+
+        [Test]
+        public void AnOrbitsContainerModels()
+        {
+            string dir = WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'containers': { 'count': 2, 'model': 'box.glb', 'bulletproofModel': 'vault.glb' } } } ]"));
+            WriteFile(dir, "box.glb", Dummy);
+            ScanAndEnable("t_world");
+            Database.Load();
+            var o = ModWorld.OrbitOf(78);
+            Assert.AreEqual("box.glb", o.containerModel);
+            Assert.IsNull(o.containerProofModel, "not in the mod: the race's container");
+            Assert.AreEqual("t_world", o.owner.Id);
+            Assert.IsTrue(ModWorld.ContainerModels().Exists(m => m.mod == o.owner && m.path == "box.glb"), "loaded with the mod crates");
+            StringAssert.Contains("\"bulletproofModel\" \"vault.glb\" isn't in the mod", AllMessages(Installed("t_world")));
+        }
+
         [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\" or \"radiation\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 
         // Remake (2026-11-03, EVERSPACE 2's item containers): a station's "orbit.containers" (World.LootContainer).
