@@ -81,7 +81,10 @@ generator).
   station's Map does), Discard (418). The story text is every step's objective (`MissionsWindow::init` 0x17a604:
   DAT_00258f68[index] below 0xa4), hidden and empty missions too (step 13's "find work in the Space Lounge" before the
   convoy); the map button only for a visible mission with a target. The pause menu's Missions page the same. Remake: a
-  "Pirate activity" tab beside Most Wanted (see "NPCs and combat", Pirate activity board).
+  "Pirate activity" tab beside Most Wanted (see "NPCs and combat", Pirate activity board). Remake (a player's suggestion
+  2026-11-03): on those two tabs Show on map sits right under the details' text at its left edge
+  (`.missions-scroll--fit` / `.missions-footer--under` in Lounge.uss), not in the panel's bottom-right corner; a long
+  text still scrolls with the button in view. The Missions tab keeps its buttons bottom-right.
 - **Blueprints** (`Blueprints`, the hangar's Blueprints tab 272): 25 products keyed by item (items.json ingredients),
   per-ingredient progress, production station (first investment; 212), 200 $ per unit shipping from another station
   (288; volatile 204 / 209 refused, 289), 210 / 223 need gate routes (528), Autocomplete `int(qty*maxPrice*1.25)` (iOS 1.1.19, the Default economy: `int(max(remaining value, qty*maxPrice)*1.4)`; 210:
@@ -154,4 +157,17 @@ generator).
   every new medal of the 45 (none on Hardcore), and the elite medals only have a gold grade (thresholds [t, -1, -1]), so
   each pays 5000 in the original as well; its medal window just never shows the amount (`ChoiceWindow::setMedal`: the
   name and the hint), the remake's toast does. Kept (a player's report 2026-10-25 thought they paid nothing).
+- **A game without medals** (remake, a player's request on Discord 2026-11-04; `Session.NoMedals`, the new game's
+  "Medals: On / Off" toggle, see docs/notes/saves.md "Hardcore"): `Achievements.Enabled` is false, so `Check` awards none
+  (not even the preset Veteran), `Elite` sets no flag, no HUD progress, no toasts or rewards, the Status window hides the
+  medal column and the Medals tab (`StatusWindow.MedalsShown`), the add-on starts give no 23 / 30 and New Game+ carries
+  none in. The counters still count (the statistics). What the medals open comes from the story instead
+  (`Achievements.VoidXUnlocked` / `SupernovaUnlocked`, medals or story by the flag, never in free play): Thynome's VoidX
+  (`Shop.GenerateShips`, `Story.OnDocked`) once the main story is won (`Story.GameWon`, so a Valkyrie / Supernova start
+  has it at once), the fireworks blueprint 232 and Katashán's Specter (44, hint 0x3a / 3233) once the Supernova story is
+  finished (index 162). `StationMenu.CheckMedalHints` skips 649 (all medals: the wingman fans who pay stay a medal
+  reward) and tells the VoidX and the fireworks in texts of its own without medals (`noMedalsVoidX`,
+  `noMedalsFireworks`; 650 / 651 congratulate on the medals). The event conditions `medals(allgold | allsupernova)` read
+  the same gates, so mod content behind them stays reachable; `medals(gold ...)` counts 0. Save v18 (`noMedals`; older
+  saves have medals); the slot rows say NO MEDALS. Tests `NoMedalsTests`.
 - Type 15 Ore Mining (unreachable in the original's generator) is only rolled in multiplayer sessions (see "Multiplayer").

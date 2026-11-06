@@ -110,11 +110,17 @@ namespace GoF2Remake.UI
             Bind("mpWorldFresh", () => SetHostWorld(0));
             Bind("mpWorldPersistent", () => SetHostWorld(1));
             // A co-op campaign's settings (shown with Co-op): the enemies' strength per player past the first
-            // (PlayerPrefs "mp_coop_strength", +50 % by default) and the story credits shared out or paid in full ("mp_coop_split").
+            // (PlayerPrefs "mp_coop_strength", +50 % by default), how many more enemy ships per player past the first
+            // ("mp_coop_spawns", Off by default) and the story credits shared out or paid in full ("mp_coop_split").
             foreach (int pct in GoF2Remake.Data.CoopCampaign.StrengthChoices)
             {
                 int choice = pct;
                 Bind("mpCoopStrength" + pct, () => { GoF2Remake.Multiplayer.NetGame.CoopStrength = choice; ApplyHostWorld(); });
+            }
+            foreach (int pct in GoF2Remake.Data.CoopCampaign.SpawnChoices)
+            {
+                int choice = pct;
+                Bind("mpCoopSpawns" + pct, () => { GoF2Remake.Multiplayer.NetGame.CoopSpawns = choice; ApplyHostWorld(); });
             }
             Bind("mpCoopRewardsShared", () => { GoF2Remake.Multiplayer.NetGame.CoopSplitRewards = true; ApplyHostWorld(); });
             Bind("mpCoopRewardsFull", () => { GoF2Remake.Multiplayer.NetGame.CoopSplitRewards = false; ApplyHostWorld(); });
@@ -256,10 +262,13 @@ namespace GoF2Remake.UI
             int strength = GoF2Remake.Multiplayer.NetGame.CoopStrength;
             foreach (int pct in GoF2Remake.Data.CoopCampaign.StrengthChoices)
                 root.Q<Button>("mpCoopStrength" + pct)?.EnableInClassList("choice-segment--active", strength == pct);
+            int spawns = GoF2Remake.Multiplayer.NetGame.CoopSpawns;
+            foreach (int pct in GoF2Remake.Data.CoopCampaign.SpawnChoices)
+                root.Q<Button>("mpCoopSpawns" + pct)?.EnableInClassList("choice-segment--active", spawns == pct);
             bool split = GoF2Remake.Multiplayer.NetGame.CoopSplitRewards;
             root.Q<Button>("mpCoopRewardsShared")?.EnableInClassList("choice-segment--active", split);
             root.Q<Button>("mpCoopRewardsFull")?.EnableInClassList("choice-segment--active", !split);
-            foreach (var row in new[] { "mpCoopStrengthRow", "mpCoopRewardsRow" })
+            foreach (var row in new[] { "mpCoopStrengthRow", "mpCoopSpawnsRow", "mpCoopRewardsRow" })
                 if (root.Q(row) is VisualElement r) r.style.display = coop ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
@@ -282,8 +291,24 @@ namespace GoF2Remake.UI
         void AskNewCoopCampaign()
         {
             string text = Localization.Extra("coopNewText", "Which campaign does the crew play? Your new game saves over the auto-save when you dock, as in single player.");
-            ShowChoice(CoopTitle, text, CampaignName(0), () => HostCoop(0), Localization.Extra("coopAddons", "Add-ons"),
-                () => ShowChoice(CoopTitle, text, CampaignName(1), () => HostCoop(1), CampaignName(2), () => HostCoop(2)));
+            ShowChoice(CoopTitle, text, CampaignName(0), () => AskCoopEconomy(0), Localization.Extra("coopAddons", "Add-ons"),
+                () => ShowChoice(CoopTitle, text, CampaignName(1), () => AskCoopEconomy(1), CampaignName(2), () => AskCoopEconomy(2)));
+        }
+
+        /// <summary>A new co-op campaign's economy, as single player's new game asks it (a continued save keeps its own): every
+        /// crew member's game loads the same tables (NetSession.Economy, sent with NetState).</summary>
+        void AskCoopEconomy(int campaign)
+        {
+            string text = Localization.Extra("coopEconomyText", "Which economy does the crew play? Every crew member's game uses its prices.")
+                + "\n\n" + Session.EconomyName(Economy.Default) + ": " + Localization.Extra("economyDefaultDesc", "PC / Mac / iPhone prices: cheaper goods and blueprints, dearer ships.")
+                + "\n" + Session.EconomyName(Economy.Android) + ": " + Localization.Extra("economyAndroidDesc", "Android prices: dearer goods and gear, bigger blueprints, cheaper ships.");
+            void Host(Economy economy)
+            {
+                GoF2Remake.Multiplayer.NetGame.CoopEconomy = economy;
+                HostCoop(campaign);
+            }
+            ShowChoice(CoopTitle, text, Session.EconomyName(Economy.Default), () => Host(Economy.Default),
+                       Session.EconomyName(Economy.Android), () => Host(Economy.Android));
         }
 
         /// <summary>The Load panel as the co-op host's save picker (coopSlotPick): a slot hosts the campaign from it.</summary>
@@ -373,7 +398,8 @@ namespace GoF2Remake.UI
         {
             var crew = GoF2Remake.Multiplayer.NetCoop.CrewNames();
             string list = string.Format(Localization.Extra("coopLobbyCrew", "Crew ({0}/{1}): {2}"), crew.Count,
-                                        GoF2Remake.Data.CoopCampaign.CrewLimit, string.Join(", ", crew));
+                                        GoF2Remake.Data.CoopCampaign.CrewLimit, string.Join(", ", crew))
+                + "\n" + Session.EconomyName(NetSession.Economy);   // the session's prices (the host's pick)
             string code = GoF2Remake.Multiplayer.NetGame.JoinCode;
             if (host && !string.IsNullOrEmpty(code)) list += "\n" + string.Format(Localization.Extra("coopLobbyCode", "Join code: {0}"), code);
             string wait = host ? Localization.Extra("coopLobbyHost", "Start once the crew is here: everyone begins the campaign together.")
@@ -544,6 +570,7 @@ namespace GoF2Remake.UI
                 }
                 if (entry.dedicated) Tag(Localization.Extra("mpServerTag", "Server"), null);
                 if (entry.coop) Tag(Localization.Extra("mpCoopTag", "Co-op"), "mp-server-tag--mods");   // a co-op campaign (NetCoop)
+                if (entry.coop && entry.economy.HasValue) Tag(Session.EconomyName(entry.economy.Value), null);   // its prices (NetSession.Economy)
                 if (entry.password) Tag(Localization.Extra("mpPasswordTag", "Password"), "mp-server-tag--password");
                 if (entry.Modded) Tag(Localization.Extra("mpModdedTag", "Modded"), "mp-server-tag--mods");
                 if (entry.pvp.HasValue)   // players fight anywhere / only in arenas and sieges (NetGame.FreePvp)

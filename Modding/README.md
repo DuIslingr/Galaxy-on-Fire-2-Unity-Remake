@@ -559,6 +559,53 @@ while a system's orbit is already in sight. `encounters.json` adds to the table 
 | `name` | The signal's name on the HUD (a string or per language, like an item's). |
 | `interstellar` | Where it pulls the ship out of the Khador Slipstream between the systems: `space` (met right there in deep space), `system` (at the nearest system, met on arrival), `either` (the default: one or the other) or `never`. The game's: pirates, derelict and flyby `space`, trader and distress `either`; a `quest` always goes to the system. |
 
+### Jump drives
+
+An item based on the Khador Drive (85) without `cruiseSpeed` is a jump drive: it opens the star map from the quick menu
+(its own name on the entry), charges and jumps like the Khador Drive. A ship carrying the Khador Drive itself (or one with
+the drive built in) jumps with that instead. `"jumpFx"` gives the drive its own effect and rules (every field optional but
+`data`):
+
+```json
+{
+    "id": "hyperdrive",
+    "base": 85,
+    "name": "Hyper Drive",
+    "jumpFx": {
+        "data": "fx/hyperdrive_3d.json", "texture": "fx/hyper_drive.png", "scale": 0.5, "glow": 2.5,
+        "meetMs": 2300, "meetDepth": 8200, "sound": "gof2:timeJump", "endHoldMs": 2000, "arrivalFx": true,
+        "startDelayMs": 2000, "chargeVoice": "RADIO_0_12", "cellsFactor": 2, "noVoid": true,
+        "failChance": 0.03, "failMax": 0.5, "failNoRoute": 0.25, "failTexture": "fx/hyper_drive_purple.png",
+        "failHandling": 0.1, "failMs": 16500, "failRumbleFromMs": 5500, "failRumble": 0.25
+    }
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `data` | The effect's parts: a JSON file of meshes with their keyframes (`objects`: `name`, `verts`, `faces`, `uvs` per face corner, `keys` `posX`..`sclZ` and `extra` (opacity 0..1) as `[[ms, value], ...]`, `base` `{ parent_loc, parent_scale, parent_rotY }`, `billboard`), in Blender's frame (Z up, the viewer on +Y), game units. The ship flies into it along -Y. |
+| `texture` | The effect's image (additive). |
+| `scale`, `glow` | The effect's size (x the data) and brightness (HDR, for bloom). |
+| `meetMs`, `meetDepth` | The ship reaches the point (0, -`meetDepth`, 0) of the effect at `meetMs` after it starts, and vanishes there. |
+| `sound` | `gof2:<name>`, a sound of the game's story assets (`timeJump`: the prologue's time jump) in place of the Khador jump's. |
+| `endHoldMs` | The scene holds this long after the effect (the camera drifting on) before the next area loads. |
+| `arrivalFx` | `true`: the ship comes into the next orbit with the prologue's 2D hyper drive effect in this drive's texture (or `failTexture`), hidden and held still for 2.5 s; the arrival camera starts once it has played. `texture` must then have the layout of the game's `hyper_drive.png`. |
+| `startDelayMs` | A jump asked for waits this long before it charges (the Khador Drive's own is 2000; not on top of an orbit's first 5 seconds). |
+| `chargeVoice` | A story voice line (by its clip name) as the charge starts; `RADIO_0_12` is the prologue's "Activating hyperdrive." |
+| `cellsFactor` | x the Khador Drive's energy cells (Extreme's x2 included). `freeJumps: true`: none at all. |
+| `noVoid` | `true`: no jump into the Void, and none out of it (the story's own jumps still go). |
+| `failChance` | The chance a jump fails, per gate jump of the route (0.03 = 3 % to a neighbour, 6 % two systems away...; x2 on Extreme), at most `failMax`. |
+| `failNoRoute` | The chance from or to a system without jumpgate routes. |
+| `failMs`, `failHandling`, `failRumbleFromMs`, `failRumble` | A failing jump: when the charge ends, the prologue's hyperdrive failure (its explosion, rumble and broken engine) for `failMs`, the ship flying at `failHandling` of its speed and turning, the camera shaking from `failRumbleFromMs`, growing over 4 s to `failRumble` (1 = the prologue's, a full boost ~0.16). |
+| `failTexture` | The effect's image for a failed jump. |
+| `failVoice`, `failVoiceChance`, `failVoiceMs` | A story voice line (like `chargeVoice`) `failVoiceMs` into a failure, at `failVoiceChance` (0 to 1, default 1) per failure: `"failVoice": "RADIO_0_15", "failVoiceChance": 0.1` is the prologue pilot's "Hey, what's happening?" one failure in ten. |
+| `failLine`, `failSpeaker` | With `failVoice`: the line also comes in the radio box, its text (a text number) with a story speaker's face and name (default 0, Keith): `"failLine": 1689`. |
+| `failRadiusKm` | A failed jump lands at a random station of a system on the map, the ship coming out anywhere within this distance of it (default 20 km, as the HUD counts), clear of the station, the gate and the asteroids. |
+
+While the drive's effect hides the ship (leaving, from the moment it vanishes; arriving, until it shows) enemy shots fly
+through it and nothing targets it. The `stats` show the drive's values in the shop: `"energyCells": 2` for a drive that
+costs twice the Khador Drive's cells (the Khador Drive shows 1).
+
 ### Multi-grab tractor beams
 
 A tractor beam (an item based on one of the tractor beams, 68 to 70 or 194) with `"tractorTargets": 2` or more pulls that
@@ -1938,8 +1985,10 @@ the event graphs' expression language and is checked when it matters (a shop's s
 | `visited(station)`, `has(item)`, `cargo(item)`, `quest(name)` | A station docked at; how many of an item the player has (mounted too) / has in the hold; a mission under way (1) or done (2). |
 | `docked(station)`, `inorbit(station)` | How many of the players are docked at that station now / alive in its orbit (single player: 1 or 0). |
 | `medals(gold)`, `medals(silver)`, `medals(bronze)`, `medals(any)` | How many medals the player holds of that grade (`any`: earned at all). |
-| `medals(allgold)`, `medals(allsupernova)` | 1 with every medal of the main game gold (what puts the VoidX at Thynome), or those and the nine Supernova medals too. |
+| `medals(allgold)`, `medals(allsupernova)` | 1 with every medal of the main game gold (what puts the VoidX at Thynome), or those and the nine Supernova medals too. In a game started without medals: 1 once the main story is won, or the Supernova story finished. |
 | `bought(ship)` | 1 once the player has bought (or built from a blueprint) that ship in this game: a number, a name or `"mod_id:id"`. Ships bought before this word existed don't count. |
+| `produced(item)` | How many times the player has built that item's blueprint in this game (a number, a name or `"mod_id:id"`): `produced(85) > 0` once the Khador Drive is built. |
+| `unlocked(item)` | 1 once the player knows that item's blueprint (bought, found or given by the story): `unlocked(85)` from the story step that hands over the Khador Drive's. |
 
 Combine them with `and`, `or`, `not`, comparisons and arithmetic:
 
@@ -1988,7 +2037,7 @@ autocomplete), and the product is made at the station where the first ingredient
 | `ingredients` | **Required.** `{ "item", "amount" }` each: goods, ores and cores, and items too (the player demounts them first). |
 | `requiresShip` | Optional. Only built while flying that ship, which it then replaces: a skin ("Valkyrie, 1000 t Gold, 100 Golden Cores, 300 Energy Cells"). The ship's Kaamo Club upgrades stay. |
 | `autocomplete` | `true` (default): the game's price, 1.25 x the product's price. A number: that price. `false`: it can't be autocompleted. |
-| `available` | A [condition](#conditions) before any source offers it. |
+| `available` | A [condition](#conditions) before any source offers it. On a game blueprint you took over (the same `item`), the story character who sells it waits for it too: Gunant at Var Hastra and his drill (90) with `"available": "unlocked(85)"` only once the Khador Drive's blueprint is known. |
 | `unlocked` | `true`: the player knows it as soon as it is available (the next docking), without finding it. |
 | `lounge` | A Space Lounge visitor sells it: `chance` % each time a bar fills with new visitors, for `price` (default half the product's price), in `systemRace` systems (-1 = any). `stations`: only in those bars (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100), like the game's own blueprint sellers, each at one station: `{ "stations": [ 54 ], "price": 59999 }`. With `stations`, `seller` puts a named character there instead of a local visitor (Kothar and Valkyrie have no lounge): `{ "name": "Khador", "speaker": 20, "race": 7, "offer": "...", "thanks": "...", "known": "..." }`, `speaker` a story character's number for the face, and the optional lines for the offer (`#N` the product, `#C` the price), the sale and every chat after it. |
 | `derelict` | `chance` % of the orbits visited hold a derelict freighter (`race`: terran, vossk, nivelian, midorian or any) to dock at and hack; it leaves the blueprint in a data container. `stations`: only in those orbits (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100, always there). `position`: `[ x, y, z ]` in game units (what `/pos` shows in that orbit), else somewhere out in front of the station. Hacking it also fires the missions' and events' `hacked` trigger. |

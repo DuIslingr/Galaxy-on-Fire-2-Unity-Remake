@@ -50,7 +50,11 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   pauses; with a programmed station "Destination: X / Travel to this station?" (Yes preselected), No or no destination
   opens the map in gate mode (only the current system and its gate neighbours, any station there; remake: any system on
   a gate route, "Jumpgate route planning"). Backing out puts the
-  ship past the gate with the controls back. Remake (#37): a destroyed ship takes no gate and its Khador charge stops
+  ship past the gate with the controls back. **Autopilot takes jumpgates** (remake, Discord BlackSrarzOP 2026-11-04:
+  "remove the prompt when auto traveling past a jumpgate"; Options > Gameplay, `Settings.AutoJumpgate`, key `autoJumpgate`,
+  on by default, a utility outside the game experience presets): with a programmed station elsewhere the gate takes the
+  question as Yes and jumps on (`SystemJump.GateJumpsUnasked`); off = the original's question. No destination still opens
+  the gate's map. Test `SettingsTests.AutoJumpgateOption`. Remake (#37): a destroyed ship takes no gate and its Khador charge stops
   (shot down entering the gate it still jumped, repaired).
 - **Gate jump scene** (`MGame::startJumpScene` / `updateJumpScene`, ~6.3 s): ship at gate - (0, 0, 10000) facing game +Z
   at 2 u/ms, fixed look-at camera at gate + (-2000, 300, -6000) drifting (5, 2, -3) u/ms; when it passes gate z - 10000
@@ -68,6 +72,15 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   `GoF2Hud/charge_frame` / `charge_fill`, #48) once the level is 5 s old, then the `khador_jump` fx (15026, scale 2)
   3000 units ahead, camera at fx + R(-2000, 300, -2000) drifting (5, 2, -5), ship hidden at 1700 ms, reload at the fx
   end (~4 s). Cells = gate jumps on the shortest route through visible systems, 4 without one, x2 on Extreme.
+- **Khador Drive start delay** (remake, KiritoJPK, 2026-11): a jump asked for once the orbit's first 5 s are over waits
+  2 s before it charges (`SystemJump.StartDelayOver`; one asked for earlier has waited already; a mod jump drive's
+  `startDelayMs` in its place); the drive's key pressed during the launch / arrival fly-in waits for it to end instead of
+  being lost (`FlightHud.khadorQueued`, "Jump drive: waiting for the systems...", also when the Void's way back waits for
+  the 5 s); the autopilot menu's Destination entry is hidden while a jump charges or waits (it flew to the jumpgate, and
+  near it the gate jumped instead). Mod jump drives: see mods.md "Jump drives".
+- **Choice dialogs** (remake, KiritoJPK, 2026-11): the map's two-way questions (the drive or the gates, the fastest or the
+  safest route) stack their two answers in the middle and have a Back button at the top right in place of No
+  (`StarMapRules.ShowDialog`, `.map-dialog--choice`, `dialogBack`; up / down move between them too; Esc / B close it).
 - **Arrival** from another system: the hidden gate in the gate orbit, else (0, 0, 100000), facing the station, with the
   7 s fly-in camera; the orbit information (race logo, station, "<System> System", security level in its colour) shows
   during it. The programmed station is cleared: no autopilot leg follows a system jump (remake: but a gate route's hop,
@@ -111,7 +124,7 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
   `mapRouteFastest` / `mapRouteSafest` / `mapRouteJumpCount`). The pick rides `StarMapResult.safestRoute` into
   `Session.RouteSafest` (never saved), which every gate's `NextHop` takes. The ship then goes gate by gate
   (`GalaxyMap.NextHop`,
-  see "Mission maps"): the first gate asks as ever, every later one jumps on unasked while the programmed station is the
+  see "Mission maps"): the first gate asks as ever (unless Autopilot takes jumpgates is on, "Jumpgate"), every later one jumps on unasked while the programmed station is the
   one the hop kept (`Session.RouteDestination`, set in `SystemJump.Arrive`, never saved); the arrival camera still plays
   in each system. Tests `GalaxyMapTests` (route planning).
 - **Reveal** (the lounge's bought coordinates, `revealSystem`): the camera on the new system, hidden (no label, lines or
@@ -129,7 +142,15 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
 - **Interstellar space** (`InterstellarSpace`, 2026-10-31, the user's idea; no original behaviour): a mounted cruise drive
   with attr 135 (`CruiseDrive.InterstellarAttr`, the base game's Khador Slipstream, "Base content" in mods.md, one drive for both cruises:
   Khador sells the blueprint in Thynome's lounge, from step 84 or in free play, as Kothar has none, `Story.LoungeUnlocked`) adds a quick menu entry
-  (`Navigation.Kind.Slipstream`, `NavigationInterstellar`); no option, the item is the switch. The Khador charge and scene
+  (`Navigation.Kind.Slipstream`, `NavigationInterstellar`); mounting it is the switch. **Options > Gameplay "Khador
+  Slipstream"** (`Settings.KhadorSlipstream`, off by default and on in the Remake experience, options.md "Game experience";
+  2026-11-04, the user: "put the new slipstream feature under a
+  gameplay toggle"): off, the base item is left out of play without leaving the numbering or the saves (`Shop.SlipstreamOff`):
+  `ModBlueprints.Available` is false for it, so Khador doesn't offer the blueprint (one already bought stays known), and
+  `Shop.WorkingCruiseDrive` (`InterstellarSpace.Drive`, `NavigationCruiseDrive.SetupDrive`) skips a mounted one: no cruise,
+  planet run or menu entry. In interstellar space `SetupDrive` keeps it whatever the option says (switched off from the
+  pause menu there, the ship would be stranded); the next orbit reads the option. A mod's cruise drive is its mod's to
+  switch (test `BaseContentTests.TheGameplayOptionSwitchesItOff`). The Khador charge and scene
   play (`SystemJump.toInterstellar`), then `Session.EnterInterstellar` reloads Space, read once in `SpaceLevel.Awake`:
   `InterstellarSpace.Clear` empties the orbit left (`OrbitLayout.interstellar`), which stays `Session.StationIndex`, so a
   save or load is that orbit and the flag is never saved. No wingmen, traffic, story (`StorySpace`), wormholes; a cruise encounter pulls the ship out (navigation.md "Between the systems");

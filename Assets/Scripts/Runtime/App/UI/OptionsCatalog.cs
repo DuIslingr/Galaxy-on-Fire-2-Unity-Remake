@@ -136,6 +136,18 @@ namespace GoF2Remake.UI
         static readonly int[] UiTextSteps = { 100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150, 160, 175, 190, 200 };
         static readonly float[] UiMarginSteps = { -1f, 0f, 2.5f, 5f, 7.5f, 10f };
 
+        /// <summary>Options > Sound's music track rows: track, Localization.Extra key, English label.</summary>
+        static readonly (string track, string key, string english)[] MusicTrackRows =
+        {
+            (MusicTracks.BattleLow, "musicBattleLow", "Battle music: few enemies"),
+            (MusicTracks.BattleMedium, "musicBattleMedium", "Battle music: several enemies"),
+            (MusicTracks.BattleFull, "musicBattleFull", "Battle music: many enemies"),
+            (MusicTracks.VoidBattle, "musicVoidBattle", "Battle music: the Void"),
+            (MusicTracks.Specters1, "musicSpecters1", "Battle music: Specters"),
+            (MusicTracks.Specters2, "musicSpecters2", "Battle music: many Specters"),
+            (MusicTracks.Wanted, "musicWanted", "Battle music: Most Wanted criminal"),
+        };
+
         /// <summary>The options of this platform, page by page.</summary>
         public static List<OptionDef> All()
         {
@@ -161,6 +173,18 @@ namespace GoF2Remake.UI
             if (!Application.isMobilePlatform)
                 list.Add(Toggle("muteInBackground", OptionPage.Sound, () => X("muteInBackground", "Mute in background"),
                     () => Settings.MuteInBackground, v => Settings.MuteInBackground = v));
+
+            // Remake (a player's request, 2026-11-04): single flight music tracks off (MusicTracks); a battle track off
+            // leaves the calm track playing.
+            foreach (var (track, key, english) in MusicTrackRows)
+            {
+                string t = track;
+                list.Add(Described(Toggle("musicTrack_" + t, OptionPage.Sound, () => X(key, english),
+                    () => Settings.MusicTrackOn(t), v => Settings.SetMusicTrackOn(t, v)),
+                    t == MusicTracks.Specters1 || t == MusicTracks.Specters2 || t == MusicTracks.Wanted
+                        ? () => X("musicTrackSpecialHelp", "Off: this track no longer plays; the usual battle music plays instead.")
+                        : () => X("musicTrackHelp", "Off: this track no longer plays; the calm music of the orbit goes on instead.")));
+            }
 
             AddGraphics(list);
             AddControls(list);
@@ -216,6 +240,7 @@ namespace GoF2Remake.UI
             ["autoAdvance"] = ("autoPlayDialogueHelp", "Conversations turn the page by themselves once a line has been spoken or read. AUTO in a conversation switches it too."),
             ["animatedDialogue"] = ("animatedDialogueHelp", "Dialogue types in letter by letter, with names and items in colour. Off: each page appears at once."),
             ["playOnInConversations"] = ("playOnInConversationsHelp", "In flight, the world keeps moving while a conversation is open. Your controls wait, nothing fires and story missions hold until it closes. Off: the game pauses."),
+            ["khadorSlipstream"] = ("khadorSlipstreamHelp", "Khador's drive that cruises through an orbit and flies between the systems, and his offer of its blueprint at Thynome. Off: Khador doesn't offer it, and a mounted one does nothing."),
             ["discordPresence"] = ("discordPresenceHelp", "Shows your ship, location and mission on your Discord profile."),
             ["language"] = ("languageHelp", "The language of every text in the game."),
         };
@@ -286,6 +311,7 @@ namespace GoF2Remake.UI
                 "renderScale" => Settings.RenderScale > 0f ? Settings.RenderScale : Bootstrap.DefaultRenderScale,
                 "upscaler" => Settings.Upscaler,
                 "msaa" => Settings.Msaa > 0 ? Settings.Msaa : Bootstrap.DefaultMsaa,
+                "postAa" => Settings.PostAntialiasing,
                 "bloomStyle" => Settings.BloomStyle,
                 "hangarShadows" => Settings.HangarShadows,
                 "hangarDof" => Settings.HangarDepthOfField ? 1f : 0f,

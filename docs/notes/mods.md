@@ -99,7 +99,8 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   showed "Hacked Hulk" after the hack (`HackWon` invoked; the hacking game itself not played). Not tested in multiplayer.
 - **A modder's requests, 2026-11-02** (Modding/README.md "Conditions", "Loaner ships", "Multi-grab tractor beams"):
   **Conditions** `medals(gold | silver | bronze | any)` (counts over `Session.Medals`), `medals(allgold | allsupernova)`
-  (`Achievements.GotAllGoldMedals` / `GotAllSupernovaMedals`) and `bought(ship)` (`EventRunner.GameState`; ship by
+  (`Achievements.VoidXUnlocked` / `SupernovaUnlocked`: the medals, or in a game without medals the story's gates, see
+  docs/notes/bar-and-freelance.md "A game without medals") and `bought(ship)` (`EventRunner.GameState`; ship by
   `NetAdmin.FindShip`): `Session.ShipsBought`, refs "12" / "mod:id" (`Session.ShipRef`, so no renumbering fix-up), saved
   (`SaveData.shipsBought`), added by `Hangar.SwitchTo` for every caller but a stored Kaamo hull (dealer, lounge seller,
   Keep, a blueprint's ship); ships bought before 2026-11-02 don't count. **Thynome with every gold medal**: the VoidX first
@@ -250,10 +251,11 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
 - **Conditions** (`Events.EventRunner.Condition(expression, out error)`: the event graphs' expression language outside an
   event, a throwaway run like the quests' "Starts when"; new words `option(mod:id)`, `won(main | valkyrie | supernova)`
   (or the multiplayer finished world), `systemsvisited` (distinct systems of `Session.VisitedStations`), `standing(race)`
-  (2026-10-28: a game race's or a mod race's standing, `Standing.RawToward`; the always-hostile sides -100)): items.json /
-  ships.json "available" (new entries and overrides; `ModUnlocks.ItemAvailable` in `Shop.GenerateItems` and
-  `NpcTables.RollLoot`, `ShipAvailable` in `Shop.GenerateShips` and the lounge ship sellers), blueprints' "available"; an
-  unreadable one is false with a warning on its mod. ships.json "dealer" { chance %, systemRace, minTechLevel }
+  (2026-10-28: a game race's or a mod race's standing, `Standing.RawToward`; the always-hostile sides -100), 2026-11-03
+  `produced(item)` (`BlueprintState.timesProduced`), `unlocked(item)` (`Blueprints.IsUnlocked`)): items.json / ships.json "available" (new entries and overrides;
+  `ModUnlocks.ItemAvailable` in `Shop.GenerateItems` and `NpcTables.RollLoot`, `ShipAvailable` in `Shop.GenerateShips`
+  and the lounge ship sellers), blueprints' "available" (also the story seller of a game blueprint a mod takes over:
+  `AgentGenerator.StorySellerAvailable`, e.g. Gunant's drill); an unreadable one is false with a warning on its mod. ships.json "dealer" { chance %, systemRace, minTechLevel }
   (`CustomShipData.dealer`, `ModUnlocks.AddDealerShips` at the end of `Shop.GenerateShipsOriginal`'s ordinary path: not the
   special yards).
 - **Mod ships in traffic** (`ModTraffic`, Options > Gameplay "Mod ships in traffic", `Settings.ModShipTraffic`: Off / 10 /
@@ -562,6 +564,25 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   container. `NpcShipDamage` (death and steal crates) passes `ModCrates.KeyOf(Spec.ship)`; `Crate.model` keeps the key
   ("mod id|path"), which `NetCrate` sends as its data's sixth field so the other players draw the same model (an old
   client reads five fields: the race's). Not mod-specific: rocks, junk and mission containers keep the game's.
+- **Jump drives** (`ModJumpFx` (Game), `World.ModJumpEffect`, `SystemJump`; items.json `"jumpFx"`, Modding/README.md
+  "Jump drives"; KiritoJPK's Hyper Drive mod): an item based on the Khador Drive (85) without `cruiseSpeed` is a jump drive
+  (`GalaxyMap.IsKhadorDrive`, the quick menu entry under its own name); the Khador Drive itself (or a built-in one) aboard
+  jumps instead (`ModJumpFx.ActiveDrive`). Its `jumpFx`: a 3D effect from keyframed mesh data (Blender frame, game units;
+  the ship flies into it and vanishes at its meeting point at `meetMs`, the camera drifting on for `endHoldMs`), its
+  sound, a start delay, a charge voice, `cellsFactor` / `freeJumps` (`GalaxyMap.EnergyCells` / `FreeJumps`), `noVoid`;
+  `arrivalFx`: the prologue's 2D hyper_drive fx brings the ship into the next orbit in the drive's texture
+  (`SpaceLevel.BeginDriveArrival`: hidden and held 2.5 s, the arrival camera's clock waits for the fx). Failures
+  (`failChance` per gate jump of the route, x2 Extreme, at most `failMax`; `failNoRoute`): the prologue's hyperdrive
+  failure (sounds 157 / 158 / 161, a growing camera rumble, the ship at `failHandling`, `ShipController.impairment`) for
+  `failMs` (`failVoice` at `failVoiceChance`, `failVoiceMs` in: the Hyper Drive mod's RADIO_0_15, 10 %; `failLine` /
+  `failSpeaker`: in the radio box, `Traffic.Say`, queued 2 s early as the box shows 2 s after), then the jump
+  with `failTexture` to a random visible station, out anywhere within `failRadiusKm` of it clear of
+  the obstacles and asteroids (`SpaceLevel.DriveFailPoint`). While the effect hides the ship it is phased and untargetable
+  (`SpaceLevel.SetSceneHidden`; the gate's and the Khador Drive's scenes unchanged). One jump drive aboard: category 18 is
+  one per ship (a Khador Drive and a mod one swap), and a mod one doesn't go on a ship with the drive built in
+  (`Hangar.CanMount`, "driveBuiltIn"; `FitToSlots` moves one there to the hold). The star map's drive-or-gates question
+  names the mod drive, and so does the volatile goods refusal (612 names the Khador Drive: `ModJumpFx.VolatileRefusal`,
+  "driveVolatile"). Not tested in multiplayer.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),

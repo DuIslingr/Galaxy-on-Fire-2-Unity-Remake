@@ -62,7 +62,7 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(Settings.AutoAdvanceDialogue, "AUTO on by default");
             Assert.IsTrue(Settings.NpcPlayerEngines, "other ships' engines like yours: on");
             Assert.IsTrue(Settings.DyingCargoMarkers, "salvage markers: on");
-            Assert.IsFalse(Settings.OriginalTargetLock, "target lock: Smart");
+            Assert.IsTrue(Settings.OriginalTargetLock, "target lock: the original's (the Original experience)");
             Assert.IsTrue(Settings.KeepEnemyLock, "the Smart lock's hold on an enemy: on, as before it was its own option");
             Assert.IsFalse(Settings.KeyAutofire, "double-press autofire: off");
             Assert.IsFalse(Settings.LevelPitch, "level out levels the roll only, like the original");
@@ -72,6 +72,49 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(-1f, Settings.TouchLeftHeight, "-1 = the original's place");
             Assert.AreEqual(-1f, Settings.TouchRightHeight);
             Assert.AreEqual("auto", Settings.VoiceLanguage, "voices as the text");
+            Assert.IsTrue(Settings.HangarRobots, "the hangars' service bots: on");
+            Assert.IsTrue(Settings.BarRobots, "the bars' robots: on");
+        }
+
+        /// <summary>The Hangar robots / Bar robots toggles (2026-11-05): stored, reset with the Graphics tab, rows there.</summary>
+        [Test]
+        public void RobotOptions()
+        {
+            AllDefaults();
+            Settings.HangarRobots = false;
+            Settings.BarRobots = false;
+            Assert.IsFalse(Settings.HangarRobots);
+            Assert.IsFalse(Settings.BarRobots);
+            CollectionAssert.IsSubsetOf(new[] { "hangarRobots", "barRobots" }, Settings.GraphicsKeys, "Default settings resets them with the Graphics tab");
+            Settings.Reset(Settings.GraphicsKeys);
+            Assert.IsTrue(Settings.HangarRobots && Settings.BarRobots, "back on after Default settings");
+            var rows = GoF2Remake.UI.OptionsCatalog.All().Where(o => o.id == "hangarRobots" || o.id == "barRobots").ToList();
+            Assert.AreEqual(2, rows.Count);
+            Assert.IsTrue(rows.All(o => o.page == GoF2Remake.UI.OptionPage.Graphics && o.kind == GoF2Remake.UI.OptionKind.Toggle));
+        }
+
+        /// <summary>Autopilot takes jumpgates (Discord, 2026-11-04): on by default, reset with the Gameplay tab, a row there; the
+        /// gate jumps on toward a destination elsewhere unasked while it is on (SystemJump.GateJumpsUnasked), and off only on
+        /// a route under way, as before.</summary>
+        [Test]
+        public void AutoJumpgateOption()
+        {
+            AllDefaults();
+            Assert.IsTrue(Settings.AutoJumpgate, "on by default");
+            Settings.AutoJumpgate = false;
+            Assert.IsFalse(Settings.AutoJumpgate);
+            CollectionAssert.Contains(Settings.GameplayKeys, "autoJumpgate");
+            Settings.Reset(Settings.GameplayKeys);
+            Assert.IsTrue(Settings.AutoJumpgate, "back on after Default settings");
+            var row = GoF2Remake.UI.OptionsCatalog.All().Single(o => o.id == "autoJumpgate");
+            Assert.AreEqual(GoF2Remake.UI.OptionPage.Gameplay, row.page);
+            Assert.AreEqual(GoF2Remake.UI.OptionKind.Toggle, row.kind);
+
+            Assert.IsTrue(GoF2Remake.World.SystemJump.GateJumpsUnasked(30, 4, -1, true), "the first gate, option on");
+            Assert.IsFalse(GoF2Remake.World.SystemJump.GateJumpsUnasked(30, 4, -1, false), "the first gate, option off: it asks");
+            Assert.IsTrue(GoF2Remake.World.SystemJump.GateJumpsUnasked(30, 4, 30, false), "a later gate on the route: unasked as ever");
+            Assert.IsFalse(GoF2Remake.World.SystemJump.GateJumpsUnasked(-1, 4, -1, true), "no destination: the gate's map");
+            Assert.IsFalse(GoF2Remake.World.SystemJump.GateJumpsUnasked(4, 4, 4, true), "the destination is here: the gate's map");
         }
 
         [Test]
@@ -79,20 +122,19 @@ namespace GoF2Remake.Tests
         {
             AllDefaults();
             Assert.IsFalse(Settings.CloakLosesPursuers, "off by default");
-            Assert.IsTrue(Settings.PirateEvents, "on by default");
+            // The Original experience by default (2026-11-04): every remake rule off.
+            Assert.IsFalse(Settings.PirateEvents, "off by default");
             Assert.IsFalse(Settings.CapitalShips, "off by default");
-            Assert.IsFalse(Settings.InformerOriginalRule, "Remake by default");
-            Assert.IsTrue(Settings.KaamoStacking, "on by default");
+            Assert.IsTrue(Settings.InformerOriginalRule, "the original's by default");
+            Assert.IsFalse(Settings.KaamoStacking, "off by default");
             Assert.AreEqual(5, Settings.KaamoMaxLevel, "upgrade limit 5 by default");
-            Assert.IsTrue(Settings.KaamoKeepsEquipment, "on by default");
-            Assert.IsTrue(Settings.CloakBay, "on by default");
-            Assert.IsTrue(Settings.EmpBreaksCloak, "on by default");
+            Assert.IsFalse(Settings.KaamoKeepsEquipment, "off by default");
+            Assert.IsFalse(Settings.CloakBay, "off by default");
+            Assert.IsFalse(Settings.EmpBreaksCloak, "off by default");
             Assert.IsFalse(Settings.SmarterNpcTargeting, "the original's targeting by default (#121)");
-            Assert.AreEqual(SessionRules.CollisionMixed, Settings.ShipCollision, "Mixed by default");
+            Assert.AreEqual(SessionRules.CollisionOriginal, Settings.ShipCollision, "Original by default");
             Assert.AreEqual(SessionRules.DogfightModHulls, Settings.NpcDogfight, "GoF3's dogfighting on the hulls that ask for it");
-            int expected = SessionRules.PirateEvents | SessionRules.KaamoStacking | SessionRules.KaamoKeepsEquipment
-                         | SessionRules.CloakBay | SessionRules.EmpBreaksCloak;
-            Assert.AreEqual(expected, Settings.LocalRules());
+            Assert.AreEqual(SessionRules.WithCollision(SessionRules.InformerOriginalRule, SessionRules.CollisionOriginal), Settings.LocalRules());
         }
 
         [Test]
@@ -132,7 +174,8 @@ namespace GoF2Remake.Tests
         {
             // Options > Gameplay "Ship collision" (Flight.HullCollision.Mode / Takes, HullBody.flyableShip / Collides).
             AllDefaults();
-            Assert.AreEqual(SessionRules.CollisionMixed, Flight.HullCollision.Mode, "Mixed by default");
+            Assert.AreEqual(SessionRules.CollisionOriginal, Flight.HullCollision.Mode, "Original by default");
+            Settings.ShipCollision = SessionRules.CollisionMixed;
             Assert.IsFalse(Flight.HullCollision.Takes(true), "Mixed: the flyable ships' cube and sphere");
             Assert.IsTrue(Flight.HullCollision.Takes(false), "Mixed: the rest on their real shape");
             Settings.ShipCollision = SessionRules.CollisionExact;

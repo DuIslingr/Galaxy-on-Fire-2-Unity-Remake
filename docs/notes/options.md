@@ -18,10 +18,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   written as it is shown already reads the table. A text a document sets once while building must go into its
   RefreshTexts too. "Default settings" keeps the language (`Settings.ResetToDefaults`; the row is in
   `OptionsCatalogTests.NotSettings`): English, German, French, Spanish, Italian, Dutch, Polish, Russian, Portuguese
-  (Brazil), Simplified Chinese, Hindi. The UI fonts (Klavika, Inter) have no CJK or Devanagari glyphs: those come from
+  (Brazil), Simplified Chinese, Hindi, Korean, Japanese, Arabic (the last three the original's tables, offered since
+  2026-11-04: every table is offered; Arabic's ~1250 texts the original left in English, mostly the add-on campaigns'
+  dialogue (ids 2466-3228), translated by the remake the same day; then every original Arabic row checked against its
+  English (2026-11-05): ~510 corrected (rows shifted by one, e.g. 229-237, 1236-1239, 1817-1820, 2191-2193, 2261-2265;
+  older texts, e.g. an older Liberator mission; meanings turned round; key placeholders lost with the mobile controls
+  texts; Latin and digits stored reversed, "RMA" for AMR, "00002" for 20000; "hangar" as المعسكر, now المرآب); the language names, credits and the gibberish / Void cipher lines (1838, 1917, 1945,
+  1952, 3054...) stay as in every table), and the menus keep their left-to-right layout: TextCore joins the letters and orders the words
+  right to left, but a closing full stop lands at the right end, checked in Play mode). The UI fonts (Klavika, Inter) have no CJK, Hangul,
+  Arabic or Devanagari glyphs: those come from
   the system's fonts through TextCore's OS font fallback (`TextSettings.fallbackOSFontAssets`), with correct Devanagari
   shaping (verified on Windows; Android has Noto CJK / Devanagari; Linux and the Xbox depend on the fonts installed).
-  The Japanese, Korean and Arabic tables exist but aren't offered (not checked in game). Settings in `Settings`
+  Settings in `Settings`
   (PlayerPrefs), menu choices in `Session`.
 - **Story step label** (remake, `StoryStepLabel`, installed by `Bootstrap` like `FpsCounter`, its own panel; only with
   Options > Gameplay "Show story step", `Settings.ShowStoryStep`, on by default since 2026-10-11 (was off, #40); a
@@ -104,7 +112,8 @@ the mining and hacking games, the touch controls (and on touch their secondary p
 its own option), Show FPS (`FpsCounter`, its own panel over every screen; where, Graphics "FPS counter position",
 `Settings.FpsPosition`, shown while Show FPS is on: the four corners and the middles of the four sides, top centre by
 default, clear of the safe area; at the top centre the flight HUD's lock plate and messages move under it, `.hud-fps`,
-#137), every weapon's own shot sound (`Settings.EachWeaponSound`, Sound tab), mute in background (desktop,
+#137), every weapon's own shot sound (`Settings.EachWeaponSound`, Sound tab), the battle music tracks one by one
+(Sound tab, `MusicTracks`, "Music tracks off" in npcs-and-combat.md), mute in background (desktop,
 `Settings.MuteInBackground`: `Bootstrap` zeroes the listener volume while the window is unfocused), double-press fire
 for auto-fire (`Settings.KeyAutofire`, off by default: the touch fire button's 249 ms latch, `AutofireLatch`, on the
 keyboard / mouse / controller fire binding; the PC version had none), the voice language (the Language tab under the
@@ -157,19 +166,56 @@ verified on a Mac or an iPhone.
   original also blooms its HUD (drawn into the same FBO); the remake's UI Toolkit HUD doesn't.
 - Frame rate option (`Settings.FrameRate`: 30 / 60 / 120 / Uncapped / V-Sync, default V-Sync; 60 on Android, the user's choice
   2026-10-22: a 120 Hz phone at 120 heats up and throttles) is applied by `Bootstrap.ApplyFrameRate`.
+- **Game experience** (remake, 2026-11-04, the Gameplay tab's first row, after a player's request: "a preset 'Vanilla'
+  toggle ... vanilla should be default"; `Settings.ExperienceKeys` / `ApplyExperience` / `CurrentExperience`): Original /
+  Cosmetic / Remake set the experience options at once; the row shows the one they match, else Custom (picking it sets
+  nothing; one changed option makes it Custom, like the graphics preset). **Original is every option's default**, so a
+  fresh install plays the original game: no hangar flights or animated dialogue, the original's lock, informer rule, ship
+  collision and Kaamo Club, no pirate events, capital ship enhancements, cloak rules, smarter NPCs, conversations running,
+  ship cruise, Khador Slipstream or bomb arming (weapons.md "Bomb arming"). Cosmetic = that plus hangar flights and animated dialogue; Remake = every addition on
+  (Mixed collision, the VIP Card bought at the club). The original's own launch camera and salvage markers are on in all
+  three (turned off, Custom). Not in it: utilities and HUD looks (tutorials, button hints, HUD mode / size / opacity, far
+  ship marker style, auto-play dialogue, which AUTO also switches, speedrun, story step, Discord, difficulty, mods).
+  **Every row reads off (or its first choice) = the original**: the launch camera and salvage markers became "Skip ..." /
+  "Hide ..." toggles, the target lock and informer rule toggles ("Smart target lock", "Lenient informer missions"), the
+  collision and VIP Card choices list Original / Off first; only the UI maps them, the stored keys keep their meaning.
+  **Players from before keep their options**: `MigrateExperienceDefaults` (Bootstrap, once, key `experienceDefaults`) stores
+  the old default of every experience option never set when the install was played before (any option stored or a save
+  slot; Android's collision stays Original), so their row shows Remake-like values or Custom. A dedicated server's rules are
+  `NetRules.Defaults`, untouched; a player host's are its options (`LocalRules`). Tests `GameExperienceTests`.
+  **An option added to the presets later** goes into `AddedExperienceKeys` (and a column of every row and of
+  `DefaultsBefore`): the migration's version 2 (`ExperienceVersion`) gives an install migrated before it the preset's
+  value when its other options match one (`KeepPresetForAddedKeys`), so a Remake player's row doesn't turn Custom; bump
+  the version for the next one. First: `bombArming` (2026-11-05).
+- **Welcome screen** (remake, 2026-11-04, `MainMenuWelcome`): on the first start, 1.3 s after the main buttons come in (not
+  over a panel), the menu's own dialog: what the remake is and where things are (Options > Gameplay, Controls / Key
+  bindings, Mods, Multiplayer and Co-op, named by their buttons' own texts), Next, then "How do you want to play?" with
+  Remake / Cosmetic / Original (No = Original, so Back / B / Esc keep the default; the focus starts there).
+  `Settings.WelcomeShown` marks it seen. An install played before (`Settings.FreshInstall` false) gets one notice that adds
+  where the new row is and that its options are kept.
 - **Graphics preset** (remake, 2026-10-22, the Graphics tab's first row; `Settings.PresetKeys` / `ApplyPreset`,
   `OptionsCatalog.CurrentPreset`): Low / Medium / High (the original's texts 507-509) and Ultra (2026-10-23) set render
-  scale, upscaler, MSAA, bloom, hangar shadows, hangar depth of field, lens flare, other ships' engines, levels of detail,
-  texture quality, fire and smoke, fog, detail distance and texture filtering at once; the row
+  scale, upscaler, MSAA, post-process AA, bloom, hangar shadows, hangar depth of field, lens flare, other ships' engines,
+  levels of detail, texture quality, fire and smoke, fog, detail distance and texture filtering at once; the row
   shows the preset the options match (render scale and MSAA as applied, 0 = the platform asset's), else Custom (picking it
-  sets nothing). High = the desktop defaults (100 %, no upscaler, MSAA off with the flight's SMAA, Remake bloom, the
+  sets nothing). High = the desktop defaults (100 %, no upscaler, MSAA off with SMAA, Remake bloom, the
   player's hangar shadow, lens flare, the player-style NPC engines, LODs, fire, smoke and fog, detail High, forced
   filtering); Medium = fire, smoke and fog off, detail Medium, anisotropic filtering, 80 % with FSR 1, NPC engines
-  original; Low = that with detail Low, 67 % with FSR 1, bloom off, no hangar shadows or lens flare, half-size textures;
+  original; Low = that with detail Low, 67 % with FSR 1, FXAA, bloom off, no hangar shadows or lens flare, half-size
+  textures;
   Ultra = every option at its most (MSAA 8×, every ship's hangar shadow, depth of field, no made levels of detail, detail
   Ultra, forced 16×) but the render scale at 150 % (the row goes to 200 %: four times 100 %'s pixels with MSAA 8× is past
   most GPUs). Android's defaults are Low (`Settings.AndroidDefaults`: each preset key's fallback, `Default`;
   keys a player set stay theirs; `OverrideAndroidDefaults` for tests) and the Original ship collision.
+- **Post-process AA** (remake, 2026-11-05, Graphics, below MSAA; `Settings.PostAntialiasing`, key `postAa`: 0 SMAA,
+  1 FXAA, 2 TAA, 3 Off; `Visuals.ScreenAntialiasing`): the URP camera anti-aliasing of the cameras that draw to the screen.
+  They were all SMAA as built (Space / MainMenu / Station scenes, the star map) and stay so by default; FXAA is the Low
+  preset's (Android's default). A camera is registered once (`Register`: `Bootstrap.OnSceneLoaded` takes each loaded
+  scene's base cameras without a target texture that have anti-aliasing; `StarMapScene`; the VR eye `Follow`s its camera)
+  and `Bootstrap.ApplyUpscaling` re-applies the option to all of them after setting MSAA. URP's TAA needs MSAA off and
+  is pointless under a temporal upscaler, so TAA draws as SMAA while either is on (`ScreenAntialiasing.Mode`); picking TAA
+  turns MSAA off, picking MSAA takes TAA back to SMAA, and under a temporal upscaler the help says SMAA is used. The
+  station camera still prefers TAA under SMAA (see "Station scene"). Ghosting of TAA on fast flight is the player's trade.
 - **Texture quality** (remake, Graphics, `Settings.TextureQuality`: Full / Half / Quarter = `QualitySettings.
   globalTextureMipmapLimit` 0 / 1 / 2, Bootstrap; half in the Low preset): the space skies, reflection cubemaps and HUD / UI
   images keep every level (`AssetImport.KeepsFullMips` sets their importers' ignoreMipmapLimit: stars blurred smaller, the

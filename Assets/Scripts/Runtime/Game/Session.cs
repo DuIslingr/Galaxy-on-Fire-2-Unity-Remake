@@ -259,6 +259,10 @@ namespace GoF2Remake.Data
         public static bool Hardcore;
         /// <summary>This game's identity (a new one at every new game; saved), so a hardcore death finds every slot of the run.</summary>
         public static string RunId = "";
+        /// <summary>Remake (a player's request 2026-11-04): a game started without medals, the new game's choice (MainMenu):
+        /// none are awarded or shown (Achievements.Enabled), and what they unlock comes from the story instead
+        /// (Achievements.VoidXUnlocked / SupernovaUnlocked). Saved; older saves have medals.</summary>
+        public static bool NoMedals;
         /// <summary>Remake: the Space Waste tons the Mining Plant has sorted in this game (WasteProcessing: the next ton's
         /// roll), the empty ones in a row since the last find and the tons since the last rare find (its bad-luck caps;
         /// all saved).</summary>
@@ -349,6 +353,12 @@ namespace GoF2Remake.Data
 
         /// <summary>Level::initStreamOutPosition: false = undocking from the station, true = arriving by travel.</summary>
         public static bool ArrivedByTravel;
+        /// <summary>Modified: a mod jump drive's jump failed (SystemJump): the arrival comes out anywhere near the station
+        /// (SpaceLevel.DriveFailPoint).</summary>
+        public static bool DriveFailArrival;
+        /// <summary>Modified: the arrival of a mod jump drive's jump (failed or not; ModJumpFx "arrivalFx"): the ship comes in
+        /// with the 2D hyper_drive fx in the drive's own texture (SpaceLevel.BeginDriveArrival).</summary>
+        public static bool DriveArrival;
 
         /// <summary>Set by the station's launch button: the flight level starts with the launch camera
         /// (LevelScript: a fixed camera 9000 units ahead watches the ship fly past for 7 s).</summary>
@@ -556,6 +566,7 @@ namespace GoF2Remake.Data
             GraphQuests = new List<GraphQuestState>();
             ModCampaign = "";
             Hardcore = false;
+            NoMedals = false;
             RunId = System.Guid.NewGuid().ToString("N");
             WasteTons = WasteDry = WasteSinceRare = 0;
             ModGameOptions = new HashSet<string>();

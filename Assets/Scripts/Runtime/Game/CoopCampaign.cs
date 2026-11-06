@@ -4,9 +4,9 @@
 //   The leader (the host) owns the story: its Session's step, mission and the step's shared counters are the crew's
 //     (State, published whenever they change). Every game still keeps and advances its own story (Story.Advance) so the
 //     step's side effects (loaner ships, blueprints, revealed systems, rewards, cargo) happen to every player.
-//   A guest behind the leader catches up silently (Advance without conversations), except for the one step whose own
-//     success conversation it is about to show (CatchUpWaitSeconds at most); one ahead (it closed that conversation
-//     first) waits for the leader. A guest's own changes to the step's shared counters (the mission value: bars searched,
+//   A guest behind the leader catches up silently (Advance without conversations), stopping at each step won here or by
+//     the crew whose success conversation it hasn't shown (CatchUpWaitSeconds at most each; never under one that is open);
+//     one ahead (it closed that conversation first) waits for the leader and finds no step complete meanwhile. A guest's own changes to the step's shared counters (the mission value: bars searched,
 //     units evacuated, freighters scanned; the story counter; step 59's convoy targets) go to the leader as a Progress
 //     and come back merged.
 //   Any crew member's game may find a step complete (ReportWon: docked at the target, the cargo aboard...): the leader
@@ -17,9 +17,11 @@
 //   A failed mission (the leader's level failed, or the leader died in it): the leader's step goes back to its checkpoint
 //     (Story.RepairCheckpoint) and every guest's to the leader's (failSerial).
 //   A new guest starts with the leader's own ship and loadout (the kit) and catches up from step 0.
-//   The host's two settings (the Host card, /coop), in the State for every game: how much stronger the enemies get per
-//     player past the first (Strength: their hull in story levels, every hostile NPC's guns at half that), and whether a
-//     story step's credits are shared out across the crew or paid to each in full (SplitRewards).
+//   The host's three settings (the Host card, /coop), in the State for every game: how much stronger the enemies get per
+//     player past the first (Strength: their hull in story levels, every hostile NPC's guns at half that), how many more
+//     hostile ships a story level spawns per player past the first (Spawns: extra copies of its hostile fighters,
+//     CampaignLevel.SpawnExtras), and whether a story step's credits are shared out across the crew or paid to each in
+//     full (SplitRewards). Strength and Spawns were one setting until 2026-11-06 (the user's request: two).
 
 using System;
 using System.Collections.Generic;
@@ -45,16 +47,23 @@ namespace GoF2Remake.Data
         /// <summary>The Strength choices (% per player past the first) and the default.</summary>
         public static readonly int[] StrengthChoices = { 0, 25, 50, 100, 150, 200 };
         public const int DefaultStrength = 50;
+        /// <summary>The Spawns choices (% more hostile ships per player past the first) and the default (Off: the story
+        /// levels' own ships, as before the setting).</summary>
+        public static readonly int[] SpawnChoices = { 0, 25, 50, 100, 150, 200 };
+        public const int DefaultSpawns = 0;
 
         /// <summary>The session's enemy strength: % more per player past the first (the leader's setting, in its State).</summary>
         public static int Strength { get; private set; } = DefaultStrength;
+        /// <summary>The session's enemy spawning: % more hostile ships in a story level per player past the first.</summary>
+        public static int Spawns { get; private set; } = DefaultSpawns;
         /// <summary>The session's story rewards are shared out across the crew (else each player gets them in full).</summary>
         public static bool SplitRewards { get; private set; } = true;
 
         /// <summary>The leader (the Host card at the start, /coop later): the session's settings.</summary>
-        public static void SetSettings(int strength, bool splitRewards)
+        public static void SetSettings(int strength, int spawns, bool splitRewards)
         {
             Strength = Mathf.Clamp(strength, 0, 200);
+            Spawns = Mathf.Clamp(spawns, 0, 200);
             SplitRewards = splitRewards;
         }
 
@@ -73,8 +82,10 @@ namespace GoF2Remake.Data
             public int crewMissions;
             public int failSerial;
             public int campaign;
-            /// <summary>The leader's settings: enemy strength (% per extra player), story rewards shared.</summary>
+            /// <summary>The leader's settings: enemy strength and spawning (% per extra player), story rewards shared. A
+            /// State from before the spawning setting reads DefaultSpawns.</summary>
             public int strength = DefaultStrength;
+            public int spawns = DefaultSpawns;
             public bool splitRewards = true;
             public int crewLimit = DefaultCrew;
             /// <summary>Where the leader last docked: a new guest's start.</summary>
@@ -97,7 +108,12 @@ namespace GoF2Remake.Data
         static State leaderState;      // a guest: the last State from the leader
         static State baseline;         // a guest: the shared fields after the last State applied or Progress sent
         static string lastPublished;   // the leader: the last State sent
-        static int remoteWon = -1;
+        // The steps the crew won that this game hasn't shown the success conversation of yet: the current one, and the
+        // later ones the leader won while this game was still on an earlier step (a guest one step behind dropped the
+        // leader's word: step 6's weapons conversation never opened for a guest, a player's report 2026-11-04).
+        static readonly HashSet<int> crewWon = new HashSet<int>();
+        static int successOpen = -1;   // this game's success conversation of that step is on screen (or about to open)
+        static int waitingIndex = -1;
         static float waitingSince = -1f, aheadSince = -1f;
         static bool catchingUp;
         static int appliedFailSerial = -1;
@@ -113,7 +129,8 @@ namespace GoF2Remake.Data
         {
             leaderState = baseline = null;
             lastPublished = null;
-            remoteWon = -1;
+            crewWon.Clear();
+            successOpen = waitingIndex = -1;
             waitingSince = aheadSince = -1f;
             catchingUp = false;
             appliedFailSerial = -1;
@@ -122,6 +139,7 @@ namespace GoF2Remake.Data
             failSerial = 0;
             missionsCounted.Clear();
             Strength = DefaultStrength;
+            Spawns = DefaultSpawns;
             SplitRewards = true;
             CrewLimit = DefaultCrew;
         }
@@ -153,6 +171,19 @@ namespace GoF2Remake.Data
         /// <summary>This game's hostile NPCs' guns in a co-op session (NpcTables): 1 outside one.</summary>
         public static float NpcDamageFactor => Active ? DamageFactor(CrewSize) : 1f;
 
+        /// <summary>A story level's hostile ships for 'crew' players: x (1 + Spawns % per player past the first).</summary>
+        public static float SpawnFactor(int crew, int spawns) => 1f + spawns / 100f * (Mathf.Clamp(crew, 1, MaxCrew) - 1);
+
+        /// <summary>How many extra copies of the hostile ship a story level spawns now: the whole part of what the level's
+        /// spawns owe so far ('carry' keeps the fraction, so +50 % with two players adds one ship for every second one).</summary>
+        public static int ExtraShips(ref float carry, int crew, int spawns)
+        {
+            carry += SpawnFactor(crew, spawns) - 1f;
+            int n = Mathf.FloorToInt(carry + 1e-4f);
+            carry -= n;
+            return Mathf.Max(0, n);
+        }
+
         /// <summary>A story reward as this player gets it: shared out across the crew (rounded up), or in full.</summary>
         public static int Share(int reward) => Share(reward, Active ? CrewSize : 1, SplitRewards);
         public static int Share(int reward, int crew, bool split) =>
@@ -181,16 +212,46 @@ namespace GoF2Remake.Data
             GameHooks.CoopStepWon?.Invoke(index);
         }
 
-        /// <summary>The leader: step 'index' is won (by any crew member). This game opens its success conversation where it is.</summary>
+        /// <summary>The leader: step 'index' is won (by any crew member). This game opens its success conversation where it is,
+        /// now or, still on an earlier step, once it gets there.</summary>
         public static void OnStepWon(int index)
         {
-            if (!Active || Story.Mission == null || Story.Mission.IsEmpty) return;
-            if (index == Story.Index && !Story.Mission.won) remoteWon = index;
+            if (!Active || index < Story.Index) return;
+            crewWon.Add(index);
         }
 
         /// <summary>Another crew member won the current step and this game hasn't shown its conversation yet.</summary>
-        public static bool RemoteWon => Active && remoteWon >= 0 && remoteWon == Story.Index && Story.Mission != null
+        public static bool RemoteWon => Active && crewWon.Contains(Story.Index) && Story.Mission != null
                                         && !Story.Mission.won && !Story.Mission.IsEmpty;
+
+        /// <summary>A guest on a later step than the leader's (it closed a success conversation first): it waits for the
+        /// leader there and finds no step complete meanwhile (StationMenu / StorySpace). Docked at Kernstal ahead of the
+        /// leader, a guest won step 12 before the leader had shown 11.</summary>
+        public static bool AheadOfLeader => Guest && leaderState != null && Story.Index > leaderState.index;
+
+        /// <summary>This game's success conversation of step 'index' opens (in flight from the success pause on): no catch-up
+        /// moves the step on under it.</summary>
+        public static void SuccessOpened(int index) { if (Active) successOpen = index; }
+
+        /// <summary>That conversation closed: false when the step moved on under it all the same (the leader's level took the
+        /// crew along, CatchUpTo), so its close advances nothing; true outside a session. Closing it advanced a second time,
+        /// from the caught-up step, which the leader followed (FollowGuestAdvance): the host skipped step 11 and got step 12's
+        /// conversation leaving Kernstal, a player's report 2026-11-04.</summary>
+        public static bool SuccessClosed(int index)
+        {
+            successOpen = -1;
+            return !Active || Story.Index == index;
+        }
+
+        /// <summary>A scene starts (Story.ReopenUnshownSuccess): a conversation the last one cut off is gone.</summary>
+        public static void SceneStarted() => successOpen = -1;
+
+        /// <summary>A docked game can't open a conversation now (a window or the hangar open): the catch-up's wait for its
+        /// success conversation starts again, so browsing the shop doesn't lose it.</summary>
+        public static void ConversationDelayed()
+        {
+            if (waitingIndex >= 0) waitingSince = Time.unscaledTime;
+        }
 
         // ---- advancing ----------------------------------------------------------------------------------------------
 
@@ -199,7 +260,7 @@ namespace GoF2Remake.Data
         public static void OnAdvanced(int from, int to, bool wasWon)
         {
             if (!Active) return;
-            if (remoteWon == from) remoteWon = -1;
+            crewWon.RemoveWhere(i => i < to);
             if (Leader || catchingUp || wasWon) return;
             GameHooks.CoopAdvanced?.Invoke(from);
         }
@@ -243,6 +304,7 @@ namespace GoF2Remake.Data
                 failSerial = failSerial,
                 campaign = (int)Session.Campaign,
                 strength = Strength,
+                spawns = Spawns,
                 splitRewards = SplitRewards,
                 crewLimit = CrewLimit,
                 station = Session.LastDockedStation >= 0 ? Session.LastDockedStation : Session.StationIndex,
@@ -321,7 +383,7 @@ namespace GoF2Remake.Data
             if (!Leader) return;
             Story.RepairCheckpoint();
             if (Story.Mission != null) Story.Mission.won = false;
-            remoteWon = -1;
+            crewWon.Clear();
             failSerial++;
         }
 
@@ -334,12 +396,13 @@ namespace GoF2Remake.Data
             if (s == null || s.index < 0) return;
             leaderState = s;
             if (!Guest) return;
-            SetSettings(s.strength, s.splitRewards);   // the leader's settings
+            SetSettings(s.strength, s.spawns, s.splitRewards);   // the leader's settings
             SetCrewLimit(s.crewLimit);
             if (appliedFailSerial < 0) appliedFailSerial = s.failSerial;
             if (s.failSerial != appliedFailSerial)
             {
                 appliedFailSerial = s.failSerial;
+                crewWon.Clear();   // the chain's steps are won again
                 if (Story.Index > s.index) ForceTo(s);   // the failed chain starts again
             }
             CatchUp(s, db);
@@ -366,15 +429,20 @@ namespace GoF2Remake.Data
 
         static void CatchUp(State s, Database db, bool now = false)
         {
-            if (Story.Index >= s.index) { waitingSince = -1f; return; }
-            // This game's own success conversation of the step the leader just left: it runs first (its moves, its reward).
-            bool ownSuccess = Story.Index == s.index - 1 && (Story.Mission != null && Story.Mission.won || RemoteWon);
-            if (ownSuccess && !now)
+            if (Story.Index >= s.index) { waitingIndex = -1; return; }
+            if (!now)
             {
-                if (waitingSince < 0f) waitingSince = Time.unscaledTime;
-                if (Time.unscaledTime - waitingSince < CatchUpWaitSeconds) return;
+                // This game's success conversation of a step the leader has left is on screen: closing it advances.
+                if (successOpen == Story.Index) return;
+                // A step won here or by the crew whose conversation this game hasn't shown: it runs first (its moves, its
+                // reward), CatchUpWaitSeconds at most (a game that can't open it).
+                if (Story.Mission != null && Story.Mission.won || RemoteWon)
+                {
+                    if (waitingIndex != Story.Index) { waitingIndex = Story.Index; waitingSince = Time.unscaledTime; }
+                    if (Time.unscaledTime - waitingSince < CatchUpWaitSeconds) return;
+                }
             }
-            waitingSince = -1f;
+            waitingIndex = -1;
             int from = Story.Index;
             catchingUp = true;
             try
@@ -384,10 +452,11 @@ namespace GoF2Remake.Data
                     int before = Story.Index;
                     Story.Advance(db);
                     if (Story.Index <= before) break;
+                    if (!now && crewWon.Contains(Story.Index)) break;   // a step the crew won: its conversation first
                 }
             }
             finally { catchingUp = false; }
-            remoteWon = -1;
+            crewWon.RemoveWhere(i => i < Story.Index);
             CatchUpSerial++;
             Debug.Log($"CoopCampaign: caught up from step {from} to {Story.Index}");
         }
@@ -408,7 +477,7 @@ namespace GoF2Remake.Data
             Session.StoryMission = Clone(s.mission);
             Session.StoryMission.won = false;
             Session.StoryStepStart = Session.PlaySeconds;
-            remoteWon = -1;
+            crewWon.Clear();
             aheadSince = -1f;
             Overwrite(s);
         }
@@ -422,7 +491,7 @@ namespace GoF2Remake.Data
             var l = s.mission ?? new StoryMission();
             m.type = l.type; m.reward = l.reward; m.station = l.station; m.value = l.value;
             m.goodsItem = l.goodsItem; m.goodsAmount = l.goodsAmount; m.visible = l.visible;
-            if (l.won && !m.won) remoteWon = s.index;
+            if (l.won && !m.won) crewWon.Add(s.index);
             Session.StoryCounter = s.counter;
             Session.StoryTargets.Clear();
             if (s.targets != null) Session.StoryTargets.AddRange(s.targets);
@@ -484,6 +553,10 @@ namespace GoF2Remake.Data
         public static bool CanHost(SaveData s) =>
             s != null && s.campaign >= 0 && s.campaign <= (int)Campaign.Supernova && !s.hardcore && string.IsNullOrEmpty(s.modCampaign);
 
+        /// <summary>The co-op campaign's economy (NetSession.Economy): a continued save keeps its own (SaveGame.SaveEconomy,
+        /// Android before save version 10), a new game plays the one the host picked.</summary>
+        public static Economy HostEconomy(SaveData save, Economy newGame) => save != null ? SaveGame.SaveEconomy(save) : newGame;
+
         /// <summary>A guest's game in a co-op session before its profile (an empty one keeps this): the story from the start,
         /// the leader's own ship and loadout, then caught up to the leader's step (every step's side effects).</summary>
         public static void PrepareGuest(State s, Database db)
@@ -507,7 +580,7 @@ namespace GoF2Remake.Data
             }
             if (s.station >= 0 && s.station < db.Stations.Count) Session.StationIndex = s.station;   // docked where the leader last docked
             Session.LaunchedFromStation = Session.ArrivedByTravel = false;   // (the prologue: in the belt like the leader)
-            SetSettings(s.strength, s.splitRewards);
+            SetSettings(s.strength, s.spawns, s.splitRewards);
             SetCrewLimit(s.crewLimit);
             leaderState = s;
             appliedFailSerial = s.failSerial;

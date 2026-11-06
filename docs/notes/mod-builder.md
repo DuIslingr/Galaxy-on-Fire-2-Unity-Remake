@@ -141,7 +141,7 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   files (music/, sounds/, voices/); all in the undo steps. **References** (`ModRefs`): every picker of other content
   (`PickRef` / `RefField`) lists the game's, the project's own (by key) and every other installed mod's (read from its files,
   on or off); another mod's pick makes it a dependency (`ModProject.AddDependency`, with the installed version as the lowest),
-  `ModsNamed` the mods the files name. **Test fly** only in Ships, Items and Skins (`ModBuilderView.Flies`); Blueprints /
+  `ModsNamed` the mods the files name. **Test fly** in Ships, Items and Skins (`ModBuilderView.Flies`) and NPC ships; Blueprints /
   Campaign show their ship on the turntable (`ModBuilder.PreviewShip` / `PreviewLoadout`). **Play** (`ModBuilderPlay`,
   `ModBuilder.PlayTesting`): a play test, the game with the project on (the station menu, traffic, quests:
   `LocalEvents` runs no quests in the builder otherwise), from the builder's station, the campaign's start or a quest under
@@ -199,13 +199,28 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (`PreviewSpec` -> `Traffic.AssemblyOf` -> `AssembledObject.LoadPrefab`, a mod hull retried every 0.5 s until built)
   and the hangar's `ModBuilderGizmo` binds to it (hardpoints cyan / amber, pads red): a ball drags over the hull (Ctrl:
   100-unit snap) or along its arrows, "Click the hull to add" a turret or a pad; every edit saves and re-reads the project
-  (the page and the preview follow). Not yet tried in Play mode. Size (2026-11-03, the user's request "a model size
+  (the page and the preview follow). A mod hull's preview (and the compared one) is copied again when its template was
+  replaced (`StaleHull`, once `ModShips.Ready`): that reload destroys the mods' templates with their meshes and materials
+  (`ModShips.Release`), and the old copy kept its key, so only the gizmo's balls showed (a tester's report, 2026-11-05;
+  a kit hull hid it, its key changing with its rolled colours). Size (2026-11-03, the user's request "a model size
   adjustment like in the ship menu"): Size (x the hull's) and Scale -10% / +10% / Its own size write `"scale"`; the
   preview's pivot is scaled, so the gizmo's points (in the hull's own frame) grow with it as the game's do, and the page
   shows its length / width / height in metres. "Compare with…" (the same request: "spawns another ship of your choosing
   next to it"): a game NPC hull, another of the project's NPC ships (at its size) or any ship (`ModRefs.List(RefKind.Ship)`,
   no dependency added; another mod's only while it is on) parked beside it on the far side from the station, centres
   level, both framed; "No comparison" removes it.
+  Test fly (2026-11-05, the user's request: "drops the player in a flyable ship with the mod NPC ship in game as they
+  would normally fly"; the MCP's test_fly too, `ModBuilderSpaceViewAi.ExternalTestFly`): the page's Test fly button
+  (`TestFlyNpc`: the project saved and read again, refused while the type isn't read) -> `ModBuilder.StartNpcTestFlight`:
+  the builder's ship and loadout and cheats as a ship's test flight, the take-off camera from the builder's station
+  straight from the space view (`LaunchedFromStation`), `ModBuilder.TestNpcShip` the type's key; `ModBuilderRange` then
+  spawns that type instead of the pirates (`DebugSpawner.SpawnNpcType` with its `spawned` list: `TrafficPlan.AddNpcType`,
+  escorts, turrets, orders as the game's) and again 6 s after its host is gone; a type not read falls back to the pirates.
+  Docking (the user's request "in test fly also allow docking"): `CapitalShips.DockRefusal` waives the deck's trust rules
+  during it (not a hostile ship's or one in battle), and the flight has 100,000 credits for the deck's shop, the
+  builder's own put back at the end. Docking at the station, Esc > Back to Mod Builder or a death end it
+  (`EndTestFlight`: back to the NPC ships kind in space, `ReloadSpace`; the dock via the hangar's `OnDocked` and
+  `SelectKind`), on the same entry (`ModBuilder.ReturnNpcShip`). Not yet tried in Play mode.
   **Ship kits** (2026-10-16, #87's customizable ships as a builder kind; `ModBuilder.Kind.Kits`, before AiTools, KindCount
   14; `ModBuilderViewKits`, `ProjectKit` / `ProjectKitPart` in ProjectKits.cs, `ModProject.Kits`, file shipkits.json, in the
   undo steps as "kits", MCP entry kind `kits`): the kit (name, scale, yaw), its slots (add, rename, reorder, remove; a

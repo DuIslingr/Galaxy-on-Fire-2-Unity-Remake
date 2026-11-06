@@ -304,8 +304,12 @@ namespace GoF2Remake.Data
                 var target = db.Systems.Find(s => s.index == b);
                 noGate = target == null || target.jumpRoutesTo.Count == 0;
             }
-            if (Cheats.FreeJumps) return 0;
-            return Session.IsExtreme ? n * 2 : n;
+            if (FreeJumps) return 0;
+            int cells = Session.IsExtreme ? n * 2 : n;
+            // Modified: a mod drive's own cost (its jumpFx "cellsFactor", x the Khador Drive's, Extreme's x2 included).
+            var drive = GoF2Remake.Modding.ModJumpFx.ActiveDrive();
+            if (drive != null && drive.cellsFactor != 1f) cells = Mathf.CeilToInt(cells * drive.cellsFactor);
+            return cells;
         }
 
         public static int CellsInCargo() => Session.Cargo.Find(s => s.item == EnergyCellItem)?.amount ?? 0;
@@ -324,18 +328,32 @@ namespace GoF2Remake.Data
         /// <summary>Ship::hasJumpDriveIntegrated (37 / 38 / 40, and a mod ship's "integrated": "khadorDrive").</summary>
         public static bool HasIntegratedDrive(int ship) => Database.Shared.HasIntegratedDrive(ship);
 
+        /// <summary>Modified: jumps take no energy cells: the Debug panel's free jumps, or a mounted mod drive whose "jumpFx" has
+        /// "freeJumps": true (Modding.ModJumpFx).</summary>
+        public static bool FreeJumps => Cheats.FreeJumps || (GoF2Remake.Modding.ModJumpFx.ActiveDrive()?.freeJumps ?? false);
+
+        /// <summary>Modified: the Khador Drive or a mod jump drive based on it (its look 85, Modding.ModJumpFx: a drive with its
+        /// own jump effect and rules); not a cruise drive, which is based on it too (Shop.IsCruiseDrive).</summary>
+        public static bool IsKhadorDrive(int item)
+        {
+            if (item == KhadorDriveItem) return true;
+            var it = item >= 0 ? Database.Shared.Item(item) : null;
+            return it != null && it.Look == KhadorDriveItem && !Shop.IsCruiseDrive(it);
+        }
+
         /// <summary>Remake (the user, 2026-11-03): a mounted cruise drive that flies between the systems (the Khador Slipstream,
-        /// CruiseDrive.InterstellarAttr) makes the Khador Drive's jumps too, as the drive it replaces on the ship.</summary>
+        /// CruiseDrive.InterstellarAttr) makes the Khador Drive's jumps too, as the drive it replaces on the ship; not the base
+        /// game's while Options > Gameplay turns it off (Shop.WorkingCruiseDrive, Settings.KhadorSlipstream).</summary>
         public static bool HasSlipstream(Database db)
         {
-            var it = Shop.MountedCruiseDrive(db);
+            var it = Shop.WorkingCruiseDrive(db);
             return it != null && it.Attr(Flight.CruiseDrive.InterstellarAttr) > 0;
         }
 
-        /// <summary>A real Khador Drive aboard to jump with: the item, a ship's own (HasIntegratedDrive) or the Khador
-        /// Slipstream (HasSlipstream); not the free-play stand-in for gateless systems.</summary>
+        /// <summary>A real Khador Drive aboard to jump with: the item or a mod jump drive (IsKhadorDrive), a ship's own
+        /// (HasIntegratedDrive) or the Khador Slipstream (HasSlipstream); not the free-play stand-in for gateless systems.</summary>
         public static bool HasKhadorDrive(Database db) =>
-            HasIntegratedDrive(Session.ShipIndex) || Session.Equipment.Exists(e => e.item == KhadorDriveItem) || HasSlipstream(db);
+            HasIntegratedDrive(Session.ShipIndex) || Session.Equipment.Exists(e => IsKhadorDrive(e.item)) || HasSlipstream(db);
 
         /// <summary>Ship::hasJumpDrive, plus the remake's free-play rule for gateless systems (see the file header) and the
         /// Khador Slipstream (HasSlipstream).</summary>

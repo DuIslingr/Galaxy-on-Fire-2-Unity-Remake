@@ -31,7 +31,8 @@ waves, `WeaponFx.Shot` / `ExplosionSound` pick one at random; the sentry deploy 
   0.025/s; at 1 the ship explodes; 35 Selfdestruct_Warning beeps by it (the spawn intensity envelope 0 below 0.2, then
   0.18 → 0.66, which libfmodevent turns into (e^(5.7865 v) − 1) · 0.3078: a beep every 1.7 s at 0.2, almost continuous
   at 1; +3 st); 3202 warns 5 s in (`FlightHints`).
-- **Music rules** (`Traffic.UpdateMusic`, `Radar::draw` 0x157c6c): nothing switches while 143 IntroAtmo plays; at 0x91 a calm orbit keeps the battle track.
+- **Music rules** (`Traffic.UpdateMusic`, `Radar::draw` 0x157c6c): nothing switches while 143 IntroAtmo plays; at 0x91 a calm orbit keeps the battle track;
+  single battle tracks can be turned off (Options > Sound, `MusicTracks`, see "Music tracks off").
 - **Flight UI**: buttons in the pause / autopilot menus, the Menu button and the dialogue click 124 / 123; the pause
   menu's confirmation 126. Step 15's success page 1833 (or skipping it) stops the music for 136 and loops 162 Alert
   (`StationMenu.StartVoidAlarm`).
@@ -66,7 +67,10 @@ waves, `WeaponFx.Shot` / `ExplosionSound` pick one at random; the sentry deploy 
   twice). `MainMenu` adopts the playing source as its music source (`SplashMusic.Take` moves it into the menu scene; it
   used to destroy it and seek a second stream to the same point: a gap or a doubling). A mod's menu theme fades in over
   it (`MainMenu.SwapMusic`: 1 s out, 1.5 s in; it cut in hard), also when it finishes loading later; the newest
-  `FadeMusic` wins (leaving the menu stops a swap).
+  `FadeMusic` wins (leaving the menu stops a swap). Nothing else is heard while the logos show (2026-11-05,
+  `StartupSplash.MuteAllButMusic`): every other `AudioSource` (the menu scene loading behind them, its backdrop orbit)
+  is muted in `LateUpdate` as it appears and unmuted when the splash goes; muted rather than `AudioListener.pause`, which
+  would hold the one-shots and play them all at once afterwards. Nothing else in the game sets `AudioSource.mute`.
 - The rescue (index 1) plays the system race's space track (index 0's state 16 sets `Globals::switch_to_target_setting`:
   `playMusicAndFadeOutCurrent(1)`, Mido 137); 141 Space_Battle_Medium is the time jump's arrival only.
 - Not yet: the generic event volumes of the older SFX; the loop waves' seams (many SFX loops end some samples past their

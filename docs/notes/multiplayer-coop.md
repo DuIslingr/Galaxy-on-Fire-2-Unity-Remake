@@ -21,7 +21,7 @@ The story for a crew of players, 4 by default (remake-only, 2026-11-01). Code: `
   screen): a slot hosts with `NetGame.CoopSlot` (`CoopNewCampaign` -1), after the Load's warning when the save has mods the
   session won't run (not on, or the Host card's Mods off). `CoopCampaign.CanHost` refuses a hardcore save (a death in a
   session ends nothing) and a mod's campaign. New game asks the campaign (Galaxy on Fire 2, or Add-ons: Valkyrie /
-  Supernova; `NetGame.CoopNewCampaign`). Max players is the co-op
+  Supernova; `NetGame.CoopNewCampaign`), then the economy (below). Max players is the co-op
   screen's own (`NetGame.CoopMaxPlayers`, PlayerPrefs `mp_coop_max_players`, 4 by default, up to the session limit of 100;
   until 2026-11-01 capped at 4), which `NetGame.MaxPlayers` returns while co-op is hosted (so Relay's allocation and the
   approval agree); the leader's State carries it (`CoopCampaign.CrewLimit`: the lobby's "crew N / limit"). Bigger crews
@@ -30,16 +30,33 @@ The story for a crew of players, 4 by default (remake-only, 2026-11-01). Code: `
   in rows of four. Listed with a CO-OP tag (lobby key `coop`).
   Not on a dedicated server.
 - **Difficulty and credits** (the host's settings, in the published State so every game uses them): enemy strength per
-  player past the first (the Host card's "Enemies per player" Off / +25 / +50 / +100 / +150 / +200 %, PlayerPrefs
+  player past the first (the Host card's "Enemy strength per player" Off / +25 / +50 / +100 / +150 / +200 %, PlayerPrefs
   `mp_coop_strength`, 50 by default; `CoopCampaign.Strength`; +150 / +200 added 2026-11-02, the user's request; its row
-  takes the switch grid's whole width, first, `.mp-debug-row--wide`: six choices in half a row overflowed): story level enemies' hull x (1 + s x (players - 1)) (`HullFactor`), every hostile
-  NPC's guns in a co-op session x (1 + s / 2 x (players - 1)) (`DamageFactor`, `NpcTables`' gun damage; not friends or
-  wingmen); and the story credits (the Host card's "Story credits" Shared / Each in full, `mp_coop_split`, shared by
-  default; `CoopCampaign.Share`): a step's reward (docked or in flight) and the game-won bonus of 45 are divided by the
+  takes the switch grid's whole width, first, `.mp-debug-row--wide`: six choices in half a row overflowed): story level
+  enemies' hull x (1 + s x (players - 1)) (`HullFactor`), every hostile NPC's guns in a co-op session
+  x (1 + s / 2 x (players - 1)) (`DamageFactor`, `NpcTables`' gun damage; not friends or wingmen).
+- **Enemy ships** (2026-11-06, the user's request: strength and spawning as two settings instead of one): the Host card's
+  "Enemy ships per player" (the row under strength, the same six choices, PlayerPrefs `mp_coop_spawns`, Off by default
+  so a crew plays the story's own numbers unless the host asks; `CoopCampaign.Spawns`, the State's `spawns`, a State
+  from before it reads Off): a story level's hostile ships x (1 + p x (players - 1)) (`SpawnFactor`). The leader's
+  `CampaignLevel.SpawnShip` adds the copies (`ExtraSpecs` / `SpawnExtras` in `CampaignLevelCoop`; `ExtraShips` keeps
+  the fraction across the level's spawns, so +50 % with two players adds one for every second ship) beside each plain
+  hostile fighter (`Copyable`: hostile race or alwaysEnemy, a Raider with a stock model; never a named character, an
+  unkillable one, a freighter, a fixed object, a turret, a capital ship or its parts, a mission crate's carrier, steps
+  0 / 1's choreography). Copies are not in `Ships` (the scripts' indices, radio triggers and objectives stay the
+  original's) and count for no kill objective (`OnShipDied`); hull x `HullFactor` like the rest. Each copy mirrors its
+  original every frame (`MirrorExtras`): woken by the script (or the crew close by) it wakes too, put beside the original
+  when it was parked far away (the waves waiting at -500 000); deactivated, hidden, frozen, holding fire or turned enemy
+  likewise; the hold freezes them too. Once the original dies the copy fights on. Waves the scripts spawn later get
+  their copies at that moment; ships a script spawns straight through the traffic get none. `/coop spawns <n>` counts
+  from the level's next spawn. Not tested with two games yet (the rules by `CoopCampaignTests`).
+- **Story credits** (the Host card's "Story credits" Shared / Each in full, `mp_coop_split`, shared by default;
+  `CoopCampaign.Share`): a step's reward (docked or in flight) and the game-won bonus of 45 are divided by the
   players in the session, rounded up, each game paying its own share; bar missions split as squads always do. The
-  host changes them while playing with `/coop strength 0|25|50|100|150|200` / `/coop rewards shared|full` (no argument shows them;
-  announced to everyone, kept for the next session). The player count is the session's at the moment: hull when a level
-  spawns its ships, guns when a ship gets them, a reward when it is paid. A catch-up pays no step rewards.
+  host changes the three while playing with `/coop strength 0|25|50|100|150|200` / `/coop spawns 0|25|...|200` /
+  `/coop rewards shared|full` (no argument shows them; announced to everyone, kept for the next session). The player
+  count is the session's at the moment: hull and extra ships when a level spawns its ships, guns when a ship gets them,
+  a reward when it is paid. A catch-up pays no step rewards.
 - **Persistence** (2026-11-01: the host's game in the save slots; until then the host's profile in CoopFolder and a
   coop.json summary for a Continue): the host's game is its single-player game. `NetCoop.PrepareHost` reads the slot
   (its campaign for `CoopCampaign.NewCampaign`), `LoadHostSave` (after `NetMods.BeginHost`) puts its modded items right
@@ -51,10 +68,28 @@ The story for a crew of players, 4 by default (remake-only, 2026-11-01). Code: `
   for a new game, which overwrites it as a single-player new game does), the station's Save game (shown for the host
   only), and the auto-save when the host leaves docked (`NetProfileClient.SaveHostNow`; in flight nothing, saves are
   docked only); never its profile (`NetProfileClient.Upload` returns). Each save keeps the slot's own difficulty and
-  economy (`BeginHostSaves`; a new game Normal / Android): the session plays Normal on the Android tables. The guests'
+  economy (`BeginHostSaves`; a new game Normal and the economy picked): the session plays Normal on the game's economy
+  ("Economy" below). The guests'
   profiles stay a persistent hosted world in its own folder (`NetGame.CoopFolder`, persistentDataPath/CoopCampaign;
   `NetGame.CoopSession` makes `PersistentHost` true), kept across hosted saves (a guest ahead of the host's step is set
   back to it, `AfterProfile`); a New game moves it to `CoopCampaign.old` (the crew starts again too).
+- **Economy** (2026-11-05, a Discord player's question: "will co-op get the PC economy?"): a co-op campaign plays the
+  host's game's economy (`NetSession.Economy`, `CoopCampaign.HostEconomy`): a continued save its own
+  (`SaveGame.SaveEconomy`, Android before save version 10), a new game the one the host picks after the campaign
+  (`MainMenu.AskCoopEconomy`: PC economy or Android economy with single player's two descriptions,
+  `NetGame.CoopEconomy`). `NetCoop.PrepareHost` sets `Session.Economy` before the campaign's tables load; NetState
+  carries it in its spawn data (the `economy` byte, `NetSession.EconomyCode`: 0 Android, the variable's default, 1
+  Default), and a guest's `OnNetworkSpawn` sets it before the session's mods, `NetCoop.OnJoined` and its profile, so
+  every game loads the same item and ship tables: prices (each game prices its own windows, `Shop.PriceList`), stats,
+  the stock the host rolls (`NetStock`: the Default economy's stock factor and AB-1 rule, `Shop`) and the Loma price
+  match on every machine. No approval check is needed: the exact-version check already refuses another build, and the
+  guest takes the session's economy whatever its own. `SaveGame.ApplyProfile` applies a profile under the session's
+  economy (no more always Android), so a guest's persistent profile in CoopFolder keeps working across campaigns of
+  either economy (the item numbers are the same; credits and items carry over, blueprint progress through
+  `Blueprints.Fit`). `NetGame.Db` loads again when the economy changes after its first use. The lobby dialog names the
+  economy, and the Open campaigns list tags each campaign with it (lobby key `economy`; none for a listing from before).
+  Free roam stays Android (docs/notes/shop.md "Economy" says why). Tested by `CoopCampaignTests` (the pick, the byte,
+  a guest's tables, a profile across economies); not with two games yet.
 - **Lobby** (a new campaign): the session opens with `NetState.CoopStarted` false (`NetCoop.LobbyWanted`), so
   `NetGame.EnterWorld` waits (`NetGame.InLobby`) and every game stays in the main menu, whose dialog lists the crew
   (`NetCoop.CrewNames`, the host first, the join code for the host), kept current every 0.5 s (`MainMenu.CoopLobby`). The
@@ -80,10 +115,18 @@ The story for a crew of players, 4 by default (remake-only, 2026-11-01). Code: `
   `StoryCounter`, step 59's `StoryTargets`, the Void invasion's station, step 13's crew missions, a fail serial) are
   published as JSON in `NetState.coopStory` whenever they change (`LeaderTick`). Every game still advances its own story
   (`Story.Advance`), so loaner ships, blueprints, revealed systems, cargo changes and rewards reach each player.
-  - A guest behind the leader catches up silently (`CatchUp`: Advance without conversations), except the one step whose
-    success conversation it is about to show (120 s at most); one ahead (it closed that conversation first) waits; ahead
-    for over 120 s it is set to the leader's step. After a catch-up the docked station swaps the turntable ship and the
-    menu's story locks (`CatchUpSerial`, `StationMenu.CheckStory`).
+  - A guest behind the leader catches up silently (`CatchUp`: Advance without conversations), but stops at every step won
+    here or by the crew whose success conversation it hasn't shown (`crewWon`: the leader's won steps are kept even when
+    the guest is still on an earlier one; 120 s at most per step, the clock starting again while a docked window, the
+    hangar or the star map keeps it from opening, `ConversationDelayed`). Until 2026-11-05 only the step one behind
+    waited, and a win arriving while the guest was a step behind was dropped: step 6's weapons conversation never opened
+    for a guest still reading step 5's (a player's report). While that conversation is open (`SuccessOpened`, in flight
+    from the success pause) nothing catches up but the leader's moves (`CatchUpTo`); its close then advances only if the
+    step is still the one shown (`SuccessClosed`, else the reward alone): closing it advanced a second time, the leader
+    followed that "own advance" and skipped step 11, getting step 12's conversation as it left Kernstal (the same report).
+    One ahead (it closed that conversation first) waits and finds no step complete meanwhile (`AheadOfLeader`, docked
+    and in flight); ahead for over 120 s it is set to the leader's step. After a catch-up the docked station swaps the
+    turntable ship and the menu's story locks (`CatchUpSerial`, `StationMenu.CheckStory`).
   - A guest's changes to the shared counters go to the leader as a `Progress` (`GuestTick`'s `Diff`) and come back merged
     (`Merge`: OR for the bit steps 116 / 125 / 148, else added; convoy targets marked done).
   - **Any crew member completes a step**: its game's check (`StationMenu.CheckStory` docked, `StorySpace.CheckSuccess` in
@@ -106,7 +149,8 @@ The story for a crew of players, 4 by default (remake-only, 2026-11-01). Code: `
 - **Story orbits**: the leader runs the story level as in single player (`CampaignLevel.Setup`); its ships are
   `NpcShip.StoryShip` (shown to the crew like a freelance mission's ships, `NetProxy.StoryRole` in the role flags; never
   handed over: when the leader leaves the orbit the server despawns them, `NetState.HandOver`; never dropped with the orbit
-  authority), hostile ones' hull x `CoopCampaign.HullFactor` (the Strength setting above). Another player's kill
+  authority), hostile ones' hull x `CoopCampaign.HullFactor` (the Strength setting above), their copies by the Spawns
+  setting ("Enemy ships" above). Another player's kill
   counts as the player's (`Target.killedByRemote` in `CampaignLevel.OnShipDied`).
   - A guest's level is a **follower** (`SpaceLevel`: `CoopCampaign.Guest` -> `CampaignLevel.SetupFollower`): nothing
     built or scripted; the leader sends 4 times a second its state (`CoopLevelState`: cutscene, invulnerable, hold, mission

@@ -33,6 +33,14 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
     unless a volume profile asset has it on (the code-made profile isn't seen):
     `Assets/Settings/HangarDepthOfFieldShaders.asset` (Bokeh on, used by nothing) keeps them; without it the builds
     logged "BokehDepthOfField ... has been stripped" and showed no blur.
+  - **Robot options** (remake, the user's request, 2026-11-05; Graphics "Hangar robots" / "Bar robots",
+    `Settings.HangarRobots` / `BarRobots`, keys `hangarRobots` / `barRobots`, both on by default, not in the graphics
+    or experience presets): off hides the Terran and Nivelian hangars' service bots (`TerranHangarBots`' parts, its
+    scheduler dropped) and the bars' robots (the Terran bar's `bar_terran_bot_anim` + `_anim_add`, the Vossk bar's
+    `bar_vossk_bot_*` arms, `VosskBarBots` dropped). `StationLevel.ApplyRobotOptions` reads them every frame, so the
+    station's Options page shows a change at once; on again starts the schedulers afresh (arms back in their rest poses).
+    A mod hangar's bots follow it when named like the Terran / Nivelian ones (`SetupTerranBots` collects them by name);
+    a mod bar (`customBar`) is left alone. Test `SettingsTests.RobotOptions`.
 - **Space Lounge:**
   - 3-4 generic visitors (the race and gender rules of `Generator::createAgent`) on random slots, as camera-facing billboards with a glow and a floor shadow.
     Remake (#174, `StationLevel.UpdateBillboards`): upright (turned about the vertical only; the original's look-at with
@@ -60,7 +68,8 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
     picking is off then, and a row keeping the focus (closed with the mouse) gives it up.
   - Lighting: the system's sun, with skybox ambient.
   - Anti-aliasing (remake, `StationLevel.ApplyAntialiasing`, both rooms): URP's TAA on the station camera, SMAA when a temporal
-    upscaler (DLSS / FSR 2+ / STP) is active or MSAA is on; the thin glossy parts (the Nivelian bar stools, the Midorian
+    upscaler (DLSS / FSR 2+ / STP) is active or MSAA is on (with the Post-process AA option at SMAA, its default; FXAA, TAA
+    and Off as picked, `ScreenAntialiasing` registers the camera as preferring TAA); the thin glossy parts (the Nivelian bar stools, the Midorian
     window frames) shimmered under SMAA as the camera swayed. Flight keeps SMAA.
   - The Terran bot loops; the Midorian prop replays at random.
   - Remake: the Vossk bar's bartender arms. The original ships `bar_vossk_bot_a/b/c_anim_alpha` without resource ids and
@@ -139,7 +148,8 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
   flies out meanwhile (the UI animation, `UiBlocked`), a footer keeps Back and the hints row at the top right the
   controls; Hide UI (H, the controller's Y; a short click / tap or H / Y brings it back, a drag still turns) and
   Screenshot (Enter / P, the controller's A: `PhotoMode.Store`, no UI in it, 55 / 56) are clickable hints (taps on
-  touch). Back: Esc, Backspace, B, 6 / I, the right stick press. The depth of field focuses on the hull's centre
+  touch); the screenshot keys count only once let go after it opens (`OrbitViewUi.ShotPressed`, Action Freeze too: the
+  Enter / A that chose Inspect ship took a screenshot as well, a player's report 2026-11-04). Back: Esc, Backspace, B, 6 / I, the right stick press. The depth of field focuses on the hull's centre
   meanwhile and turns Gaussian (also in the Mod Builder's orbit): sharp to a little past the hull, the room behind
   blurred (300 mm at f/2 kept ~6 m sharp up close, a 50 mm lens at the orbit's ~80 m blurred nothing). Leaving the
   hangar view drops it (`HangarInspect.Reset`); a take-off ends it. The rooms are only modelled where the original
@@ -264,7 +274,9 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
   flashed the Nivelian bar and the Midorian bar for a frame on every wrap, parked the Terran gutter lights on the
   player's pad and made the loops jump; the remade Vossk bar's streaks are keyed at 33 / 533 ms: `loopStartMs` 33, the
   first key (the original's started at 500 ms)); rotations swing back and forth
-  (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal) and the `_anim` layers fade by
+  (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal; not a rotation that ends where its
+  loop starts, `RotationLoopsWhole`: the Kothar hangar's eight v_hangar_deep_science_anim_add rings turn full circles and
+  swung back they reversed on every other loop) and the `_anim` layers fade by
   their `extra` channel (the Vossk portal light).
 - **Hangar service bots** (remake; the original never shows them: `CutScene+0x38` is never filled): the Terran hangar's
   five (`hangar_terran_bot_a..d_anim` from the beta, re-animated with the remodel, and the remake's bot e; each with its

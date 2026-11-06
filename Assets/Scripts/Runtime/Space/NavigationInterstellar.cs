@@ -144,7 +144,7 @@ namespace GoF2Remake.Flight
         {
             if (Interstellar || InterstellarSpace.Drive(db) == null) return false;
             if ((JumpsBlocked != null && JumpsBlocked()) || (KhadorBlocked != null && KhadorBlocked()) || Story.ForcedKhadorTarget(Session.StationIndex) != null) { Say(JumpRefusal); return false; }
-            if (GalaxyMap.HasVolatileGoods) { Say(Localization.Get(612)); return false; }
+            if (GalaxyMap.HasVolatileGoods) { Say(GoF2Remake.Modding.ModJumpFx.VolatileRefusal()); return false; }
             InterstellarRequested?.Invoke();
             return true;
         }

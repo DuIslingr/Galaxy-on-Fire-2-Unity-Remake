@@ -3,11 +3,14 @@
 // catching up to it with every step's own side effects, the wait for a guest's own success conversation, a guest's progress
 // on the step's shared counters and the leader's merge (bits at 116 / 125 / 148, counts elsewhere, convoy targets), the
 // leader following a guest's own advance, step 13's crew missions, a won step reported by another crew member, a failed
-// level's checkpoint, and the story levels' hull factor. The hooks stand in for the session (no network).
+// level's checkpoint, the story levels' hull factor, and the economy (the hosted save's or the new game's pick, the byte
+// NetState carries, a guest's tables matching the host's, a profile applied under the session's economy). The hooks stand
+// in for the session (no network).
 
 using System;
 using System.Collections.Generic;
 using GoF2Remake.Data;
+using GoF2Remake.Multiplayer;
 using NUnit.Framework;
 
 namespace GoF2Remake.Tests
@@ -101,9 +104,9 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(5.5f, CoopCampaign.HullFactor(4, 150), 1e-4f);
             Assert.AreEqual(7f, CoopCampaign.HullFactor(4, 200), 1e-4f);
             Assert.AreEqual(4f, CoopCampaign.DamageFactor(4, 200), 1e-4f);
-            CoopCampaign.SetSettings(200, true);
+            CoopCampaign.SetSettings(200, 0, true);
             Assert.AreEqual(200, CoopCampaign.Strength, "the highest choice is kept");
-            CoopCampaign.SetSettings(100, true);
+            CoopCampaign.SetSettings(100, 0, true);
             Assert.AreEqual(2f, CoopCampaign.NpcDamageFactor, 1e-4f, "three players (the test's crew) at +100 %: half of it on the guns");
             GameHooks.CoopActive = () => false;
             Assert.AreEqual(1f, CoopCampaign.NpcDamageFactor, 1e-4f, "single player");
@@ -130,7 +133,7 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(10000, CoopCampaign.Share(10000, 3, false), "each in full");
             Assert.AreEqual(10000, CoopCampaign.Share(10000, 1, true), "alone");
             Assert.AreEqual(0, CoopCampaign.Share(0, 4, true));
-            CoopCampaign.SetSettings(50, true);
+            CoopCampaign.SetSettings(50, 0, true);
             Assert.AreEqual(1000, CoopCampaign.Share(3000), "the session's crew of three");
             GameHooks.CoopActive = () => false;
             Assert.AreEqual(3000, CoopCampaign.Share(3000), "single player keeps the whole reward");
@@ -140,19 +143,65 @@ namespace GoF2Remake.Tests
         public void GuestsTakeTheLeadersSettings()
         {
             leader = true;
-            CoopCampaign.SetSettings(100, false);
+            CoopCampaign.SetSettings(100, 150, false);
             string json = LeaderAt(20);
-            CoopCampaign.SetSettings(CoopCampaign.DefaultStrength, true);
+            CoopCampaign.SetSettings(CoopCampaign.DefaultStrength, CoopCampaign.DefaultSpawns, true);
             GuestAt(20);
             CoopCampaign.ApplyLeader(json, db);
             Assert.AreEqual(100, CoopCampaign.Strength);
+            Assert.AreEqual(150, CoopCampaign.Spawns, "the spawning is its own setting");
             Assert.IsFalse(CoopCampaign.SplitRewards);
+        }
+
+        [Test]
+        public void AStateFromBeforeTheSpawningSettingSpawnsNoExtras()
+        {
+            var s = CoopCampaign.FromJson("{\"index\":20,\"strength\":100,\"splitRewards\":true}");
+            Assert.AreEqual(100, s.strength);
+            Assert.AreEqual(CoopCampaign.DefaultSpawns, s.spawns);
+            Assert.AreEqual(0, CoopCampaign.DefaultSpawns, "Off: the story levels' own ships");
+        }
+
+        [Test]
+        public void SpawnsAddShipsPerExtraPlayer()
+        {
+            Assert.AreEqual(1f, CoopCampaign.SpawnFactor(4, 0), 1e-4f, "Off");
+            Assert.AreEqual(1f, CoopCampaign.SpawnFactor(1, 200), 1e-4f, "alone");
+            Assert.AreEqual(2.5f, CoopCampaign.SpawnFactor(4, 50), 1e-4f);
+            Assert.AreEqual(7f, CoopCampaign.SpawnFactor(4, 200), 1e-4f);
+
+            float carry = 0f;
+            Assert.AreEqual(0, CoopCampaign.ExtraShips(ref carry, 4, 0), "Off adds none");
+            Assert.AreEqual(1, CoopCampaign.ExtraShips(ref carry, 2, 100), "+100 % with two players: one copy each");
+            carry = 0f;
+            int total = 0;
+            for (int i = 0; i < 6; i++) total += CoopCampaign.ExtraShips(ref carry, 2, 50);
+            Assert.AreEqual(3, total, "+50 % with two players: one for every second ship");
+            carry = 0f;
+            total = 0;
+            for (int i = 0; i < 4; i++) total += CoopCampaign.ExtraShips(ref carry, 4, 50);
+            Assert.AreEqual(6, total, "four ships for four players at +50 %: ten in all");
+            carry = 0f;
+            total = 0;
+            for (int i = 0; i < 4; i++) total += CoopCampaign.ExtraShips(ref carry, 3, 25);
+            Assert.AreEqual(2, total, "a fraction carried over, never lost");
+        }
+
+        [Test]
+        public void StrengthAndSpawnsAreSeparate()
+        {
+            CoopCampaign.SetSettings(0, 200, true);
+            Assert.AreEqual(0, CoopCampaign.Strength);
+            Assert.AreEqual(200, CoopCampaign.Spawns);
+            Assert.AreEqual(1f, CoopCampaign.NpcDamageFactor, 1e-4f, "more ships, no stronger guns");
+            CoopCampaign.SetSettings(100, 500, true);
+            Assert.AreEqual(200, CoopCampaign.Spawns, "+200 % at most");
         }
 
         [Test]
         public void TheGameWonBonusIsShared()
         {
-            CoopCampaign.SetSettings(50, true);
+            CoopCampaign.SetSettings(50, 0, true);
             leader = true;
             Session.ResetNewGame();
             Story.StartNewGame(0);
@@ -219,6 +268,89 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(CoopCampaign.RemoteWon);
             Story.Mission.won = true;
             Assert.IsFalse(CoopCampaign.RemoteWon, "shown");
+        }
+
+        [Test]
+        public void GuestOneStepBehindKeepsTheCrewsWin()
+        {
+            // The host mounts its weapons (6) while the guest still reads step 5's conversation (a player's report).
+            string json = LeaderAt(7);
+            GuestAt(5);
+            CoopCampaign.OnStepWon(6);
+            Assert.IsFalse(CoopCampaign.RemoteWon, "not this game's step yet");
+            Story.Mission.won = true;   // step 5's own conversation closes
+            Story.Advance(db);
+            Assert.AreEqual(6, Story.Index);
+            Assert.IsTrue(CoopCampaign.RemoteWon, "step 6's conversation opens here too");
+            CoopCampaign.ApplyLeader(json, db);
+            Assert.AreEqual(6, Story.Index, "the catch-up waits for it");
+        }
+
+        [Test]
+        public void CatchUpStopsAtEachStepTheCrewWon()
+        {
+            string json = LeaderAt(8);
+            GuestAt(5);
+            CoopCampaign.OnStepWon(6);
+            CoopCampaign.OnStepWon(7);
+            CoopCampaign.ApplyLeader(json, db);
+            Assert.AreEqual(6, Story.Index, "the silent catch-up stops at the first step the crew won");
+            Assert.IsTrue(CoopCampaign.RemoteWon);
+            Story.Mission.won = true;
+            Story.Advance(db);   // its conversation closes
+            Assert.AreEqual(7, Story.Index);
+            Assert.IsTrue(CoopCampaign.RemoteWon, "then the next one");
+            CoopCampaign.GuestTick(db);
+            Assert.AreEqual(7, Story.Index);
+            CoopCampaign.CatchUpTo(8, db);
+            Assert.AreEqual(8, Story.Index, "the leader's level moving the crew on doesn't wait");
+            Assert.IsFalse(CoopCampaign.RemoteWon);
+        }
+
+        [Test]
+        public void AnOpenSuccessConversationHoldsTheCatchUpAndAdvancesOnce()
+        {
+            string json = LeaderAt(11);
+            GuestAt(10);
+            Story.Mission.won = true;
+            CoopCampaign.SuccessOpened(10);
+            CoopCampaign.ApplyLeader(json, db);
+            Assert.AreEqual(10, Story.Index);
+            Assert.IsTrue(CoopCampaign.SuccessClosed(10), "closed on its own step: it advances");
+            CoopCampaign.SuccessOpened(10);
+            CoopCampaign.CatchUpTo(11, db);
+            Assert.AreEqual(11, Story.Index, "the leader's level took the crew along");
+            Assert.IsFalse(CoopCampaign.SuccessClosed(10), "its close doesn't advance a second time");
+            Assert.IsEmpty(advanced, "nothing for the leader to follow");
+        }
+
+        [Test]
+        public void GuestAheadOfTheLeaderFindsNothingComplete()
+        {
+            string json = LeaderAt(11);
+            GuestAt(12);
+            CoopCampaign.ApplyLeader(json, db);
+            Assert.IsTrue(CoopCampaign.AheadOfLeader, "docked at Kernstal it doesn't win step 12 before the leader has shown 11");
+            GuestAt(11);
+            CoopCampaign.ApplyLeader(json, db);
+            Assert.IsFalse(CoopCampaign.AheadOfLeader);
+            leader = true;
+            Assert.IsFalse(CoopCampaign.AheadOfLeader, "never the leader");
+        }
+
+        [Test]
+        public void AFailedChainForgetsTheCrewsWins()
+        {
+            string before = LeaderAt(23), failed = LeaderAt(24, s => s.failSerial = 1);
+            GuestAt(23);
+            CoopCampaign.ApplyLeader(before, db);
+            CoopCampaign.OnStepWon(24);
+            Story.Mission.won = true;   // the guest reads its own step 23 conversation
+            CoopCampaign.ApplyLeader(failed, db);   // the leader's 25 failed: back to 24, to be won again
+            Assert.AreEqual(23, Story.Index);
+            Story.Advance(db);
+            Assert.AreEqual(24, Story.Index);
+            Assert.IsFalse(CoopCampaign.RemoteWon);
         }
 
         [Test]
@@ -419,6 +551,10 @@ namespace GoF2Remake.Tests
                 Assert.AreEqual((int)Economy.Android, SaveGame.Preview(4).economy);
                 SaveGame.EndHostSaves();
                 Assert.IsFalse(SaveGame.Save(5), "the session's end: no more");
+                SaveGame.BeginHostSaves(null, Economy.Default);   // a new game the host picked the PC economy for
+                Session.Economy = Economy.Default;
+                Assert.IsTrue(SaveGame.Save(6));
+                Assert.AreEqual((int)Economy.Default, SaveGame.Preview(6).economy, "the new game's pick");
                 SaveGame.BeginHostSaves(null);
                 NetSession.ActiveProvider = () => false;   // the connection went, the game still loaded
                 Assert.IsFalse(SaveGame.Save(5));
@@ -429,6 +565,90 @@ namespace GoF2Remake.Tests
                 NetSession.ActiveProvider = oldActive;
                 NetSession.SessionGameProvider = oldGame;
             }
+        }
+
+        // ---- the economy (NetSession.Economy: the host's, carried to the guests by NetState) ----
+
+        [Test]
+        public void TheCampaignPlaysTheSavesEconomyOrTheNewGamesPick()
+        {
+            var pc = new SaveData { version = SaveData.CurrentVersion, economy = (int)Economy.Default };
+            var android = new SaveData { version = SaveData.CurrentVersion, economy = (int)Economy.Android };
+            Assert.AreEqual(Economy.Default, CoopCampaign.HostEconomy(pc, Economy.Android), "a save keeps its own");
+            Assert.AreEqual(Economy.Android, CoopCampaign.HostEconomy(android, Economy.Default));
+            Assert.AreEqual(Economy.Android, CoopCampaign.HostEconomy(new SaveData { version = 9, economy = (int)Economy.Default }, Economy.Default),
+                "a save from before version 10 played the Android tables");
+            Assert.AreEqual(Economy.Default, CoopCampaign.HostEconomy(null, Economy.Default), "a new game: the host's pick");
+            Assert.AreEqual(Economy.Android, CoopCampaign.HostEconomy(null, Economy.Android));
+        }
+
+        [Test]
+        public void TheEconomyCrossesTheHandshakeIntact()
+        {
+            foreach (Economy e in Enum.GetValues(typeof(Economy)))
+                Assert.AreEqual(e, NetSession.EconomyFromCode(NetSession.EconomyCode(e)), e.ToString());
+            Assert.AreEqual(Economy.Android, NetSession.EconomyFromCode(0), "NetState's default: every free-roam session");
+            Assert.AreEqual(Economy.Android, NetSession.EconomyFromCode(7), "a value this build doesn't know");
+            Assert.AreEqual(0, NetSession.EconomyCode(Economy.Android), "Android is the variable's default, as before the economy was sent");
+        }
+
+        [Test]
+        public void AGuestLoadsTheHostsTables()
+        {
+            var savedNet = NetSession.Economy;
+            try
+            {
+                Session.Economy = Economy.Default;   // the host
+                var host = Database.Load();
+                Session.Economy = NetSession.EconomyFromCode(NetSession.EconomyCode(Economy.Default));   // a guest, from NetState
+                var guest = Database.Load();
+                Session.Economy = Economy.Android;
+                var android = Database.Load();
+                Assert.AreEqual(Economy.Default, guest.Economy);
+                Assert.AreEqual(host.Items.Count, guest.Items.Count);
+                int differ = 0;
+                for (int i = 0; i < host.Items.Count; i++)
+                {
+                    Assert.AreEqual(host.Items[i].minPrice, guest.Items[i].minPrice, "item " + i);
+                    Assert.AreEqual(host.Items[i].maxPrice, guest.Items[i].maxPrice, "item " + i);
+                    if (host.Items[i].maxPrice != android.Items[i].maxPrice) differ++;
+                }
+                for (int i = 0; i < host.Ships.Count; i++) Assert.AreEqual(host.Ships[i].price, guest.Ships[i].price, "ship " + i);
+                Assert.Greater(differ, 50, "the Default tables aren't the Android ones (the handshake matters)");
+                // NetGame.Db, the session's look-ups, follows the economy set after its first use.
+                NetGame.ResetDb();
+                Assert.AreEqual(Economy.Android, NetGame.Db.Economy);
+                Session.Economy = Economy.Default;
+                Assert.AreEqual(Economy.Default, NetGame.Db.Economy, "read again for the co-op campaign's economy");
+            }
+            finally
+            {
+                NetSession.Economy = savedNet;
+                NetGame.ResetDb();
+            }
+        }
+
+        [Test]
+        public void AProfileAppliesUnderTheSessionsEconomy()
+        {
+            var savedNet = NetSession.Economy;
+            try
+            {
+                Session.Economy = Economy.Android;
+                Session.Credits = 12345;
+                string json = SaveGame.ProfileJson();   // a guest's profile from an Android campaign
+                Session.Economy = NetSession.Economy = Economy.Default;   // this campaign plays the PC economy
+                var db = Database.Load();
+                Assert.IsTrue(SaveGame.TryParse(json, db, out var profile, out string problem), "a persistent profile keeps working: " + problem);
+                Assert.AreEqual((int)Economy.Android, profile.economy);
+                SaveGame.ApplyProfile(profile);
+                Assert.AreEqual(Economy.Default, Session.Economy, "the session's economy, not the profile's");
+                Assert.AreEqual(12345, Session.Credits, "the profile's own game");
+                NetSession.Economy = Economy.Android;   // and back in an Android session
+                SaveGame.ApplyProfile(profile);
+                Assert.AreEqual(Economy.Android, Session.Economy);
+            }
+            finally { NetSession.Economy = savedNet; }
         }
     }
 }

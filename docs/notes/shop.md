@@ -21,7 +21,12 @@ ship trade); the UI is `HangarWindow` (tabs Ship / Shop in `UI/Station`, styles 
   signatures 500 000 / 7500 (Android: only at 107, attr 61), shields / armor / repair bots ~×2.5, blueprint recipes several
   times the ingredients (Khador Drive 200 / 10 Pyresium), starter weapons / scanner / drill cheaper, ships ×0.5-0.8; a few
   stats (mining lasers' attrs 32 / 33, PE Proton 17 / 49-51), tech levels and Night Owl's 3 / 2 secondary slots.
-  Multiplayer sessions always use Android (the shared stock). The save slots show difficulty and economy.
+  Multiplayer sessions use Android (the shared stock), but a co-op campaign plays the host's economy (2026-11-05, a
+  Discord player's question: `NetSession.Economy`, the hosted save's or the new game's pick; NetState's spawn data
+  carries it to every guest before its tables load, see docs/notes/multiplayer-coop.md "Economy"). Free roam, persistent
+  worlds and dedicated servers stay Android: their balance (the Betty + 10 000 start, `Database.CronusSessionPrice`,
+  faction VAT and tolls, rewards) is tuned on the Android prices, a persistent world's profiles all grew under them, and
+  a server has no setting for it. The save slots show difficulty and economy.
 - **Prices** are deterministic per station: min + distance factor * (max - min) +- 2 %. The original draws the +- 2 %
   from `java.util.Random(station)` reseeded per list (cargo, mounted, stock), so an item's price depended on its list
   place and a unit bought from the stock could sell for more from the hold (a multiplayer report: Garuda at Thynome
@@ -92,6 +97,14 @@ ship trade); the UI is `HangarWindow` (tabs Ship / Shop in `UI/Station`, styles 
   header; a a passenger cabin can't be demounted while the other cabins couldn't seat the passengers aboard (323,
   `HangarWindow::selectItem` 0x178e20); a double click / double tap mounts or demounts (the Mount / Demount button's
   action; a controller's confirm button does the same).
+- **Row actions** (a player's feedback 2026-11-03: the Mount / Demount buttons sat "way off to the right of the slots"):
+  the original turns a tapped slot into its own little list (`HangarList::fillBuyList` 0x14348c: 277 Selected, the row,
+  278 Actions with 279 Sell this item and 282 Demount as style-7 button rows drawn at the rows' place by
+  `HangarWindow::render`, then 284 Available in cargo). The remake keeps its list and puts the selected row's actions
+  (Mount / Demount and MOVE, a blueprint's Edit, the VIP Card's Buy) in a row right under it (`HangarWindow.rowActions`,
+  `PlaceRowActions` after every `ShowDetails`; `.row-actions`, `.detail-action--row`; the Original style's `og_action`
+  bars at the list's width); they sat under the item's description in the details panel until 2026-11-05. A ship's
+  Buy / Use / Sell stay under its turning view.
 - **Slot positions** (players' feedback 2026-11: the gear "snapped" to the next free slot, the original's didn't):
   `Ship+0x6c` is one place per slot, null when empty. `Ship::removeEquipment` 0x1a3e4c empties the slot and leaves
   the others where they are; `Ship::addEquipment` 0x1a4088 fills the type's first empty one; `Level::createPlayer` puts
@@ -182,3 +195,6 @@ ship trade); the UI is `HangarWindow` (tabs Ship / Shop in `UI/Station`, styles 
   supersampled one cost frame rate), the ship-only view keeps the desktop's 1300 x 800 box, and the hangar list's
   scrollbar has a 56 px touch area around the slim track (`.list-bar-track`), its handle at least 60 px.
 - **Weapon mod factors** (attrs 39 / 40) read "-10 %" for a negative one (#105: "+-10 %", `ItemInfo` Signed).
+- **Loading time** (a player's report 2026-11-03): the millisecond rows that used the original's 149 "Loading speed"
+  (attr 11 a gun's reload; 26 / 36 / 37 / 43 a booster's, cloak's or time extender's recharge; 19 without a capacity) read
+  `statLoadingTime` "Loading time" (`ItemInfo.LoadingTime`); most languages' 149 says speed too.

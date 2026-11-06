@@ -103,6 +103,8 @@ namespace GoF2Remake.World
         /// no lock. Freighters are PlayerFixedObjects like the fixed objects, whose sleepers stay visible.</summary>
         public bool Hidden => forcedHidden || (Asleep && !IsFixed && !IsFreighter && Target.hostileToPlayer && Session.CampaignMission > 1);
         bool forcedHidden;
+        /// <summary>A level script hid it (SetVisible(false)).</summary>
+        public bool HiddenByScript => forcedHidden;
 
         /// <summary>KIPlayer::setVisible (cutscenes): hidden ships have no model, marker or lock.</summary>
         public void SetVisible(bool visible)
@@ -299,6 +301,35 @@ namespace GoF2Remake.World
         /// battle, coasting after one) the carrier and the Vossk battleship are ships to mark, lock and scan; before, the
         /// docking type kept them off the radar for good (a player's report 2026-10-16).</summary>
         public bool OffersDocking => DockingType > 0 && (DockingType != ObjectDocking.Resupply || CapitalShips.DeckOpen(this));
+        /// <summary>Modified: a docking target that is a ship on the radar too (the Supernova freighters, 91 / 92 / 94): marked,
+        /// locked and plated as an ordinary NPC, "&lt;race&gt; NN%" (a player's comparison with the original); its name
+        /// (PlayerFixedObject::setName) is DockingName, the docking target's alone.</summary>
+        public bool ShipMarker { get; set; }
+        /// <summary>Modified: the docking target's name when it differs from the ship plate's (ShipMarker); null = displayName.</summary>
+        public string DockingName { get; set; }
+        /// <summary>Modified: a story station or platform one docks at (no pad): NPCs leave it alone (Target.npcIgnored).</summary>
+        static bool DockingStation(SpawnSpec spec)
+        {
+            var f = spec.fixedObject;
+            return !string.IsNullOrEmpty(f) && (f.Contains("station") || f.Contains("platform"))
+                && spec.dockingType > 0 && spec.dockingType != ObjectDocking.StationPad;
+        }
+
+        /// <summary>A docking object shown as a radar ship: a fixed ship (freighter, carrier, battleship), a station or platform
+        /// spawned with a docking type (Modified: the story's docking stations too, a player's request; not the pirate
+        /// outposts, which have none, nor a station's pads), or a ship spawned with a docking type; never a container or a
+        /// junk field.</summary>
+        static bool DockingShip(SpawnSpec spec)
+        {
+            var f = spec.fixedObject;
+            if (string.IsNullOrEmpty(f)) return spec.dockingType > 0;
+            if (f.Contains("container") || f.Contains("junk")) return false;
+            if (f.Contains("station") || f.Contains("platform")) return spec.dockingType > 0 && spec.dockingType != ObjectDocking.StationPad;
+            return true;
+        }
+
+        /// <summary>Kept off the radar's ship markers and locks: a docking target that isn't one (ShipMarker).</summary>
+        public bool DockingOnly => OffersDocking && !ShipMarker;
         public int SpacePointSet => Spec.spacePoints;
         /// <summary>Level::getDockingTarget's index (the hacking game's dock index).</summary>
         public int DockIndex { get; set; } = -1;
@@ -426,6 +457,12 @@ namespace GoF2Remake.World
             SetupRole(spec);   // remake mods: its traffic role (NpcShipRoles)
             SetupDogfight(spec, database);   // remake option: GoF3's way of fighting (NpcShipDogfight)
             Target.displayName = !string.IsNullOrEmpty(spec.name) ? spec.name : spec.nameText >= 0 ? Localization.Get(spec.nameText) : null;
+            // Modified: a ship or story station one docks at (DockingShip) stays an ordinary ship on the radar, plated
+            // "<race> NN%", its name the docking target's alone (a player's
+            // comparison with the original: the Supernova freighters).
+            ShipMarker = DockingShip(spec);
+            Target.npcIgnored = DockingStation(spec);
+            if (ShipMarker && !Target.plateNameOnly) { DockingName = Target.displayName; Target.displayName = null; }
             if (spec.speed > 0f) speed = baseSpeed = spec.speed;
             alwaysEnemy = spec.alwaysEnemy;
             alwaysFriend = spec.alwaysFriend;
@@ -585,7 +622,7 @@ namespace GoF2Remake.World
         }
 
         /// <summary>A turret object's homing target: a turret item firing missiles homes on what it aims at.</summary>
-        Target TurretHoming => turretPicking != null && turretPicking.Current is Target t && t.Alive && !t.cloaked ? t : null;
+        Target TurretHoming => turretPicking != null && turretPicking.Current is Target t && t.Alive && !t.cloaked && !t.untargetable ? t : null;   // Modified: untargetable
 
         /// <summary>Remake debug (PlayerHull): one of the turrets on the player's own hull.</summary>
         public bool PlayerOwned { get; private set; }
@@ -729,7 +766,7 @@ namespace GoF2Remake.World
         float gunBase = 3f, gunSpeed = NpcTables.GunSpeed;
 
         /// <summary>RocketGun::seekEnemy for an NPC: its current target (PlayerFighter+0x34), while it attacks.</summary>
-        Target HomingTarget => attacking && target != null && target.Alive && !target.cloaked ? target : null;
+        Target HomingTarget => attacking && target != null && target.Alive && !target.cloaked && !target.untargetable ? target : null;   // Modified: untargetable
 
         /// <summary>The target SetOnlyEnemy gave (Player::setEnemy), null when none.</summary>
         public Target ScriptEnemy { get; private set; }

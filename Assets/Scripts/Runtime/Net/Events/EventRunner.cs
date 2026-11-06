@@ -552,7 +552,7 @@ namespace GoF2Remake.Events
                         while (i < s.Length && (char.IsLetterOrDigit(s[i]) || s[i] == '_')) i++;
                         string name = s.Substring(start, i - start).ToLowerInvariant();
                         if ((name == "cargo" || name == "has" || name == "visited" || name == "quest" || name == "option" || name == "won" || name == "standing"
-                             || name == "medals" || name == "bought") && Peek('('))
+                             || name == "medals" || name == "bought" || name == "produced" || name == "unlocked") && Peek('('))
                         {
                             // An item / station / quest by number or name: the text up to its ")" ({expression} parts filled in).
                             Sym("(");
@@ -680,8 +680,10 @@ namespace GoF2Remake.Events
                     if (name == "medals")
                     {
                         string which = arg.ToLowerInvariant();
-                        if (which == "allgold") return Achievements.GotAllGoldMedals ? 1 : 0;
-                        if (which == "allsupernova") return Achievements.GotAllSupernovaMedals ? 1 : 0;
+                        // A game without medals (Session.NoMedals): the gates the story opens instead (the main story won,
+                        // the Supernova story finished), so content behind them stays reachable.
+                        if (which == "allgold") return Achievements.VoidXUnlocked ? 1 : 0;
+                        if (which == "allsupernova") return Achievements.SupernovaUnlocked ? 1 : 0;
                         int grade = which switch
                         {
                             "gold" => 1, "silver" => 2, "bronze" => 3, "any" => 0,
@@ -706,6 +708,16 @@ namespace GoF2Remake.Events
                     }
                     int item = NetAdmin.FindItem(arg, out string error);
                     if (item < 0) throw new Exception(error ?? arg);
+                    // Modified: produced(<item>): how often the player has built that blueprint in this game
+                    // (BlueprintState.timesProduced; 0 for one never started).
+                    // Modified: unlocked(<item>): 1 once the player knows that item's blueprint (Blueprints.IsUnlocked: bought,
+                    // found or the story's, e.g. the Khador Drive's at step 34).
+                    if (name == "unlocked") return Blueprints.IsUnlocked(item) ? 1 : 0;
+                    if (name == "produced")
+                    {
+                        var bp = Session.Blueprints.Find(b => b.item == item);
+                        return bp != null ? bp.timesProduced : 0;
+                    }
                     int n = 0;
                     foreach (var c in Session.Cargo) if (c.item == item) n += c.amount;
                     if (name == "has") foreach (var e in Session.Equipment) if (e.item == item) n += Math.Max(1, e.amount);

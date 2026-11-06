@@ -615,6 +615,7 @@ namespace GoF2Remake.UI
                 FocusFirst(mainButtons);
             }).ExecuteLater(200);
             root.schedule.Execute(() => mainButtons.RemoveFromClassList("main-buttons--revealing")).ExecuteLater(1200);
+            ScheduleWelcome();   // remake: the first start's welcome screen (MainMenuWelcome)
         }
 
         // ---- panels ----------------------------------------------------------------------------
@@ -694,6 +695,10 @@ namespace GoF2Remake.UI
         /// <summary>Remake: the next new game is hardcore (permadeath, Session.Hardcore): off whenever a difficulty is picked.</summary>
         bool hardcoreNext;
 
+        /// <summary>Remake (a player's request 2026-11-04): the next new game has no medals (Session.NoMedals): off whenever a
+        /// difficulty is picked.</summary>
+        bool noMedalsNext;
+
         // Remake (GitHub #4, NewGamePlus): with a finished game in the save slots, the campaign panel offers New Game+.
         bool newGamePlus;
         SaveData ngPlusSave;
@@ -768,8 +773,8 @@ namespace GoF2Remake.UI
         string menuNumbersKey;
 
         /// <summary>Interface style Original: the title menu's entries carry the original's dim number in front ("1." at the
-        /// left end of the bar), counted over the shown entries; Exit has none (it sits in the corner). The labels are always
-        /// there and empty in the Remake style; checked twice a second so a style switch in Options shows at once.</summary>
+        /// left end of the bar), counted over the shown entries; Exit has none (it sits in the corner). Modified: the labels only
+        /// in the Original style (none in the Remake's); checked twice a second so a style switch in Options shows at once.</summary>
         void RefreshMenuNumbers()
         {
             if (mainButtons == null) return;
@@ -783,6 +788,14 @@ namespace GoF2Remake.UI
                 if (shown) n++;
                 key.Append(shown ? '1' : '0');
                 var num = b.Q<Label>(className: "mm-og-num");
+                // Modified: only in the Original style. A child in a Button switches off the measuring of its own text, so
+                // the row's height came from its padding alone (the text standing out of it): the Remake style's rows,
+                // which have no minimum height (the Original's bars and a phone's rows do), lay on top of each other.
+                if (!on)
+                {
+                    num?.RemoveFromHierarchy();
+                    continue;
+                }
                 if (num == null)
                 {
                     num = new Label { pickingMode = PickingMode.Ignore };
@@ -855,6 +868,8 @@ namespace GoF2Remake.UI
         /// <summary>What had the focus when the dialog opened: closing gives it back (CloseDialog). The panel's first item
         /// got it instead, and in the Mod Browser focusing the top row selects it, so No on Delete moved the selection.</summary>
         VisualElement dialogReturn;
+        /// <summary>The dialog's Yes / No buttons read something else (the updater's): CloseDialog puts Yes / No back.</summary>
+        bool dialogRelabelled;
 
         void ShowDialog(string title, string text, Action onYes)
         {
@@ -901,13 +916,15 @@ namespace GoF2Remake.UI
                 InputGlyph.SetText(root.Q<Button>("dialogYes"), Localization.Get(134).UiCaps());
             }
             dialogAlt = null;
-            if (no.style.display == DisplayStyle.None || dialogField != null && dialogField.style.display == DisplayStyle.Flex)
+            if (no.style.display == DisplayStyle.None || dialogRelabelled || dialogField != null && dialogField.style.display == DisplayStyle.Flex)
             {
+                dialogRelabelled = false;
                 no.style.display = StyleKeyword.Null;
                 InputGlyph.SetText(no, Localization.Get(135).UiCaps());
                 InputGlyph.SetText(root.Q<Button>("dialogYes"), Localization.Get(134).UiCaps());
             }
             if (dialogField != null) dialogField.style.display = StyleKeyword.Null;
+            root.Q("dialogProgress")?.RemoveFromClassList("dialog-progress--shown");   // the updater's (MainMenuUpdate)
             dialog.RemoveFromClassList("dialog-backdrop--shown");
             dialogYes = dialogNo = null;
             dialogCheck = null;

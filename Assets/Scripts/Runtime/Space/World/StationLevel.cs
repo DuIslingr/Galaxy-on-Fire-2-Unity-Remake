@@ -144,6 +144,10 @@ namespace GoF2Remake.World
         // the Nivelian hangar's a to c the same way.
         TerranHangarBots terranBots;
         readonly List<List<PartAnimation>> terranBotParts = new List<List<PartAnimation>>();
+        // Remake (2026-11-05): the Hangar robots / Bar robots options as the rooms show them (ApplyRobotOptions), and the
+        // bar's robots (the Terran bar's bot and its glow layer, the Vossk bar's three arm animations).
+        bool hangarRobotsShown = true, barRobotsShown = true;
+        readonly List<PartAnimation> barBotParts = new List<PartAnimation>();
         CycleSound mainViewAtmo, loungeAtmo, hangarAtmo;
         bool hangarWindowOpen;
 
@@ -282,8 +286,6 @@ namespace GoF2Remake.World
             {
                 ApplyAntialiasing();
                 SetupDepthOfField();
-                Settings.Changed -= ApplyAntialiasing;
-                Settings.Changed += ApplyAntialiasing;
 
                 OrbitBuilder.SetupSky(Layout);   // the system's sky shows through the openings of both rooms
                 // Modified: no swell or streak in the station: the hangar camera facing the sun through an opening blew it up
@@ -355,7 +357,6 @@ namespace GoF2Remake.World
         {
             if (orbitDocked && hangarRoot != null) Destroy(hangarRoot.gameObject);   // it rode on the station in the orbit's scene
             Modding.ModShips.ModelsChanged -= OnModShipModels;
-            Settings.Changed -= ApplyAntialiasing;
             if (dofProfile != null) Destroy(dofProfile);
             var copies = new HashSet<Material>();
             foreach (var (_, _, matte) in roomHighlights) foreach (var m in matte) copies.Add(m);
@@ -466,6 +467,7 @@ namespace GoF2Remake.World
                 midorianTimer = 0f;
                 if (Random.value < 0.3f) midorianProp.Restart();
             }
+            ApplyRobotOptions();
             if (View == StationView.Lounge && vosskBots != null) UpdateVosskBots(dtMs);
             if (View == StationView.Hangar && terranBots != null) UpdateTerranBots(dtMs);
 

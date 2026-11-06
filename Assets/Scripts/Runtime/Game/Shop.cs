@@ -92,6 +92,20 @@ namespace GoF2Remake.Data
         /// <summary>The mounted cruise drive, null without one.</summary>
         public static ItemData MountedCruiseDrive(Database db) => FirstMounted(db, Flight.CruiseDrive.Kind);
 
+        /// <summary>Remake: the base game's Khador Slipstream (Modding "Base content").</summary>
+        public const string SlipstreamKey = "gof2:khador_slipstream";
+
+        /// <summary>Remake: the item is the base game's Khador Slipstream and Options > Gameplay "Khador Slipstream" is off
+        /// (Settings.KhadorSlipstream): it stays in the hold and on the ship, but does nothing.</summary>
+        public static bool SlipstreamOff(int item) => item >= 0 && !Settings.KhadorSlipstream && item == Modding.ModContent.ItemIndexOf(SlipstreamKey);
+
+        /// <summary>The mounted cruise drive when it may fly (not a Khador Slipstream switched off), null otherwise.</summary>
+        public static ItemData WorkingCruiseDrive(Database db)
+        {
+            var it = MountedCruiseDrive(db);
+            return it != null && !SlipstreamOff(it.index) ? it : null;
+        }
+
         /// <summary>The original's top tech level, of its items and its stations alike (stations 0-10, items 1-10).</summary>
         public const int TopTech = 10;
         /// <summary>Remake mods: the highest tech level a mod item may have (ModContent warns and clamps).</summary>
@@ -520,9 +534,9 @@ namespace GoF2Remake.Data
                     if (Session.CompletedWorld || (entries[k] < Session.Wanted.Count && Session.Wanted[entries[k]].terminated)) ships.Add(45 + k);
                 return ships;
             }
-            // Thynome: the VoidX with every gold medal. getShipBuyList gives it alone; the remake (a modder's request,
+            // Thynome: the VoidX with every gold medal (a game without medals: the main story won). getShipBuyList gives it alone; the remake (a modder's request,
             // 2026-11-02) puts it first in the dealer's usual roll, so Thynome's other ships and the mods' dealer ships stay.
-            bool voidX = station == 10 && (Achievements.GotAllGoldMedals || Session.CompletedWorld);
+            bool voidX = station == 10 && (Achievements.VoidXUnlocked || Session.CompletedWorld);
             int race = RaceOfSystem(db, system);
             // Android 2.0.16: rnd 6 ships (+1 at 41), 1 in 6 an empty dealer, a duplicate roll dropped; iOS 1.1.19 (the Default
             // economy): rnd 4 + 2 (+1 at 41), never empty, a duplicate rolled again.
@@ -551,10 +565,11 @@ namespace GoF2Remake.Data
             // Valkyrie won: the Vossk dealers may carry the S'Kanarr and the K'Suukk.
             if (race == 1 && Story.Dlc1Won) { if (Random.Range(0, 2) == 0) ships.Add(39); if (Random.Range(0, 2) == 0) ships.Add(41); }
             if (race == 1 && Random.Range(0, 4) == 0) ships.Add(54);
-            // Katashán (120) after the Supernova story: the Specter (Extreme or every medal) and the Scimitar.
+            // Katashán (120) after the Supernova story: the Specter (Extreme or every medal; a game without medals: the
+            // Supernova story finished) and the Scimitar.
             if (station == 120 && mission > 158)
             {
-                if (Session.IsExtreme || Achievements.GotAllSupernovaMedals || Session.CompletedWorld) ships.Add(44);
+                if (Session.IsExtreme || Achievements.SupernovaUnlocked || Session.CompletedWorld) ships.Add(44);
                 ships.Add(49);
             }
             if (race == 0 && Random.Range(0, 8) == 0) ships.Add(51);

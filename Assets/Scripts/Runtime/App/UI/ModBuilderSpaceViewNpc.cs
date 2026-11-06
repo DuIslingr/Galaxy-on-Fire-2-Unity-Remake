@@ -8,7 +8,8 @@
 // (World.ModBuilderGizmo): a ball drags over the hull or along its arrows; with "Click the hull to add" on, a click on the
 // hull adds one there. Positions are game units in the ship's frame like ships.json's mounts (at its own size: "scale"
 // grows the hull, its hardpoints and pads together). "Compare with…" parks another hull (a game NPC hull, another of the
-// project's NPC ships, any ship) beside it, at its own size, to see the two side by side.
+// project's NPC ships, any ship) beside it, at its own size, to see the two side by side. Test fly takes off with the
+// entry's type in the orbit, flying as the game spawns it (ModBuilder.StartNpcTestFlight, World.ModBuilderRange).
 
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,8 @@ namespace GoF2Remake.UI
         ProjectNpcShip currentNpc;
         GameObject npcPreview;
         string npcPreviewKey;
+        /// <summary>The template the preview was copied from (StaleHull).</summary>
+        GameObject npcPrefab;
         float npcRetryMs;
         ModBuilderGizmo npcGizmo;
         readonly List<WeaponMount> npcMounts = new List<WeaponMount>();
@@ -43,6 +46,7 @@ namespace GoF2Remake.UI
         Func<float> cmpScale;
         GameObject cmpPreview;
         string cmpKey;
+        GameObject cmpPrefab;
         float cmpRetryMs;
 
         static string[] NpcKindNames => new[] { T("mbNpcCapital", "Capital ship"), T("mbNpcFreighter", "Freighter"), T("mbNpcBoss", "Boss") };
@@ -95,6 +99,12 @@ namespace GoF2Remake.UI
             npcList.Clear();
             if (Project == null) return;
             if (currentNpc != null && !Project.NpcShips.Contains(currentNpc)) currentNpc = null;
+            // Back from its test flight: the entry it flew with.
+            if (ModBuilder.ReturnNpcShip != null)
+            {
+                currentNpc = Project.NpcShips.FirstOrDefault(n => NpcKey(n) == ModBuilder.ReturnNpcShip) ?? currentNpc;
+                ModBuilder.ReturnNpcShip = null;
+            }
             currentNpc ??= Project.NpcShips.FirstOrDefault();
             foreach (var npc in Project.NpcShips)
             {
@@ -281,6 +291,8 @@ namespace GoF2Remake.UI
             var s = currentNpc;
             if (s == null) { Note(npcPage, T("mbPickNpcShip", "Add an NPC ship on the left to start.")); return; }
             var t = NpcType(s);
+            Act(npcPage, T("mbTestFly", "Test fly"), TestFlyNpc);
+            Note(npcPage, T("mbTestFlyNpcNote", "Takes off from the builder's station in your test ship and brings this NPC ship in as the game spawns it (its escorts, turrets and orders), again 6 s after it is gone. A capital ship with docking pads takes you aboard whatever its rules (100,000 credits for its shop). Dock at the station, or Esc > Back to Mod Builder, to come back here."));
             JsonButton(npcPage, s.Json, () => { NpcEdited(); RebuildNpcList(); },
                        T("mbJsonNpcNote", "Also in npcships.json: every hardpoint field of ships.json's \"subsystems\" (shields, weakspot, stage, hangar ships)."));
             bool isNew = !s.IsOverride;
@@ -444,7 +456,7 @@ namespace GoF2Remake.UI
             float k = Mathf.Clamp(cmpScale?.Invoke() ?? 1f, ModNpcShips.MinScale, ModNpcShips.MaxScale);
             var entry = spec != null ? Traffic.AssemblyOf(Database.Shared, spec) : null;
             string key = (entry?.name ?? "?") + "|" + k;
-            if (key != cmpKey || cmpPreview == null)
+            if (key != cmpKey || cmpPreview == null || StaleHull(cmpPrefab, entry))
             {
                 Destroy(cmpPreview);
                 cmpPreview = null;
@@ -452,6 +464,7 @@ namespace GoF2Remake.UI
                 var prefab = entry != null ? AssembledObject.LoadPrefab(entry) : null;
                 if (prefab == null) { cmpRetryMs = 500f; return; }   // a mod hull still building: again soon
                 cmpKey = key;
+                cmpPrefab = prefab;
                 cmpPreview = HullModel("Compare preview", prefab, spec.fixedObject != null, k);
             }
             var hull = HullBounds(npcPreview);
@@ -870,26 +883,36 @@ namespace GoF2Remake.UI
             var entry = Traffic.AssemblyOf(db, spec);
             float scale = Mathf.Clamp(s.Scale, ModNpcShips.MinScale, ModNpcShips.MaxScale);
             string key = (entry?.name ?? "?") + "|" + s.Ref + "|" + scale;
-            if (key != npcPreviewKey || npcPreview == null)
+            if (key != npcPreviewKey || npcPreview == null || StaleHull(npcPrefab, entry))
             {
                 Destroy(npcPreview);
                 npcPreview = null;
                 var prefab = AssembledObject.LoadPrefab(entry);
                 if (prefab == null) { npcPreviewKey = null; npcRetryMs = 500f; npcGizmo.Bind(null, null); return; }   // a mod hull still building: again soon
+                // Framed when the look changed; the same hull copied again from its new template (StaleHull) keeps the camera.
+                if (key != npcPreviewKey) frame = true;
                 npcPreviewKey = key;
+                npcPrefab = prefab;
                 // At its size: the pivot scaled, so the gizmo's points (in the hull's own frame) grow with it as in the game.
                 npcPreview = HullModel("NPC ship preview", prefab, spec.fixedObject != null, scale);
                 // Beside the station, clear of it.
                 var hull = HullBounds(npcPreview);
                 var st = level.Station != null ? HullBounds(level.Station) : new Bounds(Vector3.zero, Vector3.one * 200f);
                 npcPreview.transform.position = st.center + Vector3.left * (st.extents.magnitude + hull.extents.magnitude + 200f) - (hull.center - npcPreview.transform.position);
-                frame = true;
             }
             FillNpcMounts();
             npcGizmo.Bind(npcPreview.transform, npcMounts);
             ShowCompare();
             if (frame) FrameNpc();
         }
+
+        /// <summary>The template a preview was copied from has been replaced: every edit has the game read the project again,
+        /// and that destroys the mods' ship templates with their meshes and materials (ModShips.Release), so a copy made
+        /// before showed nothing but the gizmo's balls (a tester's report, 2026-11-05: a mod hull's turrets with no hull).
+        /// Only once the mods' models are built again (ModShips.Ready, OnReloaded): meanwhile LoadPrefab hands back a
+        /// stand-in.</summary>
+        static bool StaleHull(GameObject prefab, AssemblyData entry) =>
+            entry != null && ModShips.Ready && AssembledObject.LoadPrefab(entry) != prefab;
 
         static Bounds HullBounds(GameObject go)
         {
@@ -956,6 +979,21 @@ namespace GoF2Remake.UI
             npcDragging = false;
             npcGizmo?.EndDrag();
             NpcEdited();
+        }
+
+        /// <summary>Test fly (ModBuilder.StartNpcTestFlight): the project read again, then the take-off with this entry's type
+        /// in the orbit (World.ModBuilderRange).</summary>
+        void TestFlyNpc()
+        {
+            var s = currentNpc;
+            if (s == null) return;
+            SaveNow();
+            ModBuilder.Reload();   // the game flies what the files say now
+            if (ModManager.BuilderProject == null || ModManager.BuilderProject.Broken) { ShowProblems(); return; }
+            string key = NpcKey(s);
+            if (ModNpcShips.Get(key) == null) { Status(T("mbNpcNotRead", "The game hasn't read it yet (or the messages above say what is wrong)."), true); return; }
+            Status(T("mbPreparing", "Preparing the test flight…"), false);
+            ModBuilder.StartNpcTestFlight(key);
         }
 
         void DisposeNpc()

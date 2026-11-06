@@ -106,7 +106,7 @@ namespace GoF2Remake.Visuals
             return m;
         }
 
-        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv, uvY; public bool signedExtra; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public int fadeProperty = ColorId; public Color baseColor; public int uvMode; public Vector4 baseST; public bool initialised; public Material own, from; }
+        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv, uvY; public bool signedExtra, offsetExtra; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public int fadeProperty = ColorId; public Color baseColor; public int uvMode; public Vector4 baseST; public bool initialised; public Material own, from; }
         readonly List<Track> tracks = new List<Track>();
         float timeMs, lengthMs, extraMs;
 
@@ -131,7 +131,7 @@ namespace GoF2Remake.Visuals
                 {
                     if (c.keys == null || c.keys.Length == 0 || string.IsNullOrEmpty(c.target) || c.target.Length < 4) continue;
                     foreach (var key in c.keys) if (key.t > 0f) loadPoseMs = Mathf.Min(loadPoseMs, key.t);
-                    if (c.target == "extra") { tk.extra = c.keys; extraMs = Mathf.Max(extraMs, c.keys[c.keys.Length - 1].t); tk.signedExtra = IsSignedExtra(c.keys); continue; }   // not in the length: the transform channels set it
+                    if (c.target == "extra") { tk.extra = c.keys; extraMs = Mathf.Max(extraMs, c.keys[c.keys.Length - 1].t); tk.signedExtra = IsSignedExtra(c.keys); tk.offsetExtra = IsOffsetExtra(c.keys); continue; }   // not in the length: the transform channels set it
                     // The UV scrolls set the length too: the burning stations' fire and smoke have no other keys.
                     if (c.target == "v5_0" || c.target == "v5_1")
                     {
@@ -220,6 +220,30 @@ namespace GoF2Remake.Visuals
             float min = float.MaxValue, max = float.MinValue;
             foreach (var k in keys) { min = Mathf.Min(min, k.v); max = Mathf.Max(max, k.v); }
             return min < 0f && max <= 0f;
+        }
+
+        /// <summary>Remake: an `extra` channel keyed a hundred too high, 199.5 -> 99.5 (only the Kothar / Beidan ice
+        /// asteroid's explosion cloud, v_asteroid_ice_explosion_anim_alpha part 0; Discord report 2026-11-03: the cloud
+        /// stayed at full strength and vanished at once). Transform::InternUpdate 0x7e720's colour (int)(v * 2.55) * 0x1010101
+        /// keeps the low byte, so the original wraps past 255 and the cloud fades out like the other asteroids'. Channels
+        /// that only overshoot 100 by a key (the EMP blast, the Mining Plant's fire) aren't this.</summary>
+        public static bool IsOffsetExtra(AnimationKey[] keys)
+        {
+            if (keys == null || keys.Length == 0) return false;
+            float min = float.MaxValue, max = float.MinValue;
+            foreach (var k in keys) { min = Mathf.Min(min, k.v); max = Mathf.Max(max, k.v); }
+            return min >= 99f && max > 150f && max <= 200f;
+        }
+
+        /// <summary>The opacity (0..1) of an `extra` value: 0..100 clamped; a signed channel (IsSignedExtra) as the iOS
+        /// build's colour byte wraps; an offset one (IsOffsetExtra) as every build's wraps past 255, the remake leaving out
+        /// the last hundredth under 100.4 (back to full strength for the animation's last ~90 ms, a flash of the whole cloud
+        /// before it is gone).</summary>
+        public static float ExtraOpacity(float e, bool signedExtra, bool offsetExtra)
+        {
+            if (signedExtra && e < 0f) return Mathf.Clamp01((256f + e * 2.55f) / 255f);
+            if (offsetExtra) { int n = (int)(e * 2.55f); return n >= 256 ? Mathf.Clamp01((n & 0xff) / 255f) : 0f; }
+            return Mathf.Clamp01(e / 100f);
         }
 
         /// <summary>Remake: some part's `extra` channel is keyed in -100..0 (IsSignedExtra): a light the original's
@@ -364,6 +388,31 @@ namespace GoF2Remake.Visuals
             return Mathf.Max(longest, Modding.ModFxPart.RestartAll(modParts));   // a mod weapon's sprites / models
         }
 
+        static bool Finite(float f) => !float.IsNaN(f) && !float.IsInfinity(f) && Mathf.Abs(f) < 1e18f;
+
+        /// <summary>Modified: Eval for a UV scroll channel, where a sawtooth's reset is one original frame long (the wreck's
+        /// glow, sn_cargo_001_midorian_wrecked_glow_anim_add part0: 12.5 -> 0 over ~830 ms, then back to 12.5 in 33 ms). At the
+        /// original's 30 fps that reset is a jump; interpolated at the remake's frame rate it showed as a quick scroll back, the
+        /// loop visible (a player's report). A segment of at most a frame turning against the next one is taken as a jump.</summary>
+        static float EvalScroll(AnimationKey[] k, float t, float fallback)
+        {
+            if (k == null || k.Length == 0) return fallback;
+            if (t <= k[0].t) return k[0].v;
+            for (int i = 1; i < k.Length; i++)
+                if (t <= k[i].t)
+                {
+                    float span = k[i].t - k[i - 1].t;
+                    if (span <= 0f) return k[i].v;
+                    if (span <= 40f && i + 1 < k.Length)   // a key frame of the files' 30 fps (33.3 ms)
+                    {
+                        float d = k[i].v - k[i - 1].v, next = k[i + 1].v - k[i].v;
+                        if (d * next < 0f) return t - k[i - 1].t < span * 0.5f ? k[i - 1].v : k[i].v;   // the reset: a jump
+                    }
+                    return Mathf.Lerp(k[i - 1].v, k[i].v, (t - k[i - 1].t) / span);
+                }
+            return k[k.Length - 1].v;
+        }
+
         static float Eval(AnimationKey[] k, float t, float fallback)
         {
             if (k == null || k.Length == 0) return fallback;
@@ -407,6 +456,20 @@ namespace GoF2Remake.Visuals
             if (len < 1e-5f) return q0;   // a key exactly a full turn away (q1 = -q0): the same orientation
             q /= len;
             return new Quaternion(q.x, q.y, q.z, q.w);
+        }
+
+        int loopsWhole = -1;   // Modified: RotationLoopsWhole's answer, worked out once
+        /// <summary>Modified: every rotation track ends where the loop starts (within 1 deg: a whole number of turns), so the
+        /// loop wraps seamlessly and pingPongRotation has nothing to hide.</summary>
+        bool RotationLoopsWhole()
+        {
+            if (loopsWhole >= 0) return loopsWhole == 1;
+            loopsWhole = 1;
+            float start = Mathf.Clamp(loopStartMs, 0f, lengthMs);
+            foreach (var tk in tracks)
+                if ((tk.rot[0] != null || tk.rot[1] != null || tk.rot[2] != null) && tk.rotTimes != null && tk.rotTimes.Length > 1
+                    && Quaternion.Angle(RotationAt(tk, start), RotationAt(tk, lengthMs)) > 1f) { loopsWhole = 0; break; }
+            return loopsWhole == 1;
         }
 
         /// <summary>ModelOrientationPostprocessor turned the vertices (-x, y, -z): offsets in the part's frame turn with them.</summary>
@@ -460,7 +523,9 @@ namespace GoF2Remake.Visuals
                 }
                 if (tk.rot[0] != null || tk.rot[1] != null || tk.rot[2] != null)
                 {
-                    float rt = pingPongRotation && loop && (Loops & 1) == 1
+                    // Modified: not a rotation that ends where its loop starts (a full turn, the remodelled Kothar hangar's
+                    // v_hangar_deep_science_anim_add rings): swung back it turned the other way on every other loop.
+                    float rt = pingPongRotation && loop && (Loops & 1) == 1 && !RotationLoopsWhole()
                         ? Mathf.Clamp(loopStartMs, 0f, lengthMs - 1f) + lengthMs - timeMs : timeMs;
                     tk.tr.localRotation = tk.baseRot * RotationAt(tk, rt);
                 }
@@ -470,6 +535,9 @@ namespace GoF2Remake.Visuals
                     // explosion's debris streak (explosion_debris_anim_add) stretches sclZ 45x along its length (engine Z) while it
                     // flies about as far; swapped, the 45x went across its width and every streak became a 2.9 km line.
                     var v = new Vector3(Eval(tk.scl[0], timeMs, 1), Eval(tk.scl[1], timeMs, 1), Eval(tk.scl[2], timeMs, 1));
+                    // Modified: a part keyed with NaN / infinite scale (sn_cargo_001_midorian_wrecked part11) is shown at none:
+                    // Unity refused the assignment with an error every frame (thousands in the Console at 91).
+                    if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z)) v = Vector3.zero;
                     tk.tr.localScale = Vector3.Scale(tk.baseScale, v);
                 }
                 // The UV scroll channels (v5_0 u, v5_1 v; 100 = one texture) run on every mesh, as the engine animates them
@@ -488,8 +556,9 @@ namespace GoF2Remake.Visuals
                     {
                         float e = Eval(tk.extra, timeMs, 100f);
                         // A signed channel (IsSignedExtra) as the iOS build shows it: the colour byte wraps, so -100 is
-                        // almost dark, it brightens toward 0 and is dark again at 0 exactly.
-                        float f = tk.signedExtra && e < 0f ? Mathf.Clamp01((256f + e * 2.55f) / 255f) : Mathf.Clamp01(e / 100f);
+                        // almost dark, it brightens toward 0 and is dark again at 0 exactly; an offset one (IsOffsetExtra)
+                        // wraps past 100.
+                        float f = ExtraOpacity(e, tk.signedExtra, tk.offsetExtra);
                         if (tk.fadeMode == 0) { if (own != null) own.SetFloat(FadeId, f); else tk.block.SetFloat(FadeId, f); }
                         else if (tk.fadeMode > 0)
                         {
@@ -500,7 +569,7 @@ namespace GoF2Remake.Visuals
                     }
                     if (uvAnimated && tk.uvMode != 0)
                     {
-                        float u = tk.uv != null ? Eval(tk.uv, timeMs, 0f) / 100f : 0f, v = tk.uvY != null ? Eval(tk.uvY, timeMs, 0f) / 100f : 0f;
+                        float u = tk.uv != null ? EvalScroll(tk.uv, timeMs, 0f) / 100f : 0f, v = tk.uvY != null ? EvalScroll(tk.uvY, timeMs, 0f) / 100f : 0f;
                         // GoF2/SkyLayer subtracts _UVOffset; the Shader Graphs take _MainTex_ST the same way round.
                         var uvValue = tk.uvMode == 1 ? new Vector4(u, v, 0f, 0f) : new Vector4(tk.baseST.x, tk.baseST.y, tk.baseST.z - u, tk.baseST.w - v);
                         int uvId = tk.uvMode == 1 ? UVOffsetId : MainTexStId;

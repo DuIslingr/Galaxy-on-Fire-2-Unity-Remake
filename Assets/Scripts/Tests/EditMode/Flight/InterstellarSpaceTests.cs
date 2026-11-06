@@ -213,8 +213,10 @@ namespace GoF2Remake.Tests
         public void TheSlipstreamJumpsAsTheKhadorDriveDoes()
         {
             var saved = Session.Equipment;
+            bool wasOn = Settings.KhadorSlipstream;
             try
             {
+                Settings.KhadorSlipstream = true;   // (Options > Gameplay; off in the Original experience)
                 Session.Equipment = new List<ItemStack>();
                 Assert.IsFalse(GalaxyMap.HasSlipstream(db), "nothing mounted");
                 int slipstream = GoF2Remake.Modding.ModContent.ItemIndexOf("gof2:khador_slipstream");
@@ -223,8 +225,10 @@ namespace GoF2Remake.Tests
                 Assert.IsTrue(GalaxyMap.HasSlipstream(db));
                 Assert.IsTrue(GalaxyMap.HasKhadorDrive(db), "the drive it replaces: the Khador jump, the Void's question");
                 Assert.IsTrue(GalaxyMap.HasJumpDrive(db), "the maps in jump mode, the quick menu's Khador entry");
+                Settings.KhadorSlipstream = false;
+                Assert.IsFalse(GalaxyMap.HasKhadorDrive(db), "switched off it does nothing (Shop.SlipstreamOff)");
             }
-            finally { Session.Equipment = saved; }
+            finally { Session.Equipment = saved; Settings.KhadorSlipstream = wasOn; }
         }
 
         [Test]

@@ -72,16 +72,29 @@ namespace GoF2Remake.UI
 
         /// <summary>ModStation::checkHints 0xee500: once each, one per frame: 0x1a all base medals (649), 0x1b all gold (650),
         /// all gold + the Supernova medals while blueprint 232 is locked (651, unlocked, autosave), 0x3a after campaign 0xa1
-        /// with all gold + Supernova medals (or on Extreme) the Specter on sale at Katashun (3233, autosave).</summary>
+        /// with all gold + Supernova medals (or on Extreme) the Specter on sale at Katashun (3233, autosave). Remake: a game
+        /// without medals (Session.NoMedals) gets no 649 and the VoidX / fireworks with the story (Achievements.VoidXUnlocked /
+        /// SupernovaUnlocked), told by texts of its own that don't mention medals.</summary>
         bool CheckMedalHints()
         {
             if (level == null || Session.FreePlay) return false;
             string text = null;
-            if (!Session.Hints.Contains(0x1a) && Achievements.GotAllMedals) { Session.Hints.Add(0x1a); text = Localization.Get(649); }
-            else if (!Session.Hints.Contains(0x1b) && Achievements.GotAllGoldMedals) { Session.Hints.Add(0x1b); text = Localization.Get(650); }
-            else if (!Session.UnlockedBlueprints.Contains(232) && Achievements.GotAllGoldMedals && Achievements.GotAllSupernovaMedals)
-            { Blueprints.Unlock(232); Session.Autosave(); text = Localization.Get(651); }
-            else if (!Session.Hints.Contains(0x3a) && Session.CampaignMission > 0xa1 && (Session.IsExtreme || (Achievements.GotAllGoldMedals && Achievements.GotAllSupernovaMedals)))
+            bool none = Session.NoMedals;
+            if (!none && !Session.Hints.Contains(0x1a) && Achievements.GotAllMedals) { Session.Hints.Add(0x1a); text = Localization.Get(649); }
+            else if (!Session.Hints.Contains(0x1b) && Achievements.VoidXUnlocked)
+            {
+                Session.Hints.Add(0x1b);
+                text = none ? Localization.Extra("noMedalsVoidX", "For your victory over the Void, Deep Science will provide you with a prototype of a restored Void fighter spaceship. You can buy it at Thynome.")
+                            : Localization.Get(650);
+            }
+            else if (!Session.UnlockedBlueprints.Contains(232) && Achievements.SupernovaUnlocked)
+            {
+                Blueprints.Unlock(232);
+                Session.Autosave();
+                text = none ? Localization.Extra("noMedalsFireworks", "For seeing the Supernova crisis through, you received a new blueprint for fireworks.")
+                            : Localization.Get(651);
+            }
+            else if (!Session.Hints.Contains(0x3a) && Session.CampaignMission > 0xa1 && (Session.IsExtreme || Achievements.SupernovaUnlocked))
             { Session.Hints.Add(0x3a); Session.Autosave(); text = Localization.Get(3233); }
             if (text == null) return false;
             ShowDialog(text, null, true);
@@ -219,6 +232,7 @@ namespace GoF2Remake.UI
                 station = level.Station.index,
             };
             if (ctx.inLounge && SpecialLounge(ctx.station)) return true;
+            if (CoopCampaign.AheadOfLeader) return false;   // remake co-op: this game waits for the leader's step
             bool remote = CoopCampaign.RemoteWon;   // remake co-op: another crew member's game won the step
             if (!remote && !Story.IsComplete(level.Database, ctx)) return false;
             Story.Mission.won = true;
@@ -228,14 +242,29 @@ namespace GoF2Remake.UI
             var step = Story.Step;
             var success = step != null ? StoryTable.Shown(step.success) : null;
             if (success != null && success.Count > 0)
+            {
+                int shown = Story.Index, reward = Story.Mission.reward;
+                CoopCampaign.SuccessOpened(shown);
                 storyDialogue.Show(success, skipped =>
                 {
+                    // Remake co-op: the leader's level took the crew past this step meanwhile: its reward, no second advance.
+                    if (!CoopCampaign.SuccessClosed(shown)) { AfterOvertakenSuccess(reward); return; }
                     // DialogueWindow::OnTouchEnd: skipping step 15's conversation starts the alarm too.
                     if (skipped && !Session.FreePlay && Session.CampaignMission == 0xf) StartVoidAlarm();
                     AfterStorySuccess();
                 });
+            }
             else AfterStorySuccess();
             return true;
+        }
+
+        /// <summary>Remake co-op: a success conversation whose step a catch-up already left (CoopCampaign.SuccessClosed).</summary>
+        void AfterOvertakenSuccess(int reward)
+        {
+            Session.Credits += CoopCampaign.Share(reward);
+            if (level.ShownShip != Session.ShipIndex) level.ReplacePlayerShip(Session.ShipIndex);
+            ApplyStoryLocks();
+            Select(launchButton);
         }
 
         /// <summary>ModStation::OnUpdate's lounge searches (campaign_flow.md 3.1 5): at 116 the Pescal Inartu bars other than
@@ -523,7 +552,11 @@ namespace GoF2Remake.UI
         /// window is open; true when something opened.</summary>
         bool RunDockingChecks()
         {
-            if (DialogOpen || SystemMenuOpen || HangarOpen) return false;
+            if (DialogOpen || SystemMenuOpen || HangarOpen)
+            {
+                CoopCampaign.ConversationDelayed();   // remake co-op: a crew's success conversation waits for the window
+                return false;
+            }
             arrivalChecksRun = true;
             if (CheckPirateBase() || CheckDockingFine() || CheckStory() || CheckFreelance() || CheckKaamo() || CheckPendingProducts()) return true;
             if (!storyDialogue.IsOpen && (CheckRescue() || CheckMedals() || CheckMedalHints())) return true;

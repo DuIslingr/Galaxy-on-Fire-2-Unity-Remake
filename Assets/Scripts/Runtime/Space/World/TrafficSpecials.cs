@@ -96,6 +96,7 @@ namespace GoF2Remake.World
             TurnWantedHostile();
             var w = WantedOf(wantedShip);
             if (w == null) return;
+            WantedRadio();
             if (w.index == 0) { WantedLine(3134, -1, w); WantedLine(3135, w.index, w); }
             else if (w.index == 1) { WantedLine(3139, -1, w); WantedLine(3140, w.index, w); }
             else WantedLine(3141 + UnityEngine.Random.Range(0, 5), -1, w);
@@ -116,7 +117,12 @@ namespace GoF2Remake.World
             wantedAttacked = true;
             TurnWantedHostile();
             var w = WantedOf(s);
-            if (w == null) return;
+            // Remake (a player's report 2026-11-03, steps 129 / 130): uncoverWanted doesn't set the flag (Level+0x29c), so in
+            // the original the first hit after a lock greeted the criminal a second time ("Damn it. Someone found me!" twice,
+            // "negotiations Keith T. Maxwell style" twice). The storyline pairs are both first contact: after the lock's, the hit
+            // says nothing. Wanted 2 / 6 still taunt (Keith's uncover line is no repeat of it).
+            if (w == null || (wantedUncovered && WantedBoard.IsStoryline(w.index))) return;
+            WantedRadio();
             if (w.index == 0) { WantedLine(3132, w.index, w); WantedLine(3133, -1, w); }
             else if (w.index == 1) { WantedLine(3136, w.index, w); WantedLine(3137, -1, w); WantedLine(3138, w.index, w); }
             else if ((w.index | 4) == 6) WantedLine(3146 + UnityEngine.Random.Range(0, 5), w.index, w);   // only wanted 2 and 6 taunt
@@ -141,7 +147,15 @@ namespace GoF2Remake.World
             }
             int reward = WantedBoard.OnKilled(db, w.index);
             if (reward > 0) BountyCollected?.Invoke(reward);
+            WantedRadio();
             WantedLine(3151 + UnityEngine.Random.Range(0, 5), -1, w);   // Level::killWanted: "a job well done"
+        }
+        /// <summary>Level::createRadioMessage replaces the level's radio list: a wanted message cuts the lines still waiting or
+        /// showing (the remake queued them after each other, so a lock, a hit and a kill played one long conversation).</summary>
+        void WantedRadio()
+        {
+            chatterQueue.Clear();
+            chatter = null;
         }
         /// <summary>Level::createRadioMessage(0x10 / 0x11 / 0x12): Keith (speaker 0) or the criminal (image 10000 + i: its face).</summary>
         void WantedLine(int text, int wantedSpeaker, WantedData w)
@@ -297,16 +311,15 @@ namespace GoF2Remake.World
             // Radar::draw 0x157c6c: while 143 IntroAtmo plays nothing switches.
             var introAtmo = StoryAssets.Load()?.introAtmo;
             if (introAtmo != null && music.clip == introAtmo && music.isPlaying) { music.volume = fade * Settings.MusicVolume * GoF2Remake.World.SpaceHooks.SceneMusic; return; }
-            int cat = HostileCount <= 0 ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
-            if (cat < 2 && FleetBattleRaging) cat = 2;   // remake (CapitalShips): a fleet battle plays the battle music
-            // At campaign 0x91 (the plasma array's destruction) a calm orbit never brings the calm track back.
-            if (cat == 0 && musicCategory > 0 && !Session.FreePlay && Session.CampaignMission == 0x91) cat = musicCategory;
-            // Radar::draw: an uncovered Most Wanted criminal -> 151; hostile Specters (race 10) -> 149 / 150.
-            if (cat > 0 && WantedUncovered) cat = 4;
-            else if (cat > 0 && SpectersHostile) cat = cat >= 3 ? 6 : 5;
-            // A battle track that plays is kept until the orbit is calm (the 0xe071 set: 136, 140-142, 149-151); only an
-            // uncovered criminal switches to 151.
-            if (cat > 0 && musicCategory > 0 && cat != 4) cat = musicCategory;
+            // In the alien orbit, at a Void-attacked station and at campaign 0x10 every fight is 136 Space_Combat_Void.
+            bool voidBattle = VoidAttack || (!Session.FreePlay && Session.CampaignMission == 0x10);
+            // Radar::draw's category (MusicTracks.Category, which skips the tracks turned off in Options > Sound):
+            // 1-2 / 3-4 / 5+ hostiles the battle tracks (a fleet battle at least Medium, remake CapitalShips), at
+            // campaign 0x91 (the plasma array's destruction) a calm orbit never brings the calm track back, an uncovered
+            // Most Wanted criminal 151, hostile Specters (race 10) 149 / 150; a battle track that plays is kept until
+            // the orbit is calm, only 151 takes over.
+            int cat = MusicTracks.Category(HostileCount, FleetBattleRaging, musicCategory,
+                !Session.FreePlay && Session.CampaignMission == 0x91, WantedUncovered, SpectersHostile, voidBattle, MusicTracks.On);
             if (cat != musicCategory && cat != pendingCategory) pendingCategory = cat;
             if (pendingCategory >= 0)
             {
@@ -317,8 +330,6 @@ namespace GoF2Remake.World
                     pendingCategory = -1;
                     var sn = SupernovaAssets.Load();
                     var story = StoryAssets.Load();
-                    // In the alien orbit, at a Void-attacked station and at campaign 0x10 every fight is 136 Space_Combat_Void.
-                    bool voidBattle = VoidAttack || (!Session.FreePlay && Session.CampaignMission == 0x10);
                     var clip = musicCategory == 0 ? CalmClip()
                              : musicCategory == 4 ? Modding.ModMusic.Track(WantedOf(wantedShip)?.music) ?? sn?.wantedMusic   // (a mod's "music")
                              : voidBattle ? story?.voidBattle
