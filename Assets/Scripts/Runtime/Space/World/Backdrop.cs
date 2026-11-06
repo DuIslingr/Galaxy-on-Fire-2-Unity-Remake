@@ -516,7 +516,7 @@ namespace GoF2Remake.World
             if (es2Planet == null) return null;
             var m = new Material(es2Planet) { name = "ES2 planet " + spec.look, renderQueue = 2901 };
             ownMaterials.Add(m);
-            foreach (var (role, prop) in new[] { ("surface", "_SurfaceMap"), ("normal", "_SurfaceNormal"), ("surface2", "_SurfaceMap2"), ("normal2", "_SurfaceNormal2"), ("capNormal", "_CapNormal"), ("capColour", "_CapColour"), ("noise", "_Noise") })
+            foreach (var (role, prop) in new[] { ("surface", "_SurfaceMap"), ("normal", "_SurfaceNormal"), ("surface2", "_SurfaceMap2"), ("normal2", "_SurfaceNormal2"), ("capNormal", "_CapNormal"), ("capColour", "_CapColour"), ("noise", "_Noise"), ("noise2", "_Noise2"), ("clouds", "_Clouds"), ("cloudsNormal", "_CloudsNormal") })
                 if (spec.maps.TryGetValue(role, out var file) && Modding.ModMaterials.Texture(spec.mod, file, true) is Texture2D t) m.SetTexture(prop, t);
             m.SetFloat("_Look", System.Array.IndexOf(Modding.ModWorld.PlanetSphereLooks, spec.look));
             m.SetVector("_SunDir", sunDir);

@@ -107,8 +107,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   T_Planet_Rock_002_H_C_R with its detail layer, the overlay tone, the rim, the poles); 1 M_Planet_GasSmooth and 2 M_Planet_Gas
   (2026-11-06, es2_re planetmat: their bands, lerp(color1, color2, ...) overlaid, the hue turned about the grey axis by the
   spec's `variation` x 2 pi, `colors` linear through `SetVector`; GasSmooth with the desert's poles); 3 M_Planet_Cratered
-  (grey: craters or rock by a sharpened noise, maps `surface2` / `normal2` for the rock); each further master (Volcanic,
-  Earthlike, Ice, Water) needs its look there. Check: PlayMode `PlanetSphereCheck`. Landed 2026-11-06
+  (grey: craters or rock by a sharpened noise, maps `surface2` / `normal2` for the rock); 4 M_Planet_Volcanic (its lava from
+  the compiled emissive pass, added as `glow` so it shows on the night side, `_LavaGlow` 3 for ES2's LavaIntensity 10000 in
+  its exposure; map `noise2`; the rock approximated from BaseColor / PoleColor: the dump holds no colour pass for it); 5
+  M_Planet_Ice and 6 M_Planet_Water (their drifting clouds, maps `clouds` / `cloudsNormal`: T_Planet_Clouds_001 at x 8
+  scrolling with `_Time`, coverage C^(1 / CloudsDensity), the preshader dividing; Water's floes over Color x T_Noise_009_M
+  in `noise2`); 7 M_Planet_Earthlike (two land layers by a height, its seas under WaterLevel with their shore, clouds, icy
+  poles; its colours the shader's own; its rivers left out). Every ES2 planet master has its look; Volcanic's rock is
+  approximated (no colour pass in the dump). Check: PlayMode `PlanetSphereCheck`. Landed 2026-11-06
   from the session that wrote it (uncommitted until then).
 - **Station life** (remake 2026-11-04, the ES2 importer's station_life.py; stations.json `model` + `life` ->
   `ModWorld.LifeSpec`, `World.StationLife`, attached with the orbit in `SpaceLevelWormholes`): after ES2's worker drones

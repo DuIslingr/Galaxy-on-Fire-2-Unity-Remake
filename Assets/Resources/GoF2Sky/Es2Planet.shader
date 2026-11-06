@@ -30,11 +30,41 @@
 //   x 2) between the craters (T_Planet_Craters_001_H_C_R: C^2.2 overlaid with 0.2) and the rock (T_Planet_Rock_002_H_C_R:
 //   C^2.2 overlaid with 0.05), each x the rim (1 + 3 (1 - N.V)^3) saturated; their R the roughness, their normal maps
 //   (_N, _SurfaceNormal2) mixed by the same mask; the poles the desert's, their grey 0.4 ((T_Rocks_004_C^2 - 0.5) 0.5 + 0.5).
+// _Look 4, M_Planet_Volcanic: its lava from its compiled emissive pass (the dump has no colour pass for it): the base UVs x
+//   Tiling 4; LavaColor (_Color2) turned by Variation, x ((1 - N.V)^LavaFresnelExponent 5 x LavaFresnelIntensity 0.3 + the
+//   lava x _LavaGlow), the lava = (T_Planet_Volcanic_001_M's G + the rivers: 1 - smoothstep(10 (T_Quixel_Rock_024_C_R_H's R
+//   - (LavaRiverThreshold 0.42 x 1.2 - 0.15)))) x contrast7((1 - that R at x LavaMaskTiling 4)^LavaMaskExponent 3) x
+//   T_Noise_008_M (x 0.5); emitted, so it glows on the night side too. The rock approximated from the master's colours:
+//   BaseColor (_Color1) overlaid with contrast3(the map's B), roughness RoughnessMin 1 to RoughnessMax 0.5 by it, the poles
+//   PoleColor. Normals T_Planet_Volcanic_001_N flattened NormalFlatten 0.8.
+// Clouds (looks 5 and 6): T_Planet_Clouds_001_C_AO at the base UVs x 8 drifting with time x CloudsSpeed 0.002, its x 1/4 layer
+//   by distance (_DetailMix); coverage C^(1 / CloudsDensity) (the preshader divides), their colour (C x AO)^Param 0.5, their
+//   normals T_Planet_Clouds_001_N flattened CloudsNormalFlatten 0.8; over the surface by the coverage, roughness 1.
+// _Look 5, M_Planet_Ice: T_Planet_Rock_002_H_C_R overlaid with its detail (x DetailTiling 4) toward 0.5 by distance; colour
+//   BaseColor (_Color1) x the curvature (saturate(C x CurvatureMultiplier 1.3) through the contrast curve CurvatureContrast 4) x
+//   the darkening (1 + (smoothstep(DarkenThreshold -+ DarkenWidth, H) - 1) Darken 0.05); the poles overlay(BaseColor, the
+//   desert's tone); roughness RoughnessMin 0.2 to RoughnessMax 0.6 by 1 - R; normals T_Planet_Rock_002_N flattened 0.8;
+//   clouds CloudsDensity 2.
+// _Look 6, M_Planet_Water: water Color (_Color1) x T_Noise_009_M; ice floes where T_Noise_018_M (x IceTiling 2) overlaid with
+//   its detail (x IceDetailTiling 16, sqrt, (x - 0.5) DetailOverlay 1 + 0.5) passes smoothstep(IceThreshold 0.6 -+
+//   IceThresholdWidth 0.2), IceColor (_Color2) x that mask, their normals T_Noise_018_N (base and detail, flattened 0.95);
+//   roughness Roughness 0.2, 0.7 on the ice; clouds CloudsDensity 0.3. No poles.
+// _Look 7, M_Planet_Earthlike: at the base UVs x 2, a height h = T_Noise_016_M; the land two layers by contrast16(h^MaskBias
+//   1.1): the mountains (T_Planet_Mountains_001_H_C_R: C^2.2 overlaid with (0.2, 0.19, 0.16)) and the rock
+//   (T_Planet_Rock_001_H_C_R: C^2.2), each x the rim; their normals (_N, flattened 0.8 / 0.7) and roughness the same way.
+//   The water where h is under the level WaterLevel 0.4586 + (T_Noise_015_M at x ShoreFuzzinessTiling 16, x 2 - 1) x
+//   ShoreFuzziness 0.02 (1 - smoothstep(1000 (h - (L x 1.002 - 0.0015)))): (0.2, 0.4, 0.5) x (0.2 + 0.8 (1 - N.V)^2 + half
+//   the shore band smoothstep(66.7 (h - (L x 1.03 - 0.0225)))), flat, roughness 0.4; clouds CloudsDensity 0.7; the poles icy
+//   (0.656, 0.838, 1) x the desert's tone. Its rivers (RiverTiling / RiverDepth) left out.
 Shader "GoF2/Es2Planet"
 {
     Properties
     {
-        _Look ("Look (0 desert, 1 gas smooth, 2 gas, 3 cratered)", Float) = 0
+        _Look ("Look (0 desert, 1 gas smooth, 2 gas, 3 cratered, 4 volcanic, 5 ice, 6 water, 7 earthlike)", Float) = 0
+        _Noise2 ("Volcanic: the lava noise; water: the water's noise", 2D) = "gray" {}
+        _Clouds ("Clouds C_AO", 2D) = "black" {}
+        _CloudsNormal ("Clouds normal (ES2's, DirectX)", 2D) = "bump" {}
+        _LavaGlow ("Volcanic: the lava's brightness (ES2's LavaIntensity in its exposure)", Float) = 3
         _Color1 ("Gas: Color / SecondaryColor (linear)", Vector) = (0.02, 0.071433, 0.1, 0)
         _Color2 ("Gas: Color2 / BaseColor (linear)", Vector) = (0.166665, 0.487763, 0.5, 0)
         _Variation ("Gas: Variation (0..1, the hue x 2 pi)", Float) = 0
@@ -73,6 +103,9 @@ Shader "GoF2/Es2Planet"
             TEXTURE2D(_SurfaceNormal);
             TEXTURE2D(_SurfaceMap2);
             TEXTURE2D(_SurfaceNormal2);
+            TEXTURE2D(_Noise2);
+            TEXTURE2D(_Clouds);
+            TEXTURE2D(_CloudsNormal);
             TEXTURE2D(_CapNormal);
             TEXTURE2D(_CapColour);
             TEXTURE2D(_Noise);
@@ -80,6 +113,7 @@ Shader "GoF2/Es2Planet"
                 float _Look;
                 float4 _Color1, _Color2;
                 float _Variation;
+                half _LavaGlow;
                 half _DetailMix;
                 float4 _SunDir;
                 half4 _SunColor;
@@ -148,12 +182,12 @@ Shader "GoF2/Es2Planet"
                 // the poles (every look but the banded gas)
                 half pn = SAMPLE_TEXTURE2D(_Noise, sampler_SurfaceMap, poleUv * 2.0).r;
                 half reach = max(0.5 * pow(max(pn, 1e-4), 1.5), 1e-4);
-                half cap = abs(_Look - 2.0) < 0.5 ? 0.0 : saturate(10.0 * max(1.0 - length(poleUv - 0.5) / reach, 0.0));
+                half cap = abs(_Look - 2.0) < 0.5 || abs(_Look - 6.0) < 0.5 ? 0.0 : saturate(10.0 * max(1.0 - length(poleUv - 0.5) / reach, 0.0));
                 half3 ncap = Unpack(SAMPLE_TEXTURE2D(_CapNormal, sampler_SurfaceMap, poleUv * 5.0), 0.95);
                 half cc = SAMPLE_TEXTURE2D(_CapColour, sampler_SurfaceMap, poleUv * 5.0).r;
                 half s = cc <= 2.98e-8 ? 0.25 : (cc * cc - 0.5) * 0.5 + 0.5;
                 float3 view = normalize(GetCameraPositionWS() - i.positionWS);
-                half3 albedo, nts;
+                half3 albedo, nts, glow = 0.0;
                 half rough, f;
                 if (_Look < 0.5)
                 {
@@ -194,6 +228,108 @@ Shader "GoF2/Es2Planet"
                     half3 rn = normalize(t1 * dot(t1, u1) / t1.z - u1);   // (the detail over the base: ES2's RNM blend)
                     nts = normalize(lerp(normalize(lerp(rn, half3(0, 0, 1), 0.9)), ncap, cap));
                     rough = 1.0;
+                }
+                else if (_Look > 4.5)
+                {
+                    float2 cUv = baseUv * 8.0 + float2(_Time.y * 0.002, 0.0), cgx = gx * 8.0, cgy = gy * 8.0;
+                    half2 cf = SAMPLE_TEXTURE2D_GRAD(_Clouds, sampler_SurfaceMap, cUv, cgx, cgy).xy;
+                    half2 cc4 = SAMPLE_TEXTURE2D_GRAD(_Clouds, sampler_SurfaceMap, cUv * 0.25, cgx * 0.25, cgy * 0.25).xy;
+                    half2 cl = lerp(cf, cc4, _DetailMix);   // (C, AO)
+                    half3 ncl = normalize(lerp(Unpack(SAMPLE_TEXTURE2D_GRAD(_CloudsNormal, sampler_SurfaceMap, cUv, cgx, cgy), 0.8),
+                                               Unpack(SAMPLE_TEXTURE2D_GRAD(_CloudsNormal, sampler_SurfaceMap, cUv * 0.25, cgx * 0.25, cgy * 0.25), 0.8), _DetailMix));
+                    half cover, cloudGrey = pow(max(cl.x * cl.y, 1e-4), 0.5);
+                    half3 sn;
+                    if (_Look < 5.5)
+                    {
+                        // the ice planet
+                        cover = pow(max(cl.x, 1e-4), 1.0 / 2.0);
+                        float2 dUv = baseUv * 4.0;
+                        half3 b = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap, sampler_SurfaceMap, baseUv, gx, gy).rgb;   // (H, C, R)
+                        half3 dt = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap, sampler_SurfaceMap, dUv, gx * 4.0, gy * 4.0).rgb;
+                        dt = dt + _DetailMix * (0.5 - dt);
+                        half3 hcr = Overlay3(b, dt);
+                        half dark = 1.0 + (smoothstep(0.3, 0.7, hcr.x) - 1.0) * 0.05;
+                        half curv = Contrast(saturate(hcr.y * 1.3), 4.0);
+                        half3 body = _Color1.rgb * dark * curv;
+                        half3 capCol = Overlay3(_Color1.rgb, half3(s, s, s));
+                        albedo = saturate(lerp(body, capCol, cap));
+                        rough = lerp(0.2 + (0.6 - 0.2) * (1.0 - hcr.z), 0.4 + 0.4 * smoothstep(0.0, 1.0, saturate((cc - 0.2) * 20.0)), cap);
+                        half3 nb = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal, sampler_SurfaceMap, baseUv, gx, gy), 0.0);
+                        half3 nd = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal, sampler_SurfaceMap, dUv, gx * 4.0, gy * 4.0), _DetailMix);
+                        half3 t1 = nb + half3(0, 0, 1), u1 = nd * half3(-1, -1, 1);
+                        sn = normalize(lerp(normalize(lerp(normalize(t1 * dot(t1, u1) / t1.z - u1), half3(0, 0, 1), 0.8)), ncap, cap));
+                    }
+                    else if (_Look > 6.5)
+                    {
+                        // the earthlike planet: land, seas, clouds
+                        cover = pow(max(cl.x, 1e-4), 1.0 / 0.7);
+                        float2 lUv = baseUv * 2.0, lgx = gx * 2.0, lgy = gy * 2.0;
+                        half h = SAMPLE_TEXTURE2D_GRAD(_Noise, sampler_SurfaceMap, lUv, lgx, lgy).r;
+                        half m = Contrast(pow(max(h, 1e-4), 1.1), 16.0);
+                        half3 a = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap, sampler_SurfaceMap, lUv, lgx, lgy).rgb;    // (H, C, R)
+                        half3 b = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap2, sampler_SurfaceMap, lUv, lgx, lgy).rgb;
+                        half3 na = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal, sampler_SurfaceMap, lUv, lgx, lgy), 0.8);
+                        half3 nr = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal2, sampler_SurfaceMap, lUv, lgx, lgy), 0.7);
+                        half sh = SAMPLE_TEXTURE2D_GRAD(_Noise2, sampler_SurfaceMap, baseUv * 16.0, gx * 16.0, gy * 16.0).r;
+                        half level = (sh * 2.0 - 1.0) * 0.02 + 0.458572;
+                        half water = 1.0 - smoothstep(0.0, 1.0, saturate((h - (level * 1.002 - 0.0015)) * 1000.0));
+                        half shore = smoothstep(0.0, 1.0, saturate((h - (level * 1.03 - 0.0225)) * 66.6667));
+                        float3 n0 = normalize(TransformObjectToWorldDir(d));
+                        half fv = max(1.0 - saturate(dot(n0, view)), 1e-4);
+                        half rim = 1.0 + 3.0 * fv * fv * fv;
+                        half ca = pow(max(a.y, 1e-4), 2.2), cb = pow(max(b.y, 1e-4), 2.2);
+                        half3 landA = saturate(Overlay3(half3(ca, ca, ca), half3(0.2, 0.190813, 0.16)) * rim);
+                        half3 landB = saturate(half3(cb, cb, cb) * rim);
+                        half3 land = lerp(landA, landB, m);
+                        half3 sea = (shore * 0.5 + 0.2 + 0.8 * fv * fv) * half3(0.2, 0.4, 0.5);
+                        half3 capCol = half3(0.65625 * s, 0.838338 * s, s);
+                        albedo = saturate(lerp(lerp(land, sea, water), capCol, cap));
+                        rough = lerp(lerp(lerp(a.z, b.z, m), 0.4, water), 0.4 + 0.4 * smoothstep(0.0, 1.0, saturate((cc - 0.2) * 20.0)), cap);
+                        sn = normalize(lerp(normalize(lerp(normalize(lerp(na, nr, m)), half3(0, 0, 1), water)), ncap, cap));
+                    }
+                    else
+                    {
+                        // the water planet
+                        cover = pow(max(cl.x, 1e-4), 1.0 / 0.3);
+                        float2 iUv = baseUv * 2.0, idUv = baseUv * 16.0;
+                        half im = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap, sampler_SurfaceMap, iUv, gx * 2.0, gy * 2.0).r;
+                        half imd = sqrt(max(SAMPLE_TEXTURE2D_GRAD(_SurfaceMap, sampler_SurfaceMap, idUv, gx * 16.0, gy * 16.0).r, 0.0));
+                        half iceV = Overlay(im, (imd - 0.5) * 1.0 + 0.5);
+                        half ice = smoothstep(0.6 - 0.2, 0.6 + 0.2, iceV);
+                        half wn = SAMPLE_TEXTURE2D_GRAD(_Noise2, sampler_SurfaceMap, baseUv, gx, gy).r;
+                        albedo = saturate(lerp(_Color1.rgb * wn, _Color2.rgb * iceV, ice));
+                        rough = lerp(0.2, 0.7, ice);
+                        half3 nb = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal, sampler_SurfaceMap, iUv, gx * 2.0, gy * 2.0), 0.0);
+                        half3 nd = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal, sampler_SurfaceMap, idUv, gx * 16.0, gy * 16.0), 0.0);
+                        half3 t1 = nb + half3(0, 0, 1), u1 = nd * half3(-1, -1, 1);
+                        half3 iceN = normalize(lerp(normalize(t1 * dot(t1, u1) / t1.z - u1), half3(0, 0, 1), 0.95));
+                        sn = normalize(lerp(half3(0, 0, 1), iceN, ice));
+                    }
+                    // the clouds over it
+                    albedo = saturate(lerp(albedo, half3(cloudGrey, cloudGrey, cloudGrey), cover));
+                    rough = lerp(rough, 1.0, cover);
+                    nts = normalize(lerp(sn, ncl, cover));
+                }
+                else if (_Look > 3.5)
+                {
+                    // the volcanic planet: dark rock, lava rivers glowing
+                    float2 vUv = baseUv * 4.0, vgx = gx * 4.0, vgy = gy * 4.0;
+                    half4 vm = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap, sampler_SurfaceMap, vUv, vgx, vgy);
+                    half qr = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap2, sampler_SurfaceMap, vUv, vgx, vgy).r;
+                    half qm = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap2, sampler_SurfaceMap, vUv * 4.0, vgx * 4.0, vgy * 4.0).r;
+                    half nz = SAMPLE_TEXTURE2D_GRAD(_Noise2, sampler_SurfaceMap, vUv * 0.5, vgx * 0.5, vgy * 0.5).r;
+                    half river = 1.0 - smoothstep(0.0, 1.0, saturate((qr - (0.42 * 1.2 - 0.15)) * 10.0));
+                    half mask = Contrast(pow(max(1.0 - qm, 1e-4), 3.0), 7.0);
+                    half lava = (vm.g + river) * mask * nz;
+                    half3 nv = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal, sampler_SurfaceMap, vUv, vgx, vgy), 0.8);
+                    nts = normalize(lerp(nv, ncap, cap));
+                    float3 n0 = normalize(TransformObjectToWorldDir(normalize(east * nts.x + north * nts.y + d * nts.z)));
+                    f = max(1.0 - saturate(dot(n0, view)), 1e-4);
+                    half3 lavaCol = HueRotate(_Color2.rgb, _Variation * 2.0 * PI);
+                    glow = lavaCol * (pow(f, 5.0) * 0.3 + lava * _LavaGlow) * (1.0 - cap);
+                    half k = Contrast(vm.b, 3.0);
+                    albedo = saturate(lerp(Overlay3(_Color1.rgb, half3(k, k, k)), half3(0.114583, 0.108537, 0.097873), cap));
+                    rough = lerp(1.0, 0.5, k);
                 }
                 else if (_Look > 2.5)
                 {
@@ -252,7 +388,7 @@ Shader "GoF2/Es2Planet"
                 if (_Debug > 2.5) return half4(_SunColor.rgb, 1);
                 if (_Debug > 1.5) return half4(SAMPLE_TEXTURE2D(_SurfaceMap, sampler_SurfaceMap, baseUv).rgb, 1);
                 if (_Debug > 0.5) return half4(albedo, 1);
-                return half4(lit + rim, _Color.a);
+                return half4(lit + rim + glow, _Color.a);
             }
             ENDHLSL
         }
