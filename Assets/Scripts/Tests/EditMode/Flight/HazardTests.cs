@@ -180,6 +180,16 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AShipInNeedAsksForWhatThePilotCarries()
+        {
+            var items = GoF2Remake.World.ShipInNeed.Items;
+            Assert.AreEqual(98, GoF2Remake.World.ShipInNeed.Pick(items, i => i == 98 ? 5 : 1, 3), "enough Medical Supplies aboard");
+            Assert.AreEqual(121, GoF2Remake.World.ShipInNeed.Pick(items, i => i == 121 ? 1 : 0, 3), "some Nanotech aboard");
+            CollectionAssert.Contains(items, GoF2Remake.World.ShipInNeed.Pick(items, i => 0, 3), "else either");
+            Assert.AreEqual(75f, GoF2Remake.World.ShipInNeed.RepairPerS, "EnqueueHullRepair's RepairRatePerSecond");
+        }
+
+        [Test]
         public void TheShootingChallengeGoesToTheBetterShot()
         {
             Assert.AreEqual(1, GoF2Remake.World.ChallengeWatch.Outcome(5, 4));

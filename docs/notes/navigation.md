@@ -148,6 +148,15 @@ the player ship) and `NavigationView` (flight HUD).
   score on the HUD; all gone, `Outcome`: more for the player pays half a `BattlePay` (ES2 gives XP only: GoF2 has none),
   fewer loses, a tie brings one more raider (AdditionalEnemy); leaving past `LeaveM` abandons it (bFailIfPlayerLeaves).
   The importer's entry: weight 5, security 0-2. Test `TheShootingChallengeGoesToTheBetterShot`. Not tried in game.
+  `needy` (2026-11-06, ES2's BP_Encounter_ItemsNeeded "Ship In Need" / BP_Job_ItemsNeeded_Task_01): a freighter or fighter
+  of the system's race (half each: ES2's freelancer or its freighter; `stationary`, group Special) at 10-40 % hull, no
+  shield, needing "ships" (default `ShipInNeed.Need` 3) units of a repair good (ES2's ValidHealItems, here
+  `ShipInNeed.Items`: Nanotech 121, Medical Supplies 98; `Pick`: one the pilot carries enough of, else some of, else
+  either). `World.ShipInNeed`: within `NoticeM` 2 km its request on the HUD; in reach ahead with enough aboard the action
+  prompt "HELP" (FlightHud's chain after the carry puzzle) hands it over (`Shop.RemoveFromCargo`), the hull repairs at
+  `RepairPerS` 75 (EnqueueHullRepair) and `BattlePay` is paid (GivesCreditsReward); the ship lost or the pilot past
+  `LeaveM` ends it. The importer's entry: weight 6, any security (no danger). Test `AShipInNeedAsksForWhatThePilotCarries`.
+  Not tried in game.
   The `stash` and `depot` crates stay until emptied (`Crate.keep`), not the crates' 60 s.
   **Between the systems** (2026-11-03, the user: "encounters should pull you out either in their own space or the nearest
   system"; `CruiseEncounters.Between`): the same table rolls on an interstellar leg (single player, as that space is), the

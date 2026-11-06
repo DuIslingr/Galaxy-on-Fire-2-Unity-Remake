@@ -33,6 +33,8 @@
 //   challenge (2026-11-06, ES2's BP_Encounter_ShootingChallenge) a Challenger of the system's race (a local fighter, its gun
 //             x ChallengerDealDamageFactor 3) and NumGroups 4-5 groups of raiders (1 + rank / 12 each, or "ships" in all);
 //             destroy more of them than it does (World.ChallengeWatch): half a battle's pay
+//   needy     (2026-11-06, ES2's BP_Encounter_ItemsNeeded, "Ship In Need") a damaged freighter or fighter of the system's race,
+//             still, asking "ships" (default ShipInNeed.Need 3) units of a repair good; handed over, BattlePay (World.ShipInNeed)
 // The counts are the remake's picks (ES2 places its groups by spawn_groups.CSV at a location's level). The pay is ES2's
 // (BattlePay); its location level the orbit's "level" (stations.json: an ES2 location's own), else the station's tech level
 // x 3 (Es2Level: GoF2's 1-10 over ES2's 1-30).
@@ -172,6 +174,19 @@ namespace GoF2Remake.World
                         raiders.Add(Raider(traffic, group + Jitter(2000f)));
                     }
                     ChallengeWatch.Start(level, raiders, BattlePay(Es2Level(level)) / 2, at);
+                    break;
+                }
+                case CruiseEncounters.Needy:
+                {
+                    bool big = Random.value < 0.5f;   // (ES2's freelancer or freelancer freighter)
+                    NpcShip needy;
+                    if (big)
+                    {
+                        var (ship, race) = NpcTables.RandomFreighter(systemRace);
+                        needy = traffic.SpawnShip(new SpawnSpec { group = NpcGroup.Special, race = race, ship = ship, freighter = true, stationary = true, position = at });
+                    }
+                    else needy = traffic.SpawnShip(new SpawnSpec { group = NpcGroup.Special, race = systemRace, ship = NpcTables.RandomFighter(systemRace), stationary = true, position = at });
+                    ShipInNeed.Start(level, needy, e.ships > 0 ? e.ships : ShipInNeed.Need, BattlePay(Es2Level(level)));
                     break;
                 }
                 case CruiseEncounters.Minesweeper:
