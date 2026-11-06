@@ -152,6 +152,7 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0.25f, gas.variation, 1e-5f, "a whole turn more is the same hue");
             Assert.AreEqual(1, System.Array.IndexOf(ModWorld.PlanetSphereLooks, "es2GasSmooth"), "GoF2/Es2Planet's _Look 1");
             Assert.AreEqual(2, System.Array.IndexOf(ModWorld.PlanetSphereLooks, "es2Gas"));
+            Assert.AreEqual(3, System.Array.IndexOf(ModWorld.PlanetSphereLooks, "es2Cratered"));
             Assert.IsNull(ModWorld.PlanetSphereOf(136).color1, "the desert has none");
         }
 

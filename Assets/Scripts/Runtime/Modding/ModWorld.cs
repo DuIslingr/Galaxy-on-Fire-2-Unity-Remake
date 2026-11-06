@@ -248,7 +248,7 @@ namespace GoF2Remake.Modding
             public Vector3? color1, color2;
             public float variation;
         }
-        public static readonly string[] PlanetSphereLooks = { "es2Desert", "es2GasSmooth", "es2Gas" };
+        public static readonly string[] PlanetSphereLooks = { "es2Desert", "es2GasSmooth", "es2Gas", "es2Cratered" };
         static readonly Dictionary<int, PlanetSphereSpec> planetSpheres = new Dictionary<int, PlanetSphereSpec>();
 
         static readonly Dictionary<int, string> planetTextures = new Dictionary<int, string>(), sunTextures = new Dictionary<int, string>(),

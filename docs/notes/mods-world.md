@@ -106,8 +106,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   The shader follows ES2's planet masters' compiled base-pass shaders: `_Look` 0 M_Planet_Desert (its latitude-stretched UVs,
   T_Planet_Rock_002_H_C_R with its detail layer, the overlay tone, the rim, the poles); 1 M_Planet_GasSmooth and 2 M_Planet_Gas
   (2026-11-06, es2_re planetmat: their bands, lerp(color1, color2, ...) overlaid, the hue turned about the grey axis by the
-  spec's `variation` x 2 pi, `colors` linear through `SetVector`; GasSmooth with the desert's poles); each further master
-  (Cratered, Volcanic, Earthlike, Ice, Water) needs its look there. Check: PlayMode `PlanetSphereCheck`. Landed 2026-11-06
+  spec's `variation` x 2 pi, `colors` linear through `SetVector`; GasSmooth with the desert's poles); 3 M_Planet_Cratered
+  (grey: craters or rock by a sharpened noise, maps `surface2` / `normal2` for the rock); each further master (Volcanic,
+  Earthlike, Ice, Water) needs its look there. Check: PlayMode `PlanetSphereCheck`. Landed 2026-11-06
   from the session that wrote it (uncommitted until then).
 - **Station life** (remake 2026-11-04, the ES2 importer's station_life.py; stations.json `model` + `life` ->
   `ModWorld.LifeSpec`, `World.StationLife`, attached with the orbit in `SpaceLevelWormholes`): after ES2's worker drones

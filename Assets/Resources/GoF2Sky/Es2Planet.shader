@@ -26,16 +26,22 @@
 //   squared; the bands contrast4(sqrt(T_Noise_001_M at (u, 4 v))) between SecondaryColor and BaseColor (_Color1 / _Color2),
 //   its hue turned by Variation, overlaid with that C^2. Normals T_Planet_Gas_001_N, the detail flattened Param_1 0.6. No
 //   poles. Roughness 1, metalness 0.
+// _Look 3, M_Planet_Cratered: grey. The base UVs x 2 (4 u, 10 v'); a mask contrast8(T_Noise_016_M at ((2 u, 5 v') + 0.25)
+//   x 2) between the craters (T_Planet_Craters_001_H_C_R: C^2.2 overlaid with 0.2) and the rock (T_Planet_Rock_002_H_C_R:
+//   C^2.2 overlaid with 0.05), each x the rim (1 + 3 (1 - N.V)^3) saturated; their R the roughness, their normal maps
+//   (_N, _SurfaceNormal2) mixed by the same mask; the poles the desert's, their grey 0.4 ((T_Rocks_004_C^2 - 0.5) 0.5 + 0.5).
 Shader "GoF2/Es2Planet"
 {
     Properties
     {
-        _Look ("Look (0 desert, 1 gas smooth, 2 gas)", Float) = 0
+        _Look ("Look (0 desert, 1 gas smooth, 2 gas, 3 cratered)", Float) = 0
         _Color1 ("Gas: Color / SecondaryColor (linear)", Vector) = (0.02, 0.071433, 0.1, 0)
         _Color2 ("Gas: Color2 / BaseColor (linear)", Vector) = (0.166665, 0.487763, 0.5, 0)
         _Variation ("Gas: Variation (0..1, the hue x 2 pi)", Float) = 0
         _SurfaceMap ("Surface H_C_R", 2D) = "gray" {}
         _SurfaceNormal ("Surface normal (ES2's, DirectX)", 2D) = "bump" {}
+        _SurfaceMap2 ("Cratered: the rock's H_C_R", 2D) = "gray" {}
+        _SurfaceNormal2 ("Cratered: the rock's normal", 2D) = "bump" {}
         _CapNormal ("Pole normal (ES2's, DirectX)", 2D) = "bump" {}
         _CapColour ("Pole colour mask", 2D) = "gray" {}
         _Noise ("Noise mask", 2D) = "gray" {}
@@ -65,6 +71,8 @@ Shader "GoF2/Es2Planet"
 
             TEXTURE2D(_SurfaceMap); SAMPLER(sampler_SurfaceMap);
             TEXTURE2D(_SurfaceNormal);
+            TEXTURE2D(_SurfaceMap2);
+            TEXTURE2D(_SurfaceNormal2);
             TEXTURE2D(_CapNormal);
             TEXTURE2D(_CapColour);
             TEXTURE2D(_Noise);
@@ -140,7 +148,7 @@ Shader "GoF2/Es2Planet"
                 // the poles (every look but the banded gas)
                 half pn = SAMPLE_TEXTURE2D(_Noise, sampler_SurfaceMap, poleUv * 2.0).r;
                 half reach = max(0.5 * pow(max(pn, 1e-4), 1.5), 1e-4);
-                half cap = _Look > 1.5 ? 0.0 : saturate(10.0 * max(1.0 - length(poleUv - 0.5) / reach, 0.0));
+                half cap = abs(_Look - 2.0) < 0.5 ? 0.0 : saturate(10.0 * max(1.0 - length(poleUv - 0.5) / reach, 0.0));
                 half3 ncap = Unpack(SAMPLE_TEXTURE2D(_CapNormal, sampler_SurfaceMap, poleUv * 5.0), 0.95);
                 half cc = SAMPLE_TEXTURE2D(_CapColour, sampler_SurfaceMap, poleUv * 5.0).r;
                 half s = cc <= 2.98e-8 ? 0.25 : (cc * cc - 0.5) * 0.5 + 0.5;
@@ -186,6 +194,28 @@ Shader "GoF2/Es2Planet"
                     half3 rn = normalize(t1 * dot(t1, u1) / t1.z - u1);   // (the detail over the base: ES2's RNM blend)
                     nts = normalize(lerp(normalize(lerp(rn, half3(0, 0, 1), 0.9)), ncap, cap));
                     rough = 1.0;
+                }
+                else if (_Look > 2.5)
+                {
+                    // the cratered moon: craters or rock by a sharpened noise, grey
+                    float2 cUv = baseUv * 2.0, cgx = gx * 2.0, cgy = gy * 2.0;
+                    half m = Contrast(SAMPLE_TEXTURE2D_GRAD(_Noise, sampler_SurfaceMap, (baseUv + 0.25) * 2.0, gx * 2.0, gy * 2.0).r, 8.0);
+                    half3 na = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal, sampler_SurfaceMap, cUv, cgx, cgy), 0.0);
+                    half3 nr = Unpack(SAMPLE_TEXTURE2D_GRAD(_SurfaceNormal2, sampler_SurfaceMap, cUv, cgx, cgy), 0.0);
+                    nts = normalize(lerp(normalize(lerp(na, nr, m)), ncap, cap));
+                    float3 n0 = normalize(TransformObjectToWorldDir(normalize(east * nts.x + north * nts.y + d * nts.z)));
+                    f = max(1.0 - saturate(dot(n0, view)), 1e-4);
+                    half rim = 1.0 + 3.0 * f * f * f;
+                    half3 a = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap, sampler_SurfaceMap, cUv, cgx, cgy).rgb;    // (H, C, R)
+                    half3 b = SAMPLE_TEXTURE2D_GRAD(_SurfaceMap2, sampler_SurfaceMap, cUv, cgx, cgy).rgb;
+                    half ga = saturate(Overlay(pow(max(a.y, 1e-4), 2.2), 0.2) * rim);
+                    half gb = saturate(Overlay(pow(max(b.y, 1e-4), 2.2), 0.05) * rim);
+                    half grey = lerp(ga, gb, m);
+                    half capGrey = cc <= 2.98e-8 ? 0.1 : s * 0.4;
+                    grey = saturate(lerp(grey, capGrey, cap));
+                    albedo = half3(grey, grey, grey);
+                    half capRough = 0.4 + 0.4 * smoothstep(0.0, 1.0, saturate((cc - 0.2) * 20.0));
+                    rough = saturate(lerp(lerp(a.z, b.z, m), capRough, cap));
                 }
                 else
                 {
