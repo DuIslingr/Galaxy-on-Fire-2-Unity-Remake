@@ -123,6 +123,16 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AThrownSphereKeepsItsMomentumAndFliesOn()
+        {
+            var v = new UnityEngine.Vector3(0f, 0f, 50f);
+            Assert.AreEqual(v, GoF2Remake.World.Portable.Thrown(v, UnityEngine.Vector3.right, false), "let go: Detach's bKeepMomentum");
+            var t = GoF2Remake.World.Portable.Thrown(v, UnityEngine.Vector3.right * 3f, true);
+            Assert.AreEqual(720f, t.x, 1e-3f, "FlingStrength 20 000 cm/s x 3.6 along the nose");
+            Assert.AreEqual(50f, t.z, 1e-4f, "on top of its momentum");
+        }
+
+        [Test]
         public void ACloakedContainerShowsItselfOnlyUpClose()
         {
             Assert.AreEqual(2, GoF2Remake.World.CloakedContainers.Stage(100f), "within ES2's InteractRadius 40 m x 3.6: the marker comes on");

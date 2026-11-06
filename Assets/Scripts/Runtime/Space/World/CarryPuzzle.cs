@@ -2,7 +2,8 @@
 // Remake (2026-11-06, for mods): the action key's part in the secure containers' energy sockets (World.Portable,
 // World.OrbDispenser, World.EnergySocket), for the flight HUD's prompt chain after the containers: carrying something,
 // "DROP" lets it go (ES2: the action key again); else a loose sphere or coil within reach in front, "GRAB"; else a ready
-// dispenser within reach, "GRAB" hands a new sphere. Reach: the containers' (LootContainer.OpenRangeM, in front).
+// dispenser within reach, "GRAB" hands a new sphere. Reach: the containers' (LootContainer.OpenRangeM, in front). While
+// carrying, primary fire throws it instead of shooting (Throw; the HUD holds the guns back, WeaponSystem.PrimaryBlocked).
 
 using GoF2Remake.Data;
 using UnityEngine;
@@ -42,6 +43,15 @@ namespace GoF2Remake.World
             if (Nearest(ship, Portable.All, p => !p.Socketed && p.Carrier == null) != null || Nearest(ship, OrbDispenser.All, d => d.Ready) != null)
                 return Localization.Extra("hudGrab", "GRAB");
             return null;
+        }
+
+        /// <summary>Throws what the ship carries along its nose (Portable.Release fling); true = there was something.</summary>
+        public static bool Throw(Transform ship)
+        {
+            var carried = Carried(ship);
+            if (carried == null) return false;
+            carried.Release(true);
+            return true;
         }
 
         /// <summary>The action key: drop, grab or dispense; true = something happened.</summary>

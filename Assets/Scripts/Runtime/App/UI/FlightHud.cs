@@ -110,6 +110,7 @@ namespace GoF2Remake.UI
         float quickMenuCheck;
         bool quickMenuEntries;
         ShipController ship;
+        bool carryBlocksFire;
         ChaseCamera chase;
         Vector2Int lastScreen;
         Rect lastSafeArea;
@@ -775,6 +776,14 @@ namespace GoF2Remake.UI
             }
 
             var phase = mining != null ? mining.State : Mining.Phase.Idle;
+            // Remake mods: carrying a sphere or coil, primary fire throws it (World.CarryPuzzle) and the guns hold
+            bool carrying = GoF2Remake.World.CarryPuzzle.Carried(ship != null ? ship.transform : null) != null;
+            if (carrying != carryBlocksFire)
+            {
+                carryBlocksFire = carrying;
+                if (weapons != null && (carrying || phase == Mining.Phase.Idle)) weapons.PrimaryBlocked = carrying;
+            }
+            if (carrying && !Navigation.PressesBlocked && GameControls.FirePrimary.WasPressedThisFrame()) GoF2Remake.World.CarryPuzzle.Throw(ship.transform);
             bool autopilot = nav != null && nav.Autopilot;
             if (phase != lastPhase || autopilot != lastAutopilot) { lastPhase = phase; lastAutopilot = autopilot; BuildHints(InputMode.Current); }
             // The turret: the touch button (turret view / auto-fire) and the hints of the turret view.

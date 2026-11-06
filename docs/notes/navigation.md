@@ -232,8 +232,13 @@ the player ship) and `NavigationView` (flight HUD).
   (EnergyOrbLifetime) unless seated. `World.OrbDispenser` hands a new sphere (straight onto the ship) while none of its own
   is about. `World.CarryPuzzle`: the HUD's prompt after the containers' OPEN (FlightHud / `Interact`): carrying, "DROP";
   else a loose one or a ready dispenser within `OpenRangeM` ahead, "GRAB". Markers: dispensers, sockets and loose ones are
-  radar objects (ES2's HUD markers). Left out: the trigger sound, conductor chains (the importer leaves those bulletproof),
-  the multi-activation links, throwing, the sockets' laser beams and the fire / ice orb variants' fields. Tests
+  radar objects (ES2's HUD markers). Throwing (PortableComponent::Detach bFling / bKeepMomentum): while carrying, the HUD
+  sets `WeaponSystem.PrimaryBlocked` (left to mining's when it's mining) and a primary fire press (`GameControls.FirePrimary`)
+  throws it (`CarryPuzzle.Throw`, `Portable.Release(true)`: its carried velocity + `FlingMs`, FlingStrength 20 000 cm/s x 3.6,
+  along the nose); DROP lets it go with its velocity; loose, it drifts on with `Portable.Damping` 0.2 (the rift mines' UE
+  damping), and a socket takes it in passing. Not on touch (the fire button is SetPrimaryHeld). Test
+  `AThrownSphereKeepsItsMomentumAndFliesOn`. Left out: the trigger sound, conductor chains (the importer leaves those
+  bulletproof), the multi-activation links, the sockets' laser beams and the fire / ice orb variants' fields. Tests
   `HazardTests.ShotTriggers*` / `ASocketTakesItsKindWithinReach`, `ModWorldTests.AnOrbitsSecureContainers` /
   `ASecureContainersEnergySockets`. Not tried in game.
 - **Traffic lanes** (remake 2026-11-03, for mods; stations.json `orbit.lanes` -> `ModWorld.LaneSpec`, `Flight.TrafficLane`
