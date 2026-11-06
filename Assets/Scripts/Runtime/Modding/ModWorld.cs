@@ -309,6 +309,18 @@ namespace GoF2Remake.Modding
             public bool ordered;
             public float retriggerS;
             public List<SocketSpec> sockets = new List<SocketSpec>();
+            /// <summary>Its conductor puzzle, null = none.</summary>
+            public ConductorSpec conductors;
+        }
+
+        /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_Conductor_Source / _Static / _Portable / _Receiver): conductors that carry
+        /// energy from the sources to every receiver when each link lies within a conduction sphere ('radius', game units;
+        /// 'receiverRadius' a receiver's; an entry's w its own, 0 = those); the portable ones the ship carries into place
+        /// (Flight.ConductorGraph).</summary>
+        public sealed class ConductorSpec
+        {
+            public List<Vector4> sources = new List<Vector4>(), statics = new List<Vector4>(), portables = new List<Vector4>(), receivers = new List<Vector4>();
+            public float radius = 4000f, receiverRadius = 40f;
         }
 
         /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_EnergyOrb_Socket / BP_EnergyCoil_Socket): a socket at 'at' that wants an

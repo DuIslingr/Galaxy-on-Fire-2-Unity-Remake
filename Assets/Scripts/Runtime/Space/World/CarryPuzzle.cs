@@ -1,6 +1,6 @@
 // CarryPuzzle.cs
-// Remake (2026-11-06, for mods): the action key's part in the secure containers' energy sockets (World.Portable,
-// World.OrbDispenser, World.EnergySocket), for the flight HUD's prompt chain after the containers: carrying something,
+// Remake (2026-11-06, for mods): the action key's part in the secure containers' energy sockets and conductors (World.Portable,
+// World.OrbDispenser, World.EnergySocket, World.ConductorNet), for the flight HUD's prompt chain after the containers: carrying something,
 // "DROP" lets it go (ES2: the action key again); else a loose sphere or coil within reach in front, "GRAB"; else a ready
 // dispenser within reach, "GRAB" hands a new sphere. Reach: the containers' (LootContainer.OpenRangeM, in front). While
 // carrying, primary fire throws it instead of shooting (Throw; the HUD holds the guns back, WeaponSystem.PrimaryBlocked).

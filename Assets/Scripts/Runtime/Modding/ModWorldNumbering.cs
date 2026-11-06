@@ -389,7 +389,7 @@ namespace GoF2Remake.Modding
                         {
                             if (!(e is JObject so)) throw new ModJsonException($"{where}: a secure container is {{ \"at\": [x, y, z], \"triggers\": [ [x, y, z], ... ] }}");
                             foreach (var p in so.Properties())
-                                if (p.Name != "at" && p.Name != "triggers" && p.Name != "ordered" && p.Name != "retrigger" && p.Name != "sockets")
+                                if (p.Name != "at" && p.Name != "triggers" && p.Name != "ordered" && p.Name != "retrigger" && p.Name != "sockets" && p.Name != "conductors")
                                     Report(mod, $"{where}: unknown secure container field \"{p.Name}\" (ignored)");
                             var at = Xyz(so, "at", where);
                             if (!at.HasValue) throw new ModJsonException($"{where}: a secure container needs \"at\": [x, y, z]");
@@ -411,7 +411,24 @@ namespace GoF2Remake.Modding
                                     { Report(mod, $"{where}: a socket is {{ \"at\": [x, y, z], \"orb\" or \"coil\": [x, y, z] }} (left out)"); continue; }
                                     if (spec.sockets.Count < 4) spec.sockets.Add(new SocketSpec { at = sat.Value, source = (orb ?? coil).Value, coil = coil.HasValue });
                                 }
-                            if (spec.triggers.Count == 0 && spec.sockets.Count == 0) { Report(mod, $"{where}: a secure container without shot triggers or sockets (left out)"); continue; }
+                            if (ModJson.Get(so, "conductors") is JObject co)
+                            {
+                                var cs = new ConductorSpec();
+                                foreach (var p in co.Properties())
+                                    if (p.Name != "sources" && p.Name != "statics" && p.Name != "portables" && p.Name != "receivers" && p.Name != "radius" && p.Name != "receiverRadius")
+                                        Report(mod, $"{where}: unknown conductors field \"{p.Name}\" (ignored)");
+                                foreach (var (field, list) in new[] { ("sources", cs.sources), ("statics", cs.statics), ("portables", cs.portables), ("receivers", cs.receivers) })
+                                    if (ModJson.Get(co, field) is JArray arr)
+                                        foreach (var ce in arr)
+                                            if (ce is JArray xyz && (xyz.Count == 3 || xyz.Count == 4) && xyz.All(v => v.Type == JTokenType.Integer || v.Type == JTokenType.Float))
+                                            { if (list.Count < 12) list.Add(new Vector4((float)xyz[0], (float)xyz[1], (float)xyz[2], xyz.Count == 4 ? Mathf.Clamp((float)xyz[3], 1f, 40000f) : 0f)); }
+                                            else Report(mod, $"{where}: a conductor's place is [x, y, z] or [x, y, z, radius] (left out)");
+                                cs.radius = Mathf.Clamp(ModJson.Float(co, "radius", 4000f, StationsFile), 100f, 40000f);
+                                cs.receiverRadius = Mathf.Clamp(ModJson.Float(co, "receiverRadius", 40f, StationsFile), 1f, 40000f);
+                                if (cs.sources.Count > 0 && cs.receivers.Count > 0) spec.conductors = cs;
+                                else Report(mod, $"{where}: conductors need \"sources\" and \"receivers\" (left out)");
+                            }
+                            if (spec.triggers.Count == 0 && spec.sockets.Count == 0 && spec.conductors == null) { Report(mod, $"{where}: a secure container without shot triggers, sockets or conductors (left out)"); continue; }
                             if (s.containerSecure.Count < 6) s.containerSecure.Add(spec);
                             else { Report(mod, $"{where}: at most 6 secure containers (the rest left out)"); break; }
                         }

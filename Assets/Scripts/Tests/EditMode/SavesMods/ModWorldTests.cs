@@ -769,6 +769,25 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("a socket is { \"at\"", AllMessages(Installed("t_world")));
         }
 
+        [Test]
+        public void ASecureContainersConductors()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'containers': { 'count': 0, 'secure': [ { 'at': [0, 0, 0], 'conductors': { 'sources': [ [0, 0, 100] ], 'portables': [ [0, 50, 0, 3000], [1] ], " +
+                "'receivers': [ [0, 0, -100] ], 'pipes': 1 } }, { 'at': [5, 5, 5], 'conductors': { 'sources': [ [0, 0, 0] ] } } ] } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var s = ModWorld.OrbitOf(78).containerSecure;
+            Assert.AreEqual(1, s.Count, "conductors without receivers lock nothing");
+            Assert.AreEqual(1, s[0].conductors.portables.Count);
+            Assert.AreEqual(4000f, s[0].conductors.radius, "ES2's 20 000 cm: 200 m");
+            Assert.AreEqual(3000f, s[0].conductors.portables[0].w, "its own sphere");
+            Assert.AreEqual(0f, s[0].conductors.sources[0].w, "the default");
+            var msgs = AllMessages(Installed("t_world"));
+            StringAssert.Contains("unknown conductors field \"pipes\"", msgs);
+            StringAssert.Contains("conductors need \"sources\" and \"receivers\"", msgs);
+        }
+
         [Test] public void ASecureContainerNeedsAPlace() => StringAssert.Contains("a secure container needs \"at\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'secure': [ { 'triggers': [ [0, 0, 0] ] } ] } } } ]"));
 
         [Test] public void CloakedContainersAreAList() => StringAssert.Contains("containers \"cloaked\" is a list", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'cloaked': true } } } ]"));

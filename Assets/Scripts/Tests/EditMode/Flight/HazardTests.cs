@@ -110,6 +110,22 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ConductorsCarryEnergyAlongLinkedChains()
+        {
+            // source 0 -> relay at 150 m -> receiver at 340 m (within the relay's 200 m) ; a lone receiver far off
+            var at = new System.Collections.Generic.List<(float, float, float)> { (0f, 0f, 0f), (150f, 0f, 0f), (340f, 0f, 0f), (1000f, 0f, 0f) };
+            var r = new System.Collections.Generic.List<float> { ConductorGraph.ConductorRadiusM, ConductorGraph.ConductorRadiusM, ConductorGraph.ReceiverRadiusM, ConductorGraph.ReceiverRadiusM };
+            var src = new System.Collections.Generic.List<bool> { true, false, false, false };
+            var on = ConductorGraph.Energized(at, r, src, out var feeder);
+            Assert.AreEqual(new[] { true, true, true, false }, on);
+            Assert.AreEqual(new[] { -1, 0, 1, -1 }, feeder, "each fed by the node before it");
+            at[1] = (250f, 0f, 0f);
+            on = ConductorGraph.Energized(at, r, src, out _);
+            Assert.IsFalse(on[1], "beyond both 200 m spheres: no link");
+            Assert.IsTrue(ConductorGraph.Linked(199f, 2f, 200f), "within the larger sphere");
+        }
+
+        [Test]
         public void ASocketTakesItsKindWithinReach()
         {
             float reach = GoF2Remake.World.EnergySocket.ConnectM;

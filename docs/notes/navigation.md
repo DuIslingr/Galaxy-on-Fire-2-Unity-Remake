@@ -237,8 +237,20 @@ the player ship) and `NavigationView` (flight HUD).
   throws it (`CarryPuzzle.Throw`, `Portable.Release(true)`: its carried velocity + `FlingMs`, FlingStrength 20 000 cm/s x 3.6,
   along the nose); DROP lets it go with its velocity; loose, it drifts on with `Portable.Damping` 0.2 (the rift mines' UE
   damping), and a socket takes it in passing. Not on touch (the fire button is SetPrimaryHeld). Test
-  `AThrownSphereKeepsItsMomentumAndFliesOn`. Left out: the trigger sound, conductor chains (the importer leaves those
-  bulletproof), the multi-activation links, the sockets' laser beams and the fire / ice orb variants' fields. Tests
+  `AThrownSphereKeepsItsMomentumAndFliesOn`.
+  Conductors (2026-11-06, ES2's ConductorReceiverRequired, UConductorComponent in ES2_classes.hpp, BP_Conductor_Source /
+  _Static / _Portable / _Receiver): a secure container's `conductors` (`ConductorSpec`: `sources`, `statics`, `portables`,
+  `receivers`, at most 12 each, `[x, y, z]` or `[x, y, z, radius]`; `radius` 4000 / `receiverRadius` 40 game units, the
+  blueprints' 20 000 / 200 cm) must have every receiver energized too. `Flight.ConductorGraph.Energized`: two nodes link when
+  either lies in the other's sphere, a breadth-first walk from the sources (`feeder`: each node's link back, for the beams).
+  `World.ConductorNet` runs it each frame: a reached receiver charges `ChargeS` 1.5 s (ChargeTime) and stays energized while
+  reached; all energized, every container on the net checks (`CheckUnlock`); nets with the same places are shared (`Key`).
+  Beams: a LineRenderer from each energized node to its feeder; nodes glow when energized; sources and receivers are radar
+  objects. Portable conductors are `Portable.Kind.Conductor` (carried, dropped or thrown like a coil, never socketed), slowing
+  with `ConductorDamping` 0.1 or `ConductingDamping` 3 while energized (NormalDamping / ConductingDamping). Tests
+  `ConductorsCarryEnergyAlongLinkedChains`, `ModWorldTests.ASecureContainersConductors`. Left out: the Okkar pipes' box shape
+  (the importer gives them a sphere), seesaw toggles, conductor capsules, layers in the remake (the importer filters by
+  them), the trigger sound, the multi-activation links, the sockets' laser beams and the fire / ice orb variants' fields. Tests
   `HazardTests.ShotTriggers*` / `ASocketTakesItsKindWithinReach`, `ModWorldTests.AnOrbitsSecureContainers` /
   `ASecureContainersEnergySockets`. Not tried in game.
 - **Traffic lanes** (remake 2026-11-03, for mods; stations.json `orbit.lanes` -> `ModWorld.LaneSpec`, `Flight.TrafficLane`

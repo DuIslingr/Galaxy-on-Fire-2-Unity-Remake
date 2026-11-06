@@ -14,7 +14,8 @@
 //   secure        (2026-11-06, ES2's BP_ItemContainer_Armored, OpenOnUnlocked): a bulletproof one that won't open until
 //                 its shot triggers are all lit (ShotTriggersRequired: World.ShotTrigger, Flight.ShotTriggerChain) and its
 //                 energy sockets filled (EnergyOrbsRequired / EnergyCoilSocketsRequired: World.EnergySocket, carried
-//                 spheres and coils, World.Portable / OrbDispenser / CarryPuzzle); then it opens itself. A rare container's rolls, the fixed loot after the cloaked ones'.
+//                 spheres and coils, World.Portable / OrbDispenser / CarryPuzzle) and its conductor receivers energized
+//                 (ConductorReceiverRequired: World.ConductorNet); then it opens itself. A rare container's rolls, the fixed loot after the cloaked ones'.
 // Loot: ES2's loot_types.CSV, a "Container" LootRolls 1-3 drops, a "RareContainer" (here the bulletproof one) 2-4: as many
 // freighter loot rolls. An orbit's fixed loot ("loot", EVERSPACE 2's unique_loot.csv) goes on top, an entry a container in
 // turn (the bulletproof ones first), each entry once a game: taken when its container opens (Session.FixedLootTaken).
@@ -54,6 +55,7 @@ namespace GoF2Remake.World
         /// <summary>A secure one's shot triggers (World.ShotTrigger) and energy sockets (World.EnergySocket), null = none.</summary>
         ShotTriggerChain chain;
         List<EnergySocket> sockets;
+        ConductorNet conductors;
         bool secure;
         public bool Locked => secure && !Opened;
         public bool Opened { get; private set; }
@@ -87,6 +89,7 @@ namespace GoF2Remake.World
         {
             if (!secure || Opened || chain != null && !chain.Unlocked) return;
             if (sockets != null) foreach (var s in sockets) if (s == null || !s.Filled) return;
+            if (conductors != null && !conductors.AllEnergized) return;
             Unlock();
         }
 
@@ -121,6 +124,7 @@ namespace GoF2Remake.World
                     else if (!dispensers.ContainsKey(s.source)) dispensers[s.source] = OrbDispenser.Make(parent, OrbitLayout.ToUnity(s.source));
                 }
             }
+            if (spec.conductors != null) conductors = ConductorNet.Make(parent, spec.conductors, this);
         }
 
         /// <summary>A cloaked one's marker and lock come on (the ship came near); it stays cloaked until opened.</summary>

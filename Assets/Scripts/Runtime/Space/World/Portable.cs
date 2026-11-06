@@ -5,7 +5,9 @@
 // EnergyOrbLifetime 40 s unless socketed) or an energy coil lying in the orbit (BP_Portable_EnergyCoil, stays). Grabbing and
 // letting go: World.CarryPuzzle. Let go it keeps its momentum (PortableComponent::Detach bKeepMomentum); thrown (Detach bFling:
 // bAllowFlinging, FlingStrength 20 000 cm/s, BP_Portable_EnergyCoil's and the common value) it flies on ahead of the ship at
-// FlingMs more, slowing with the rift mines' damping (UE linear damping 0.2). Drawn as the rift's spheres (RiftHazards.Sphere): a white-blue glowing sphere, an orange coil.
+// FlingMs more, slowing with the rift mines' damping (UE linear damping 0.2). A portable conductor (BP_Conductor_Portable,
+// World.ConductorNet) is carried the same way; loose, it slows with its NormalDamping 0.1, or ConductingDamping 3 while it
+// carries energy (so it stops where it links). Drawn as the rift's spheres (RiftHazards.Sphere): a white-blue glowing sphere, an orange coil.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -19,13 +21,19 @@ namespace GoF2Remake.World
     {
         /// <summary>BP_EnergyOrb_Dispenser's EnergyOrbLifetime (s); how far behind the ship it hangs (m); its size (m).</summary>
         public const float OrbLifeS = 40f, CarryBehindM = 30f, RadiusM = 4f, FlingMs = 200f * 3.6f, Damping = 0.2f;
-        static readonly Color OrbColor = new Color(1.6f, 2.2f, 3f, 0.9f), CoilColor = new Color(3f, 1.4f, 0.3f, 0.9f);
+        static readonly Color OrbColor = new Color(1.6f, 2.2f, 3f, 0.9f), CoilColor = new Color(3f, 1.4f, 0.3f, 0.9f), ConductorColor = new Color(0.4f, 0.8f, 1.6f, 0.8f);
+        public enum Kind { Orb, Coil, Conductor }
+        /// <summary>BP_Conductor_Portable's NormalDamping and ConductingDamping.</summary>
+        public const float ConductorDamping = 0.1f, ConductingDamping = 3f;
 
         public static readonly List<Portable> All = new List<Portable>();
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() => All.Clear();
 
-        public bool Coil { get; private set; }
+        public Kind Type { get; private set; }
+        public bool Coil => Type == Kind.Coil;
+        /// <summary>A conductor carrying energy (World.ConductorNet sets it).</summary>
+        public bool Conducting { get; set; }
         /// <summary>The ship carrying it, null = loose.</summary>
         public Transform Carrier { get; private set; }
         /// <summary>In a socket for good.</summary>
@@ -40,19 +48,24 @@ namespace GoF2Remake.World
         void OnDisable() => All.Remove(this);
         void OnDestroy() { if (marker != null) Target.RadarObjects.Remove(marker); }
 
-        public static Portable Make(Transform parent, Vector3 at, bool coil, OrbDispenser from = null)
+        public static Portable Make(Transform parent, Vector3 at, bool coil, OrbDispenser from = null) => Make(parent, at, coil ? Kind.Coil : Kind.Orb, from);
+
+        public static Portable Make(Transform parent, Vector3 at, Kind kind, OrbDispenser from = null)
         {
-            var go = RiftHazards.Sphere(parent, at, coil ? RadiusM * 0.8f : RadiusM, coil ? CoilColor : OrbColor, coil ? "Energy coil" : "Energy sphere");
+            bool coil = kind == Kind.Coil;
+            var go = RiftHazards.Sphere(parent, at, coil ? RadiusM * 0.8f : RadiusM, kind == Kind.Coil ? CoilColor : kind == Kind.Conductor ? ConductorColor : OrbColor,
+                                        kind == Kind.Coil ? "Energy coil" : kind == Kind.Conductor ? "Conductor" : "Energy sphere");
             if (coil) go.transform.localScale = new Vector3(RadiusM * 1.2f, RadiusM * 2.4f, RadiusM * 1.2f);
             var p = go.AddComponent<Portable>();
-            p.Coil = coil;
+            p.Type = kind;
             p.From = from;
-            if (!coil) p.lifeS = OrbLifeS;
+            if (kind == Kind.Orb) p.lifeS = OrbLifeS;
             var t = p.marker = go.AddComponent<Target>();
             t.hp = t.maxHp = 1f;
             t.invulnerable = true;
             t.radius = RadiusM;
-            t.displayName = coil ? Localization.Extra("energyCoil", "Energy coil") : Localization.Extra("energySphere", "Energy sphere");
+            t.displayName = kind == Kind.Coil ? Localization.Extra("energyCoil", "Energy coil")
+                          : kind == Kind.Conductor ? Localization.Extra("conductor", "Conductor") : Localization.Extra("energySphere", "Energy sphere");
             t.plateNameOnly = t.plateNoIcon = true;
             Target.RadarObjects.Add(t);
             return p;
@@ -98,7 +111,8 @@ namespace GoF2Remake.World
             if (Carrier == null)
             {
                 transform.position += Velocity * dt;
-                Velocity *= Mathf.Exp(-Damping * dt);
+                float damping = Type != Kind.Conductor ? Damping : Conducting ? ConductingDamping : ConductorDamping;
+                Velocity *= Mathf.Exp(-damping * dt);
                 return;
             }
             var was = transform.position;
