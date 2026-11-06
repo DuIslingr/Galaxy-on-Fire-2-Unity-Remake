@@ -565,6 +565,8 @@ namespace GoF2Remake.World
         {
             var list = (db?.Ship(spec.ship) as CustomShipData)?.traffic?.secondaries;
             if (list == null) return;
+            // GoF3's Easy (NPCFactory::getSecondaryWeaponNPCAmmount, secondaryWeaponNPCCapMultiplier 0.5): half carry none
+            if (dogfight != null && Session.Difficulty < 0.25f && Random.value >= Gof3Dogfight.EasySecondaryShare) return;
             foreach (var s in list)
             {
                 if (s == null || !s.Carried(Session.Rank, Random.value)) continue;

@@ -79,8 +79,17 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   lined up; 15 s cooldown); Tease (AIJob_Tease: every 10 s, 40 %, within 800 x 11.4 and in front of its nose: 4-6 s 180
   x 11.4 ahead of it, holding fire). The aim leads (the target's smoothed velocity x the shot's flight time, `gunSpeed`)
   with a miss of up to 1000 units settling to 0 over 0.5 s each run. The roll (NPCBankingSystem::updateEvade): per hit
-  by `EvadeChance(Session.Difficulty)` (Easy 0, Normal 0.15, Hard 0.25, Extreme 0.33; Most Wanted and pirate-event
-  bosses 0.66), 1.8 s, `Target.invulnerable` for 1.5 s (cleared only if it set it), 3 s locked after; the model spins
+  by `EvadeChance(Session.Difficulty, boss, traffic.evade)` (2026-11-06, after a survey of GoF3's difficulty:
+  NPCFactory::setHordeModeModifiers, ConfigNpc): the hull's evadeChanceBase (ships.json `"traffic": { "evade" }`: scouts
+  and T1-T2 hulls 0, T3+ fighters 0.33 (the default), T3+ gunships 1, GoF3's bosses 0.1) x the difficulty's multiplier,
+  capped (Easy 0, Normal = GoF3's Medium 0.15, Hard 0.25, Extreme = GoF3's boss missions' 0.66; Most Wanted and
+  pirate-event bosses on that boss column too; GoF3's +0.02 a wave left out), 1.8 s, `Target.invulnerable` for 1.5 s
+  (cleared only if it set it), 10 s locked after (the component's default, which GoF3's templates keep; was 3 s). GoF3's
+  Easy also (MissionController::configureSteeringAgent, SteeringAgentSystem::limitSpeed): a fighter after the player within
+  1200 x 11.4 units and in its sights (dot > 0.3) flies at |its heading . the player's| (0.33 at least) of its speed
+  (`Gof3EasySlowdown`); half the fighters carry their hull's secondaries (secondaryWeaponNPCCapMultiplier 0.5,
+  `SetOwnSecondary`). Not taken: GoF3's per-wave hull / damage on Hard (no waves), its danger-level hull / damage (GoF2's
+  difficulty factor already), the wingmen's kill ratio and recovery, the Premium difficulty's player bonuses; the model spins
   only, so other players see the path, not the spin. Not for wingmen, freighters, turrets, fixed objects, capital ships,
   an event order or a mind-controlled ship. GoF3's distances x `Gof3Dogfight.DistanceScale` 11.4 (the devices' factor).
   Left out: GoF3's attacker budget (the remake's Smarter NPC targeting is the same rule), formations and flocking, the

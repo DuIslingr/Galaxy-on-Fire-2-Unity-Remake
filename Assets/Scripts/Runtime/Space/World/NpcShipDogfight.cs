@@ -40,7 +40,8 @@ namespace GoF2Remake.World
             if (string.Equals(ai, "es2", System.StringComparison.OrdinalIgnoreCase)) { SetupEs2Fight(); return; }   // (NpcShipEs2)
             if (!string.Equals(ai, "gof3", System.StringComparison.OrdinalIgnoreCase)) return;
             bool boss = spec.wantedIndex >= 0 || spec.pirateEvent == SpawnSpec.EventBoss;
-            dogfight = new Gof3Dogfight(Gof3Dogfight.EvadeChance(Session.Difficulty, boss), () => Random.value);
+            float evadeBase = (db?.Ship(spec.ship) as CustomShipData)?.traffic?.evade ?? -1f;   // (GoF3's evadeChanceBase by class and tier)
+            dogfight = new Gof3Dogfight(Gof3Dogfight.EvadeChance(Session.Difficulty, boss, evadeBase), () => Random.value);
         }
 
         /// <summary>It fights GoF3's way this frame: attacking a target on its own (no route, order, wingman duty).</summary>
@@ -160,6 +161,17 @@ namespace GoF2Remake.World
             // aim past the slot along the leader's heading, so it flies alongside instead of circling the point
             slot += lt.forward * spacing;
             return true;
+        }
+
+        /// <summary>GoF3's Easy (SteeringAgentSystem::limitSpeed): crossing the player's sights close by, it slows down; 1 else.</summary>
+        float Gof3EasySlowdown()
+        {
+            if (dogfight == null || Session.Difficulty >= 0.25f || IsWingman || target == null || !target.isPlayer) return 1f;
+            var p = target.transform;
+            var toUs = transform.position - p.position;
+            float d = toUs.magnitude;
+            if (d < 1e-4f) return 1f;
+            return Gof3Dogfight.EasySlowdown(d / M, Vector3.Dot(p.forward, toUs / d), Vector3.Dot(p.forward, transform.forward));
         }
 
         /// <summary>The roll under way: the model's turn about its nose (degrees) and the side step this frame (Unity metres).</summary>

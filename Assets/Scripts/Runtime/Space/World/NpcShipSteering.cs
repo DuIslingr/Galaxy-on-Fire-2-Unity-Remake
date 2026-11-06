@@ -143,7 +143,7 @@ namespace GoF2Remake.World
             if (model != null) model.localRotation = Quaternion.AngleAxis(bank * Mathf.PI / 4096f * Mathf.Rad2Deg + barrel, Vector3.forward);
             if (levelling) Roll(dtMs);
 
-            float dogSpeed = dog ? dogfight.SpeedFactor : formationSpeed;
+            float dogSpeed = dog ? dogfight.SpeedFactor * Gof3EasySlowdown() : formationSpeed;   // (GoF3's Easy: slower in your sights)
             if (!Hp.empDisabled) transform.position += transform.forward * speed * slow.SpeedFactor * roleSpeedFactor * dogSpeed * dtMs * M + sideStep;   // (remake: a rift's)
         }
 
