@@ -104,6 +104,8 @@ namespace GoF2Remake.Modding
         public static int InteriorRace(int station) => stationInterior.TryGetValue(station, out int r) ? r : -1;
         /// <summary>A station's own planet texture (Backdrop's "mod:" name, ModBackdrop), null: the game's.</summary>
         public static string PlanetTexture(int station) => planetTextures.TryGetValue(station, out var t) ? t : null;
+        /// <summary>The station's planet as a lit sphere (stations.json "planetSphere"), null: its planetTexture's disc.</summary>
+        public static PlanetSphereSpec PlanetSphereOf(int station) => planetSpheres.TryGetValue(station, out var p) ? p : null;
         /// <summary>A station's star map planet image (stations.json "mapTexture", wrapped round the map's sphere; Backdrop's
         /// "mod:" name), null: none (StarMap then shows its planetTexture as a disc, else the game's planet).</summary>
         public static string MapTexture(int station) => mapTextures.TryGetValue(station, out var t) ? t : null;
@@ -554,6 +556,79 @@ namespace GoF2Remake.Modding
                 else throw new ModJsonException($"{where}: a volume is {{ \"box\": [x, y, z, hx, hy, hz] }} or {{ \"sphere\": [x, y, z, r] }} (game units)");
             }
             return r;
+        }
+        /// <summary>stations.json "life" (LifeSpec): { "scene", "loops": [ { "points", "count", "speed", "loop", "twoLanes",
+        /// "laneOffset", "spots": [[x, y, z, nx, ny, nz], ...] } ] }, at most MaxLifeLoops loops.</summary>
+        public const int MaxLifeLoops = 24, MaxLifeDrones = 40, MaxLifeSpots = 64;
+        static LifeSpec ParseLife(ModInfo mod, JToken t, string where)
+        {
+            if (!(t is JObject o)) throw new ModJsonException($"{where}: \"life\" must be {{ \"scene\", \"loops\": [ ... ] }}");
+            foreach (var p in o.Properties())
+                if (p.Name != "scene" && p.Name != "loops") Report(mod, $"{where}: unknown life field \"{p.Name}\" (ignored)");
+            var life = new LifeSpec { scene = ModJson.Str(o, "scene", "life") };
+            if (!(ModJson.Get(o, "loops") is JArray list)) throw new ModJsonException($"{where}: \"life\" needs \"loops\": [ {{ \"points\": [[x, y, z], ...] }} ]");
+            if (list.Count > MaxLifeLoops) throw new ModJsonException($"{where}: at most {MaxLifeLoops} life loops a station");
+            Vector3 V(JToken a, int at, string what)
+            {
+                var arr = (JArray)a;
+                var v = new Vector3((float)arr[at], (float)arr[at + 1], (float)arr[at + 2]);
+                if (Mathf.Abs(v.x) > 1e5f || Mathf.Abs(v.y) > 1e5f || Mathf.Abs(v.z) > 1e5f) throw new ModJsonException($"{where}: a life loop's {what} lies too far out (at most 100000 m)");
+                return v;
+            }
+            bool Numbers(JToken a, int n) => a is JArray arr && arr.Count == n && arr.All(v => v.Type == JTokenType.Integer || v.Type == JTokenType.Float);
+            foreach (var e in list)
+            {
+                if (!(e is JObject l)) throw new ModJsonException($"{where}: a life loop is {{ \"points\", \"count\", \"speed\", \"loop\", \"twoLanes\", \"laneOffset\", \"spots\" }}");
+                foreach (var p in l.Properties())
+                    if (p.Name != "points" && p.Name != "count" && p.Name != "speed" && p.Name != "loop" && p.Name != "twoLanes" && p.Name != "laneOffset" && p.Name != "spots")
+                        Report(mod, $"{where}: unknown life loop field \"{p.Name}\" (ignored)");
+                if (!(ModJson.Get(l, "points") is JArray pts) || pts.Count < 2) throw new ModJsonException($"{where}: a life loop needs \"points\": at least two [x, y, z]");
+                var loop = new LifeLoop();
+                foreach (var pt in pts)
+                {
+                    if (!Numbers(pt, 3)) throw new ModJsonException($"{where}: a life loop's points are [x, y, z] (the model's metres)");
+                    loop.points.Add(V(pt, 0, "point"));
+                }
+                loop.count = Mathf.Clamp(ModJson.Int(l, "count", 4, StationsFile), 1, MaxLifeDrones);
+                loop.speed = Mathf.Clamp(ModJson.Float(l, "speed", 20f, StationsFile), 0.5f, 500f);
+                loop.laneOffset = Mathf.Clamp(ModJson.Float(l, "laneOffset", 5f, StationsFile), 0f, 100f);
+                loop.loop = ModJson.Bool(l, "loop", true, StationsFile);
+                loop.twoLanes = ModJson.Bool(l, "twoLanes", true, StationsFile);
+                if (ModJson.Get(l, "spots") is JToken sp)
+                {
+                    if (!(sp is JArray spots)) throw new ModJsonException($"{where}: a life loop's \"spots\" are [[x, y, z, nx, ny, nz], ...]");
+                    foreach (var s in spots.Take(MaxLifeSpots))
+                    {
+                        if (!Numbers(s, 6)) throw new ModJsonException($"{where}: a weld spot is [x, y, z, nx, ny, nz] (the model's metres, its outward normal)");
+                        var n = V(s, 3, "spot normal");
+                        if (n.sqrMagnitude < 1e-6f) throw new ModJsonException($"{where}: a weld spot's normal is zero");
+                        loop.spots.Add((V(s, 0, "spot"), n.normalized));
+                    }
+                }
+                life.loops.Add(loop);
+            }
+            return life.loops.Count > 0 ? life : null;
+        }
+        /// <summary>stations.json "planetSphere": { "look": "es2Desert", "maps": { role: PNG, ... }, "atmosphere": [r, g, b] }; the
+        /// maps must be in the mod ('check').</summary>
+        static PlanetSphereSpec ParsePlanetSphere(ModInfo mod, JToken t, string where, bool check)
+        {
+            if (!(t is JObject o)) throw new ModJsonException($"{where}: \"planetSphere\" must be {{ \"look\", \"maps\", \"atmosphere\" }}");
+            foreach (var p in o.Properties())
+                if (p.Name != "look" && p.Name != "maps" && p.Name != "atmosphere") Report(mod, $"{where}: unknown planetSphere field \"{p.Name}\" (ignored)");
+            var spec = new PlanetSphereSpec { mod = mod, look = ModJson.Str(o, "look") };
+            if (Array.IndexOf(PlanetSphereLooks, spec.look) < 0)
+                throw new ModJsonException($"{where}: planetSphere \"look\" is one of {string.Join(", ", PlanetSphereLooks)}");
+            if (ModJson.Get(o, "maps") is JObject maps)
+                foreach (var p in maps.Properties())
+                {
+                    if (p.Value.Type != JTokenType.String) throw new ModJsonException($"{where}: planetSphere map \"{p.Name}\" is a PNG in the mod");
+                    string file = (string)p.Value;
+                    if (check && !mod.Source.Exists(file)) throw new ModJsonException($"{where}: the planetSphere map {file} isn't in the mod");
+                    spec.maps[p.Name] = file;
+                }
+            if (ModJson.Get(o, "atmosphere") is JArray a && a.Count >= 3) spec.atmosphere = new Color((float)a[0], (float)a[1], (float)a[2]);
+            return spec;
         }
         /// <summary>A mod's PNG as Backdrop's texture name.</summary>
         static string BackdropName(ModInfo mod, string path) => "mod:" + mod.Id + "|" + path;

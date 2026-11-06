@@ -1724,9 +1724,37 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | `orbit` | The layout of its orbit level: station or not, jumpgate, arrivals, asteroids, fog, sun and planet. See [Orbit layouts](#orbit-layouts). |
 | `music` | A mod's track for its docked music (see [Music](#music)). |
 | `mobile` | A new station that moves: `true` or `{ "route": [stations] \| "any", "stayMinutes": 15, "systemMinutes": 90, "speed": 0.2, "race": "terran", "engines": [mounts] }`. See [Mobile stations](#mobile-stations). |
+| `life` | Drones at work round its own `model`, like EVERSPACE 2's worker drones. See [Station life](#station-life). |
 
 Changing a station (`"override"`): `name`, `subtitle`, `description`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
 `mapTexture`, `mapRing`, `mapPlace`, `orbit`, `music` (an original station can get a new model too).
+
+### Station life
+
+A station with its own `model` can have drones at work round it, like EVERSPACE 2's worker drones: they fly loops round its
+structures, and now and then one leaves its loop for a spot on the hull, welds there a while with sparks and flies back to
+its place on the loop.
+
+```json
+"life": { "scene": "life", "loops": [ { "points": [[x, y, z], ...], "count": 4, "speed": 20, "loop": true, "twoLanes": true,
+                                       "laneOffset": 5, "spots": [[x, y, z, nx, ny, nz], ...] } ] }
+```
+
+Everything is in the model's own frame: its metres as the glTF file has them, before `modelYaw`, `modelSize` and the
+centring, so the drones turn, scale and move with the model.
+
+| Field | |
+|---|---|
+| `scene` | The drone: the scene of this name in the station's model file (glTF files can hold several scenes; the station is its main one). Its nose faces +Z. Default `"life"`. |
+| `loops` | At most 24. Each: |
+| `points` | The loop's path, at least two points; a smooth curve runs through them. |
+| `count` | Drones on it, spread evenly: 1 to 40 (default 4). |
+| `speed` | Metres a second, in the model's metres (default 20, EVERSPACE 2's). |
+| `loop` | `true` (default): the path closes; `false`: the drones turn back at its ends. |
+| `twoLanes` | `true` (default): every other drone runs the other way, each `laneOffset` metres (default 5) to its right. |
+| `spots` | Where its drones weld: a point on the hull and the hull's outward direction there, at most 64. A drone with a spot within 100 m and 90 degrees of its heading may go: it waits 5 m off the spot facing the hull, welds 10 to 20 s, and its next weld comes at most 20 s after it is back (one drone of a loop is picked every 2 s, shared among those not welding). Without spots the drones only fly. |
+
+The drones are only scenery: no marker, no collision. Not in the alien orbit or interstellar space.
 
 ### Mobile stations
 

@@ -94,7 +94,7 @@ namespace GoF2Remake.Modding
         static readonly HashSet<string> StationFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "system", "techLevel", "planet", "looksLike", "music", "model", "modelSize", "modelYaw", "modelCentre",
               "materials", "collision", "volumes", "interior", "planetTexture", "mapTexture", "mapRing", "mapPlace", "orbit", "hangar", "bar", "mobile",
-              "subtitle", "description" };
+              "subtitle", "description", "life", "planetSphere" };
 
         /// <summary>ModContent.Parse: a mod's systems.json and stations.json into 'systems' / 'stations'.</summary>
         public static void Parse(ModInfo mod, List<Def> systems, List<Def> stations)
@@ -140,6 +140,12 @@ namespace GoF2Remake.Modding
                         throw new ModJsonException($"{d.where}: the {image} {file} isn't in the mod");
                 ModJson.Bool(o, "mapRing", false, d.file);
                 if (ModJson.Get(o, "orbit") is JToken orbitToken) ParseOrbit(mod, orbitToken, d.where, null);
+                if (ModJson.Get(o, "life") is JToken lifeToken)
+                {
+                    if (!ModJson.Has(o, "model")) throw new ModJsonException($"{d.where}: \"life\" needs the station's own \"model\"");
+                    ParseLife(mod, lifeToken, d.where);
+                }
+                if (ModJson.Get(o, "planetSphere") is JToken sphereToken) ParsePlanetSphere(mod, sphereToken, d.where, check: true);
                 if (ModJson.Get(o, "mapPlace") is JToken placeToken) ParseMapPlace(placeToken, d.where);
                 if (ModJson.Get(o, "mobile") is JToken mobileToken)
                 {
@@ -195,6 +201,30 @@ namespace GoF2Remake.Modding
             /// <summary>The gate's collision and approach radius in game units (0: the race gate's).</summary>
             public float gateRadius;
             public string Assembly => gateSystem >= 0 ? $"modgate_{gateSystem:000}" : $"modstation_{station:000}";
+            /// <summary>Remake (2026-11-04): its station life (stations.json "life", World.StationLife), null = none.</summary>
+            public LifeSpec life;
+        }
+
+        /// <summary>Remake (2026-11-04): a station model's life, EVERSPACE 2's worker drones (stations.json "life",
+        /// World.StationLife): loops of drones round its structures that stop now and then to weld its hull. The drone is the
+        /// model file's scene "scene" (its first node; nose on +z). Everything in the model's own frame: its glTF metres as
+        /// the file has them, before modelYaw, modelSize and the centring (which the drones follow with the model).</summary>
+        public sealed class LifeSpec
+        {
+            public string scene = "life";
+            public List<LifeLoop> loops = new List<LifeLoop>();
+        }
+
+        public sealed class LifeLoop
+        {
+            /// <summary>The model's glTF metres, at least two.</summary>
+            public List<Vector3> points = new List<Vector3>();
+            public int count = 4;
+            /// <summary>The model's metres a second (ES2's BaseSpeed 2000 cm/s: 20).</summary>
+            public float speed = 20f, laneOffset = 5f;
+            public bool loop = true, twoLanes = true;
+            /// <summary>Where its drones weld: a spot on the hull and its outward normal (the model's glTF frame).</summary>
+            public List<(Vector3 at, Vector3 normal)> spots = new List<(Vector3, Vector3)>();
         }
 
         static readonly Dictionary<int, StationModel> gateModels = new Dictionary<int, StationModel>();
@@ -204,6 +234,19 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, string> stationHangar = new Dictionary<int, string>(), stationBar = new Dictionary<int, string>();
 
         const string NoBarKey = "none";
+        /// <summary>Remake (2026-11-04): a station's planet drawn as a lit sphere (stations.json "planetSphere", World.Backdrop),
+        /// after EVERSPACE 2's planet materials: 'look' the master it follows (es2Desert), its maps (mod paths) by role, its
+        /// atmosphere's colour (linear RGB, null: none).</summary>
+        public sealed class PlanetSphereSpec
+        {
+            public ModInfo mod;
+            public string look;
+            public readonly Dictionary<string, string> maps = new Dictionary<string, string>();
+            public Color? atmosphere;
+        }
+        public static readonly string[] PlanetSphereLooks = { "es2Desert" };
+        static readonly Dictionary<int, PlanetSphereSpec> planetSpheres = new Dictionary<int, PlanetSphereSpec>();
+
         static readonly Dictionary<int, string> planetTextures = new Dictionary<int, string>(), sunTextures = new Dictionary<int, string>(),
                                                 mapTextures = new Dictionary<int, string>();
         static readonly HashSet<int> mapRings = new HashSet<int>();

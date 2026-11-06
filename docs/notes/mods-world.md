@@ -99,6 +99,21 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   Freeport has both. Tests `ModWorldTests.AnOrbitLaidOutByItsMod` / `AnOrbitWithoutStationOrAsteroids` and the errors. The builder's Stations page: the map
   image and the ring. Verified in Play mode: Kepler Prime's banded map planet lit from the sun with its ring, and with
   only planetTexture the disc.
+- **Planet spheres** (remake 2026-11-04, the ES2 importer; stations.json `planetSphere` -> `ModWorld.PlanetSphereSpec`,
+  `ModWorld.PlanetSphereOf`, `World.Backdrop.SphereMaterial`): a station's planet drawn as a lit sphere (GoF2/Es2Planet in
+  Resources/GoF2Sky) in place of its quad, as big on screen as the quad's disc, placed farther (`SphereFar`), its pole on
+  the quad's up, lit by the orbit's sun (`_SunDir` / `_SunColor`, a little ambient on the night side); no mirroring, no ring.
+  The shader follows ES2's planet masters' compiled base-pass shaders: `_Look` 0 M_Planet_Desert (its latitude-stretched UVs,
+  T_Planet_Rock_002_H_C_R with its detail layer, the overlay tone, the rim, the poles); each further master needs its look
+  there. Check: PlayMode `PlanetSphereCheck`. Landed 2026-11-06 from the session that wrote it (uncommitted until then).
+- **Station life** (remake 2026-11-04, the ES2 importer's station_life.py; stations.json `model` + `life` ->
+  `ModWorld.LifeSpec`, `World.StationLife`, attached with the orbit in `SpaceLevelWormholes`): after ES2's worker drones
+  (BP_SplineTraffic_WorkerDrones): drones (the `scene` of that name in the station's glTF) on loops round its structures
+  (`Flight.TrafficLane`: spread evenly, two lanes the other way `laneOffset` to the right), and every ScanIntervalS one
+  drone not welding and off its cooldown looks for a `spots` weld point within ReachM / ConeDeg of its heading (ES2 traces
+  for one; the importer traces them beforehand), leaves its loop for it WeldOffsetM off the hull, welds WeldMinS..WeldMaxS
+  with sparks and rejoins its place on the loop. In the model's own frame (children of its hull). Scenery only: no marker,
+  no collision; not in the alien orbit or interstellar space. Check: PlayMode `StationLifeCheck`. Landed 2026-11-06.
 - **Custom hangars and bars** (`ModInteriors`, a mod's `interiors.json`: id, type hangar | bar, model, scale, materials, fov
   (degrees), near / far (metres), ambient, lightIntensity, fog [r, g, b, end m]; hangar startYaw (Unity degrees), parkedMax,
   flights, cruise, gateSpan; stations.json `hangar` / `bar` = an interior key, `interior` still the race): the GLB loads with the

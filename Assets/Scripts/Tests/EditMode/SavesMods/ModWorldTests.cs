@@ -729,6 +729,37 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(l[1].loop && l[1].twoLanes, "ES2's ClosedLoop and TwoLanes");
         }
 
+        // Remake (2026-11-04, EVERSPACE 2's worker drones): a station model's "life" (World.StationLife).
+        [Test]
+        public void AStationModelsLife()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'model': 'st.glb', 'life': { 'loops': [ { 'points': [[1, 2, 3], [4, 5, 6], [7, 8, 9]], 'count': 3, 'speed': 12, 'loop': false, " +
+                "'laneOffset': 2, 'spots': [[1, 1, 1, 0, 0, 2]] }, { 'points': [[0, 0, 0], [10, 0, 0]], 'count': 99 } ] } }, " +
+                "{ 'override': 79, 'model': 'st.glb' } ]"), ("st.glb", "x"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var life = ModWorld.ModelOf(78).life;
+            Assert.AreEqual("life", life.scene, "the model's scene \"life\" by default");
+            Assert.AreEqual(2, life.loops.Count);
+            var a = life.loops[0];
+            Assert.AreEqual(new Vector3(7, 8, 9), a.points[2]);
+            Assert.AreEqual((3, 12f, 2f), (a.count, a.speed, a.laneOffset));
+            Assert.IsFalse(a.loop);
+            Assert.IsTrue(a.twoLanes);
+            Assert.AreEqual(1, a.spots.Count);
+            Assert.AreEqual(new Vector3(0, 0, 1), a.spots[0].normal, "the normal made a unit");
+            var b = life.loops[1];
+            Assert.AreEqual(ModWorld.MaxLifeDrones, b.count, "at most 40 drones a loop");
+            Assert.AreEqual((20f, 5f), (b.speed, b.laneOffset), "ES2's BaseSpeed 2000 cm/s and LaneOffset 500 cm");
+            Assert.IsTrue(b.loop && b.spots.Count == 0);
+            Assert.IsNull(ModWorld.ModelOf(79).life, "none unless given");
+            Assert.AreEqual(new Vector3(-1, 2, 3), GoF2Remake.World.StationLife.FromGltf(new Vector3(1, 2, 3)), "glTFast's frame mirrors x");
+        }
+
+        [Test] public void LifeNeedsTheStationsOwnModel() => StringAssert.Contains("\"life\" needs the station's own \"model\"", WorldError("stations.json", "[ { 'override': 1, 'life': { 'loops': [] } } ]"));
+        [Test] public void AWeldSpotHasSixNumbers() => StringAssert.Contains("a weld spot is [x, y, z, nx, ny, nz]", WorldError("stations.json", "[ { 'override': 1, 'model': 'a.glb', 'life': { 'loops': [ { 'points': [[0, 0, 0], [1, 0, 0]], 'spots': [[0, 0, 0]] } ] } } ]"));
+
         // Remake (2026-11-04): an orbit's EVERSPACE 2 location level (its encounters' pay, CruiseEncounterSpawner.Es2Level).
         [Test]
         public void AnOrbitsLevel()
