@@ -229,7 +229,7 @@ namespace GoF2Remake.Modding
                     s.minefields.Add(new MinefieldSpec
                     {
                         kind = kind, centre = centre.Value,
-                        radius = Mathf.Clamp(ModJson.Float(m, "radius", 5000f, StationsFile), 500f, 100000f),
+                        radius = Mathf.Clamp(ModJson.Float(m, "radius", 18000f, StationsFile), 500f, 100000f),
                         count = Mathf.Clamp(ModJson.Int(m, "count", 20, StationsFile), 1, 40),
                         raiderSeconds = ModJson.Float(m, "raiderSeconds", -1f, StationsFile) is float rs && rs >= 0f ? Mathf.Min(rs, 20f) : -1f,
                         minRank = Mathf.Clamp(ModJson.Int(m, "minRank", 4, StationsFile), 0, 20),

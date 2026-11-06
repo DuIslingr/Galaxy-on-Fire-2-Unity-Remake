@@ -134,8 +134,13 @@ the player ship) and `NavigationView` (flight HUD).
   high-risk area's three waves and its crate of 8-14 loot rolls, ES2's HighRiskAreaBoss drops in its loot_types.CSV,
   `EncounterWatch.BossRolls*`, and stops unpaid past 15 km). Counts are the remake's picks (ES2 places its groups by
   spawn_groups.CSV at the location's level). The ES2 importer's mod writes them (encounters.json). Not done: ES2's
-  Minesweeper (mines), Scavenger Baiting, Incursion and Rift (Leviathan encounters are
-  left out on purpose).
+  Scavenger Baiting, Incursion and Rift (Leviathan encounters are left out on purpose).
+  `minesweeper` (2026-11-06, ES2's BP_Encounter_Minesweeper with BP_Job_MineSweeper_Task_01's StuckFreighterVariant): a
+  freighter of the system's race (`stationary`, group Special) inside one BP_Minefield_BiggerRadius (`MinesweeperRadius`:
+  30 000 cm x 0.2 x 3.6) of "ships" kinetic `OrbitMine`s (default 40, MaxMineAmount), marked on the radar, kept
+  `MinesweeperClearM` from the hull; `World.MinesweeperWatch` pays `BattlePay` when every mine is gone (shot or set off),
+  "Minefield cleared"; the freighter destroyed fails it; past `EncounterWatch.LeaveM` it lapses. The importer's entry: weight
+  5, rank 4+, security 0-1 (mines add danger). Tests `AMinesweepersFieldKeepsItsMinesApart`. Not tried in game.
   The `stash` and `depot` crates stay until emptied (`Crate.keep`), not the crates' 60 s.
   **Between the systems** (2026-11-03, the user: "encounters should pull you out either in their own space or the nearest
   system"; `CruiseEncounters.Between`): the same table rolls on an interstellar leg (single player, as that space is), the
@@ -309,7 +314,10 @@ the player ship) and `NavigationView` (flight HUD).
   90 + 30) and its proximity mines. `count` (1-40) mines at random in the `radius` sphere round `centre` (`Places`: uniform in
   the ball, the best of 8 tries kept 0.48 x radius x (40 / count)^(1/3) apart, ES2's spacing share), still but bobbing, the
   rift's mines' numbers (`RiftRun.Mine*`: armed after 1 s, a 0.5 s blinking fuse within 360 m, a 144 m blast less towards
-  the edge) and drawn as them (`RiftHazards.Sphere`), coloured by kind. The blast is `raiderSeconds` x
+  the edge) and drawn as them (`RiftHazards.Sphere`), coloured by kind. The field's size is at the mines' 3.6 scale too
+  (default `radius` 18000 units: ES2's 25 000 cm x 0.2 x 3.6; the importer likewise): ES2 spaces its mines 120 m apart
+  against a 100 m trigger, and at 1:1 against the 360 m trigger a whole field went off at once. A shot sets a mine off
+  (a one-hit `Target`, BP_ProximityMine_Base's Health). The blast is `raiderSeconds` x
   `NpcTables.RaiderGunDps` (default by kind, `RaiderSeconds`: ES2's BaseDamage over a raider's 55, 120 / 55, a web mine
   15 / 55); a web mine also webs (`NpcRoles.WebSpeedFactor` 4 s), a cryo one freezes (`Hazards.FrozenMs` / `FrozenFactor`),
   a corrosion one leaves Corrosive Death's small `RiftField`, a thermal one reaches 1.5 x. Player's ship only. They add

@@ -180,6 +180,19 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AMinesweepersFieldKeepsItsMinesApart()
+        {
+            float radiusM = GoF2Remake.World.CruiseEncounterSpawner.MinesweeperRadius * 0.05f;
+            Assert.AreEqual(1080f, radiusM, 1e-2f, "BP_Minefield_BiggerRadius 30 000 cm x 3.6");
+            var list = GoF2Remake.World.OrbitMinefield.Places(UnityEngine.Vector3.zero, radiusM, 40, radiusM * 0.48f, new System.Random(5));
+            int close = 0;
+            for (int i = 0; i < list.Count; i++)
+                for (int j = 0; j < i; j++) if ((list[i] - list[j]).magnitude < RiftRun.MineTriggerM * 0.5f) close++;
+            Assert.Less(close, 4, "next to none within half a mine's trigger of another: they don't go off together");
+            Assert.AreEqual(18000f, new GoF2Remake.Modding.ModWorld.MinefieldSpec().radius, "ES2's 25 000 cm x 0.2 x 3.6");
+        }
+
+        [Test]
         public void MinesLieInTheFieldSpreadOut()
         {
             var c = new UnityEngine.Vector3(10f, 20f, 30f);

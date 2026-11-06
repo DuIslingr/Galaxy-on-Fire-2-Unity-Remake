@@ -25,6 +25,11 @@
 //             no wanted level and the other ships ignore; here no friendly-fire rules, and its kill is a pirate's), in the
 //             group the orbit never relaunches (Special)
 //   rift      a rift run (World.RiftEncounter, Flight.RiftRun: EVERSPACE 2's Ancient Rifts), "ships" its stages (default 4)
+//   minesweeper (2026-11-06, ES2's BP_Encounter_Minesweeper, StuckFreighterVariant) a freighter of the system's race stuck
+//             (stationary) in a minefield: one BP_Minefield_BiggerRadius (Radius 30 000 cm x the ES2 ships' 3.6, as the mines'
+//             trigger and blast: MinesweeperRadius units, so the mines lie further apart than they reach) of
+//             "ships" kinetic mines (default 40, ES2's MaxMineAmount), marked; all shot (or set off), BattlePay
+//             (World.MinesweeperWatch); the freighter lost, nothing
 // The counts are the remake's picks (ES2 places its groups by spawn_groups.CSV at a location's level). The pay is ES2's
 // (BattlePay); its location level the orbit's "level" (stations.json: an ES2 location's own), else the station's tech level
 // x 3 (Es2Level: GoF2's 1-10 over ES2's 1-30).
@@ -150,11 +155,35 @@ namespace GoF2Remake.World
                 case CruiseEncounters.Rift:
                     RiftEncounter.Start(level, at, e.ships, e.bosses);
                     return;   // (it spawns its own and connects them)
+                case CruiseEncounters.Minesweeper:
+                {
+                    var (ship, race) = NpcTables.RandomFreighter(systemRace);
+                    var freighter = traffic.SpawnShip(new SpawnSpec { group = NpcGroup.Special, race = race, ship = ship, freighter = true, stationary = true, position = at });
+                    int count = Mathf.Clamp(e.ships > 0 ? e.ships : 40, 1, 40);
+                    float radiusM = MinesweeperRadius * M;
+                    var root = new GameObject("Minesweeper field");
+                    root.transform.SetParent(level.transform, false);
+                    var mines = new List<OrbitMine>();
+                    float damage = OrbitMinefield.RaiderSeconds(new Modding.ModWorld.MinefieldSpec()) * NpcTables.RaiderGunDps;
+                    var places = OrbitMinefield.Places(ToUnity(at), radiusM, count, radiusM * 0.48f * Mathf.Pow(40f / count, 1f / 3f), new System.Random(Random.Range(int.MinValue, int.MaxValue)));
+                    foreach (var p in places)
+                    {
+                        var off = p - ToUnity(at);   // (clear of the freighter's hull)
+                        var place = off.magnitude < MinesweeperClearM ? ToUnity(at) + (off.sqrMagnitude > 1e-4f ? off.normalized : Random.onUnitSphere) * MinesweeperClearM : p;
+                        mines.Add(OrbitMine.Lay(level, root.transform, place, Modding.ModWorld.MinefieldSpec.Kind.Kinetic, damage, true));
+                    }
+                    if (freighter != null) MinesweeperWatch.Start(level, freighter, mines, BattlePay(Es2Level(level)), ToUnity(at));
+                    break;
+                }
                 default:
                     return;
             }
             traffic.ConnectPlayers();   // the new ships and the others see each other (targets, hit lists)
         }
+
+        /// <summary>BP_Minefield_BiggerRadius's Radius 30 000 cm in game units (x 0.2, x 3.6 as the mines' numbers); the mines keep this
+        /// far (m) from the freighter.</summary>
+        public const float MinesweeperRadius = 6000f * 3.6f, MinesweeperClearM = 60f;
 
         /// <summary>The ores a resource depot holds (items 154-164: the asteroids' ores).</summary>
         static readonly int[] Ores = { 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164 };

@@ -341,7 +341,7 @@ namespace GoF2Remake.Modding
             public enum Kind { Kinetic, Web, Cryo, Thermal, Corrosion }
             public Kind kind;
             public Vector3 centre;
-            public float radius = 5000f, raiderSeconds = -1f, share = 0.5f;
+            public float radius = 18000f, raiderSeconds = -1f, share = 0.5f;
             public int count = 20, minRank = 4, maxSecurity = 1;
         }
 

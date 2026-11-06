@@ -3,7 +3,8 @@
 // BP_ProximityMine_*): still where it was laid, armed after RiftRun.MineArmS, its fuse (RiftRun.MineFuseS, blinking) lit when
 // the player's ship comes within RiftRun.MineTriggerM, then a blast of RiftRun.MineBlastM (less towards the edge) and its
 // kind's effect on the ship: web, freeze, a corrosion field, or a wider thermal blast. Drawn as the rift's mines are
-// (RiftHazards.Sphere), coloured by kind, and gently bobbing.
+// (RiftHazards.Sphere), coloured by kind, and gently bobbing. A shot sets it off at once (BP_ProximityMine_Base's Health:
+// one hit; World.MinesweeperWatch counts them), and a minesweeper's are marked on the radar ('marked').
 
 using GoF2Remake.Flight;
 using UnityEngine;
@@ -21,14 +22,25 @@ namespace GoF2Remake.World
         Vector3 home;
         float ageS, fuseS = -1f, damage, phase;
         Renderer body;
+        Target target;
+        public bool Gone { get; private set; }
 
-        public static OrbitMine Lay(SpaceLevel level, Transform parent, Vector3 at, Kind kind, float damage)
+        void OnDestroy() { Gone = true; if (target != null) Target.RadarObjects.Remove(target); }
+
+        public static OrbitMine Lay(SpaceLevel level, Transform parent, Vector3 at, Kind kind, float damage, bool marked = false)
         {
             var go = RiftHazards.Sphere(parent, at, RiftRun.MineHitM, OrbitMinefield.ColorOf(kind), "Mine " + kind);
             var m = go.AddComponent<OrbitMine>();
             m.level = level; m.kind = kind; m.damage = damage; m.home = at;
             m.phase = Random.value * Mathf.PI * 2f;
             m.body = go.GetComponent<Renderer>();
+            var t = m.target = go.AddComponent<Target>();
+            t.hp = t.maxHp = 1f;   // (one hit)
+            t.radius = RiftRun.MineHitM;
+            t.displayName = GoF2Remake.Data.Localization.Extra("mine", "Mine");
+            t.plateNameOnly = t.plateNoIcon = true;
+            t.Died += _ => { if (m != null && !m.Gone) m.Detonate(); };
+            if (marked) Target.RadarObjects.Add(t);
             return m;
         }
 
@@ -55,6 +67,8 @@ namespace GoF2Remake.World
 
         void Detonate()
         {
+            if (Gone) return;
+            Gone = true;
             var at = transform.position;
             float reach = BlastM(kind);
             Explosion.Spawn(at, kind == Kind.Thermal ? 1.2f : 0.8f);
