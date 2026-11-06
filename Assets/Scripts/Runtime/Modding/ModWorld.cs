@@ -300,6 +300,15 @@ namespace GoF2Remake.Modding
             public float radius = 30000f;
         }
 
+        /// <summary>Remake (2026-11-06): a static model in an orbit: the mod's glTF 'model' at 'at' (game units), turned by 'rotation'
+        /// (Unity's Euler degrees in the orbit's Unity frame), its largest side 'size' game units.</summary>
+        public sealed class PropSpec
+        {
+            public string model;
+            public Vector3 at, rotation;
+            public float size = 2000f;
+        }
+
         /// <summary>Remake (2026-11-06): a secure container at 'at' (game units), its shot triggers' places ('ordered' = they go in
         /// turn, 'retriggerS' = a lit one goes dark again after that many seconds, 0 = stays lit) and its energy sockets.</summary>
         public sealed class SecureContainerSpec
@@ -379,6 +388,10 @@ namespace GoF2Remake.Modding
             public StormSpec storm;
             /// <summary>Remake (2026-11-06): the orbit's minefields (World.OrbitMinefields), null = none.</summary>
             public List<MinefieldSpec> minefields;
+            /// <summary>Remake (2026-11-06, EVERSPACE 2's placed unique asteroids): static models at their places (World.OrbitProps),
+            /// null = none; their materials like ships.json's.</summary>
+            public List<PropSpec> props;
+            public List<CustomShipMaterial> propMaterials = new List<CustomShipMaterial>();
             /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_AcidSack_Base): acid pouch bases at these places (game units), null = none
             /// (World.AcidSackBase).</summary>
             public List<Vector3> acidSacks;
@@ -478,7 +491,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm", "minefields", "acidSacks" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm", "minefields", "acidSacks", "props", "propMaterials" };
         /// <summary>The roles of an orbit's containers "sounds" (World.PuzzleSounds).</summary>
         public static readonly string[] PuzzleSoundRoles = { "grab", "hold", "drop", "throw", "dispenser", "conductor", "unlock" };
         static readonly HashSet<string> MinefieldFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

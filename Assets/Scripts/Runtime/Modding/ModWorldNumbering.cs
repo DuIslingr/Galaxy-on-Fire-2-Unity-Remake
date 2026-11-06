@@ -211,6 +211,28 @@ namespace GoF2Remake.Modding
                         else Report(mod, $"{where}: a gas cloud is [x, y, z] (left out)");
                 if (spec.clouds.Count > 0) s.gasClouds = spec;
             }
+            // Remake (2026-11-06): static props, EVERSPACE 2's placed unique asteroids (World.OrbitProps)
+            if (ModJson.Get(o, "props") is JToken props)
+            {
+                if (!(props is JArray propList)) throw new ModJsonException($"{where}: orbit \"props\" is a list [ {{ \"model\", \"at\", \"rotation\", \"size\" }} ]");
+                s.props = new List<PropSpec>();
+                foreach (var e in propList)
+                {
+                    if (!(e is JObject po)) throw new ModJsonException($"{where}: a prop is {{ \"model\", \"at\", \"rotation\", \"size\" }}");
+                    foreach (var p in po.Properties())
+                        if (p.Name != "model" && p.Name != "at" && p.Name != "rotation" && p.Name != "size") Report(mod, $"{where}: unknown prop field \"{p.Name}\" (ignored)");
+                    var model = ModJson.Str(po, "model");
+                    var at = Xyz(po, "at", where);
+                    if (model == null || !at.HasValue) throw new ModJsonException($"{where}: a prop needs \"model\" and \"at\": [x, y, z]");
+                    if (!mod.Source.Exists(model)) { Report(mod, $"{where}: prop model \"{model}\" isn't in the mod (left out)"); continue; }
+                    if (s.props.Count >= 60) { Report(mod, $"{where}: at most 60 props an orbit (the rest left out)"); break; }
+                    s.props.Add(new PropSpec { model = model, at = at.Value, rotation = Xyz(po, "rotation", where) ?? Vector3.zero,
+                                               size = Mathf.Clamp(ModJson.Float(po, "size", 2000f, StationsFile), 10f, 400000f) });
+                }
+                if (s.props.Count == 0) s.props = null;
+            }
+            if (ModJson.Get(o, "propMaterials") is JArray pmats)
+                foreach (var m in pmats) s.propMaterials.Add(JsonUtility.FromJson<CustomShipMaterial>(m.ToString()));
             // Remake (2026-11-06): acid pouch bases, EVERSPACE 2's BP_AcidSack_Base (World.AcidSackBase)
             if (ModJson.Get(o, "acidSacks") is JToken acid)
             {
@@ -775,6 +797,7 @@ namespace GoF2Remake.Modding
                 if (o.containerProofModel != null) l.Add((o.owner, o.containerProofModel, o.containerMaterials));
                 if (o.asteroidModels != null) foreach (var p in o.asteroidModels) l.Add((o.owner, p, o.asteroidMaterials));   // (and its asteroids')
                 if (o.wreckModels != null) foreach (var p in o.wreckModels) l.Add((o.owner, p, o.wreckMaterials));   // (and its wrecks')
+                if (o.props != null) foreach (var p in o.props) l.Add((o.owner, p.model, o.propMaterials));   // (and its props)
             }
             return l;
         }

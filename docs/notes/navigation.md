@@ -353,6 +353,14 @@ the player ship) and `NavigationView` (flight HUD).
   a corrosion one leaves Corrosive Death's small `RiftField`, a thermal one reaches 1.5 x. Player's ship only. They add
   danger, so `Laid` gates each field per visit: the system's security <= `maxSecurity` (default 1, risky or dangerous),
   `Session.Rank` >= `minRank` (default 4) and a roll under `share` (default 0.5). Not tried in game.
+- **Orbit props** (remake 2026-11-06, for mods; stations.json `orbit.props` -> `ModWorld.PropSpec`, `orbit.propMaterials`,
+  `World.OrbitProps.Spawn` after the wreck field): static models (the mod's glTF, loaded with the mod crates:
+  `ModWorld.ContainerModels`) at `at`, turned by `rotation` (Unity's Euler degrees in the orbit's Unity frame:
+  `Quaternion.Euler`) and fitted to `size` game units at their largest side (`ModCrates.InstantiateFitted`), each a box
+  `Obstacle` in its own frame as the wreck hulls; at most 60 an orbit. First for EVERSPACE 2's unique asteroids: the
+  importer's `sectors.level_props` (the 16 most placed SM_Asteroid_Rock_*_Unique_* meshes, their placed rotation from UE's
+  rotator through `unity_euler`, scale x the mesh bounds; 878 rocks in 89 orbits). Test `ModWorldTests.AnOrbitsProps`.
+  A rock's mesh frame is the glTF's (asymmetric props' facing not checked). Not tried in game.
 - **Acid pouches** (remake 2026-11-06, for mods; stations.json `orbit.acidSacks` -> `OrbitSpec.acidSacks`,
   `World.AcidSackBase.LayOrbit` after the minefields): after EVERSPACE 2's BP_AcidSack_Base / BP_AcidSack "Acid Pouch" (es2_re
   kismet). Each base (a dark green sphere, `StalkM`) grows a pouch (`Portable.Kind.AcidSack`); every SpitIntervalMin..Max

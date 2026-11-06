@@ -419,6 +419,7 @@ namespace GoF2Remake.World
             // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).
             if (!Layout.interstellar) GasClouds = GasCloudField.Spawn(db, Layout, ctrl, Turret);
             if (!Layout.interstellar && !Layout.alienOrbit) WreckField.Spawn(db, Layout);   // remake mods: the orbit's wreck field
+            if (!Layout.interstellar && !Layout.alienOrbit) OrbitProps.Spawn(Layout);   // ... and its props (ES2's unique asteroids)
             if (!Layout.interstellar && !Layout.alienOrbit) LootContainer.SpawnOrbit(db, Layout);   // ... and its containers
             TrafficLanes.Attach(this, db);   // ... and its traffic lanes
             StationLife.Attach(this);   // ... and its station's life (worker drones)

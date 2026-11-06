@@ -698,6 +698,28 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AnOrbitsProps()
+        {
+            string dir = WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'props': [ { 'model': 'rock.glb', 'at': [1, 2, 3], 'rotation': [10, 20, 30], 'size': 5000, 'mass': 1 }, " +
+                "{ 'model': 'gone.glb', 'at': [0, 0, 0] } ], 'propMaterials': [ { 'mesh': 'rock' } ] } } ]"));
+            WriteFile(dir, "rock.glb", Dummy);
+            ScanAndEnable("t_world");
+            Database.Load();
+            var o = ModWorld.OrbitOf(78);
+            Assert.AreEqual(1, o.props.Count, "the missing model left out");
+            Assert.AreEqual(new UnityEngine.Vector3(10, 20, 30), o.props[0].rotation);
+            Assert.AreEqual(5000f, o.props[0].size);
+            Assert.AreEqual(1, o.propMaterials.Count);
+            Assert.AreEqual(1, ModWorld.ContainerModels().FindAll(m => m.path == "rock.glb").Count, "loaded with the mod crates");
+            var msgs = AllMessages(Installed("t_world"));
+            StringAssert.Contains("prop model \"gone.glb\" isn't in the mod", msgs);
+            StringAssert.Contains("unknown prop field \"mass\"", msgs);
+        }
+
+        [Test] public void APropNeedsAModelAndAPlace() => StringAssert.Contains("a prop needs \"model\" and \"at\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'props': [ { 'model': 'x.glb' } ] } } ]"));
+
+        [Test]
         public void AnOrbitsAcidPouches()
         {
             WriteMod("w", "t_world", "1.0", "", ("stations.json", "[ { 'override': 78, 'orbit': { 'acidSacks': [ [1, 2, 3], [4] ] } } ]"));
