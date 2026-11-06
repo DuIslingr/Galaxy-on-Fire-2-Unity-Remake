@@ -526,6 +526,9 @@ namespace GoF2Remake.World
             // light by MPC_Environment's SunLightSaturation: a tinted sun greyed the sand)
             m.SetColor("_SunColor", Color.Lerp(Color.white, c / max, 0.5f) * 1.6f);
             if (spec.atmosphere is Color a) m.SetColor("_Atmosphere", new Color(a.r, a.g, a.b, 1f));
+            if (spec.color1 is Vector3 c1) m.SetVector("_Color1", c1);   // (ES2's linear colours as they are)
+            if (spec.color2 is Vector3 c2) m.SetVector("_Color2", c2);
+            m.SetFloat("_Variation", spec.variation);
             return m;
         }
 

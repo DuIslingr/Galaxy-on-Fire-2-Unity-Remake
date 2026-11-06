@@ -141,6 +141,21 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AGasGiantsSphereTakesItsColoursAndVariation()
+        {
+            World("[ { 'id': 'a', 'system': 't_world:home', 'name': 'A', 'planetSphere': { 'look': 'es2GasSmooth', 'colors': [[0.02, 0.07, 0.1], [0.17, 0.49, 0.5]], 'variation': 1.25 } }, "
+                + "{ 'id': 'b', 'system': 't_world:home', 'name': 'B', 'planetSphere': { 'look': 'es2Desert' } } ]");
+            var gas = ModWorld.PlanetSphereOf(135);
+            Assert.AreEqual("es2GasSmooth", gas.look);
+            Assert.AreEqual(new Vector3(0.02f, 0.07f, 0.1f), gas.color1.Value);
+            Assert.AreEqual(new Vector3(0.17f, 0.49f, 0.5f), gas.color2.Value);
+            Assert.AreEqual(0.25f, gas.variation, 1e-5f, "a whole turn more is the same hue");
+            Assert.AreEqual(1, System.Array.IndexOf(ModWorld.PlanetSphereLooks, "es2GasSmooth"), "GoF2/Es2Planet's _Look 1");
+            Assert.AreEqual(2, System.Array.IndexOf(ModWorld.PlanetSphereLooks, "es2Gas"));
+            Assert.IsNull(ModWorld.PlanetSphereOf(136).color1, "the desert has none");
+        }
+
+        [Test]
         public void ValuesAreClampedAndDefaulted()
         {
             var db = World("[ { 'id': 'a', 'system': 't_world:home', 'name': 'A', 'techLevel': 15 } ]");

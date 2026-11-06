@@ -243,8 +243,12 @@ namespace GoF2Remake.Modding
             public string look;
             public readonly Dictionary<string, string> maps = new Dictionary<string, string>();
             public Color? atmosphere;
+            /// <summary>2026-11-06, the gas giants: the master's two colours (linear, as ES2's material holds them: GasSmooth's
+            /// Color / Color2, Gas's SecondaryColor / BaseColor) and the planet's Variation (0..1: its hue turned by x 2 pi).</summary>
+            public Vector3? color1, color2;
+            public float variation;
         }
-        public static readonly string[] PlanetSphereLooks = { "es2Desert" };
+        public static readonly string[] PlanetSphereLooks = { "es2Desert", "es2GasSmooth", "es2Gas" };
         static readonly Dictionary<int, PlanetSphereSpec> planetSpheres = new Dictionary<int, PlanetSphereSpec>();
 
         static readonly Dictionary<int, string> planetTextures = new Dictionary<int, string>(), sunTextures = new Dictionary<int, string>(),

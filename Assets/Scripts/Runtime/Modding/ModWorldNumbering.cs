@@ -615,7 +615,7 @@ namespace GoF2Remake.Modding
         {
             if (!(t is JObject o)) throw new ModJsonException($"{where}: \"planetSphere\" must be {{ \"look\", \"maps\", \"atmosphere\" }}");
             foreach (var p in o.Properties())
-                if (p.Name != "look" && p.Name != "maps" && p.Name != "atmosphere") Report(mod, $"{where}: unknown planetSphere field \"{p.Name}\" (ignored)");
+                if (p.Name != "look" && p.Name != "maps" && p.Name != "atmosphere" && p.Name != "colors" && p.Name != "variation") Report(mod, $"{where}: unknown planetSphere field \"{p.Name}\" (ignored)");
             var spec = new PlanetSphereSpec { mod = mod, look = ModJson.Str(o, "look") };
             if (Array.IndexOf(PlanetSphereLooks, spec.look) < 0)
                 throw new ModJsonException($"{where}: planetSphere \"look\" is one of {string.Join(", ", PlanetSphereLooks)}");
@@ -628,6 +628,12 @@ namespace GoF2Remake.Modding
                     spec.maps[p.Name] = file;
                 }
             if (ModJson.Get(o, "atmosphere") is JArray a && a.Count >= 3) spec.atmosphere = new Color((float)a[0], (float)a[1], (float)a[2]);
+            if (ModJson.Get(o, "colors") is JArray cs && cs.Count >= 2 && cs[0] is JArray c1 && c1.Count >= 3 && cs[1] is JArray c2 && c2.Count >= 3)
+            {
+                spec.color1 = new Vector3((float)c1[0], (float)c1[1], (float)c1[2]);
+                spec.color2 = new Vector3((float)c2[0], (float)c2[1], (float)c2[2]);
+            }
+            if (ModJson.Has(o, "variation")) spec.variation = Mathf.Repeat(ModJson.Float(o, "variation", 0f, StationsFile), 1f);
             return spec;
         }
         /// <summary>A mod's PNG as Backdrop's texture name.</summary>
