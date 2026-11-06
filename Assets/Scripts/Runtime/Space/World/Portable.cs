@@ -71,7 +71,18 @@ namespace GoF2Remake.World
             return p;
         }
 
-        public void Grab(Transform ship) { if (!Socketed) Carrier = ship; }
+        AudioSource holdLoop;
+
+        public void Grab(Transform ship)
+        {
+            if (Socketed || Carrier == ship) return;
+            Carrier = ship;
+            PuzzleSounds.PlayAt("grab", transform.position);   // (S_SC_Grab_Hold, then its loop while carried)
+            if (holdLoop == null) holdLoop = PuzzleSounds.Loop("hold", gameObject);
+            else holdLoop.Play();
+        }
+
+        void StopHold() { if (holdLoop != null) holdLoop.Stop(); }
 
         /// <summary>Let go with its momentum; 'fling' throws it on along the ship's nose at FlingMs more.</summary>
         public void Release(bool fling = false)
@@ -79,6 +90,8 @@ namespace GoF2Remake.World
             if (Carrier == null) return;
             Velocity = Thrown(Velocity, Carrier.forward, fling);
             Carrier = null;
+            StopHold();
+            PuzzleSounds.PlayAt(fling ? "throw" : "drop", transform.position);   // (S_SC_Grab_Throw / _Leggo)
         }
 
         /// <summary>Its velocity once let go: kept, plus FlingMs along 'forward' when flung.</summary>
@@ -88,6 +101,7 @@ namespace GoF2Remake.World
         public void Seat(Transform socket)
         {
             Carrier = null;
+            StopHold();
             Socketed = true;
             Velocity = Vector3.zero;
             lifeS = -1f;

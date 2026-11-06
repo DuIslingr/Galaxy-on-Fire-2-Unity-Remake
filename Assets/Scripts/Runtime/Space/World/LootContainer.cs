@@ -96,6 +96,7 @@ namespace GoF2Remake.World
         void Unlock()
         {
             if (Opened) return;
+            PuzzleSounds.PlayAt("unlock", transform.position);   // (S_SC_Container_Armored)
             ShipBurn.ManualBurst(transform.position, 0.6f, 1200f, 1400f, 300f);
             Open();
         }
@@ -176,6 +177,7 @@ namespace GoF2Remake.World
         public static int SpawnOrbit(Database db, OrbitLayout layout)
         {
             var spec = layout != null ? Modding.ModWorld.OrbitOf(layout.stationIndex) : null;
+            PuzzleSounds.Use(spec?.containerSounds);   // (the orbit's puzzle sounds, or silence)
             int cloakedCount = spec?.containerCloaked?.Count ?? 0, secureCount = spec?.containerSecure?.Count ?? 0;
             if (spec == null || spec.containerCount + cloakedCount + secureCount <= 0) return 0;
             var centre = spec.containerCentre ?? new Vector3(30000f, 0f, 50000f);

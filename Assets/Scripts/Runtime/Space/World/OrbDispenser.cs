@@ -35,6 +35,7 @@ namespace GoF2Remake.World
             t.displayName = Localization.Extra("energySphereDispenser", "Energy sphere dispenser");
             t.plateNameOnly = t.plateNoIcon = true;
             Target.RadarObjects.Add(t);
+            PuzzleSounds.Loop("dispenser", go);   // (S_SC_OrbDispenser_Loop)
             return d;
         }
 

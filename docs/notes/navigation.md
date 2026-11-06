@@ -276,7 +276,14 @@ the player ship) and `NavigationView` (flight HUD).
   Beams: a LineRenderer from each energized node to its feeder; nodes glow when energized; sources and receivers are radar
   objects. Portable conductors are `Portable.Kind.Conductor` (carried, dropped or thrown like a coil, never socketed), slowing
   with `ConductorDamping` 0.1 or `ConductingDamping` 3 while energized (NormalDamping / ConductingDamping). Tests
-  `ConductorsCarryEnergyAlongLinkedChains`, `ModWorldTests.ASecureContainersConductors`. Left out: the Okkar pipes' box shape
+  `ConductorsCarryEnergyAlongLinkedChains`, `ModWorldTests.ASecureContainersConductors`.
+  Puzzle sounds (2026-11-06, ES2's cues): `containers.sounds` (`OrbitSpec.containerSounds`, roles
+  `ModWorld.PuzzleSoundRoles`: grab, hold, drop, throw, dispenser, conductor, unlock, each a mod sound) set by
+  `LootContainer.SpawnOrbit` (`World.PuzzleSounds.Use`, null = silent); 3D (`MinM` 60 / `MaxM` 1500 m, linear) at the
+  object: grab (S_SC_Grab_Hold) and the hold loop while carried, drop (S_SC_Grab_Leggo) / throw (S_SC_Grab_Throw), the
+  dispenser's loop (S_SC_OrbDispenser_Loop), an energized receiver's hum (S_SC_3D_ConductorBeam), the secure container
+  opening (S_SC_Container_Armored). ES2's shot triggers have no TriggerSound placed: silent there too. The importer writes
+  es2_puzzle_<role> from the cues' waves on every orbit with secure containers. Test `AnOrbitsPuzzleSounds`. Left out: the Okkar pipes' box shape
   (the importer gives them a sphere), seesaw toggles, conductor capsules, layers in the remake (the importer filters by
   them), the trigger sound, the multi-activation links, the sockets' laser beams and the fire / ice orb variants' fields. Tests
   `HazardTests.ShotTriggers*` / `ASocketTakesItsKindWithinReach`, `ModWorldTests.AnOrbitsSecureContainers` /

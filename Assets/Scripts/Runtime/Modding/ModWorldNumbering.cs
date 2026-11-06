@@ -354,7 +354,7 @@ namespace GoF2Remake.Modding
                 {
                     foreach (var p in c.Properties())
                         if (p.Name != "count" && p.Name != "centre" && p.Name != "center" && p.Name != "spread" && p.Name != "bulletproof" && p.Name != "loot"
-                            && p.Name != "model" && p.Name != "bulletproofModel" && p.Name != "materials" && p.Name != "cloaked" && p.Name != "secure")
+                            && p.Name != "model" && p.Name != "bulletproofModel" && p.Name != "materials" && p.Name != "cloaked" && p.Name != "secure" && p.Name != "sounds")
                             Report(mod, $"{where}: unknown containers field \"{p.Name}\" (ignored)");
                     s.containerCount = Mathf.Clamp(ModJson.Int(c, "count", 6, StationsFile), 0, 40);
                     s.containerCentre = Xyz(c, "centre", where) ?? Xyz(c, "center", where);
@@ -380,6 +380,16 @@ namespace GoF2Remake.Modding
                             else Report(mod, $"{where}: a cloaked container's place is [x, y, z] (left out)");
                         }
                         if (s.containerCloaked.Count == 0) s.containerCloaked = null;
+                    }
+                    if (ModJson.Get(c, "sounds") is JObject snd)
+                    {
+                        s.containerSounds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var p in snd.Properties())
+                        {
+                            if (Array.IndexOf(PuzzleSoundRoles, p.Name) < 0) { Report(mod, $"{where}: unknown containers sound \"{p.Name}\" (ignored; {string.Join(", ", PuzzleSoundRoles)})"); continue; }
+                            if (p.Value.Type == JTokenType.String) s.containerSounds[p.Name] = (string)p.Value;
+                        }
+                        if (s.containerSounds.Count == 0) s.containerSounds = null;
                     }
                     if (ModJson.Get(c, "secure") is JToken sec)
                     {

@@ -34,6 +34,7 @@ namespace GoF2Remake.World
             public float chargeS;
             public Renderer body;
             public LineRenderer beam;
+            public AudioSource hum;
         }
 
         readonly List<Node> nodes = new List<Node>();
@@ -140,6 +141,9 @@ namespace GoF2Remake.World
                 {
                     n.chargeS = on[i] ? n.chargeS + dt : 0f;
                     if (n.chargeS < ConductorGraph.ChargeS) all = false;
+                    // S_SC_3D_ConductorBeam while it's energized
+                    if (on[i] && n.hum == null) n.hum = PuzzleSounds.Loop("conductor", n.t.gameObject);
+                    else if (n.hum != null && on[i] != n.hum.isPlaying) { if (on[i]) n.hum.Play(); else n.hum.Stop(); }
                 }
                 if (n.body != null && !n.source && n.portable == null) n.body.material.color = on[i] && (!n.receiver || n.chargeS >= ConductorGraph.ChargeS) ? Lit : Dark;
                 if (n.beam != null)

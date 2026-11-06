@@ -418,6 +418,9 @@ namespace GoF2Remake.Modding
             /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_ItemContainer_Armored with ShotTriggersRequired): secure containers,
             /// locked until all their shot triggers are lit (World.ShotTrigger, Flight.ShotTriggerChain); null = none.</summary>
             public List<SecureContainerSpec> containerSecure;
+            /// <summary>Remake (2026-11-06, EVERSPACE 2's grab / dispenser / conductor / armoured container cues): the mod sounds its
+            /// puzzles play, by role (grab, hold, drop, throw, dispenser, conductor, unlock; World.PuzzleSounds); null = silent.</summary>
+            public Dictionary<string, string> containerSounds;
             public float containerSpread = 40000f, containerBulletproof = 0.3f;
             /// <summary>Remake (2026-11-05, EVERSPACE 2's unique loot): fixed items in its containers, each entry once a game
             /// (Session.FixedLootTaken); null = none.</summary>
@@ -473,6 +476,8 @@ namespace GoF2Remake.Modding
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm", "minefields" };
+        /// <summary>The roles of an orbit's containers "sounds" (World.PuzzleSounds).</summary>
+        public static readonly string[] PuzzleSoundRoles = { "grab", "hold", "drop", "throw", "dispenser", "conductor", "unlock" };
         static readonly HashSet<string> MinefieldFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "kind", "centre", "center", "radius", "count", "raiderSeconds", "minRank", "share", "maxSecurity" };
         static readonly HashSet<string> StormFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

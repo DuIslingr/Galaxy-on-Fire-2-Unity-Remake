@@ -788,6 +788,20 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("conductors need \"sources\" and \"receivers\"", msgs);
         }
 
+        [Test]
+        public void AnOrbitsPuzzleSounds()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'containers': { 'count': 1, 'sounds': { 'grab': 'g', 'unlock': 'u', 'beep': 'b' } } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var s = ModWorld.OrbitOf(78).containerSounds;
+            Assert.AreEqual("g", s["grab"]);
+            Assert.AreEqual("u", s["Unlock"], "roles in any case");
+            Assert.AreEqual(2, s.Count);
+            StringAssert.Contains("unknown containers sound \"beep\"", AllMessages(Installed("t_world")));
+        }
+
         [Test] public void ASecureContainerNeedsAPlace() => StringAssert.Contains("a secure container needs \"at\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'secure': [ { 'triggers': [ [0, 0, 0] ] } ] } } } ]"));
 
         [Test] public void CloakedContainersAreAList() => StringAssert.Contains("containers \"cloaked\" is a list", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'cloaked': true } } } ]"));
