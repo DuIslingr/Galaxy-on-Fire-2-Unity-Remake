@@ -49,7 +49,7 @@ namespace GoF2Remake.World
             if (Filled) return;
             foreach (var p in Portable.All)
             {
-                if (p == null || p.Socketed || p.Type == Portable.Kind.Conductor || !Takes(Coil, p.Coil, (p.transform.position - transform.position).magnitude)) continue;
+                if (p == null || p.Socketed || p.Type == Portable.Kind.Conductor || p.Type == Portable.Kind.AcidSack || !Takes(Coil, p.Coil, (p.transform.position - transform.position).magnitude)) continue;
                 p.Seat(transform);
                 Filled = true;
                 if (body != null) body.material.color = new Color(color.r * 3f, color.g * 3f, color.b * 3f, 0.8f);

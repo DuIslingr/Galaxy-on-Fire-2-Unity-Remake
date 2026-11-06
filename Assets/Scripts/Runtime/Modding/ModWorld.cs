@@ -379,6 +379,9 @@ namespace GoF2Remake.Modding
             public StormSpec storm;
             /// <summary>Remake (2026-11-06): the orbit's minefields (World.OrbitMinefields), null = none.</summary>
             public List<MinefieldSpec> minefields;
+            /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_AcidSack_Base): acid pouch bases at these places (game units), null = none
+            /// (World.AcidSackBase).</summary>
+            public List<Vector3> acidSacks;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's spline traffic): null = none.</summary>
             public List<LaneSpec> lanes;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's heat volumes and radiation fields): null = none.</summary>
@@ -475,7 +478,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm", "minefields" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm", "minefields", "acidSacks" };
         /// <summary>The roles of an orbit's containers "sounds" (World.PuzzleSounds).</summary>
         public static readonly string[] PuzzleSoundRoles = { "grab", "hold", "drop", "throw", "dispenser", "conductor", "unlock" };
         static readonly HashSet<string> MinefieldFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

@@ -698,6 +698,16 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AnOrbitsAcidPouches()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json", "[ { 'override': 78, 'orbit': { 'acidSacks': [ [1, 2, 3], [4] ] } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            Assert.AreEqual(new[] { new UnityEngine.Vector3(1, 2, 3) }, ModWorld.OrbitOf(78).acidSacks.ToArray());
+            StringAssert.Contains("an acid pouch's place is [x, y, z]", AllMessages(Installed("t_world")));
+        }
+
+        [Test]
         public void AnOrbitsMinefields()
         {
             WriteMod("w", "t_world", "1.0", "", ("stations.json",

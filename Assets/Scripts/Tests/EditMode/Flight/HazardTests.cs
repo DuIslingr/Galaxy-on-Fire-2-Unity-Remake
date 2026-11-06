@@ -139,11 +139,32 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AcidCorrodesNpcShipsNotThePlayersOrProps()
+        {
+            var go = new UnityEngine.GameObject("t");
+            try
+            {
+                var t = go.AddComponent<Target>();
+                t.hp = t.maxHp = 10f;
+                t.isShip = true;
+                Assert.IsTrue(GoF2Remake.World.ShipCorrosion.Corrodes(t, UnityEngine.Vector3.zero, 10f));
+                Assert.IsFalse(GoF2Remake.World.ShipCorrosion.Corrodes(t, new UnityEngine.Vector3(20f, 0f, 0f), 10f), "outside");
+                t.isPlayer = true;
+                Assert.IsFalse(GoF2Remake.World.ShipCorrosion.Corrodes(t, UnityEngine.Vector3.zero, 10f), "the player's: RiftField's part");
+                t.isPlayer = false; t.isShip = false;
+                Assert.IsFalse(GoF2Remake.World.ShipCorrosion.Corrodes(t, UnityEngine.Vector3.zero, 10f), "a prop");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(go); }
+            Assert.AreEqual(8f, GoF2Remake.World.AcidSackBase.SpitMinS, "SpitIntervalMin");
+            Assert.AreEqual(13f, GoF2Remake.World.AcidSackBase.SpitMaxS, "SpitIntervalMax");
+        }
+
+        [Test]
         public void AThrownSphereKeepsItsMomentumAndFliesOn()
         {
             var v = new UnityEngine.Vector3(0f, 0f, 50f);
-            Assert.AreEqual(v, GoF2Remake.World.Portable.Thrown(v, UnityEngine.Vector3.right, false), "let go: Detach's bKeepMomentum");
-            var t = GoF2Remake.World.Portable.Thrown(v, UnityEngine.Vector3.right * 3f, true);
+            Assert.AreEqual(v, GoF2Remake.World.Portable.Fling(v, UnityEngine.Vector3.right, false), "let go: Detach's bKeepMomentum");
+            var t = GoF2Remake.World.Portable.Fling(v, UnityEngine.Vector3.right * 3f, true);
             Assert.AreEqual(720f, t.x, 1e-3f, "FlingStrength 20 000 cm/s x 3.6 along the nose");
             Assert.AreEqual(50f, t.z, 1e-4f, "on top of its momentum");
         }

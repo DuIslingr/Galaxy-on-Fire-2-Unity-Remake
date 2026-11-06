@@ -7,7 +7,8 @@
 // bAllowFlinging, FlingStrength 20 000 cm/s, BP_Portable_EnergyCoil's and the common value) it flies on ahead of the ship at
 // FlingMs more, slowing with the rift mines' damping (UE linear damping 0.2). A portable conductor (BP_Conductor_Portable,
 // World.ConductorNet) is carried the same way; loose, it slows with its NormalDamping 0.1, or ConductingDamping 3 while it
-// carries energy (so it stops where it links). Drawn as the rift's spheres (RiftHazards.Sphere): a white-blue glowing sphere, an orange coil.
+// carries energy (so it stops where it links). An acid pouch (BP_AcidSack, World.AcidSackBase) thrown bursts on the first
+// NPC ship it comes within BurstM of (its ImpactEvent: BP_Explosion_Corrosion and a corrosion field), or after BurstAfterS. Drawn as the rift's spheres (RiftHazards.Sphere): a white-blue glowing sphere, an orange coil.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -22,7 +23,10 @@ namespace GoF2Remake.World
         /// <summary>BP_EnergyOrb_Dispenser's EnergyOrbLifetime (s); how far behind the ship it hangs (m); its size (m).</summary>
         public const float OrbLifeS = 40f, CarryBehindM = 30f, RadiusM = 4f, FlingMs = 200f * 3.6f, Damping = 0.2f;
         static readonly Color OrbColor = new Color(1.6f, 2.2f, 3f, 0.9f), CoilColor = new Color(3f, 1.4f, 0.3f, 0.9f), ConductorColor = new Color(0.4f, 0.8f, 1.6f, 0.8f);
-        public enum Kind { Orb, Coil, Conductor }
+        public enum Kind { Orb, Coil, Conductor, AcidSack }
+        /// <summary>A thrown acid pouch bursts within this of a ship (m), or after this long (s).</summary>
+        public const float BurstM = 30f, BurstAfterS = 8f;
+        static readonly Color AcidColor = new Color(0.9f, 2.2f, 0.3f, 0.9f);
         /// <summary>BP_Conductor_Portable's NormalDamping and ConductingDamping.</summary>
         public const float ConductorDamping = 0.1f, ConductingDamping = 3f;
 
@@ -34,6 +38,10 @@ namespace GoF2Remake.World
         public bool Coil => Type == Kind.Coil;
         /// <summary>A conductor carrying energy (World.ConductorNet sets it).</summary>
         public bool Conducting { get; set; }
+        /// <summary>An acid pouch thrown (it bursts on a ship); the level it bursts in.</summary>
+        public bool Thrown { get; private set; }
+        public SpaceLevel Level { get; set; }
+        float thrownS;
         /// <summary>The ship carrying it, null = loose.</summary>
         public Transform Carrier { get; private set; }
         /// <summary>In a socket for good.</summary>
@@ -53,8 +61,9 @@ namespace GoF2Remake.World
         public static Portable Make(Transform parent, Vector3 at, Kind kind, OrbDispenser from = null)
         {
             bool coil = kind == Kind.Coil;
-            var go = RiftHazards.Sphere(parent, at, coil ? RadiusM * 0.8f : RadiusM, kind == Kind.Coil ? CoilColor : kind == Kind.Conductor ? ConductorColor : OrbColor,
-                                        kind == Kind.Coil ? "Energy coil" : kind == Kind.Conductor ? "Conductor" : "Energy sphere");
+            var go = RiftHazards.Sphere(parent, at, coil ? RadiusM * 0.8f : RadiusM,
+                                        kind == Kind.Coil ? CoilColor : kind == Kind.Conductor ? ConductorColor : kind == Kind.AcidSack ? AcidColor : OrbColor,
+                                        kind == Kind.Coil ? "Energy coil" : kind == Kind.Conductor ? "Conductor" : kind == Kind.AcidSack ? "Acid pouch" : "Energy sphere");
             if (coil) go.transform.localScale = new Vector3(RadiusM * 1.2f, RadiusM * 2.4f, RadiusM * 1.2f);
             var p = go.AddComponent<Portable>();
             p.Type = kind;
@@ -65,7 +74,8 @@ namespace GoF2Remake.World
             t.invulnerable = true;
             t.radius = RadiusM;
             t.displayName = kind == Kind.Coil ? Localization.Extra("energyCoil", "Energy coil")
-                          : kind == Kind.Conductor ? Localization.Extra("conductor", "Conductor") : Localization.Extra("energySphere", "Energy sphere");
+                          : kind == Kind.Conductor ? Localization.Extra("conductor", "Conductor")
+                          : kind == Kind.AcidSack ? Localization.Extra("acidPouch", "Acid pouch") : Localization.Extra("energySphere", "Energy sphere");
             t.plateNameOnly = t.plateNoIcon = true;
             Target.RadarObjects.Add(t);
             return p;
@@ -88,14 +98,15 @@ namespace GoF2Remake.World
         public void Release(bool fling = false)
         {
             if (Carrier == null) return;
-            Velocity = Thrown(Velocity, Carrier.forward, fling);
+            Velocity = Fling(Velocity, Carrier.forward, fling);
             Carrier = null;
+            if (fling && Type == Kind.AcidSack) { this.Thrown = true; thrownS = 0f; }
             StopHold();
             PuzzleSounds.PlayAt(fling ? "throw" : "drop", transform.position);   // (S_SC_Grab_Throw / _Leggo)
         }
 
         /// <summary>Its velocity once let go: kept, plus FlingMs along 'forward' when flung.</summary>
-        public static Vector3 Thrown(Vector3 velocity, Vector3 forward, bool fling) => fling ? velocity + forward.normalized * FlingMs : velocity;
+        public static Vector3 Fling(Vector3 velocity, Vector3 forward, bool fling) => fling ? velocity + forward.normalized * FlingMs : velocity;
 
         /// <summary>Into 'socket' for good: it sits there, off the radar.</summary>
         public void Seat(Transform socket)
@@ -107,6 +118,20 @@ namespace GoF2Remake.World
             lifeS = -1f;
             transform.position = socket.position;
             if (marker != null) { Target.RadarObjects.Remove(marker); Destroy(marker); marker = null; }
+        }
+
+        static bool NearShip(Vector3 at)
+        {
+            foreach (var t in Target.All) if (ShipCorrosion.Corrodes(t, at, BurstM)) return true;
+            return false;
+        }
+
+        /// <summary>A thrown acid pouch bursts: BP_Explosion_Corrosion and its corrosion field.</summary>
+        void Burst()
+        {
+            Explosion.Spawn(transform.position, 0.6f);
+            AcidSackBase.Corrosion(Level, transform.parent, transform.position);
+            Destroy(gameObject);
         }
 
         /// <summary>Where a carried one hangs: CarryBehindM behind the ship and a little below.</summary>
@@ -124,6 +149,7 @@ namespace GoF2Remake.World
             if (Socketed || dt <= 0f) return;
             if (Carrier == null)
             {
+                if (Thrown && ((thrownS += dt) >= BurstAfterS || NearShip(transform.position))) { Burst(); return; }
                 transform.position += Velocity * dt;
                 float damping = Type != Kind.Conductor ? Damping : Conducting ? ConductingDamping : ConductorDamping;
                 Velocity *= Mathf.Exp(-damping * dt);

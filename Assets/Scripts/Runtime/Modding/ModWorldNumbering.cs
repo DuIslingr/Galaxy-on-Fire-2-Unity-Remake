@@ -211,6 +211,17 @@ namespace GoF2Remake.Modding
                         else Report(mod, $"{where}: a gas cloud is [x, y, z] (left out)");
                 if (spec.clouds.Count > 0) s.gasClouds = spec;
             }
+            // Remake (2026-11-06): acid pouch bases, EVERSPACE 2's BP_AcidSack_Base (World.AcidSackBase)
+            if (ModJson.Get(o, "acidSacks") is JToken acid)
+            {
+                if (!(acid is JArray acidList)) throw new ModJsonException($"{where}: orbit \"acidSacks\" is a list of places [ [x, y, z], ... ]");
+                s.acidSacks = new List<Vector3>();
+                foreach (var e in acidList)
+                    if (e is JArray xyz && xyz.Count == 3 && xyz.All(v => v.Type == JTokenType.Integer || v.Type == JTokenType.Float))
+                    { if (s.acidSacks.Count < 30) s.acidSacks.Add(new Vector3((float)xyz[0], (float)xyz[1], (float)xyz[2])); }
+                    else Report(mod, $"{where}: an acid pouch's place is [x, y, z] (left out)");
+                if (s.acidSacks.Count == 0) s.acidSacks = null;
+            }
             // Remake (2026-11-06): minefields, EVERSPACE 2's BP_Minefield (World.OrbitMinefields)
             if (ModJson.Get(o, "minefields") is JToken mf)
             {

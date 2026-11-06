@@ -353,6 +353,16 @@ the player ship) and `NavigationView` (flight HUD).
   a corrosion one leaves Corrosive Death's small `RiftField`, a thermal one reaches 1.5 x. Player's ship only. They add
   danger, so `Laid` gates each field per visit: the system's security <= `maxSecurity` (default 1, risky or dangerous),
   `Session.Rank` >= `minRank` (default 4) and a roll under `share` (default 0.5). Not tried in game.
+- **Acid pouches** (remake 2026-11-06, for mods; stations.json `orbit.acidSacks` -> `OrbitSpec.acidSacks`,
+  `World.AcidSackBase.LayOrbit` after the minefields): after EVERSPACE 2's BP_AcidSack_Base / BP_AcidSack "Acid Pouch" (es2_re
+  kismet). Each base (a dark green sphere, `StalkM`) grows a pouch (`Portable.Kind.AcidSack`); every SpitIntervalMin..Max
+  8-13 s it charges SpitChargeDuration 2 s and spits its ConditionField, BP_CorrosionField (`AcidSackBase.Corrosion`:
+  Corrosive Death's small `RiftField` on the player plus `World.ShipCorrosion` on the NPC ships inside, the rift's ticks).
+  GRAB pulls it off (CarryPuzzle); thrown (primary fire) it bursts on the first NPC ship within `Portable.BurstM` 30 m or
+  after `BurstAfterS` 8 s (its ImpactEvent: BP_Explosion_Corrosion and the same field); a taken pouch grows again
+  MinRegenerationTime..Max 4-6 s + RegenerationDuration 2 s later. The importer spreads each location's bases x 3.6 about
+  their centre (the field's scale). Tests `AcidCorrodesNpcShipsNotThePlayersOrProps`, `ModWorldTests.AnOrbitsAcidPouches`.
+  Left out: the pouches' mesh and cable, the spit's charge swelling. Not tried in game.
 - **Ambience zones** (remake 2026-11-05, for mods; stations.json `orbit.ambience` -> `ModWorld.AmbienceSpec`,
   `World.OrbitAmbience`, attached with the hazards): after EVERSPACE 2's BP_MusicTrigger OverrideAmbience (its inner /
   outer spheres round stations, factories, cargo wrecks, wreck fields: a SoundCue looping one of its waves by

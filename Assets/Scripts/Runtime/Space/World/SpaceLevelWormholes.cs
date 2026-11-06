@@ -427,6 +427,7 @@ namespace GoF2Remake.World
             OrbitAmbience.Attach(this);   // remake mods: the orbit's ambience zones
             OrbitStorm.Attach(this);   // remake mods: the orbit's lightning storm
             OrbitMinefield.Attach(this);   // remake mods: the orbit's minefields (by security, rank and share)
+            AcidSackBase.LayOrbit(this);   // remake mods: the orbit's acid pouches
             if (Radar != null) Radar.Clouds = GasClouds;   // the spectral filters' markers and lock
             Extender = TimeExtender.Attach(root, db);
 
