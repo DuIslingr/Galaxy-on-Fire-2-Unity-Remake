@@ -216,6 +216,17 @@ the player ship) and `NavigationView` (flight HUD).
   DistanceToPlayer 200 000 cm, at the places' 1:1 scale) "Container nearby" once (its WarningHeaderText), within `RevealM`
   (the container's InteractRadius 4000 cm x 3.6, below `OpenRangeM`) the marker (ShowMarker); opened, "Container found"
   (FoundContainer) and the empty shell shows. Left out: ES2's success sound, the location-secret count. Not tried in game.
+  Secure containers (2026-11-06, EVERSPACE 2's BP_ItemContainer_Armored with ShotTriggersRequired, BP_ShotTrigger, es2_re
+  kismet): `containers.secure` (`OrbitSpec.containerSecure`: at most 6, each `at`, 1-8 `triggers`, `ordered`, `retrigger`
+  seconds) are bulletproof ones with a rare container's rolls (fixed loot after the cloaked ones'), `Locked` (skipped by
+  `InReach`) until `Flight.ShotTriggerChain` has every trigger lit at once: a player's hit lights one (BP_ShotTrigger's
+  DamageLimit: a `Target` with `HitFilter` 0, `Damaged` by the player); `ordered` (ShotTriggerChainPreviousOne): a hit while
+  the one before is dark puts out it and those before (OnReset); `retrigger` (Retriggerable, RegtriggerDelay 3 s): a lit one
+  goes dark after it. Then `Unlock` bursts it open (`ShipBurn.ManualBurst`, `Open`). `World.ShotTrigger`: a 7.2 m sphere
+  (ES2's ~2 m x 3.6) flickering red, steady green when lit (MI_Blockout_Glow_Red_Flicker / _Green), no marker or lock.
+  Left out: the trigger sound, ES2's other locks (energy orbs, coil sockets, conductor chains: the importer leaves those
+  bulletproof), the multi-activation links. Tests `HazardTests.ShotTriggers*`, `ModWorldTests.AnOrbitsSecureContainers`.
+  Not tried in game.
 - **Traffic lanes** (remake 2026-11-03, for mods; stations.json `orbit.lanes` -> `ModWorld.LaneSpec`, `Flight.TrafficLane`
   plain (a Catmull-Rom path walked by distance, 16 chords a segment; open paths turn over at their ends),
   `World.TrafficLanes` attached with the containers): after EVERSPACE 2's BP_SplineTraffic (Count 10, BaseSpeed 8000 cm/s,

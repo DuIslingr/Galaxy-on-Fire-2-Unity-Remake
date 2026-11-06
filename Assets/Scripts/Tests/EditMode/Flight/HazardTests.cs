@@ -73,6 +73,43 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ShotTriggersUnlockOnceAllAreLit()
+        {
+            var c = new ShotTriggerChain(3, false, 0f);
+            Assert.IsFalse(c.Hit(2));
+            Assert.IsFalse(c.Hit(0));
+            Assert.IsTrue(c.Hit(1), "any order: the last one unlocks it");
+            Assert.IsTrue(c.Unlocked);
+            Assert.IsFalse(c.Hit(1), "once only");
+        }
+
+        [Test]
+        public void OrderedShotTriggersResetOnAWrongHit()
+        {
+            var c = new ShotTriggerChain(3, true, 0f);
+            Assert.IsFalse(c.Hit(0));
+            Assert.IsFalse(c.Hit(2), "the one before is dark");
+            Assert.IsFalse(c.IsLit(0), "OnReset walks the chain back");
+            c.Hit(0); c.Hit(1);
+            Assert.IsTrue(c.Hit(2));
+        }
+
+        [Test]
+        public void RetriggerableShotTriggersGoDarkAgain()
+        {
+            var c = new ShotTriggerChain(2, false, ShotTriggerChain.DefaultRetriggerS);
+            c.Hit(0);
+            c.Update(2999f);
+            Assert.IsTrue(c.IsLit(0));
+            c.Update(2f);
+            Assert.IsFalse(c.IsLit(0), "BP_ShotTrigger's RegtriggerDelay 3 s");
+            c.Hit(0); c.Update(1000f);
+            Assert.IsTrue(c.Hit(1), "both lit within the 3 s");
+            c.Update(10000f);
+            Assert.IsTrue(c.IsLit(0), "unlocked for good");
+        }
+
+        [Test]
         public void ACloakedContainerShowsItselfOnlyUpClose()
         {
             Assert.AreEqual(2, GoF2Remake.World.CloakedContainers.Stage(100f), "within ES2's InteractRadius 40 m x 3.6: the marker comes on");

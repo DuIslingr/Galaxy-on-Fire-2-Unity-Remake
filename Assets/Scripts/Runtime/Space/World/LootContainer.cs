@@ -11,6 +11,9 @@
 //                 (BP_Condition_Buff_Cloaked: the hull dissolves into the refracted screen, NpcCloak's look) with no marker
 //                 until revealed (World.CloakedContainers: the ship within RevealM); a rare container's rolls, the fixed loot
 //                 first; uncloaked once opened.
+//   secure        (2026-11-06, ES2's BP_ItemContainer_Armored with ShotTriggersRequired: OpenOnUnlocked): a bulletproof one
+//                 that won't open until its shot triggers are all lit (World.ShotTrigger, Flight.ShotTriggerChain); then it
+//                 opens itself. A rare container's rolls, the fixed loot after the cloaked ones'.
 // Loot: ES2's loot_types.CSV, a "Container" LootRolls 1-3 drops, a "RareContainer" (here the bulletproof one) 2-4: as many
 // freighter loot rolls. An orbit's fixed loot ("loot", EVERSPACE 2's unique_loot.csv) goes on top, an entry a container in
 // turn (the bulletproof ones first), each entry once a game: taken when its container opens (Session.FixedLootTaken).
@@ -47,6 +50,9 @@ namespace GoF2Remake.World
         public const float ShimmerM = 2000f;
         NpcCloak cloak;
         bool shimmering;
+        /// <summary>A secure one's shot triggers (World.ShotTrigger); null = not secure.</summary>
+        ShotTriggerChain chain;
+        public bool Locked => chain != null && !chain.Unlocked;
         public bool Opened { get; private set; }
         public Target Target { get; private set; }
         public IReadOnlyList<ItemStack> Loot => loot;
@@ -61,6 +67,7 @@ namespace GoF2Remake.World
 
         void Update()
         {
+            chain?.Update(Time.deltaTime * 1000f);
             if (cloak == null) return;
             var cam = Camera.main;
             bool near = cam != null && (cam.transform.position - transform.position).sqrMagnitude < ShimmerM * ShimmerM;
@@ -70,6 +77,25 @@ namespace GoF2Remake.World
                 foreach (var r in GetComponentsInChildren<Renderer>(true)) if (!(r is ParticleSystemRenderer)) r.forceRenderingOff = !near;
             }
             cloak.Show(near ? 100f : 0f, Time.deltaTime * 1000f);
+        }
+
+        /// <summary>A secure one's triggers are all lit: it opens itself.</summary>
+        public void Unlock()
+        {
+            if (Opened) return;
+            ShipBurn.ManualBurst(transform.position, 0.6f, 1200f, 1400f, 300f);
+            Open();
+        }
+
+        /// <summary>Makes it a secure one with shot triggers at 'triggers' (Unity), in turn when 'ordered', each lit for 'retriggerS'
+        /// (0 = for good).</summary>
+        public void Secure(System.Collections.Generic.IList<Vector3> triggers, bool ordered, float retriggerS)
+        {
+            chain = new ShotTriggerChain(triggers.Count, ordered, retriggerS);
+            name = "Secure container";
+            if (Target != null) Target.displayName = Localization.Extra("containerSecure", "Secure container");
+            var parent = transform.parent;
+            for (int i = 0; i < triggers.Count; i++) ShotTrigger.Make(parent, triggers[i], chain, i, this);
         }
 
         /// <summary>A cloaked one's marker and lock come on (the ship came near); it stays cloaked until opened.</summary>
@@ -121,16 +147,16 @@ namespace GoF2Remake.World
         public static int SpawnOrbit(Database db, OrbitLayout layout)
         {
             var spec = layout != null ? Modding.ModWorld.OrbitOf(layout.stationIndex) : null;
-            int cloakedCount = spec?.containerCloaked?.Count ?? 0;
-            if (spec == null || spec.containerCount + cloakedCount <= 0) return 0;
+            int cloakedCount = spec?.containerCloaked?.Count ?? 0, secureCount = spec?.containerSecure?.Count ?? 0;
+            if (spec == null || spec.containerCount + cloakedCount + secureCount <= 0) return 0;
             var centre = spec.containerCentre ?? new Vector3(30000f, 0f, 50000f);
             float half = spec.containerSpread * 0.5f;
             int race = db?.Systems.Find(s => s.index == layout.systemIndex)?.raceId ?? Standing.Pirate;
-            // containers 0..containerCount-1 in the field, then the cloaked ones at their places
-            int total = spec.containerCount + cloakedCount;
+            // containers 0..containerCount-1 in the field, then the cloaked ones at their places, then the secure ones at theirs
+            int firstSecure = spec.containerCount + cloakedCount, total = firstSecure + secureCount;
             var proofs = new bool[total];
             for (int i = 0; i < proofs.Length; i++) proofs[i] = i >= spec.containerCount || Random.value < spec.containerBulletproof;
-            // the fixed loot not yet taken, an entry a container (the cloaked ones first, then the bulletproof ones)
+            // the fixed loot not yet taken, an entry a container (the cloaked ones first, the secure ones, then the bulletproof ones)
             var order = new List<int>();
             for (int i = spec.containerCount; i < total; i++) order.Add(i);
             for (int i = 0; i < spec.containerCount; i++) if (proofs[i]) order.Add(i);
@@ -148,7 +174,7 @@ namespace GoF2Remake.World
                 }
             for (int i = 0; i < total; i++)
             {
-                bool proof = proofs[i], cloaked = i >= spec.containerCount;
+                bool proof = proofs[i], secure = i >= firstSecure, cloaked = i >= spec.containerCount && !secure;
                 var cargo = new List<ItemStack>();
                 int rolls = proof ? Random.Range(BulletproofRollsMin, BulletproofRollsMax + 1) : Random.Range(RollsMin, RollsMax + 1);
                 for (int k = 0; k < rolls; k++) cargo.AddRange(WreckField.Loot(db));
@@ -158,11 +184,19 @@ namespace GoF2Remake.World
                     keys = new List<string>();
                     foreach (var (key, stack) in own) { cargo.Add(stack); keys.Add(key); }
                 }
-                var at = cloaked ? spec.containerCloaked[i - spec.containerCount]
+                var at = secure ? spec.containerSecure[i - firstSecure].at : cloaked ? spec.containerCloaked[i - spec.containerCount]
                        : centre + new Vector3(Random.Range(-half, half), Random.Range(-half, half) * 0.3f, Random.Range(-half, half));
                 string model = proof ? spec.containerProofModel ?? spec.containerModel : spec.containerModel;
                 var c = Spawn(OrbitLayout.ToUnity(at), cargo, proof, race, model != null && spec.owner != null ? spec.owner.Id + "|" + model : null, cloaked);
-                if (c != null) c.fixedKeys = keys;
+                if (c == null) continue;
+                c.fixedKeys = keys;
+                if (secure)
+                {
+                    var s = spec.containerSecure[i - firstSecure];
+                    var places = new List<Vector3>();
+                    foreach (var p in s.triggers) places.Add(OrbitLayout.ToUnity(p));
+                    c.Secure(places, s.ordered, s.retriggerS);
+                }
             }
             return total;
         }
@@ -178,7 +212,7 @@ namespace GoF2Remake.World
             float bestD = OpenRangeM * OpenRangeM;
             foreach (var c in All)
             {
-                if (c == null || c.Opened || !c.Revealed) continue;
+                if (c == null || c.Opened || !c.Revealed || c.Locked) continue;
                 var d = c.transform.position - ship.position;
                 float d2 = d.sqrMagnitude;
                 if (d2 > bestD || Vector3.Dot(d, ship.forward) <= 0f) continue;

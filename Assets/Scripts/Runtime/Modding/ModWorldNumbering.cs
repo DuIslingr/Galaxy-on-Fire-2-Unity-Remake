@@ -354,7 +354,7 @@ namespace GoF2Remake.Modding
                 {
                     foreach (var p in c.Properties())
                         if (p.Name != "count" && p.Name != "centre" && p.Name != "center" && p.Name != "spread" && p.Name != "bulletproof" && p.Name != "loot"
-                            && p.Name != "model" && p.Name != "bulletproofModel" && p.Name != "materials" && p.Name != "cloaked")
+                            && p.Name != "model" && p.Name != "bulletproofModel" && p.Name != "materials" && p.Name != "cloaked" && p.Name != "secure")
                             Report(mod, $"{where}: unknown containers field \"{p.Name}\" (ignored)");
                     s.containerCount = Mathf.Clamp(ModJson.Int(c, "count", 6, StationsFile), 0, 40);
                     s.containerCentre = Xyz(c, "centre", where) ?? Xyz(c, "center", where);
@@ -380,6 +380,31 @@ namespace GoF2Remake.Modding
                             else Report(mod, $"{where}: a cloaked container's place is [x, y, z] (left out)");
                         }
                         if (s.containerCloaked.Count == 0) s.containerCloaked = null;
+                    }
+                    if (ModJson.Get(c, "secure") is JToken sec)
+                    {
+                        if (!(sec is JArray secList)) throw new ModJsonException($"{where}: containers \"secure\" is a list [ {{ \"at\", \"triggers\" }} ]");
+                        s.containerSecure = new List<SecureContainerSpec>();
+                        foreach (var e in secList)
+                        {
+                            if (!(e is JObject so)) throw new ModJsonException($"{where}: a secure container is {{ \"at\": [x, y, z], \"triggers\": [ [x, y, z], ... ] }}");
+                            foreach (var p in so.Properties())
+                                if (p.Name != "at" && p.Name != "triggers" && p.Name != "ordered" && p.Name != "retrigger")
+                                    Report(mod, $"{where}: unknown secure container field \"{p.Name}\" (ignored)");
+                            var at = Xyz(so, "at", where);
+                            if (!at.HasValue) throw new ModJsonException($"{where}: a secure container needs \"at\": [x, y, z]");
+                            var spec = new SecureContainerSpec { at = at.Value, ordered = ModJson.Bool(so, "ordered", false, StationsFile),
+                                retriggerS = Mathf.Clamp(ModJson.Float(so, "retrigger", 0f, StationsFile), 0f, 60f) };
+                            if (ModJson.Get(so, "triggers") is JArray tl)
+                                foreach (var tp in tl)
+                                    if (tp is JArray xyz && xyz.Count == 3 && xyz.All(v => v.Type == JTokenType.Integer || v.Type == JTokenType.Float))
+                                    { if (spec.triggers.Count < 8) spec.triggers.Add(new Vector3((float)xyz[0], (float)xyz[1], (float)xyz[2])); }
+                                    else Report(mod, $"{where}: a shot trigger's place is [x, y, z] (left out)");
+                            if (spec.triggers.Count == 0) { Report(mod, $"{where}: a secure container without shot triggers (left out)"); continue; }
+                            if (s.containerSecure.Count < 6) s.containerSecure.Add(spec);
+                            else { Report(mod, $"{where}: at most 6 secure containers (the rest left out)"); break; }
+                        }
+                        if (s.containerSecure.Count == 0) s.containerSecure = null;
                     }
                     if (ModJson.Get(c, "materials") is JArray cmats)
                         foreach (var m in cmats) s.containerMaterials.Add(JsonUtility.FromJson<CustomShipMaterial>(m.ToString()));

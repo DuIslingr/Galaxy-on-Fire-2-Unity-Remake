@@ -300,6 +300,16 @@ namespace GoF2Remake.Modding
             public float radius = 30000f;
         }
 
+        /// <summary>Remake (2026-11-06): a secure container at 'at' (game units) and its shot triggers' places; 'ordered' = they go in
+        /// turn, 'retriggerS' = a lit one goes dark again after that many seconds (0 = stays lit).</summary>
+        public sealed class SecureContainerSpec
+        {
+            public Vector3 at;
+            public List<Vector3> triggers = new List<Vector3>();
+            public bool ordered;
+            public float retriggerS;
+        }
+
         /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_Minefield): a minefield in an orbit (stations.json "orbit.minefields",
         /// World.OrbitMinefields): 'count' proximity mines at random within 'radius' game units of 'centre', each blasting the
         /// player's ship for 'raiderSeconds' seconds of a raider's fire (-1 = by its 'kind', as ES2's BaseDamage over a raider's 55
@@ -384,6 +394,9 @@ namespace GoF2Remake.Modding
             /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_Activity_InvisibleContainer): cloaked containers at these places (game
             /// units), on top of containerCount: unseen and unmarked until the ship is near (World.CloakedContainers); null = none.</summary>
             public List<Vector3> containerCloaked;
+            /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_ItemContainer_Armored with ShotTriggersRequired): secure containers,
+            /// locked until all their shot triggers are lit (World.ShotTrigger, Flight.ShotTriggerChain); null = none.</summary>
+            public List<SecureContainerSpec> containerSecure;
             public float containerSpread = 40000f, containerBulletproof = 0.3f;
             /// <summary>Remake (2026-11-05, EVERSPACE 2's unique loot): fixed items in its containers, each entry once a game
             /// (Session.FixedLootTaken); null = none.</summary>

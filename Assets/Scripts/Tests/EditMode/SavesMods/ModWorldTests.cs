@@ -732,6 +732,28 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("a cloaked container's place is [x, y, z]", AllMessages(Installed("t_world")));
         }
 
+        [Test]
+        public void AnOrbitsSecureContainers()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'containers': { 'count': 0, 'secure': [ { 'at': [1, 2, 3], 'triggers': [ [10, 0, 0], [0, 10, 0], [5] ], 'ordered': true, 'retrigger': 3, 'doors': 2 }, " +
+                "{ 'at': [0, 0, 0], 'triggers': [] } ] } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var s = ModWorld.OrbitOf(78).containerSecure;
+            Assert.AreEqual(1, s.Count, "one without triggers left out");
+            Assert.AreEqual(new UnityEngine.Vector3(1, 2, 3), s[0].at);
+            Assert.AreEqual(2, s[0].triggers.Count);
+            Assert.IsTrue(s[0].ordered);
+            Assert.AreEqual(3f, s[0].retriggerS);
+            var msgs = AllMessages(Installed("t_world"));
+            StringAssert.Contains("unknown secure container field \"doors\"", msgs);
+            StringAssert.Contains("a shot trigger's place is [x, y, z]", msgs);
+            StringAssert.Contains("a secure container without shot triggers", msgs);
+        }
+
+        [Test] public void ASecureContainerNeedsAPlace() => StringAssert.Contains("a secure container needs \"at\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'secure': [ { 'triggers': [ [0, 0, 0] ] } ] } } } ]"));
+
         [Test] public void CloakedContainersAreAList() => StringAssert.Contains("containers \"cloaked\" is a list", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'cloaked': true } } } ]"));
 
         [Test] public void AMinefieldNeedsACentre() => StringAssert.Contains("a minefield needs \"centre\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'minefields': [ { 'kind': 'web' } ] } } ]"));
