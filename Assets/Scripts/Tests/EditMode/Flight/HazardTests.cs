@@ -180,6 +180,15 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AnEncountersMusicLastsWhileItsFightDoes()
+        {
+            Assert.IsTrue(GoF2Remake.World.EncounterMusic.StillOn(5f, 5f, 100f), "the grace: the fight hasn't started yet");
+            Assert.IsTrue(GoF2Remake.World.EncounterMusic.StillOn(60f, 10f, 100f), "calm a little while");
+            Assert.IsFalse(GoF2Remake.World.EncounterMusic.StillOn(60f, 16f, 100f), "calm 15 s after the grace");
+            Assert.IsFalse(GoF2Remake.World.EncounterMusic.StillOn(5f, 0f, 16000f), "flown off");
+        }
+
+        [Test]
         public void AShipInNeedAsksForWhatThePilotCarries()
         {
             var items = GoF2Remake.World.ShipInNeed.Items;

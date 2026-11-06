@@ -157,6 +157,13 @@ the player ship) and `NavigationView` (flight HUD).
   `RepairPerS` 75 (EnqueueHullRepair) and `BattlePay` is paid (GivesCreditsReward); the ship lost or the pilot past
   `LeaveM` ends it. The importer's entry: weight 6, any security (no danger). Test `AShipInNeedAsksForWhatThePilotCarries`.
   Not tried in game.
+  Encounter music (2026-11-06, ES2's DA_MusicSet_Rift_001 / _HighRiskSector_001 / _Dreadnought): an entry's `music` (a mod
+  track; a rift entry's sets the rift's, the first mod's) starts `World.EncounterMusic` at the spawn; while it runs
+  (`Current`) the orbit's battle music (TrafficSpecials) plays that track instead of the system's `battleMusic` / the
+  game's; it ends past `EncounterWatch.LeaveM` or after `CalmS` 15 s without hostiles once `GraceS` 20 s have passed
+  (`StillOn`), a newer encounter's replacing it. The importer writes es2_rift, es2_highrisk (and the Dreadnought raid's
+  es2_dreadnought, its mission's music step) from those sets' 3Battle layers. Tests `AnEncountersMusicLastsWhileItsFightDoes`,
+  `ModEncountersTests.AnEncounterMayHaveItsOwnMusic`. Not heard in game.
   The `stash` and `depot` crates stay until emptied (`Crate.keep`), not the crates' 60 s.
   **Between the systems** (2026-11-03, the user: "encounters should pull you out either in their own space or the nearest
   system"; `CruiseEncounters.Between`): the same table rolls on an interstellar leg (single player, as that space is), the

@@ -59,6 +59,7 @@ namespace GoF2Remake.World
             var traffic = level.Traffic;
             var db = level.Database ?? Database.Shared;
             int rank = Session.Rank, systemRace = traffic.SystemRace;
+            if (e.music != null) EncounterMusic.Begin(level, e.music, at);   // (its own fight music, encounters.json "music")
             switch (e.kind)
             {
                 case CruiseEncounters.Pirates:

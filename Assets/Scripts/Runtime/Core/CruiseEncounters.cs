@@ -55,6 +55,9 @@ namespace GoF2Remake.Flight
             /// <summary>Kind "rift" (2026-11-04): the ships its boss may fly (one at random) and its hull in pirate raiders' hulls
             /// (EVERSPACE 2's hit points over its Outlaw raider's 310); null = the pirate boss.</summary>
             public List<RiftBoss> bosses;
+            /// <summary>Remake (2026-11-06): the mod music track its fight plays instead of the battle music (World.EncounterMusic),
+            /// null = the system's.</summary>
+            public string music;
             public bool StopsTheDrive => kind != Flyby && kind != Quest;
         }
 
