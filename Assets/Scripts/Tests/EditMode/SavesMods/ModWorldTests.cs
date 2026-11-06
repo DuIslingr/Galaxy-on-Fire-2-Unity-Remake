@@ -663,6 +663,21 @@ namespace GoF2Remake.Tests
             Assert.IsFalse(AllMessages(Installed("t_world")).Contains("unknown wrecks field"));
         }
 
+        [Test]
+        public void AnOrbitsStorm()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'storm': { 'frequency': 2, 'thunder': ['t1', 't2'], 'sparks': 1 } } }, { 'override': 77, 'orbit': { 'storm': true } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var s = ModWorld.OrbitOf(78).storm;
+            Assert.AreEqual(2f, s.frequency);
+            Assert.AreEqual(new[] { "t1", "t2" }, s.thunder.ToArray());
+            Assert.AreEqual(0.2f, s.thunderChance, 1e-5f, "ES2's ThunderSoundSpawnChance");
+            Assert.AreEqual(80000f, ModWorld.OrbitOf(77).storm.radius, "ES2's 400 000 cm");
+            StringAssert.Contains("unknown storm field \"sparks\"", AllMessages(Installed("t_world")));
+        }
+
         [Test] public void AHazardKindIsNotANumber() => StringAssert.Contains("a hazard's \"kind\" is", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': '1', 'centre': [0, 0, 0] } ] } } ]"));
         [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\", \"radiation\", \"frost\", \"corrosion\" or \"damage\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 

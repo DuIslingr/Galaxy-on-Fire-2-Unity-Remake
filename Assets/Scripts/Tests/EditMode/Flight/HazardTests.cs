@@ -61,6 +61,18 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void StormFlashesLieOnTheCylinder()
+        {
+            var o = GoF2Remake.World.OrbitStorm.FlashOffset(4000f, 4000f, 0.25f, 1f);
+            Assert.AreEqual(4000f, new UnityEngine.Vector2(o.x, o.z).magnitude, 1e-2f, "on the cylinder's surface (ES2's VolumeSurfaceOnly)");
+            Assert.AreEqual(2000f, o.y, 1e-3f, "at the top: half the height up");
+            float total = 0f;
+            UnityEngine.Random.InitState(7);
+            for (int i = 0; i < 2000; i++) total += GoF2Remake.World.OrbitStorm.NextFlashMs(1f);
+            Assert.AreEqual(1000f, total / 2000f, 100f, "a flash a second on average at frequency 1");
+        }
+
+        [Test]
         public void TheFieldsTakeEverspace2sColours()
         {
             Assert.AreEqual(new UnityEngine.Color(0.84f, 1f, 0.09f), GoF2Remake.World.HazardLooks.KindColor(GoF2Remake.Modding.ModWorld.HazardKind.Corrosion), "P_CorrosionField's StartColor");

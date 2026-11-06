@@ -1,18 +1,21 @@
 // HazardLooks.cs
 // Remake (2026-11-06, for mods): how an orbit's hazard volumes look (World.HazardZones; stations.json "orbit.hazards"), after
 // EVERSPACE 2's fields, which are particles in the volume and a post-process inside it, never a surface:
-//   corrosion  P_CorrosionField: clouds (M_CorrosionField_Cloud, 5 a second for 2-4 s, 1-2 x the radius across, their
-//              alpha up and down over the life) and a fizz of bubbles (M_Condition_Corrosion_Bubble), all (0.84, 1, 0.09)
-//   radiation  NS_RadiationField: clouds (M_RadiationField_Cloud) and sparks (M_Particle_Spark_002) in RadiationColor
-//              (1, 1, 0.39); inside, M_Condition_Radiated_PostProcess's dots (GoF2/HazardVolume mode 2)
-//   frost      NS_FrostField: drifting ice shards (mesh particles, M_WebField_Plasma) in (0.19, 0.77, 1); inside,
-//              M_Condition_Frozen_PostProcess's frost from the edges as the buildup grows (GoF2/HazardVolume mode 1)
+//   corrosion  P_CorrosionField: clouds (M_CorrosionField_Cloud: turbulence, GoF2/HazardCloud mode 0; 5 a second for 2-4 s,
+//              1-2 x the radius across, their alpha up and down over the life) and a fizz of bubbles
+//              (M_Condition_Corrosion_Bubble), all (0.84, 1, 0.09); its clouds' refraction left out
+//   radiation  NS_RadiationField: clouds (M_RadiationField_Cloud: dots where a noise peaks, mode 1) and sparks
+//              (M_Particle_Spark_002) in RadiationColor (1, 1, 0.39); inside, M_Condition_Radiated_PostProcess's glowing
+//              edges, grain and blobs (GoF2/HazardVolume mode 2)
+//   frost      NS_FrostField: drifting wisps (mesh particles of M_WebField_Plasma: mode 2) and ice glints in
+//              (0.19, 0.77, 1); inside, M_Condition_Frozen_PostProcess's frost from the edges as the buildup grows
+//              (GoF2/HazardVolume mode 1)
 //   heat       BP_HeatDamageVolume: no particles (ES2's heat volumes lie on hot ground); inside, its post-process raises
 //              the bloom to 2 (here a global volume doubling the scene's bloom, weighted by the depth inside); a faint
 //              orange haze added so the volume shows in open space (remake)
 //   damage     BP_DamageField: the burning mining prop's fire (BP_Mining_Fire_001): GoF2's fire sprites and embers
-// The particles are GoF2's own sprites (the pirate base's fog for the clouds, the particle atlas for the motes, the burning
-// ships' fire), simulated in the volume's space with its sphere as the emitter.
+// The clouds are GoF2/HazardCloud (ES2's cloud materials' compiled shaders, recoded), the motes GoF2's particle atlas, the
+// fire GoF2's burning ships' sprites; simulated in the volume's space with its sphere as the emitter.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -43,6 +46,7 @@ namespace GoF2Remake.World
             var overlays = new Material[zones.Length];
             var assets = CombatAssets.Load();
             var overlayShader = Resources.Load<Shader>("GoF2Combat/HazardVolume");
+            var cloudShader = Resources.Load<Shader>("GoF2Combat/HazardCloud");
             for (int i = 0; i < zones.Length; i++)
             {
                 var z = zones[i];
@@ -55,21 +59,21 @@ namespace GoF2Remake.World
                 switch (z.kind)
                 {
                     case Modding.ModWorld.HazardKind.Corrosion:
-                        Clouds(root.transform, assets, r, c, 0.45f, 5f, 2f, 4f, 1f, 2f);
+                        Clouds(root.transform, cloudShader, r, c, 0f, 1.5f, 5f, 2f, 4f, 1f, 2f);
                         Motes(root.transform, assets, r, c, GlowCell, 60f, 0.4f, 1f, 0.02f, 0.06f, 0f);
                         break;
                     case Modding.ModWorld.HazardKind.Radiation:
-                        Clouds(root.transform, assets, r, c, 0.35f, 3f, 3f, 5f, 1f, 2f);
+                        Clouds(root.transform, cloudShader, r, c, 1f, 2f, 3f, 3f, 5f, 1f, 2f);
                         Motes(root.transform, assets, r, c, SparkCell, 30f, 0.5f, 1f, 0.01f, 0.03f, 0f);
-                        overlays[i] = Overlay(root.transform, overlayShader, r, new Color(1f, 1f, 0.659f), 2f);   // (RadiationColor FFFFA8)
+                        overlays[i] = Overlay(root.transform, overlayShader, r, new Vector4(1f, 1f, 0.39f, 1f), 2f);   // (RadiationColor, linear)
                         break;
                     case Modding.ModWorld.HazardKind.Frost:
-                        Clouds(root.transform, assets, r, c, 0.18f, 2f, 3f, 5f, 0.8f, 1.5f);
+                        Clouds(root.transform, cloudShader, r, c, 2f, 1.2f, 3f, 3f, 5f, 0.8f, 1.5f);
                         Motes(root.transform, assets, r, c, GlowCell, 40f, 2f, 4f, 0.015f, 0.04f, 30f);
-                        overlays[i] = Overlay(root.transform, overlayShader, r, new Color(0.82f, 0.93f, 1f), 1f);
+                        overlays[i] = Overlay(root.transform, overlayShader, r, new Vector4(0.8f, 0.92f, 1f, 1f), 1f);
                         break;
                     case Modding.ModWorld.HazardKind.Heat:
-                        Clouds(root.transform, assets, r, c, 0.12f, 2f, 3f, 5f, 0.8f, 1.6f);
+                        Clouds(root.transform, cloudShader, r, c, 0f, 0.4f, 2f, 3f, 5f, 0.8f, 1.6f);
                         break;
                     default:
                         Fire(root.transform, assets, r);
@@ -140,17 +144,25 @@ namespace GoF2Remake.World
             return m;
         }
 
-        /// <summary>Soft clouds through the volume: 'rate' a second for lifeMin-lifeMax s, sizeMin-sizeMax x the radius.</summary>
-        static void Clouds(Transform parent, CombatAssets assets, float radius, Color c, float strength, float rate, float lifeMin, float lifeMax, float sizeMin, float sizeMax)
+        /// <summary>Clouds through the volume (GoF2/HazardCloud in 'mode', 'glow' bright): 'rate' a second for lifeMin-lifeMax
+        /// s, sizeMin-sizeMax x the radius; their centre fed to the shader (the Center stream) to vary each one's pattern.</summary>
+        static void Clouds(Transform parent, Shader shader, float radius, Color c, float mode, float glow, float rate, float lifeMin, float lifeMax, float sizeMin, float sizeMax)
         {
+            if (shader == null) return;
             var ps = MakeSystem(parent, "Clouds", radius, Mathf.CeilToInt(rate * lifeMax) + 2, rate, lifeMin, lifeMax);
             var main = ps.main;
             main.startSize = new ParticleSystem.MinMaxCurve(radius * sizeMin, radius * sizeMax);
             var rot = ps.rotationOverLifetime;
             rot.enabled = true;
             rot.z = new ParticleSystem.MinMaxCurve(-0.15f, 0.15f);
-            FadeInOut(ps, c, strength);
-            Finish(ps, Tinted(assets != null ? assets.fogMaterial : null, "Hazard clouds"), null, 4f);
+            FadeInOut(ps, c, 1f);
+            var m = new Material(shader) { name = "Hazard clouds" };
+            m.SetFloat("_Mode", mode);
+            m.SetFloat("_Glow", glow);
+            var r = ps.GetComponent<ParticleSystemRenderer>();
+            r.SetActiveVertexStreams(new List<ParticleSystemVertexStream>
+                { ParticleSystemVertexStream.Position, ParticleSystemVertexStream.Color, ParticleSystemVertexStream.UV, ParticleSystemVertexStream.Center });
+            Finish(ps, m, null, 4f);
         }
 
         /// <summary>Small motes (bubbles, sparks, shards) of particles.png cell 'cell', sizeMin-sizeMax x the radius; 'spin'
@@ -188,7 +200,7 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The inside view's overlay (GoF2/HazardVolume in 'mode') on the volume's sphere, its amount 0.</summary>
-        static Material Overlay(Transform parent, Shader shader, float radius, Color c, float mode)
+        static Material Overlay(Transform parent, Shader shader, float radius, Vector4 linearColor, float mode)
         {
             if (shader == null) return null;
             var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -200,7 +212,7 @@ namespace GoF2Remake.World
             r.shadowCastingMode = ShadowCastingMode.Off;
             r.receiveShadows = false;
             var m = new Material(shader) { name = "Hazard inside view" };
-            m.SetColor("_Color", c);
+            m.SetVector("_Color", linearColor);   // (ES2's linear colours as they are)
             m.SetFloat("_Mode", mode);
             m.SetFloat("_Amount", 0f);
             r.sharedMaterial = m;

@@ -253,6 +253,15 @@ namespace GoF2Remake.Modding
             public float radius = 30000f;
         }
 
+        /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_LightningField): a lightning storm round the camera (stations.json
+        /// "orbit.storm", World.OrbitStorm): 'frequency' flashes a second on a cylinder 'radius' game units out, each a glow
+        /// and a bolt 'scale' x ES2's sizes, 'intensity' x its brightness; a 'thunder' sound (one of the mod's) at 'thunderChance'.</summary>
+        public sealed class StormSpec
+        {
+            public float frequency = 1f, radius = 80000f, heightPercent = 1f, scale = 1f, intensity = 1f, thunderChance = 0.2f;
+            public List<string> thunder;
+        }
+
         /// <summary>Remake (2026-11-05, EVERSPACE 2's plasma fields): the orbit's gas clouds (stations.json "orbit.gasClouds",
         /// World.GasCloudField) instead of GoF2's roll: their plasma and places; still only with a spectral filter mounted.</summary>
         public sealed class GasCloudSpec
@@ -274,6 +283,8 @@ namespace GoF2Remake.Modding
             public ModInfo owner;
             /// <summary>Remake (2026-11-05, EVERSPACE 2's ambience zones): null = none.</summary>
             public List<AmbienceSpec> ambience;
+            /// <summary>Remake (2026-11-06): the orbit's lightning storm (World.OrbitStorm), null = none.</summary>
+            public StormSpec storm;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's spline traffic): null = none.</summary>
             public List<LaneSpec> lanes;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's heat volumes and radiation fields): null = none.</summary>
@@ -361,7 +372,9 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm" };
+        static readonly HashSet<string> StormFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "frequency", "radius", "heightPercent", "scale", "intensity", "thunder", "thunderChance" };
         static readonly HashSet<string> WreckFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "count", "centre", "center", "spread", "models", "materials", "hulks", "size" };
         static readonly HashSet<string> AsteroidFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

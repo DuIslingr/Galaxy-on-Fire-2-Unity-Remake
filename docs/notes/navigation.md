@@ -232,17 +232,31 @@ the player ship) and `NavigationView` (flight HUD).
   `CorrosionTickSeconds` = intensity 5 / 55; `PlayerDebuffs` lifts it), `damage` (DamagePerSecond 20 a second, no falloff;
   the importer gives ES2's capsule as a sphere of its radius). Not done: ES2's lightning fields (a storm effect), acid
   sacks, lightning plants and meltable ice (props with ES2's models), the energy restore fields (in no ES2 level).
-  Looks (2026-11-06, `World.HazardLooks`, after ES2's fields: particles and an inside post-process, no surface): Unity
-  particle systems in the volume's space, its sphere the emitter, prewarmed: clouds of GoF2's fog sprite (the pirate
-  base's, additive, RGB faded 0 -> 1 -> 0 over the life as ES2's AlphaScaleOverLife) and motes of particles.png (cell 3
-  glow, 61 spark), in ES2's colours: corrosion P_CorrosionField (0.84, 1, 0.09; clouds 5/s for 2-4 s, 1-2 x the radius;
-  bubbles), radiation NS_RadiationField (RadiationColor (1, 1, 0.39); clouds, sparks), frost NS_FrostField (0.19, 0.77, 1;
-  faint clouds, spinning shards), heat a faint orange haze (remake: ES2's heat volumes have none), damage GoF2's fire
-  sprites and embers (ES2's: the burning mining prop). Inside (GoF2/HazardVolume, the volume's sphere drawn Cull Front /
-  ZTest Always while the camera is within it): frost M_Condition_Frozen_PostProcess (frost from the edges, `_Amount` the
-  buildup, whole while frozen; procedural cells for T_Grunge_Frost_001), radiation M_Condition_Radiated_PostProcess (dots
-  FFFFA8 under drifting noise, 0.3 -> 1 toward the next dose); heat BP_HeatDamageVolume's BloomIntensity 2: a global
-  Volume at priority 60 with the scene's bloom x 2, its weight the camera's depth (1 within 85 % of the radius).
+  Looks (2026-11-06, `World.HazardLooks`, after ES2's fields: particles and an inside post-process, no surface; the
+  materials' compiled shaders read in es2_re/fxmat, ShaderDump + disasm): Unity particle systems in the volume's space, its
+  sphere the emitter, prewarmed. Clouds are GoF2/HazardCloud (additive; the Center vertex stream seeds each one;
+  procedural noise for ES2's textures): mode 0 M_CorrosionField_Cloud (2 octaves of |gradient noise| at uv x 3 drifting
+  with time x 0.2, ^1.5 squared, in the disc 1 - 2 r), mode 1 M_RadiationField_Cloud (dots where one octave of simplex
+  noise at uv x 20 peaks, x 10 saturated, in a noise-wobbled disc), mode 2 M_WebField_Plasma (a flowed noise squared,
+  ^ 1 / disc^3: wisps). Colours ES2's: corrosion P_CorrosionField (0.84, 1, 0.09; 5 clouds/s for 2-4 s, 1-2 x the radius;
+  bubbles of particles.png cell 3), radiation NS_RadiationField (RadiationColor (1, 1, 0.39); sparks, cell 61), frost
+  NS_FrostField (0.19, 0.77, 1; wisps, glints), heat a faint turbulence haze (remake: ES2's heat volumes have none),
+  damage GoF2's fire sprites and embers (ES2's: the burning mining prop). The corrosion clouds' refraction is left out.
+  Inside (GoF2/HazardVolume, added, the volume's sphere drawn Cull Front / ZTest Always while the camera is within it):
+  frost M_Condition_Frozen_PostProcess (vignette (|uv - 0.5|)^1.5 through the contrast curve 3, x the frost revealed by
+  saturate((f - (1 - Opacity)) / Opacity), x f^2; procedural ice cells for T_Grunge_Frost_001's R; Opacity = the buildup,
+  whole while frozen), radiation M_Condition_Radiated_PostProcess (the edges' glow, two scrolling noises ^ 1 / distance x
+  RadiationColor x 5 x Opacity^1.5, a grain x 0.3 x distance^3 and sparse noise blobs x Opacity^2; Opacity 0.3 -> 1
+  toward the next dose); heat BP_HeatDamageVolume's BloomIntensity 2: a global Volume at priority 60 with the scene's bloom
+  x 2, its weight the camera's depth (1 within 85 % of the radius).
+- **Lightning storms** (remake 2026-11-06, for mods; stations.json `orbit.storm` -> `ModWorld.StormSpec`, `World.OrbitStorm`
+  attached with the ambience): after EVERSPACE 2's BP_LightningField (AttachToCamera, Frequency 1, Radius 400 000 cm,
+  HeightPercent 1, VolumeSurfaceOnly, ThunderSoundSpawnChance 0.2) and P_LightningField: flashes at random
+  (`NextFlashMs`: exponential, `frequency` a second) on a cylinder round the camera (`FlashOffset`, `radius` game units,
+  kept within 0.8 x the far plane), each a glow (particles.png cell 3, 1-10 km for 0.1-0.2 s) and a bolt (khador_jump's
+  big bolt, EmpSparks' tile 11; 2-6 km for 0.25-1 s) x `scale`, blue-violet (0.1, 0.34, 1) to orange (1, 0.29, 0.05) over
+  the life x `intensity` (ES2's ColorOverLife); a mod `thunder` sound 0.4-2 s after a flash at `thunderChance`. Effects
+  only: no damage or EMP.
 - **Ambience zones** (remake 2026-11-05, for mods; stations.json `orbit.ambience` -> `ModWorld.AmbienceSpec`,
   `World.OrbitAmbience`, attached with the hazards): after EVERSPACE 2's BP_MusicTrigger OverrideAmbience (its inner /
   outer spheres round stations, factories, cargo wrecks, wreck fields: a SoundCue looping one of its waves by

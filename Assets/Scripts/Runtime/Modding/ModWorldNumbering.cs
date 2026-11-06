@@ -209,6 +209,27 @@ namespace GoF2Remake.Modding
                         else Report(mod, $"{where}: a gas cloud is [x, y, z] (left out)");
                 if (spec.clouds.Count > 0) s.gasClouds = spec;
             }
+            // Remake (2026-11-06): a lightning storm, EVERSPACE 2's BP_LightningField (World.OrbitStorm)
+            if (ModJson.Get(o, "storm") is JToken stm)
+            {
+                if (stm.Type == JTokenType.Boolean) s.storm = (bool)stm ? new StormSpec() : null;
+                else if (stm is JObject so)
+                {
+                    foreach (var p in so.Properties())
+                        if (!StormFields.Contains(p.Name)) Report(mod, $"{where}: unknown storm field \"{p.Name}\" (ignored)");
+                    s.storm = new StormSpec
+                    {
+                        frequency = Mathf.Clamp(ModJson.Float(so, "frequency", 1f, StationsFile), 0.05f, 10f),
+                        radius = Mathf.Clamp(ModJson.Float(so, "radius", 80000f, StationsFile), 5000f, 400000f),
+                        heightPercent = Mathf.Clamp(ModJson.Float(so, "heightPercent", 1f, StationsFile), 0f, 4f),
+                        scale = Mathf.Clamp(ModJson.Float(so, "scale", 1f, StationsFile), 0.1f, 10f),
+                        intensity = Mathf.Clamp(ModJson.Float(so, "intensity", 1f, StationsFile), 0f, 10f),
+                        thunderChance = Mathf.Clamp01(ModJson.Float(so, "thunderChance", 0.2f, StationsFile)),
+                        thunder = ModJson.Has(so, "thunder") ? ModJson.Strings(so, "thunder") : null,
+                    };
+                }
+                else throw new ModJsonException($"{where}: orbit \"storm\" is true, false or {{ \"frequency\", \"radius\", \"scale\", \"intensity\", \"thunder\", \"thunderChance\" }}");
+            }
             // Remake (2026-11-05): ambience zones, EVERSPACE 2's (World.OrbitAmbience)
             if (ModJson.Get(o, "ambience") is JToken amb)
             {

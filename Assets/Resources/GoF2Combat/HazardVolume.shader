@@ -1,19 +1,21 @@
-// GoF2/HazardVolume: the view from inside an orbit's hazard volume (World.HazardLooks; stations.json "orbit.hazards"), after
-// EVERSPACE 2's fields' post-process materials, drawn by the volume's sphere (Unity's primitive, radius 0.5) from inside
-// only (Cull Front, ZTest Always: over everything while the camera is within it; nothing from outside, where ES2's
-// fields are only their particles):
-//   _Mode 1  frost      M_Condition_Frozen_PostProcess: frost (T_Grunge_Frost_001) creeping in from the screen's edges,
-//                       its Opacity the buildup (_Amount 0..1); here a procedural frost of cells and fine grain
-//   _Mode 2  radiation  M_Condition_Radiated_PostProcess: RadiationColor (1, 1, 0.39) dots (T_Pattern_Dots_002) over drifting
-//                       noise (T_Noise_010_M); here a screen grid of dots under a value noise, _Amount its opacity
+// GoF2/HazardVolume: the view from inside an orbit's hazard volume (World.HazardLooks; stations.json "orbit.hazards"),
+// EVERSPACE 2's fields' post-process materials as their compiled pixel shaders compute them (es2_re fxmat, ShaderDump +
+// disasm), added over the frame. Drawn by the volume's sphere (Unity's primitive, radius 0.5) from inside only (Cull Front,
+// ZTest Always: over everything while the camera is within it; nothing from outside):
+//   _Mode 1  M_Condition_Frozen_PostProcess: the vignette (length(uv - 0.5))^1.5 through the contrast curve 3, times the
+//            frost texture revealed by Opacity (saturate((f - (1 - Opacity)) / Opacity): its brightest crystals first),
+//            times f^2; T_Grunge_Frost_001_C's R is procedural here (ice cells and a fine grain); _Amount = Opacity
+//   _Mode 2  M_Condition_Radiated_PostProcess: the edges' glow (the lower of two T_Noise_010_M layers at uv / 2 scrolling
+//            apart at time x 2, raised to 1 / the distance from the centre) x RadiationColor x 5 x Opacity^1.5; a grain
+//            (a hash per 1/500 of the screen) x 0.3 x distance^3 x Opacity; and sparse blobs (three octaves of gradient
+//            noise at uv x 2 and the time, saturate(n x 4 - 3)^3) x RadiationColor x Opacity^2; _Amount = Opacity
 Shader "GoF2/HazardVolume"
 {
     Properties
     {
         _Color ("Color", Color) = (1, 1, 0.39, 1)
         _Mode ("Mode (1 frost, 2 radiation)", Float) = 1
-        _Amount ("Amount", Float) = 0
-        _DotPixels ("Dot spacing (pixels at 1080p)", Float) = 7
+        _Amount ("Amount (ES2's Opacity)", Float) = 0
     }
     SubShader
     {
@@ -21,7 +23,7 @@ Shader "GoF2/HazardVolume"
         ZWrite Off
         ZTest Always
         Cull Front
-        Blend SrcAlpha OneMinusSrcAlpha
+        Blend One One
 
         Pass
         {
@@ -33,7 +35,7 @@ Shader "GoF2/HazardVolume"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _Color;
-                float _Mode, _Amount, _DotPixels;
+                float _Mode, _Amount;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; };
@@ -55,6 +57,22 @@ Shader "GoF2/HazardVolume"
                 return lerp(lerp(Hash(i), Hash(i + float2(1, 0)), f.x), lerp(Hash(i + float2(0, 1)), Hash(i + float2(1, 1)), f.x), f.y);
             }
 
+            float3 Hash3(float3 p)
+            {
+                p = float3(dot(p, float3(127.1, 311.7, 74.7)), dot(p, float3(269.5, 183.3, 246.1)), dot(p, float3(113.5, 271.9, 124.6)));
+                return frac(sin(p) * 43758.5453) * 2.0 - 1.0;
+            }
+
+            float Gradient(float3 p)
+            {
+                float3 i = floor(p), f = frac(p);
+                float3 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+                return lerp(lerp(lerp(dot(Hash3(i), f), dot(Hash3(i + float3(1, 0, 0)), f - float3(1, 0, 0)), u.x),
+                                 lerp(dot(Hash3(i + float3(0, 1, 0)), f - float3(0, 1, 0)), dot(Hash3(i + float3(1, 1, 0)), f - float3(1, 1, 0)), u.x), u.y),
+                            lerp(lerp(dot(Hash3(i + float3(0, 0, 1)), f - float3(0, 0, 1)), dot(Hash3(i + float3(1, 0, 1)), f - float3(1, 0, 1)), u.x),
+                                 lerp(dot(Hash3(i + float3(0, 1, 1)), f - float3(0, 1, 1)), dot(Hash3(i + float3(1, 1, 1)), f - float3(1, 1, 1)), u.x), u.y), u.z);
+            }
+
             // the distance to the nearest of a jittered grid's points: ice cells
             float Cells(float2 p)
             {
@@ -70,6 +88,13 @@ Shader "GoF2/HazardVolume"
                 return d;
             }
 
+            // the masters' contrast curve: 0.5 (2x)^k below a half, 1 - 0.5 (2 - 2x)^k above
+            float Contrast(float x, float k)
+            {
+                float hi = 1.0 - pow(saturate(1.0 - 2.0 * (x - 0.5)), k);
+                return hi > 0.0 ? 0.5 + 0.5 * hi : 0.5 * pow(saturate(2.0 * x), k);
+            }
+
             // 1 with the camera inside the sphere (object radius 0.5), else 0
             float CameraInside() { return step(length(TransformWorldToObject(_WorldSpaceCameraPos)), 0.5); }
 
@@ -78,27 +103,30 @@ Shader "GoF2/HazardVolume"
                 float inside = CameraInside();
                 float2 uv = i.positionCS.xy / _ScreenParams.xy;
                 float aspect = _ScreenParams.x / _ScreenParams.y;
-                float2 p = float2((uv.x - 0.5) * aspect, uv.y - 0.5);
-                float a;
+                float2 tuv = uv * float2(aspect, 1.0);
+                float d = length(uv - 0.5);
+                float opacity = max(_Amount, 1e-4);
+                float3 c;
                 if (_Mode < 1.5)
                 {
-                    // frost: from the edges inward as the buildup grows, ragged by the cells and a fine grain
-                    float edge = length(p / float2(aspect * 0.5, 0.5));   // 0 the centre, 1 the edges' middles, ~1.4 the corners
-                    float cells = Cells(p * 9.0);
-                    float grain = Noise(p * 90.0) * 0.5 + Noise(p * 23.0) * 0.5;
-                    float reach = 1.35 - _Amount * 0.95;   // where the frost begins: the corners at first, most of the view at the full buildup
-                    float frost = smoothstep(reach, reach + 0.35, edge + (grain - 0.5) * 0.35);
-                    a = frost * (0.35 + 0.45 * smoothstep(0.05, 0.45, cells)) * saturate(_Amount * 1.5) * 0.85;
+                    float vignette = Contrast(pow(d, 1.5), 3.0);
+                    float f = saturate(1.15 - Cells(tuv * 7.0) * 1.1) * 0.75 + Noise(tuv * 160.0) * 0.25;   // (the frost texture's R)
+                    float reveal = saturate((f - (1.0 - opacity)) / opacity);
+                    c = _Color.rgb * vignette * reveal * f * f * step(1e-3, _Amount);
                 }
                 else
                 {
-                    // radiation: a dot grid at screen pixels, faded by drifting noise
-                    float2 px = i.positionCS.xy * (1080.0 / _ScreenParams.y) / _DotPixels;
-                    float spot = smoothstep(0.38, 0.22, length(frac(px) - 0.5));
-                    float n = Noise(p * 3.0 + _Time.y * 0.15) * 0.6 + Noise(p * 7.0 - _Time.y * 0.1) * 0.4;
-                    a = spot * smoothstep(0.35, 0.75, n) * _Amount;
+                    float t = _Time.y;
+                    float dd = min(d, 1.0);
+                    float n = min(Noise((uv * 0.5 + float2(t * 2.0, 0.0)) * 8.0), Noise((uv * 0.5 + 0.5 + float2(-t * 2.0, t * 0.3)) * 8.0));
+                    float3 glow = pow(max(n, 1e-4), 1.0 / max(dd, 1e-3)) * _Color.rgb * 5.0;
+                    float grain = (Hash(floor(float2(tuv.x, uv.y) * 500.0) + floor(t * 60.0)) * 2.0 - 1.0) * 0.3 * dd * dd * dd * opacity;
+                    float3 p = float3(tuv * 2.0, t);
+                    float blobs = Gradient(p) + Gradient(p * 2.0) * 0.5 + Gradient(p * 4.0) * 0.25;
+                    blobs = pow(saturate((blobs * 0.5 + 0.5) * 4.0 - 3.0), 3.0);
+                    c = glow * pow(opacity, 1.5) + grain + blobs * _Color.rgb * opacity * opacity;
                 }
-                return half4(_Color.rgb, saturate(a * _Color.a * inside));
+                return half4(max(c, 0.0) * inside, 1);
             }
             ENDHLSL
         }
