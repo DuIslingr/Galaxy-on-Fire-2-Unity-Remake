@@ -30,6 +30,9 @@
 //             trigger and blast: MinesweeperRadius units, so the mines lie further apart than they reach) of
 //             "ships" kinetic mines (default 40, ES2's MaxMineAmount), marked; all shot (or set off), BattlePay
 //             (World.MinesweeperWatch); the freighter lost, nothing
+//   challenge (2026-11-06, ES2's BP_Encounter_ShootingChallenge) a Challenger of the system's race (a local fighter, its gun
+//             x ChallengerDealDamageFactor 3) and NumGroups 4-5 groups of raiders (1 + rank / 12 each, or "ships" in all);
+//             destroy more of them than it does (World.ChallengeWatch): half a battle's pay
 // The counts are the remake's picks (ES2 places its groups by spawn_groups.CSV at a location's level). The pay is ES2's
 // (BattlePay); its location level the orbit's "level" (stations.json: an ES2 location's own), else the station's tech level
 // x 3 (Es2Level: GoF2's 1-10 over ES2's 1-30).
@@ -155,6 +158,22 @@ namespace GoF2Remake.World
                 case CruiseEncounters.Rift:
                     RiftEncounter.Start(level, at, e.ships, e.bosses);
                     return;   // (it spawns its own and connects them)
+                case CruiseEncounters.Challenge:
+                {
+                    traffic.SpawnShip(new SpawnSpec { group = NpcGroup.Local, race = systemRace, ship = NpcTables.RandomFighter(systemRace), position = at,
+                                                      name = Localization.Extra("challenger", "Challenger"), gunItem = NpcTables.GunItemFor(systemRace, false),
+                                                      gunFactor = ChallengerDamageFactor });
+                    var raiders = new List<NpcShip>();
+                    int groups = Random.Range(4, 6), each = Mathf.Clamp(1 + rank / 12, 1, 2);
+                    int total = e.ships > 0 ? e.ships : groups * each;
+                    for (int i = 0; i < total; i++)
+                    {
+                        var group = at + forward * 6000f + new Vector3(Mathf.Cos(i % groups * 1.3f), 0.2f, Mathf.Sin(i % groups * 1.3f)) * 9000f;
+                        raiders.Add(Raider(traffic, group + Jitter(2000f)));
+                    }
+                    ChallengeWatch.Start(level, raiders, BattlePay(Es2Level(level)) / 2, at);
+                    break;
+                }
                 case CruiseEncounters.Minesweeper:
                 {
                     var (ship, race) = NpcTables.RandomFreighter(systemRace);
@@ -180,6 +199,9 @@ namespace GoF2Remake.World
             }
             traffic.ConnectPlayers();   // the new ships and the others see each other (targets, hit lists)
         }
+
+        /// <summary>BP_Job_ShootingChallenge_Task_01's ChallengerDealDamageFactor (its primary weapon's damage).</summary>
+        public const float ChallengerDamageFactor = 3f;
 
         /// <summary>BP_Minefield_BiggerRadius's Radius 30 000 cm in game units (x 0.2, x 3.6 as the mines' numbers); the mines keep this
         /// far (m) from the freighter.</summary>

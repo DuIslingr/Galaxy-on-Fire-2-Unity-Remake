@@ -24,7 +24,9 @@ namespace GoF2Remake.Flight
         public const string Battle = "battle", Trap = "trap", Stash = "stash", Depot = "depot", HighRisk = "highrisk", LootDrone = "lootdrone", Rift = "rift";
         /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_Encounter_Minesweeper): a freighter stuck in a minefield.</summary>
         public const string Minesweeper = "minesweeper";
-        public static readonly string[] Kinds = { Pirates, Trader, Derelict, Distress, Flyby, Quest, Battle, Trap, Stash, Depot, HighRisk, LootDrone, Rift, Minesweeper };
+        /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_Encounter_ShootingChallenge): out-shoot a challenger.</summary>
+        public const string Challenge = "challenge";
+        public static readonly string[] Kinds = { Pirates, Trader, Derelict, Distress, Flyby, Quest, Battle, Trap, Stash, Depot, HighRisk, LootDrone, Rift, Minesweeper, Challenge };
         /// <summary>Where an entry takes the ship between the systems (Entry.interstellar).</summary>
         public const string InSpace = "space", AtSystem = "system", Either = "either", Never = "never";
         public static readonly string[] Places = { InSpace, AtSystem, Either, Never };

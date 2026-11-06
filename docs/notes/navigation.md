@@ -141,6 +141,13 @@ the player ship) and `NavigationView` (flight HUD).
   `MinesweeperClearM` from the hull; `World.MinesweeperWatch` pays `BattlePay` when every mine is gone (shot or set off),
   "Minefield cleared"; the freighter destroyed fails it; past `EncounterWatch.LeaveM` it lapses. The importer's entry: weight
   5, rank 4+, security 0-1 (mines add danger). Tests `AMinesweepersFieldKeepsItsMinesApart`. Not tried in game.
+  `challenge` (2026-11-06, ES2's BP_Encounter_ShootingChallenge / BP_Job_ShootingChallenge_Task_01): a Challenger (a local
+  fighter of the system's race named so, `SpawnSpec.gunItem` / `gunFactor` `ChallengerDamageFactor` 3:
+  ChallengerDealDamageFactor) and NumGroups 4-5 groups of 1 + rank / 12 (at most 2) raiders round the place ("ships" in
+  all); `World.ChallengeWatch` scores each raider's death by `Target.killedByNpc` (an NPC's kill is the challenger's), the
+  score on the HUD; all gone, `Outcome`: more for the player pays half a `BattlePay` (ES2 gives XP only: GoF2 has none),
+  fewer loses, a tie brings one more raider (AdditionalEnemy); leaving past `LeaveM` abandons it (bFailIfPlayerLeaves).
+  The importer's entry: weight 5, security 0-2. Test `TheShootingChallengeGoesToTheBetterShot`. Not tried in game.
   The `stash` and `depot` crates stay until emptied (`Crate.keep`), not the crates' 60 s.
   **Between the systems** (2026-11-03, the user: "encounters should pull you out either in their own space or the nearest
   system"; `CruiseEncounters.Between`): the same table rolls on an interstellar leg (single player, as that space is), the

@@ -339,6 +339,7 @@ namespace GoF2Remake.Flight
                 CruiseEncounters.Depot => Localization.Extra("encounterDepot", "Resource depot"),
                 CruiseEncounters.HighRisk => Localization.Extra("encounterHighRisk", "High-risk area"),
                 CruiseEncounters.Minesweeper => Localization.Extra("encounterMinesweeper", "Minesweeper"),
+                CruiseEncounters.Challenge => Localization.Extra("encounterChallenge", "Shooting Challenge"),
                 CruiseEncounters.LootDrone => Localization.Extra("encounterLootDrone", "Loot drone"),
                 CruiseEncounters.Rift => Localization.Extra("encounterRift", "Rift"),
                 // (a trap passes for an unknown signal, as EVERSPACE 2's does)

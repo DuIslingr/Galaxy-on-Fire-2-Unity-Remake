@@ -180,6 +180,15 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheShootingChallengeGoesToTheBetterShot()
+        {
+            Assert.AreEqual(1, GoF2Remake.World.ChallengeWatch.Outcome(5, 4));
+            Assert.AreEqual(-1, GoF2Remake.World.ChallengeWatch.Outcome(3, 4));
+            Assert.AreEqual(0, GoF2Remake.World.ChallengeWatch.Outcome(4, 4), "a tie: ES2's AdditionalEnemy");
+            Assert.AreEqual(3f, GoF2Remake.World.CruiseEncounterSpawner.ChallengerDamageFactor, "ChallengerDealDamageFactor");
+        }
+
+        [Test]
         public void AMinesweepersFieldKeepsItsMinesApart()
         {
             float radiusM = GoF2Remake.World.CruiseEncounterSpawner.MinesweeperRadius * 0.05f;
