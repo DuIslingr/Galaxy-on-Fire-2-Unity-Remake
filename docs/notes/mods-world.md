@@ -114,7 +114,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   scrolling with `_Time`, coverage C^(1 / CloudsDensity), the preshader dividing; Water's floes over Color x T_Noise_009_M
   in `noise2`); 7 M_Planet_Earthlike (two land layers by a height, its seas under WaterLevel with their shore, clouds, icy
   poles; its colours the shader's own; its rivers left out). Every ES2 planet master has its look; Volcanic's rock is
-  approximated (no colour pass in the dump). Check: PlayMode `PlanetSphereCheck`. Landed 2026-11-06
+  approximated (no colour pass in the dump). The atmosphere (2026-11-06, the spec's `atmosphere` colour): its own shell,
+  `Backdrop.AtmosphereShell`, a child sphere of `AtmosphereScale` 1.04 x the planet in queue 2902, GoF2/Es2Atmosphere after
+  M_Planet_Atmosphere_001's compiled translucent pass (the colour's hue turned by `variation`, toward the opposite hue at the
+  terminator, sunlit; opacity thickest round the limb from (1 - |N.V|)^3.4); `Backdrop.Fade` fades it with its planet. Check: PlayMode `PlanetSphereCheck`. Landed 2026-11-06
   from the session that wrote it (uncommitted until then).
 - **Station life** (remake 2026-11-04, the ES2 importer's station_life.py; stations.json `model` + `life` ->
   `ModWorld.LifeSpec`, `World.StationLife`, attached with the orbit in `SpaceLevelWormholes`): after ES2's worker drones

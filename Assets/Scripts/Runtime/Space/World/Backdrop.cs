@@ -50,6 +50,7 @@ namespace GoF2Remake.World
             public bool orbitPlanet;
             public bool star;            // remake mods: drawn as a star (faces the camera, its core glows)
             public bool sphere;          // remake mods: a lit sphere (planetSphere)
+            public MeshRenderer shell;   // remake mods: its atmosphere (GoF2/Es2Atmosphere), faded with it
             public Body starStreak;      // remake mods: the star's horizontal streak (additive)
         }
 
@@ -119,6 +120,7 @@ namespace GoF2Remake.World
                     ball.t.GetComponent<MeshFilter>().sharedMesh = SphereMesh;
                     ball.sphere = true;
                     ball.orbitPlanet = p.isOrbitPlanet;
+                    ball.shell = AtmosphereShell(ball.t, Modding.ModWorld.PlanetSphereOf(p.station), sunDir, orbit);
                     planets.Add(ball);
                     PlanetTargets.Add((p.station, ball.t, p.isOrbitPlanet));
                     continue;
@@ -189,6 +191,7 @@ namespace GoF2Remake.World
                 b.r.GetPropertyBlock(fadeBlock);
                 fadeBlock.SetColor("_Color", added ? new Color(f, f, f, f) : new Color(1f, 1f, 1f, f));
                 b.r.SetPropertyBlock(fadeBlock);
+                if (b.shell != null) b.shell.SetPropertyBlock(fadeBlock);
             }
         }
 
@@ -530,6 +533,37 @@ namespace GoF2Remake.World
             if (spec.color2 is Vector3 c2) m.SetVector("_Color2", c2);
             m.SetFloat("_Variation", spec.variation);
             return m;
+        }
+
+        static Shader es2Atmosphere;
+        /// <summary>The atmosphere's radius in the planet's (EVERSPACE 2's shell sits just above the surface).</summary>
+        public const float AtmosphereScale = 1.04f;
+
+        /// <summary>A planetSphere's atmosphere shell (GoF2/Es2Atmosphere, after M_Planet_Atmosphere_001): a child sphere of
+        /// AtmosphereScale x the planet's, drawn right after it; null without an atmosphere colour (or the shader).</summary>
+        MeshRenderer AtmosphereShell(Transform planet, Modding.ModWorld.PlanetSphereSpec spec, Vector3 sunDir, OrbitLayout orbit)
+        {
+            if (spec?.atmosphere == null) return null;
+            if (es2Atmosphere == null) es2Atmosphere = Resources.Load<Shader>("GoF2Sky/Es2Atmosphere");
+            if (es2Atmosphere == null) return null;
+            var m = new Material(es2Atmosphere) { name = "ES2 atmosphere", renderQueue = 2902 };
+            ownMaterials.Add(m);
+            var a = spec.atmosphere.Value;
+            m.SetVector("_AtmosColor", new Vector4(a.r, a.g, a.b, 0f));
+            m.SetFloat("_Variation", spec.variation);
+            m.SetVector("_SunDir", sunDir);
+            var c = orbit.SunLightColor;
+            float max = Mathf.Max(c.r, Mathf.Max(c.g, c.b), 1e-3f);
+            m.SetColor("_SunColor", Color.Lerp(Color.white, c / max, 0.5f) * 1.6f);   // (as the planet's: SphereMaterial)
+            var go = new GameObject("Atmosphere");
+            go.transform.SetParent(planet, false);
+            go.transform.localScale = Vector3.one * AtmosphereScale;
+            go.AddComponent<MeshFilter>().sharedMesh = SphereMesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = m;
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            return r;
         }
 
         /// <summary>A unit sphere, fine enough for a planet filling the view (its silhouette stays round).</summary>

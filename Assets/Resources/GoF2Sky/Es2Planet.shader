@@ -383,12 +383,10 @@ Shader "GoF2/Es2Planet"
                 half dd = nh * nh * (a2 - 1.0) + 1.0;
                 half spec = a2 / (PI * dd * dd) * 0.04 * nl * 0.25;
                 half3 lit = albedo * (_SunColor.rgb * nl + _Ambient) + _SunColor.rgb * spec;
-                // the atmosphere's rim on the lit side (until its own shell is ported)
-                half3 rim = _Atmosphere.rgb * _Atmosphere.a * 0.6 * pow(f, 8.0) * saturate(dot(normalize(TransformObjectToWorldDir(d)), l) * 1.5 + 0.3);   // (the limb only)
                 if (_Debug > 2.5) return half4(_SunColor.rgb, 1);
                 if (_Debug > 1.5) return half4(SAMPLE_TEXTURE2D(_SurfaceMap, sampler_SurfaceMap, baseUv).rgb, 1);
                 if (_Debug > 0.5) return half4(albedo, 1);
-                return half4(lit + rim + glow, _Color.a);
+                return half4(lit + glow, _Color.a);   // (the atmosphere is its own shell: GoF2/Es2Atmosphere)
             }
             ENDHLSL
         }
