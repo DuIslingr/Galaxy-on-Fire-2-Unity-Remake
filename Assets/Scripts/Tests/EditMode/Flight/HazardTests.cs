@@ -48,5 +48,24 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0f, b, "and it builds again");
             Assert.AreEqual(0f, Hazards.FrostStep(100f, 60000f, false, out frozen), "never below none");
         }
+
+        [Test]
+        public void TheHeatsBloomFollowsTheDepthInside()
+        {
+            var heat = new[] { new GoF2Remake.Modding.ModWorld.HazardSpec { kind = GoF2Remake.Modding.ModWorld.HazardKind.Heat, centre = UnityEngine.Vector3.zero, radius = 10000f } };
+            float r = 10000f * 0.05f;   // 500 m
+            Assert.AreEqual(1f, GoF2Remake.World.HazardLooks.HeatDepth(heat, UnityEngine.Vector3.zero), "the centre");
+            Assert.AreEqual(1f, GoF2Remake.World.HazardLooks.HeatDepth(heat, new UnityEngine.Vector3(r * 0.85f, 0f, 0f)), 1e-4f, "85 % in");
+            Assert.AreEqual(0.5f, GoF2Remake.World.HazardLooks.HeatDepth(heat, new UnityEngine.Vector3(r * 0.925f, 0f, 0f)), 1e-3f, "half way through the edge");
+            Assert.AreEqual(0f, GoF2Remake.World.HazardLooks.HeatDepth(heat, new UnityEngine.Vector3(r * 1.2f, 0f, 0f)), "outside");
+        }
+
+        [Test]
+        public void TheFieldsTakeEverspace2sColours()
+        {
+            Assert.AreEqual(new UnityEngine.Color(0.84f, 1f, 0.09f), GoF2Remake.World.HazardLooks.KindColor(GoF2Remake.Modding.ModWorld.HazardKind.Corrosion), "P_CorrosionField's StartColor");
+            Assert.AreEqual(new UnityEngine.Color(0.19f, 0.77f, 1f), GoF2Remake.World.HazardLooks.KindColor(GoF2Remake.Modding.ModWorld.HazardKind.Frost), "NS_FrostField's Initial.Color");
+            Assert.AreEqual(new UnityEngine.Color(1f, 1f, 0.39f), GoF2Remake.World.HazardLooks.KindColor(GoF2Remake.Modding.ModWorld.HazardKind.Radiation), "RadiationColor");
+        }
     }
 }

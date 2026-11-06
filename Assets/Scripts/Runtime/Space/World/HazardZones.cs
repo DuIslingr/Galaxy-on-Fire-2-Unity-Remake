@@ -2,8 +2,9 @@
 // Remake (2026-11-03, for mods): runs the orbit's hazard volumes on the player's ship (Flight.Hazards, stations.json
 // "orbit.hazards": heat and radiation, after EVERSPACE 2's heat damage volumes and radiation fields) and holds a radiated
 // ship's hull under its cap in every orbit until it docks. Entering a volume says so on the HUD ("Heat" / "Radiation");
-// each new radiation token says the hull's new limit. The volumes aren't drawn (ES2 shows them by its post-process
-// tint and the planet's surface). 2026-11-06: frost (its buildup freezes the ship: the web's slow, Target.SlowBy, at
+// each new radiation token says the hull's new limit. 2026-11-06: the volumes are drawn as ES2 draws its fields (World.
+// HazardLooks: their particles, the frost and radiation views from inside, the heat's bloom); the frost view follows the
+// buildup, the radiation view the next dose. Also 2026-11-06: frost (its buildup freezes the ship: the web's slow, Target.SlowBy, at
 // Hazards.FrozenFactor), corrosion (shield-piercing ticks on for 8 s after leaving, as a rift's corrosion field; a System
 // Recovery Routine lifts it, PlayerDebuffs) and damage (a steady dps) volumes, after ES2's frost, corrosion and damage fields.
 
@@ -22,6 +23,9 @@ namespace GoF2Remake.World
         float heatTickMs, radiationMs, frostMs, corrodedMs, corrosionTickMs, corrosionDamage, damageTickMs;
         int inside = -1;
         System.Func<bool> corroded;
+        Material[] overlays = new Material[0];
+        UnityEngine.Rendering.Volume heatBloom;
+        float frozenMs;
 
         public static HazardZones Attach(SpaceLevel level)
         {
@@ -31,12 +35,22 @@ namespace GoF2Remake.World
             h.health = level.Health;
             var spec = level.Layout != null && !level.Layout.interstellar ? Modding.ModWorld.OrbitOf(level.Layout.stationIndex) : null;
             if (spec?.hazards != null) h.zones = spec.hazards.ToArray();
+            var looks = new GameObject("Hazard volumes");
+            looks.transform.SetParent(level.transform, false);
+            h.overlays = HazardLooks.Build(looks.transform, h.zones);
+            h.heatBloom = HazardLooks.HeatBloom(looks.transform, h.zones);
             h.corroded = () => h.corrodedMs > 0f;
             PlayerDebuffs.Register(h.corroded, () => h.corrodedMs = 0f);   // (a System Recovery Routine lifts it)
             return h;
         }
 
-        void OnDestroy() { if (corroded != null) PlayerDebuffs.Unregister(corroded); }
+        void OnDestroy()
+        {
+            if (corroded != null) PlayerDebuffs.Unregister(corroded);
+            foreach (var m in overlays) if (m != null) Destroy(m);
+            if (heatBloom != null && heatBloom.sharedProfile != null) Destroy(heatBloom.sharedProfile);
+        }
+
 
         static float Dps(Modding.ModWorld.HazardSpec z) => z.raiderDps > 0f ? z.raiderDps * NpcTables.RaiderGunDps : z.dps;
 
@@ -79,6 +93,15 @@ namespace GoF2Remake.World
             inside = now;
             // frost: the buildup freezes the ship (its moves at FrozenFactor) for FrozenMs, then builds again
             frostMs = Hazards.FrostStep(frostMs, dtMs, frost, out bool frozen);
+            if (frozen) frozenMs = Hazards.FrozenMs;
+            else if (frozenMs > 0f) frozenMs -= dtMs;
+            // the views from inside: the frost with its buildup (whole while frozen), the radiation toward the next dose
+            float frostView = frozenMs > 0f ? 1f : frostMs / Hazards.FrostBuildupMs;
+            float radiationView = 0.3f + 0.7f * Mathf.Clamp01(radiationMs / Hazards.RadiationBuildupMs);
+            for (int i = 0; i < zones.Length && i < overlays.Length; i++)
+                if (overlays[i] != null) overlays[i].SetFloat("_Amount", zones[i].kind == Modding.ModWorld.HazardKind.Frost ? frostView : radiationView);
+            var cam = Camera.main;
+            if (heatBloom != null && cam != null) heatBloom.weight = HazardLooks.HeatDepth(zones, cam.transform.position);
             if (frozen && !health.invulnerable)
             {
                 health.Target.SlowBy?.Invoke(Hazards.FrozenMs, Hazards.FrozenFactor, false);
