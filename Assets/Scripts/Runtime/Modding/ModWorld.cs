@@ -300,14 +300,23 @@ namespace GoF2Remake.Modding
             public float radius = 30000f;
         }
 
-        /// <summary>Remake (2026-11-06): a secure container at 'at' (game units) and its shot triggers' places; 'ordered' = they go in
-        /// turn, 'retriggerS' = a lit one goes dark again after that many seconds (0 = stays lit).</summary>
+        /// <summary>Remake (2026-11-06): a secure container at 'at' (game units), its shot triggers' places ('ordered' = they go in
+        /// turn, 'retriggerS' = a lit one goes dark again after that many seconds, 0 = stays lit) and its energy sockets.</summary>
         public sealed class SecureContainerSpec
         {
             public Vector3 at;
             public List<Vector3> triggers = new List<Vector3>();
             public bool ordered;
             public float retriggerS;
+            public List<SocketSpec> sockets = new List<SocketSpec>();
+        }
+
+        /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_EnergyOrb_Socket / BP_EnergyCoil_Socket): a socket at 'at' that wants an
+        /// energy sphere from the dispenser at 'source' (orb) or the energy coil lying at 'source' (coil), carried there.</summary>
+        public sealed class SocketSpec
+        {
+            public Vector3 at, source;
+            public bool coil;
         }
 
         /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_Minefield): a minefield in an orbit (stations.json "orbit.minefields",

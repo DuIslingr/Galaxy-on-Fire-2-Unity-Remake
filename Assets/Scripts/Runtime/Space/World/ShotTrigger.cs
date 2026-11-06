@@ -39,7 +39,7 @@ namespace GoF2Remake.World
         void OnShot()
         {
             if (chain == null || chain.IsLit(index)) return;
-            if (chain.Hit(index) && container != null) container.Unlock();
+            if (chain.Hit(index) && container != null) container.CheckUnlock();
         }
 
         void Update()

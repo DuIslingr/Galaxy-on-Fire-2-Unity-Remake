@@ -752,6 +752,23 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("a secure container without shot triggers", msgs);
         }
 
+        [Test]
+        public void ASecureContainersEnergySockets()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'containers': { 'count': 0, 'secure': [ { 'at': [0, 0, 0], 'sockets': [ { 'at': [10, 0, 0], 'orb': [20, 0, 0] }, " +
+                "{ 'at': [0, 10, 0], 'coil': [0, 20, 0] }, { 'at': [1, 1, 1] }, { 'at': [2, 2, 2], 'orb': [3, 3, 3], 'coil': [4, 4, 4] } ] } ] } } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var s = ModWorld.OrbitOf(78).containerSecure[0];
+            Assert.AreEqual(0, s.triggers.Count, "sockets alone lock it");
+            Assert.AreEqual(2, s.sockets.Count);
+            Assert.IsFalse(s.sockets[0].coil);
+            Assert.AreEqual(new UnityEngine.Vector3(20, 0, 0), s.sockets[0].source);
+            Assert.IsTrue(s.sockets[1].coil);
+            StringAssert.Contains("a socket is { \"at\"", AllMessages(Installed("t_world")));
+        }
+
         [Test] public void ASecureContainerNeedsAPlace() => StringAssert.Contains("a secure container needs \"at\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'secure': [ { 'triggers': [ [0, 0, 0] ] } ] } } } ]"));
 
         [Test] public void CloakedContainersAreAList() => StringAssert.Contains("containers \"cloaked\" is a list", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'containers': { 'cloaked': true } } } ]"));

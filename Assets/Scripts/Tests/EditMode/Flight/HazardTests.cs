@@ -110,6 +110,19 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ASocketTakesItsKindWithinReach()
+        {
+            float reach = GoF2Remake.World.EnergySocket.ConnectM;
+            Assert.AreEqual(36f, reach, 1e-4f, "BP_EnergyOrb_Socket's ConnectionDistance 1000 cm x 3.6");
+            Assert.IsTrue(GoF2Remake.World.EnergySocket.Takes(false, false, reach));
+            Assert.IsFalse(GoF2Remake.World.EnergySocket.Takes(false, true, 1f), "a coil doesn't fit a sphere socket");
+            Assert.IsFalse(GoF2Remake.World.EnergySocket.Takes(true, true, reach + 1f));
+            var p = GoF2Remake.World.Portable.CarryPoint(UnityEngine.Vector3.zero, UnityEngine.Vector3.forward, UnityEngine.Vector3.up);
+            Assert.AreEqual(-30f, p.z, 1e-4f, "behind the ship");
+            Assert.Less(p.y, 0f, "a little below");
+        }
+
+        [Test]
         public void ACloakedContainerShowsItselfOnlyUpClose()
         {
             Assert.AreEqual(2, GoF2Remake.World.CloakedContainers.Stage(100f), "within ES2's InteractRadius 40 m x 3.6: the marker comes on");

@@ -389,7 +389,7 @@ namespace GoF2Remake.Modding
                         {
                             if (!(e is JObject so)) throw new ModJsonException($"{where}: a secure container is {{ \"at\": [x, y, z], \"triggers\": [ [x, y, z], ... ] }}");
                             foreach (var p in so.Properties())
-                                if (p.Name != "at" && p.Name != "triggers" && p.Name != "ordered" && p.Name != "retrigger")
+                                if (p.Name != "at" && p.Name != "triggers" && p.Name != "ordered" && p.Name != "retrigger" && p.Name != "sockets")
                                     Report(mod, $"{where}: unknown secure container field \"{p.Name}\" (ignored)");
                             var at = Xyz(so, "at", where);
                             if (!at.HasValue) throw new ModJsonException($"{where}: a secure container needs \"at\": [x, y, z]");
@@ -400,7 +400,18 @@ namespace GoF2Remake.Modding
                                     if (tp is JArray xyz && xyz.Count == 3 && xyz.All(v => v.Type == JTokenType.Integer || v.Type == JTokenType.Float))
                                     { if (spec.triggers.Count < 8) spec.triggers.Add(new Vector3((float)xyz[0], (float)xyz[1], (float)xyz[2])); }
                                     else Report(mod, $"{where}: a shot trigger's place is [x, y, z] (left out)");
-                            if (spec.triggers.Count == 0) { Report(mod, $"{where}: a secure container without shot triggers (left out)"); continue; }
+                            if (ModJson.Get(so, "sockets") is JArray sl)
+                                foreach (var sk in sl)
+                                {
+                                    var sko = sk as JObject;
+                                    var sat = sko != null ? Xyz(sko, "at", where) : null;
+                                    var orb = sko != null ? Xyz(sko, "orb", where) : null;
+                                    var coil = sko != null ? Xyz(sko, "coil", where) : null;
+                                    if (!sat.HasValue || orb.HasValue == coil.HasValue)
+                                    { Report(mod, $"{where}: a socket is {{ \"at\": [x, y, z], \"orb\" or \"coil\": [x, y, z] }} (left out)"); continue; }
+                                    if (spec.sockets.Count < 4) spec.sockets.Add(new SocketSpec { at = sat.Value, source = (orb ?? coil).Value, coil = coil.HasValue });
+                                }
+                            if (spec.triggers.Count == 0 && spec.sockets.Count == 0) { Report(mod, $"{where}: a secure container without shot triggers or sockets (left out)"); continue; }
                             if (s.containerSecure.Count < 6) s.containerSecure.Add(spec);
                             else { Report(mod, $"{where}: at most 6 secure containers (the rest left out)"); break; }
                         }

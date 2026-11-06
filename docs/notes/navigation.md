@@ -224,9 +224,18 @@ the player ship) and `NavigationView` (flight HUD).
   the one before is dark puts out it and those before (OnReset); `retrigger` (Retriggerable, RegtriggerDelay 3 s): a lit one
   goes dark after it. Then `Unlock` bursts it open (`ShipBurn.ManualBurst`, `Open`). `World.ShotTrigger`: a 7.2 m sphere
   (ES2's ~2 m x 3.6) flickering red, steady green when lit (MI_Blockout_Glow_Red_Flicker / _Green), no marker or lock.
-  Left out: the trigger sound, ES2's other locks (energy orbs, coil sockets, conductor chains: the importer leaves those
-  bulletproof), the multi-activation links. Tests `HazardTests.ShotTriggers*`, `ModWorldTests.AnOrbitsSecureContainers`.
-  Not tried in game.
+  Energy sockets (2026-11-06, ES2's EnergyOrbsRequired / EnergyCoilSocketsRequired, BP_EnergyOrb_Socket, BP_EnergyCoil_Socket,
+  BP_EnergyOrb_Dispenser, BP_Portable_Component): a secure container's `sockets` (at most 4, each `at` and `orb` = its
+  dispenser's place or `coil` = a loose coil's) must all be filled too (`CheckUnlock`; triggers optional). `World.EnergySocket`
+  takes the first sphere or coil of its kind within `ConnectM` (ConnectionDistance 1000 cm x 3.6) and keeps it (`Portable.Seat`).
+  `World.Portable`: carried `CarryBehindM` 30 m behind the ship (a lerp, the magnetic field), a sphere gone after `OrbLifeS` 40 s
+  (EnergyOrbLifetime) unless seated. `World.OrbDispenser` hands a new sphere (straight onto the ship) while none of its own
+  is about. `World.CarryPuzzle`: the HUD's prompt after the containers' OPEN (FlightHud / `Interact`): carrying, "DROP";
+  else a loose one or a ready dispenser within `OpenRangeM` ahead, "GRAB". Markers: dispensers, sockets and loose ones are
+  radar objects (ES2's HUD markers). Left out: the trigger sound, conductor chains (the importer leaves those bulletproof),
+  the multi-activation links, throwing, the sockets' laser beams and the fire / ice orb variants' fields. Tests
+  `HazardTests.ShotTriggers*` / `ASocketTakesItsKindWithinReach`, `ModWorldTests.AnOrbitsSecureContainers` /
+  `ASecureContainersEnergySockets`. Not tried in game.
 - **Traffic lanes** (remake 2026-11-03, for mods; stations.json `orbit.lanes` -> `ModWorld.LaneSpec`, `Flight.TrafficLane`
   plain (a Catmull-Rom path walked by distance, 16 chords a segment; open paths turn over at their ends),
   `World.TrafficLanes` attached with the containers): after EVERSPACE 2's BP_SplineTraffic (Count 10, BaseSpeed 8000 cm/s,
