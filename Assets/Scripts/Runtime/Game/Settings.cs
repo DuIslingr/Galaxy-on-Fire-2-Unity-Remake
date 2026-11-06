@@ -463,6 +463,13 @@ namespace GoF2Remake.Data
         /// lead). Off (default) = the original. A session rule, apart from "NPC dogfighting".</summary>
         public static bool Es2Aiming { get => Rule(R.Es2Aiming, "es2Aiming", false); set => SetRule(R.Es2Aiming, "es2Aiming", value); }
 
+        /// <summary>Remake (2026-11-06): Options > Gameplay "EVERSPACE 2 NPC flight": NPC ships fly on EVERSPACE 2's physics
+        /// (Flight.Es2NpcFlight: turn rates that ramp up and coast out of turns, a velocity that accelerates, brakes and drifts,
+        /// path tests that steer round asteroids, stations and other obstacles) at GoF2's top speed and turn rate, instead of
+        /// GoF2's (the heading nudged toward the goal at a constant speed, through asteroids). Off (default) = the original. A
+        /// session rule.</summary>
+        public static bool Es2NpcFlight { get => Rule(R.Es2NpcFlight, "es2NpcFlight", false); set => SetRule(R.Es2NpcFlight, "es2NpcFlight", value); }
+
         static int LocalCollision
         {
             get
@@ -492,6 +499,7 @@ namespace GoF2Remake.Data
             if (GetBool("empBreaksCloak", false)) m |= R.EmpBreaksCloak;
             if (GetBool("smarterNpcTargeting", false)) m |= R.SmarterNpcTargeting;
             if (GetBool("es2Aiming", false)) m |= R.Es2Aiming;
+            if (GetBool("es2NpcFlight", false)) m |= R.Es2NpcFlight;
             return R.WithDogfight(R.WithCollision(m, LocalCollision), LocalDogfight);
         }
 
@@ -858,7 +866,7 @@ namespace GoF2Remake.Data
         public static readonly string[] GameplayKeys =
         {
             "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "collisionDamage", "pirateEvents", "capitalShips", "kaamoStacking", "kaamoMaxLevel", "kaamoKeepsEquipment", "kaamoVip", "cloakBay", "informerOriginalRule",
-            "originalTargetLock", "keepEnemyLock", "modShipTraffic", "dyingCargoMarkers", "cloakLosesPursuers", "empBreaksCloak", "bombArming", "smarterNpcTargeting", "npcDogfight", "es2Aiming", "shipCollision", "preciseShipCollision", "autoAdvanceDialogue", "animatedDialogue", "playOnInConversations", "fastForwardCruise", "autoJumpgate", "khadorSlipstream", "inputHints", "hudMode", "hudScale", "hudOpacity", "discordPresence",
+            "originalTargetLock", "keepEnemyLock", "modShipTraffic", "dyingCargoMarkers", "cloakLosesPursuers", "empBreaksCloak", "bombArming", "smarterNpcTargeting", "npcDogfight", "es2Aiming", "es2NpcFlight", "shipCollision", "preciseShipCollision", "autoAdvanceDialogue", "animatedDialogue", "playOnInConversations", "fastForwardCruise", "autoJumpgate", "khadorSlipstream", "inputHints", "hudMode", "hudScale", "hudOpacity", "discordPresence",
             "farShipMarkers", "markerDistance", "interstellarDistance", "speedrunTimer", "speedrunSplits", "speedrunLength", "speedrunTiming", "speedrunCompare",
             "speedrunPosition", "speedrunLiveSplit",
         };

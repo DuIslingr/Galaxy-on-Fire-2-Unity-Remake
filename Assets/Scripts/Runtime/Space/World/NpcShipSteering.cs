@@ -114,12 +114,19 @@ namespace GoF2Remake.World
             // LevelScript::process: during the launch / arrival camera every wingman drifts (KIPlayer+0x129, no steering).
             bool noSteer = drift || (IsWingman && traffic != null && traffic.LaunchCameraRunning != null && traffic.LaunchCameraRunning())
                            || !slow.CanTurn;   // remake: an EMP device's slow
+            float dogSpeed = dog ? dogfight.SpeedFactor * Gof3EasySlowdown() : formationSpeed;   // (GoF3's Easy: slower in your sights)
+            float topSpeed = speed * slow.SpeedFactor * roleSpeedFactor * dogSpeed;   // units a ms (remake: a rift's)
             if (!noSteer && !Hp.empDisabled)
             {
-                var delta = dirN - fwd;
-                var h = delta.sqrMagnitude > 1e-10f ? (fwd + delta.normalized * (dtMs * 48f / 65536f)).normalized : dirN;
-                var diff = h - dirN;
-                if (Mathf.Abs(diff.x) + Mathf.Abs(diff.y) + Mathf.Abs(diff.z) < 0.0625f) h = dirN;
+                Vector3 h;
+                if (es2Flight) h = Es2FlightTurn(dirN, topSpeed, dtMs);   // remake option: EVERSPACE 2's physics flight (NpcShipEs2Flight)
+                else
+                {
+                    var delta = dirN - fwd;
+                    h = delta.sqrMagnitude > 1e-10f ? (fwd + delta.normalized * (dtMs * 48f / 65536f)).normalized : dirN;
+                    var diff = h - dirN;
+                    if (Mathf.Abs(diff.x) + Mathf.Abs(diff.y) + Mathf.Abs(diff.z) < 0.0625f) h = dirN;
+                }
                 float a = Mathf.Acos(Mathf.Clamp(Vector3.Dot(fwd, h), -1f, 1f));
                 if (Vector3.Dot(transform.right, h) > 0f) a = -a;
                 turnRing[ringIndex] = a * OriginalFrame.Ms / dtMs;   // per original frame, like the original's samples
@@ -143,8 +150,8 @@ namespace GoF2Remake.World
             if (model != null) model.localRotation = Quaternion.AngleAxis(bank * Mathf.PI / 4096f * Mathf.Rad2Deg + barrel, Vector3.forward);
             if (levelling) Roll(dtMs);
 
-            float dogSpeed = dog ? dogfight.SpeedFactor * Gof3EasySlowdown() : formationSpeed;   // (GoF3's Easy: slower in your sights)
-            if (!Hp.empDisabled) transform.position += transform.forward * speed * slow.SpeedFactor * roleSpeedFactor * dogSpeed * dtMs * M + sideStep;   // (remake: a rift's)
+            if (!Hp.empDisabled)
+                transform.position += (es2Flight ? Es2FlightMove(topSpeed, dtMs) : transform.forward * topSpeed * dtMs * M) + sideStep;
         }
 
         /// <summary>Gives the ship an order (null: back to its own AI). Wakes a sleeper, lets a parked ship fly; "hold" is

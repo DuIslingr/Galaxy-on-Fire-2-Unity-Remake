@@ -298,6 +298,14 @@ namespace GoF2Remake.World
         Es2Dogfight es2Fight;
         Vector3 es2Leg;
         float es2LegMs;
+        /// <summary>Remake option (Settings.Es2NpcFlight, NpcShipEs2Flight): it flies on EVERSPACE 2's physics: its velocity (units
+        /// a second), yaw and pitch rates (degrees a second), the last path test's direction and speed factor (straight = the
+        /// wanted direction itself), the time to the next test, the frame it last flew so.</summary>
+        bool es2Flight;
+        Vector3 es2Vel, es2PathDir, es2PathWanted;
+        float es2YawRate, es2PitchRate, es2PathSpeed = 1f, es2PathMs;
+        bool es2PathStraight = true;
+        int es2FlownFrame = -2;
         WingmanCrew wingCrew;
         int[] wingFace;
         bool wingHelpSaid;

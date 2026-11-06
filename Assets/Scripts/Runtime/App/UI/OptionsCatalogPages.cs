@@ -504,6 +504,11 @@ namespace GoF2Remake.UI
                 () => Settings.Es2Aiming, v => Settings.Es2Aiming = v);
             es2Aiming.description = () => X("es2AimingHelp", "NPCs lead their shots, re-aiming faster on higher difficulties; of a crowd on you only a few shoot at once. Off: as in the original.");
             list.Add(SessionRule(es2Aiming));
+            // Remake (2026-11-06): EVERSPACE 2's physics flight for NPC ships (Settings.Es2NpcFlight, Flight.Es2NpcFlight).
+            var es2Flight = Toggle("es2NpcFlight", OptionPage.Gameplay, () => X("es2NpcFlight", "EVERSPACE 2 NPC flight"),
+                () => Settings.Es2NpcFlight, v => Settings.Es2NpcFlight = v);
+            es2Flight.description = () => X("es2NpcFlightHelp", "NPC ships fly with momentum, ease out of turns and steer round asteroids and stations. Off: as in the original.");
+            list.Add(SessionRule(es2Flight));
             // Remake (players' report: fighters hard to hit since the mesh collision): every hull's real shape, the flyable ships
             // on the original's hit cube, or the original's volumes everywhere (Settings.ShipCollision, Flight.HullCollision.Mode).
             list.Add(SessionRule(Choice("shipCollision", OptionPage.Gameplay, () => X("shipCollision", "Ship collision"), true,

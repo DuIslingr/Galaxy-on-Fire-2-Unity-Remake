@@ -131,6 +131,25 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   arrival distance, then swerves to its point; the guns fire whenever the nose is on the aim (no break-off circling
   meanwhile). Difficulty: no barrel roll on Easy (as GoF3's evasive roll); the rest is ES2's on every level. Same
   exclusions as GoF3's; no formations. Tests `Es2AiTests`. Not tried in Play mode.
+- **ES2 NPC flight** (remake option, 2026-11-06; Options > Gameplay "EVERSPACE 2 NPC flight", `Settings.Es2NpcFlight`, a session
+  rule `SessionRules.Es2NpcFlight`, server flag `-es2flight`; apart from the aiming and the dogfighting): `Flight.Es2NpcFlight`
+  (Core) run by `NpcShipEs2Flight` (`Es2FlightTurn` / `Es2FlightMove` in `Steer`, in place of GoF2's heading nudge and constant
+  speed). ES2's UBTT_FlyToAvoidCollision with the movement step the player's free flight ports (`FlightModel.StepFree`, not
+  reused: it reads the player's sensitivity, auto-roll, level-out, boost energy and overheating): per axis CalcAiRotationInput
+  = sign(err) x clamp((|err| - 1/2 w^2 / a while turning that way) / 5 deg, 0, 1), the rates ramped at a (top over 400 ms);
+  thrust along the nose eased by 1 - p^3 (132 m/s^2 at 95.3 m/s, x the top speed), a quarter of it as the brake above the
+  top speed, the velocity swung toward the nose by AccelerationForward / 6000 a second (a little drift through turns).
+  GoF2's top speed (2 u/ms, boost 5.5, the slows and factors as before) and top turn rate (48 / 65536 a ms, 42 deg/s) stay,
+  so fights keep GoF2's pace. Path test (GenerateNextWaypoint, TestPathByEulerIntegration) every 2 s, staggered, or when the
+  wanted direction turns 30 deg: its flight toward a direction simulated 4 s ahead, 5 samples a second, against the asteroids
+  within reach (`Target.isAsteroid`, the list refreshed every 30 frames; radius + its own) and `Obstacle.All` (MayTouch /
+  Touches; its target's own obstacle aside); ES2's exterior table (0 / 30 / 60 / 90 deg at speed 1, the same at 0.33, 135 at
+  1 / 0.33, 180 at 1 / 0.66 / 0.33), 3 directions round each cone nearest the heading first; the first clear one is flown
+  until the next test, none clear = straight on; no test when nothing lies within reach. GoF2's `Avoid` (inside a landmark's
+  or a freighter's volume) still runs after. Every ship `Steer` moves (fighters, wingmen, drones); orders, freighters,
+  turrets, fixed objects, capital ships keep GoF2's flight; coming back from them the velocity picks up the heading x the
+  speed. Left out: ES2's steering noise (GoF2's guns fire along the nose) and strafing. Tests `Es2AiTests`. Not tried in Play
+  mode.
 - **Turned ships pick at any range** (`PlayerFighter::update` 0xf131e / 0xf1444, `NpcShip.TakesAtAnyRange`): a turned
   ship (`turnedEnemy`, Player+0xe0) of any race but the pirates' takes the player outside its ±50 000 box when it picks
   (not attacking, or the re-roll's random tries); the 5 s re-roll still drops a pick outside the box, and as it leaves

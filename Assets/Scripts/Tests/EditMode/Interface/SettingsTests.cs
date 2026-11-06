@@ -165,6 +165,10 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(SessionRules.DogfightModHulls, SessionRules.DogfightOf(Settings.LocalRules()), "the dogfighting untouched");
             Settings.Es2Aiming = false;
             Assert.AreEqual(0, Settings.LocalRules() & SessionRules.Es2Aiming);
+            Assert.IsFalse(Settings.Es2NpcFlight, "GoF2's NPC flight by default");
+            Settings.Es2NpcFlight = true;
+            Assert.AreEqual(SessionRules.Es2NpcFlight, Settings.LocalRules() & (SessionRules.Es2NpcFlight | SessionRules.Es2Aiming), "a bit of its own");
+            Settings.Es2NpcFlight = false;
         }
 
         [Test]

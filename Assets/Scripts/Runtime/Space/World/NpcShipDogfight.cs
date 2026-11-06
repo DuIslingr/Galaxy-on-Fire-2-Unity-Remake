@@ -32,6 +32,7 @@ namespace GoF2Remake.World
             es2Fight = null;
             dogTarget = null;
             SetupEs2Aim(spec);   // remake option: EVERSPACE 2's aim, apart from the way of fighting (NpcShipEs2)
+            SetupEs2Flight(spec);   // remake option: EVERSPACE 2's physics flight (NpcShipEs2Flight)
             if (spec.freighter || spec.fixedObject != null || spec.turretAssembly != null || spec.capital != 0 || spec.capitalPart || spec.modCapital) return;
             int mode = Settings.NpcDogfight;
             if (mode == SessionRules.DogfightOriginalMode) return;

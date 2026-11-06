@@ -1,8 +1,8 @@
 // Es2AiTests.cs
 // Feature: docs/notes/npcs-and-combat.md "ES2 aiming" and "ES2 dogfighting" (Flight.Es2Aim, Es2Director, Es2Dogfight, after
 // EVERSPACE 2's FBehaviourTreeTaskLib::Attack, DT_AimingNoiseTable, FAiDirectorParameter and BT_Default): the aim's inertia by
-// row, target and difficulty, the reticule's easing, the lead, the noise, the crowd's suppression, and the dogfight's runs,
-// gaining distance, tailed evasion and flight.
+// row, target and difficulty, the reticule's easing, the lead, the noise, the crowd's suppression, the dogfight's runs,
+// gaining distance, tailed evasion and flight, and the physics flight's turn and thrust rules (Flight.Es2NpcFlight).
 
 using GoF2Remake.Flight;
 using NUnit.Framework;
@@ -155,6 +155,37 @@ namespace GoF2Remake.Tests
             Assert.IsFalse(Es2Dogfight.IsTailed(20f, 0f, -100f, 0f, 0f, 1f, 0f, 0f, 1f, 5f), "too far off its line");
             Assert.IsFalse(Es2Dogfight.IsTailed(10f, 0f, -100f, 0f, 0f, 1f, 0f, 0f, -1f, 5f), "its nose away from us");
             Assert.IsFalse(Es2Dogfight.IsTailed(10f, 0f, 100f, 0f, 0f, 1f, 0f, 0f, -1f, 5f), "in front of us");
+        }
+    
+        [Test]
+        public void ATurnCoastsOutWithoutOvershooting()
+        {
+            float err = 90f, rate = 0f, dt = 1f / 60f, over = 0f;
+            float top = Es2NpcFlight.TopTurnDegS, acc = Es2NpcFlight.TurnAccelDegS2;
+            Assert.AreEqual(42f, top, 0.1f, "GoF2's 48 / 65536 a ms");
+            for (int i = 0; i < 600; i++)
+            {
+                rate = Es2NpcFlight.Ramp(rate, Es2NpcFlight.RotationInput(err, rate, acc) * top, acc, dt);
+                err -= rate * dt;
+                if (err < 0f) over = System.Math.Max(over, -err);
+            }
+            Assert.AreEqual(0f, err, 0.5f, "on the heading");
+            Assert.Less(over, 3f, "eased off before it");
+            Assert.AreEqual(0f, Es2NpcFlight.RotationInput(4f, 40f, acc), "inside the braking angle: it coasts");
+            Assert.AreEqual(0.8f, Es2NpcFlight.RotationInput(4f, -40f, acc), 1e-5f, "turning away: no braking angle (4 of the 5 deg ease)");
+        }
+
+        [Test]
+        public void TheThrustEasesAndStopsInTime()
+        {
+            Assert.AreEqual(1f, Es2NpcFlight.Ease(0f, 2f));
+            Assert.AreEqual(0f, Es2NpcFlight.Ease(2f, 2f));
+            Assert.AreEqual(0f, Es2NpcFlight.LinearInput(10f, 20f, 5f), "inside the stopping distance: brake");
+            Assert.AreEqual(1f, Es2NpcFlight.LinearInput(100f, 20f, 5f));
+            Assert.AreEqual(0.5f, Es2NpcFlight.LinearInput(22.5f, 20f, 5f), 1e-6f, "eased between");
+            Assert.AreEqual(25f, Es2NpcFlight.StoppingDistance(10f, 2f), 1e-5f);
+            Assert.AreEqual(13, Es2NpcFlight.Candidates.Length, "ES2's exterior table");
+            Assert.AreEqual((0f, 1f), Es2NpcFlight.Candidates[0], "straight on first");
         }
     }
 }
