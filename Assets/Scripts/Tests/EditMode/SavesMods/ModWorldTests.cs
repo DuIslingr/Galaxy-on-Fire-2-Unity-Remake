@@ -697,6 +697,31 @@ namespace GoF2Remake.Tests
             StringAssert.Contains("unknown storm field \"sparks\"", AllMessages(Installed("t_world")));
         }
 
+        [Test]
+        public void AnOrbitsMinefields()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'minefields': [ { 'kind': 'cryo', 'centre': [100, 0, 200], 'radius': 3000, 'count': 99, 'fuse': 1 }, " +
+                "{ 'centre': [0, 0, 0], 'minRank': 0, 'share': 1, 'maxSecurity': 3, 'raiderSeconds': 1 } ] } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var m = ModWorld.OrbitOf(78).minefields;
+            Assert.AreEqual(2, m.Count);
+            Assert.AreEqual(ModWorld.MinefieldSpec.Kind.Cryo, m[0].kind);
+            Assert.AreEqual(new UnityEngine.Vector3(100, 0, 200), m[0].centre);
+            Assert.AreEqual(40, m[0].count, "ES2's MaxMineAmount");
+            Assert.AreEqual(4, m[0].minRank, "a danger: rank 4 or more by default");
+            Assert.AreEqual(1, m[0].maxSecurity, "risky or dangerous systems by default");
+            Assert.AreEqual(0.5f, m[0].share, 1e-5f);
+            Assert.AreEqual(-1f, m[0].raiderSeconds, "by its kind");
+            Assert.AreEqual(ModWorld.MinefieldSpec.Kind.Kinetic, m[1].kind);
+            Assert.AreEqual(1f, m[1].raiderSeconds);
+            StringAssert.Contains("unknown minefield field \"fuse\"", AllMessages(Installed("t_world")));
+        }
+
+        [Test] public void AMinefieldNeedsACentre() => StringAssert.Contains("a minefield needs \"centre\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'minefields': [ { 'kind': 'web' } ] } } ]"));
+        [Test] public void AMinefieldKindIsNotANumber() => StringAssert.Contains("a minefield's \"kind\" is", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'minefields': [ { 'kind': '2', 'centre': [0, 0, 0] } ] } } ]"));
+
         [Test] public void AHazardKindIsNotANumber() => StringAssert.Contains("a hazard's \"kind\" is", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': '1', 'centre': [0, 0, 0] } ] } } ]"));
         [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\", \"radiation\", \"frost\", \"corrosion\" or \"damage\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 

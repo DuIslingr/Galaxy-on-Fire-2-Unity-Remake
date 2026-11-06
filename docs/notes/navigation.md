@@ -257,6 +257,18 @@ the player ship) and `NavigationView` (flight HUD).
   big bolt, EmpSparks' tile 11; 2-6 km for 0.25-1 s) x `scale`, blue-violet (0.1, 0.34, 1) to orange (1, 0.29, 0.05) over
   the life x `intensity` (ES2's ColorOverLife); a mod `thunder` sound 0.4-2 s after a flash at `thunderChance`. Effects
   only: no damage or EMP.
+- **Minefields** (remake 2026-11-06, for mods; stations.json `orbit.minefields` -> `ModWorld.MinefieldSpec`,
+  `World.OrbitMinefield` lays them after the storm, one `World.OrbitMine` each): after EVERSPACE 2's BP_Minefield (Radius
+  25 000 cm, AverageMineDistance 12 000, MaxMineAmount 40; 60 kinetic + 60 energy, _Web 10 + 5 with WebDuration 4, _Cryo
+  90 + 30) and its proximity mines. `count` (1-40) mines at random in the `radius` sphere round `centre` (`Places`: uniform in
+  the ball, the best of 8 tries kept 0.48 x radius x (40 / count)^(1/3) apart, ES2's spacing share), still but bobbing, the
+  rift's mines' numbers (`RiftRun.Mine*`: armed after 1 s, a 0.5 s blinking fuse within 360 m, a 144 m blast less towards
+  the edge) and drawn as them (`RiftHazards.Sphere`), coloured by kind. The blast is `raiderSeconds` x
+  `NpcTables.RaiderGunDps` (default by kind, `RaiderSeconds`: ES2's BaseDamage over a raider's 55, 120 / 55, a web mine
+  15 / 55); a web mine also webs (`NpcRoles.WebSpeedFactor` 4 s), a cryo one freezes (`Hazards.FrozenMs` / `FrozenFactor`),
+  a corrosion one leaves Corrosive Death's small `RiftField`, a thermal one reaches 1.5 x. Player's ship only. They add
+  danger, so `Laid` gates each field per visit: the system's security <= `maxSecurity` (default 1, risky or dangerous),
+  `Session.Rank` >= `minRank` (default 4) and a roll under `share` (default 0.5). Not tried in game.
 - **Ambience zones** (remake 2026-11-05, for mods; stations.json `orbit.ambience` -> `ModWorld.AmbienceSpec`,
   `World.OrbitAmbience`, attached with the hazards): after EVERSPACE 2's BP_MusicTrigger OverrideAmbience (its inner /
   outer spheres round stations, factories, cargo wrecks, wreck fields: a SoundCue looping one of its waves by

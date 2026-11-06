@@ -73,6 +73,43 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void MinefieldsAreLaidOnlyWhereTheirSpecAllows()
+        {
+            var spec = new GoF2Remake.Modding.ModWorld.MinefieldSpec();   // defaults: security 1 or lower, rank 4 or more, half the visits
+            Assert.IsTrue(GoF2Remake.World.OrbitMinefield.Laid(spec, 1, 4, 0.49f));
+            Assert.IsFalse(GoF2Remake.World.OrbitMinefield.Laid(spec, 2, 4, 0f), "an average system");
+            Assert.IsFalse(GoF2Remake.World.OrbitMinefield.Laid(spec, 0, 3, 0f), "a low rank");
+            Assert.IsFalse(GoF2Remake.World.OrbitMinefield.Laid(spec, 0, 10, 0.5f), "the roll");
+        }
+
+        [Test]
+        public void AMinesBlastFollowsEverspace2sBaseDamage()
+        {
+            var spec = new GoF2Remake.Modding.ModWorld.MinefieldSpec();
+            Assert.AreEqual(120f / 55f, GoF2Remake.World.OrbitMinefield.RaiderSeconds(spec), 1e-5f, "BP_Minefield 60 + 60 over a raider's 55");
+            spec.kind = GoF2Remake.Modding.ModWorld.MinefieldSpec.Kind.Web;
+            Assert.AreEqual(15f / 55f, GoF2Remake.World.OrbitMinefield.RaiderSeconds(spec), 1e-5f, "_Web 10 + 5");
+            spec.raiderSeconds = 3f;
+            Assert.AreEqual(3f, GoF2Remake.World.OrbitMinefield.RaiderSeconds(spec), "the mod's own");
+            Assert.AreEqual(RiftRun.MineBlastM * 1.5f, GoF2Remake.World.OrbitMine.BlastM(GoF2Remake.Modding.ModWorld.MinefieldSpec.Kind.Thermal), 1e-3f);
+        }
+
+        [Test]
+        public void MinesLieInTheFieldSpreadOut()
+        {
+            var c = new UnityEngine.Vector3(10f, 20f, 30f);
+            var list = GoF2Remake.World.OrbitMinefield.Places(c, 1000f, 20, 300f, new System.Random(3));
+            Assert.AreEqual(20, list.Count);
+            float closest = float.MaxValue;
+            for (int i = 0; i < list.Count; i++)
+            {
+                Assert.LessOrEqual((list[i] - c).magnitude, 1000.01f, "inside the sphere");
+                for (int j = 0; j < i; j++) closest = UnityEngine.Mathf.Min(closest, (list[i] - list[j]).magnitude);
+            }
+            Assert.Greater(closest, 100f, "kept apart (the best of a few tries each)");
+        }
+
+        [Test]
         public void TheFieldsTakeEverspace2sColours()
         {
             Assert.AreEqual(new UnityEngine.Color(0.84f, 1f, 0.09f), GoF2Remake.World.HazardLooks.KindColor(GoF2Remake.Modding.ModWorld.HazardKind.Corrosion), "P_CorrosionField's StartColor");

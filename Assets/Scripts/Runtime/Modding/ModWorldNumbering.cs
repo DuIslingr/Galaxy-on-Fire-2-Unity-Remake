@@ -211,6 +211,34 @@ namespace GoF2Remake.Modding
                         else Report(mod, $"{where}: a gas cloud is [x, y, z] (left out)");
                 if (spec.clouds.Count > 0) s.gasClouds = spec;
             }
+            // Remake (2026-11-06): minefields, EVERSPACE 2's BP_Minefield (World.OrbitMinefields)
+            if (ModJson.Get(o, "minefields") is JToken mf)
+            {
+                if (!(mf is JArray mfList)) throw new ModJsonException($"{where}: orbit \"minefields\" must be a list [ {{ \"kind\", \"centre\", \"radius\", \"count\" }} ]");
+                s.minefields = new List<MinefieldSpec>();
+                foreach (var e in mfList)
+                {
+                    if (!(e is JObject m)) throw new ModJsonException($"{where}: a minefield is {{ \"kind\", \"centre\", \"radius\", \"count\" }}");
+                    foreach (var p in m.Properties())
+                        if (!MinefieldFields.Contains(p.Name)) Report(mod, $"{where}: unknown minefield field \"{p.Name}\" (ignored)");
+                    var kindName = ModJson.Str(m, "kind") ?? "kinetic";
+                    if (!Enum.TryParse(kindName, true, out MinefieldSpec.Kind kind) || int.TryParse(kindName, out _))
+                        throw new ModJsonException($"{where}: a minefield's \"kind\" is \"kinetic\", \"web\", \"cryo\", \"thermal\" or \"corrosion\"");
+                    var centre = Xyz(m, "centre", where) ?? Xyz(m, "center", where);
+                    if (!centre.HasValue) throw new ModJsonException($"{where}: a minefield needs \"centre\": [x, y, z]");
+                    s.minefields.Add(new MinefieldSpec
+                    {
+                        kind = kind, centre = centre.Value,
+                        radius = Mathf.Clamp(ModJson.Float(m, "radius", 5000f, StationsFile), 500f, 100000f),
+                        count = Mathf.Clamp(ModJson.Int(m, "count", 20, StationsFile), 1, 40),
+                        raiderSeconds = ModJson.Float(m, "raiderSeconds", -1f, StationsFile) is float rs && rs >= 0f ? Mathf.Min(rs, 20f) : -1f,
+                        minRank = Mathf.Clamp(ModJson.Int(m, "minRank", 4, StationsFile), 0, 20),
+                        share = Mathf.Clamp01(ModJson.Float(m, "share", 0.5f, StationsFile)),
+                        maxSecurity = Mathf.Clamp(ModJson.Int(m, "maxSecurity", 1, StationsFile), 0, 3),
+                    });
+                }
+                if (s.minefields.Count == 0) s.minefields = null;
+            }
             // Remake (2026-11-06): a lightning storm, EVERSPACE 2's BP_LightningField (World.OrbitStorm)
             if (ModJson.Get(o, "storm") is JToken stm)
             {

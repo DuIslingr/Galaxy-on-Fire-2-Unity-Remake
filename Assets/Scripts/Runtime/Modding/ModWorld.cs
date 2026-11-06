@@ -300,6 +300,20 @@ namespace GoF2Remake.Modding
             public float radius = 30000f;
         }
 
+        /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_Minefield): a minefield in an orbit (stations.json "orbit.minefields",
+        /// World.OrbitMinefields): 'count' proximity mines at random within 'radius' game units of 'centre', each blasting the
+        /// player's ship for 'raiderSeconds' seconds of a raider's fire (-1 = by its 'kind', as ES2's BaseDamage over a raider's 55
+        /// a second: 2.2, a web mine 0.27) and webbing, freezing or corroding it by its 'kind'. It adds danger, so only in systems
+        /// of security 'maxSecurity' or lower, for a player of rank 'minRank' or more, on 'share' of the visits.</summary>
+        public sealed class MinefieldSpec
+        {
+            public enum Kind { Kinetic, Web, Cryo, Thermal, Corrosion }
+            public Kind kind;
+            public Vector3 centre;
+            public float radius = 5000f, raiderSeconds = -1f, share = 0.5f;
+            public int count = 20, minRank = 4, maxSecurity = 1;
+        }
+
         /// <summary>Remake (2026-11-06, EVERSPACE 2's BP_LightningField): a lightning storm round the camera (stations.json
         /// "orbit.storm", World.OrbitStorm): 'frequency' flashes a second on a cylinder 'radius' game units out, each a glow
         /// and a bolt 'scale' x ES2's sizes, 'intensity' x its brightness; a 'thunder' sound (one of the mod's) at 'thunderChance'.</summary>
@@ -332,6 +346,8 @@ namespace GoF2Remake.Modding
             public List<AmbienceSpec> ambience;
             /// <summary>Remake (2026-11-06): the orbit's lightning storm (World.OrbitStorm), null = none.</summary>
             public StormSpec storm;
+            /// <summary>Remake (2026-11-06): the orbit's minefields (World.OrbitMinefields), null = none.</summary>
+            public List<MinefieldSpec> minefields;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's spline traffic): null = none.</summary>
             public List<LaneSpec> lanes;
             /// <summary>Remake (2026-11-03, EVERSPACE 2's heat volumes and radiation fields): null = none.</summary>
@@ -419,7 +435,9 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm" };
+            { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm", "minefields" };
+        static readonly HashSet<string> MinefieldFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "kind", "centre", "center", "radius", "count", "raiderSeconds", "minRank", "share", "maxSecurity" };
         static readonly HashSet<string> StormFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "frequency", "radius", "heightPercent", "scale", "intensity", "thunder", "thunderChance" };
         static readonly HashSet<string> WreckFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
