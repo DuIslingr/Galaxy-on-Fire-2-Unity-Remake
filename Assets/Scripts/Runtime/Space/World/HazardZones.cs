@@ -3,7 +3,9 @@
 // "orbit.hazards": heat and radiation, after EVERSPACE 2's heat damage volumes and radiation fields) and holds a radiated
 // ship's hull under its cap in every orbit until it docks. Entering a volume says so on the HUD ("Heat" / "Radiation");
 // each new radiation token says the hull's new limit. The volumes aren't drawn (ES2 shows them by its post-process
-// tint and the planet's surface).
+// tint and the planet's surface). 2026-11-06: frost (its buildup freezes the ship: the web's slow, Target.SlowBy, at
+// Hazards.FrozenFactor), corrosion (shield-piercing ticks on for 8 s after leaving, as a rift's corrosion field; a System
+// Recovery Routine lifts it, PlayerDebuffs) and damage (a steady dps) volumes, after ES2's frost, corrosion and damage fields.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -17,8 +19,9 @@ namespace GoF2Remake.World
         SpaceLevel level;
         PlayerHealth health;
         Modding.ModWorld.HazardSpec[] zones = new Modding.ModWorld.HazardSpec[0];
-        float heatTickMs, radiationMs;
+        float heatTickMs, radiationMs, frostMs, corrodedMs, corrosionTickMs, corrosionDamage, damageTickMs;
         int inside = -1;
+        System.Func<bool> corroded;
 
         public static HazardZones Attach(SpaceLevel level)
         {
@@ -28,8 +31,23 @@ namespace GoF2Remake.World
             h.health = level.Health;
             var spec = level.Layout != null && !level.Layout.interstellar ? Modding.ModWorld.OrbitOf(level.Layout.stationIndex) : null;
             if (spec?.hazards != null) h.zones = spec.hazards.ToArray();
+            h.corroded = () => h.corrodedMs > 0f;
+            PlayerDebuffs.Register(h.corroded, () => h.corrodedMs = 0f);   // (a System Recovery Routine lifts it)
             return h;
         }
+
+        void OnDestroy() { if (corroded != null) PlayerDebuffs.Unregister(corroded); }
+
+        static float Dps(Modding.ModWorld.HazardSpec z) => z.raiderDps > 0f ? z.raiderDps * NpcTables.RaiderGunDps : z.dps;
+
+        static string Entered(Modding.ModWorld.HazardKind kind) => kind switch
+        {
+            Modding.ModWorld.HazardKind.Heat => Localization.Extra("hazardHeat", "Heat: the hull is burning"),
+            Modding.ModWorld.HazardKind.Radiation => Localization.Extra("hazardRadiation", "Radiation: the hull's limit is falling"),
+            Modding.ModWorld.HazardKind.Frost => Localization.Extra("hazardFrost", "Frost: the ship is icing up"),
+            Modding.ModWorld.HazardKind.Corrosion => Localization.Extra("hazardCorrosion", "Corrosion: the hull is being eaten away"),
+            _ => Localization.Extra("hazardDamage", "Danger: the hull is taking damage"),
+        };
 
         void Update()
         {
@@ -38,8 +56,8 @@ namespace GoF2Remake.World
             if (dtMs <= 0f) return;
             var pos = transform.position;
             int now = -1;
-            bool hot = false, radiated = false;
-            float heatDps = 0f;
+            bool hot = false, radiated = false, frost = false, corrosive = false, harmful = false;
+            float heatDps = 0f, damageDps = 0f;
             for (int i = 0; i < zones.Length; i++)
             {
                 var z = zones[i];
@@ -48,14 +66,47 @@ namespace GoF2Remake.World
                 float d = (pos - c).magnitude;
                 if (d >= r) continue;
                 if (now < 0) now = i;
-                if (z.kind == Modding.ModWorld.HazardKind.Heat) { hot = true; heatDps += Hazards.HeatDamage(z.raiderDps > 0f ? z.raiderDps * NpcTables.RaiderGunDps : z.dps, d, r, 1000f); }
-                else radiated = true;
+                switch (z.kind)
+                {
+                    case Modding.ModWorld.HazardKind.Heat: hot = true; heatDps += Hazards.HeatDamage(Dps(z), d, r, 1000f); break;
+                    case Modding.ModWorld.HazardKind.Radiation: radiated = true; break;
+                    case Modding.ModWorld.HazardKind.Frost: frost = true; break;
+                    case Modding.ModWorld.HazardKind.Corrosion: corrosive = true; corrosionDamage = Mathf.Max(corrosionDamage, Dps(z)); break;
+                    default: harmful = true; damageDps += Dps(z); break;
+                }
             }
-            if (now != inside && now >= 0)
-                level.Navigation?.Post(zones[now].kind == Modding.ModWorld.HazardKind.Heat
-                    ? Localization.Extra("hazardHeat", "Heat: the hull is burning")
-                    : Localization.Extra("hazardRadiation", "Radiation: the hull's limit is falling"));
+            if (now != inside && now >= 0) level.Navigation?.Post(Entered(zones[now].kind));
             inside = now;
+            // frost: the buildup freezes the ship (its moves at FrozenFactor) for FrozenMs, then builds again
+            frostMs = Hazards.FrostStep(frostMs, dtMs, frost, out bool frozen);
+            if (frozen && !health.invulnerable)
+            {
+                health.Target.SlowBy?.Invoke(Hazards.FrozenMs, Hazards.FrozenFactor, false);
+                level.Navigation?.Post(Localization.Extra("hazardFrozen", "Frozen: the ship has lost control"));
+            }
+            // corrosion: on for its 8 s after leaving, a tick past the shield every 0.95 s
+            if (corrosive) corrodedMs = RiftRun.CorrosionDebuffS * 1000f;
+            if (corrodedMs > 0f)
+            {
+                corrodedMs -= dtMs;
+                corrosionTickMs += dtMs;
+                while (corrosionTickMs >= RiftRun.CorrosionTickS * 1000f)
+                {
+                    corrosionTickMs -= RiftRun.CorrosionTickS * 1000f;
+                    if (!health.invulnerable) health.Target.Damage(corrosionDamage, true, Vector3.zero, 0f);
+                }
+            }
+            else { corrosionTickMs = 0f; corrosionDamage = 0f; }
+            if (harmful)
+            {
+                damageTickMs += dtMs;
+                while (damageTickMs >= Hazards.DamageTickMs)
+                {
+                    damageTickMs -= Hazards.DamageTickMs;
+                    if (!health.invulnerable) health.Target.Damage(damageDps * Hazards.DamageTickMs / 1000f, true, Vector3.zero);
+                }
+            }
+            else damageTickMs = 0f;
             if (hot)
             {
                 heatTickMs += dtMs;

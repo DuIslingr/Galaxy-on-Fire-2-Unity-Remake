@@ -527,6 +527,21 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AnOrbitsFrostCorrosionAndDamageFields()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("stations.json",
+                "[ { 'override': 78, 'orbit': { 'hazards': [ { 'kind': 'frost', 'centre': [0, 0, 20000] }, { 'kind': 'corrosion', 'centre': [5000, 0, 0] }, { 'kind': 'damage', 'centre': [0, 0, 0], 'raiderDps': 0.36 } ] } } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var h = ModWorld.OrbitOf(78).hazards;
+            Assert.AreEqual(ModWorld.HazardKind.Frost, h[0].kind);
+            Assert.AreEqual(ModWorld.HazardKind.Corrosion, h[1].kind);
+            Assert.AreEqual(GoF2Remake.Flight.RiftRun.CorrosionTickSeconds, h[1].raiderDps, 1e-5f, "ES2's intensity 5 over the raider's 55 DPS by default");
+            Assert.AreEqual(ModWorld.HazardKind.Damage, h[2].kind);
+            Assert.AreEqual(0.36f, h[2].raiderDps, 1e-5f);
+        }
+
+        [Test]
         public void AnOrbitsAmbienceZones()
         {
             WriteMod("w", "t_world", "1.0", "", ("stations.json",
@@ -648,7 +663,8 @@ namespace GoF2Remake.Tests
             Assert.IsFalse(AllMessages(Installed("t_world")).Contains("unknown wrecks field"));
         }
 
-        [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\" or \"radiation\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
+        [Test] public void AHazardKindIsNotANumber() => StringAssert.Contains("a hazard's \"kind\" is", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': '1', 'centre': [0, 0, 0] } ] } } ]"));
+        [Test] public void AHazardNeedsAKnownKind() => StringAssert.Contains("\"kind\" is \"heat\", \"radiation\", \"frost\", \"corrosion\" or \"damage\"", WorldError("stations.json", "[ { 'override': 1, 'orbit': { 'hazards': [ { 'kind': 'lava', 'centre': [0, 0, 0] } ] } } ]"));
 
         // Remake (2026-11-03, EVERSPACE 2's item containers): a station's "orbit.containers" (World.LootContainer).
         [Test]

@@ -225,8 +225,13 @@ the player ship) and `NavigationView` (flight HUD).
   `NpcTables.RaiderGunDps`, ES2's DamagePerSecondMax 200 being GetScaledDamage by the location level like its NPCs' DPS, so
   200 / the Outlaw raider's 55), `radiation` (`Hazards.RadiationTokens`,
   the hull capped at maxHull x 0.85^n in every orbit, `StationLevel` clears it on docking). HUD lines on entering and per
-  token. Not drawn (ES2's post-process tint). Not done: ES2's lightning fields (a storm effect), acid sacks, lightning
-  plants and meltable ice (props with ES2's models).
+  token. Not drawn (ES2's post-process tint). 2026-11-06, ES2's BP_FrostField / BP_CorrosionField / BP_DamageField:
+  `frost` (BP_Condition_Buildup_Frost: `Hazards.FrostStep`, 5 s inside -> frozen 6 s as the web's slow, `Target.SlowBy` at
+  `FrozenFactor` 0.15; drains over DrainDuration 60 s), `corrosion` (the rift field's rule: `RiftRun.CorrosionDebuffS` 8 s
+  after leaving, a tick every `CorrosionTickS` 0.95 s past the shield of `raiderDps` x `RaiderGunDps`, default
+  `CorrosionTickSeconds` = intensity 5 / 55; `PlayerDebuffs` lifts it), `damage` (DamagePerSecond 20 a second, no falloff;
+  the importer gives ES2's capsule as a sphere of its radius). Not done: ES2's lightning fields (a storm effect), acid
+  sacks, lightning plants and meltable ice (props with ES2's models), the energy restore fields (in no ES2 level).
 - **Ambience zones** (remake 2026-11-05, for mods; stations.json `orbit.ambience` -> `ModWorld.AmbienceSpec`,
   `World.OrbitAmbience`, attached with the hazards): after EVERSPACE 2's BP_MusicTrigger OverrideAmbience (its inner /
   outer spheres round stations, factories, cargo wrecks, wreck fields: a SoundCue looping one of its waves by

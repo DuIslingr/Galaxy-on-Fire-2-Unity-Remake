@@ -34,5 +34,19 @@ namespace GoF2Remake.Tests
             Hazards.ClearRadiation();
             Assert.AreEqual(0, Hazards.RadiationTokens, "docked");
         }
+
+        [Test]
+        public void FrostBuildsForFiveSecondsAndDrainsOverSixty()
+        {
+            float b = Hazards.FrostStep(0f, 4000f, true, out bool frozen);
+            Assert.IsFalse(frozen);
+            Assert.AreEqual(4000f, b);
+            b = Hazards.FrostStep(b, 12000f, false, out frozen);
+            Assert.AreEqual(3000f, b, 1e-3f, "12 s outside drain a fifth of the 5 s (60 s for all)");
+            b = Hazards.FrostStep(b, 2000f, true, out frozen);
+            Assert.IsTrue(frozen, "5 s built: frozen");
+            Assert.AreEqual(0f, b, "and it builds again");
+            Assert.AreEqual(0f, Hazards.FrostStep(100f, 60000f, false, out frozen), "never below none");
+        }
     }
 }

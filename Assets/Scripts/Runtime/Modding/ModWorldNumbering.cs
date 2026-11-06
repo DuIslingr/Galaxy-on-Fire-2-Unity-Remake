@@ -171,7 +171,7 @@ namespace GoF2Remake.Modding
             // Remake (2026-11-03): hazard volumes, EVERSPACE 2's heat volumes and radiation fields (World.HazardZones)
             if (ModJson.Get(o, "hazards") is JToken hz)
             {
-                if (!(hz is JArray hzList)) throw new ModJsonException($"{where}: orbit \"hazards\" must be a list [ {{ \"kind\": \"heat\" | \"radiation\", \"centre\", \"radius\" }} ]");
+                if (!(hz is JArray hzList)) throw new ModJsonException($"{where}: orbit \"hazards\" must be a list [ {{ \"kind\": \"heat\" | \"radiation\" | \"frost\" | \"corrosion\" | \"damage\", \"centre\", \"radius\" }} ]");
                 s.hazards = new List<HazardSpec>();
                 foreach (var e in hzList)
                 {
@@ -179,10 +179,8 @@ namespace GoF2Remake.Modding
                     foreach (var p in h.Properties())
                         if (p.Name != "kind" && p.Name != "centre" && p.Name != "center" && p.Name != "radius" && p.Name != "dps" && p.Name != "raiderDps") Report(mod, $"{where}: unknown hazard field \"{p.Name}\" (ignored)");
                     var kindName = ModJson.Str(h, "kind") ?? "";
-                    HazardKind kind;
-                    if (kindName.Equals("heat", StringComparison.OrdinalIgnoreCase)) kind = HazardKind.Heat;
-                    else if (kindName.Equals("radiation", StringComparison.OrdinalIgnoreCase)) kind = HazardKind.Radiation;
-                    else throw new ModJsonException($"{where}: a hazard's \"kind\" is \"heat\" or \"radiation\"");
+                    if (!Enum.TryParse(kindName, true, out HazardKind kind) || int.TryParse(kindName, out _))
+                        throw new ModJsonException($"{where}: a hazard's \"kind\" is \"heat\", \"radiation\", \"frost\", \"corrosion\" or \"damage\"");
                     var centre = Xyz(h, "centre", where) ?? Xyz(h, "center", where);
                     if (!centre.HasValue) throw new ModJsonException($"{where}: a hazard needs \"centre\": [x, y, z]");
                     s.hazards.Add(new HazardSpec
@@ -190,7 +188,7 @@ namespace GoF2Remake.Modding
                         kind = kind, centre = centre.Value,
                         radius = Mathf.Clamp(ModJson.Float(h, "radius", 20000f, StationsFile), 1000f, 400000f),
                         dps = Mathf.Max(0f, ModJson.Float(h, "dps", 10f, StationsFile)),
-                        raiderDps = Mathf.Clamp(ModJson.Float(h, "raiderDps", 0f, StationsFile), 0f, 50f),
+                        raiderDps = Mathf.Clamp(ModJson.Float(h, "raiderDps", kind == HazardKind.Corrosion ? Flight.RiftRun.CorrosionTickSeconds : 0f, StationsFile), 0f, 50f),
                     });
                 }
                 if (s.hazards.Count == 0) s.hazards = null;

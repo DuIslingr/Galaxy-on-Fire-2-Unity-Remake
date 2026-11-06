@@ -212,18 +212,19 @@ namespace GoF2Remake.Modding
         /// <summary>A station's orbit level laid out by its mod (stations.json "orbit"), applied by OrbitLayout.Build over the
         /// seeded layout; null fields keep the game's. Positions in game units around the station (the orbit's centre).</summary>
         /// <summary>Remake (2026-11-03): an orbit's hazard volume (stations.json "orbit.hazards", Flight.Hazards).</summary>
-        public enum HazardKind { Heat, Radiation }
+        public enum HazardKind { Heat, Radiation, Frost, Corrosion, Damage }
         public sealed class HazardSpec
         {
             public HazardKind kind;
             public Vector3 centre;
             /// <summary>Game units.</summary>
             public float radius;
-            /// <summary>Heat: the damage a second at the centre.</summary>
+            /// <summary>Heat: the damage a second at the centre; damage: everywhere inside.</summary>
             public float dps;
             /// <summary>Heat (2026-11-04): the damage a second at the centre as that many pirate raiders' gunfire
             /// (NpcTables.RaiderGunDps; EVERSPACE 2's DamagePerSecondMax over its Outlaw raider's 55 DPS, both scaled by level
-            /// alike); over 'dps' when given.</summary>
+            /// alike); over 'dps' when given. Damage and corrosion the same way (corrosion: a tick's damage, default ES2's
+            /// intensity 5 over the raider's 55 DPS).</summary>
             public float raiderDps;
         }
 
