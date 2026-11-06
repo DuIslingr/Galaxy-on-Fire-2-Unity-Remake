@@ -54,17 +54,23 @@ namespace GoF2Remake.World
         {
             // Turned and fired at a spot on the target's model (AimAt); the break-off range measured to its centre.
             var aimPos = attacking && !followingWaypoint && target != null ? AimAt(target, dtMs) : targetPos;
-            // remake option (NpcShipDogfight): GoF3's attack runs, veer-offs, tease and chase, its led aim
-            bool dog = Dogfighting, dogHold = false;
-            if (dog) aimPos = DogfightAim(aimPos, out dogHold);
+            // remake option (NpcShipEs2): EVERSPACE 2's aim, a reticule on the lead that settles by the difficulty
+            bool es2Aimed = Es2Aiming;
+            if (es2Aimed) aimPos = Es2Reticule(aimPos, dtMs);
+            var shotAt = aimPos;
+            // remake options: GoF3's attack runs, veer-offs, tease and chase, its led aim (NpcShipDogfight); EVERSPACE 2's runs
+            // past the target, gaining distance, tailed evasion and flight (NpcShipEs2)
+            bool dog = Dogfighting, es2 = Es2Fighting, dogHold = false;
+            if (dog) aimPos = DogfightAim(aimPos, out dogHold, es2Aimed);
+            else if (es2) aimPos = Es2FightGoal(aimPos, dtMs, out dogHold);
             float formationSpeed = 1f;
-            if (!dog && FormationSlot(dtMs, out var slot, out formationSpeed)) aimPos = slot;   // (GoF3's V formations)
+            if (!dog && !es2 && FormationSlot(dtMs, out var slot, out formationSpeed)) aimPos = slot;   // (GoF3's V formations)
             var dir = aimPos - transform.position;
             if (RoleFlees) dir = transform.position - FleeFrom.transform.position;   // (remake: a loot drone runs, NpcShipRoles)
             // PlayerFighter::update's fly state: the player docked at an object (PlayerEgo::isDockedToDockingPoint) is circled
             // at +-12000 instead of +-8000, and not fired at while it is above the ship (0xf2cfa).
             bool dockedPlayer = target != null && target.isPlayer && ObjectDocking.PlayerDocked;
-            if (target != null && !followingWaypoint && RoleBreaksOff && !dog)   // (remake: a detonator flies into it, NpcShipRoles; GoF3's veer off)
+            if (target != null && !followingWaypoint && RoleBreaksOff && !dog && !es2)   // (remake: a detonator flies into it, NpcShipRoles; GoF3's veer off, ES2's runs)
             {
                 float r = (dockedPlayer ? 12000f : NpcTables.BreakOffRange) * M;
                 var toCentre = targetPos - transform.position;
@@ -77,11 +83,13 @@ namespace GoF2Remake.World
             if (attacking && !followingWaypoint && target != null)
             {
                 if (target.untargetable || target.cloaked) attacking = false;   // a cloaked ship: chased, never fired at
-                else if (RoleFires && !dogHold)   // (remake: the support drones and the detonator hold their guns, NpcShipRoles; GoF3's runs)
+                else if (RoleFires && !dogHold && !(es2Aimed && Es2Suppressed))   // (remake: the support drones and the detonator hold their guns, NpcShipRoles; GoF3's runs; ES2's director)
                 {
-                    var d = aimPos - transform.position;
+                    // ES2's way of fighting flies elsewhere than it shoots: the guns go off when the nose is on the reticule
+                    var d = (es2 ? shotAt : aimPos) - transform.position;
+                    var fireLocal = es2 ? transform.InverseTransformDirection(d.sqrMagnitude > 1e-8f ? d.normalized : transform.forward) : local;
                     float fr = NpcTables.FireRange * M * RoleRangeFactor;   // (remake: a sniper's reach)
-                    if (Mathf.Abs(local.x) < NpcTables.FireCone && Mathf.Abs(local.y) < NpcTables.FireCone
+                    if ((!es2 || fireLocal.z > 0f) && Mathf.Abs(fireLocal.x) < NpcTables.FireCone && Mathf.Abs(fireLocal.y) < NpcTables.FireCone
                         && Mathf.Abs(d.x) < fr && Mathf.Abs(d.y) < fr && Mathf.Abs(d.z) < fr)
                     {
                         var firing = useEmp && empGun != null ? empGun : useSecond && secondGun != null ? secondGun : gun;
@@ -131,7 +139,7 @@ namespace GoF2Remake.World
             bank = Mathf.MoveTowards(bank, bankTarget, step);
             if (Mathf.Approximately(bank, before)) { levelTimer -= dtMs; if (levelTimer <= 0f) levelling = true; }
             else levelTimer = 750f;
-            float barrel = DogfightRoll(dtMs, out var sideStep);   // remake option: GoF3's evasive roll (NpcShipDogfight)
+            float barrel = es2Fight != null ? Es2Roll(dtMs, out var sideStep) : DogfightRoll(dtMs, out sideStep);   // remake options: GoF3's evasive roll (NpcShipDogfight), ES2's barrel roll (NpcShipEs2)
             if (model != null) model.localRotation = Quaternion.AngleAxis(bank * Mathf.PI / 4096f * Mathf.Rad2Deg + barrel, Vector3.forward);
             if (levelling) Roll(dtMs);
 

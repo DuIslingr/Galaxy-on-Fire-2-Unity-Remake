@@ -316,7 +316,8 @@ namespace GoF2Remake.Data
         /// Modding.ModTraffic.PickLootDrone); empty = an ordinary fighter.</summary>
         public string role;
         /// <summary>Remake (2026-11-05, the GoF3 roadmap's G6): "gof3" = its NPC fighters fight Galaxy on Fire 3's way
-        /// (Flight.Gof3Dogfight) while Options > Gameplay "NPC dogfighting" is "GoF3 on mod hulls" (the default); else GoF2's.</summary>
+        /// (Flight.Gof3Dogfight), "es2" (2026-11-06) EVERSPACE 2's (Flight.Es2Dogfight), while Options > Gameplay "NPC dogfighting"
+        /// is "Mod hulls' own" (the default); else GoF2's.</summary>
         public string ai;
         /// <summary>Remake (2026-11-05, GoF3's kamikazes): the devices its NPCs use when hostile to the player, as a Most
         /// Wanted criminal's (wanted.json "devices", Modding.ModWanted.ReadDevices); read apart from JsonUtility, null = none.</summary>

@@ -68,8 +68,9 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   turned ship (it goes for the player who shot it), the Specters, the fleet battles' fighters (their own nearest pick),
   wingmen, turrets, the multiplayer remote players' pick. Off = the original exactly.
 - **GoF3 dogfighting** (remake option, 2026-11-05, the GoF3 roadmap's G6 after a survey of libgofm.so's AI; Options >
-  Gameplay "NPC dogfighting", `Settings.NpcDogfight`, a session rule in two bits, `SessionRules.DogfightOf`: Original /
-  GoF3 on mod hulls (default: ships.json `"traffic": { "ai": "gof3" }`, `CustomTraffic.ai`) / GoF3 for all; a dedicated
+  Gameplay "NPC dogfighting", `Settings.NpcDogfight`, a session rule in three bits since ES2's (below), `SessionRules.DogfightOf`:
+  Original / Mod hulls' own (default: ships.json `"traffic": { "ai": "gof3" }` or `"es2"`, `CustomTraffic.ai`) / GoF3 for all /
+  ES2 for all; a dedicated
   server has no flag for it and keeps the default): `Flight.Gof3Dogfight` (Core, rules) run by `NpcShipDogfight`
   (`UpdateDogfight` after the targeting, `DogfightAim` in `Steer`, `DogfightRoll` for the model's spin and side step,
   `OnDamaged` -> `Hit`). GoF3's AIJob_Fight as modes: Approach (8-13 s, firing; ends inside the 8000 break-off box,
@@ -92,6 +93,35 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   `Gof3Dogfight.FormationSpeed` (0.6-1.5 x, by how far the slot is ahead); the leader or itself fighting ends it. Not
   done: GoF3's fours and vertical / mirrored V, flocking (its neighbours' spacing), followers taking the leader's
   target.
+- **ES2 aiming** (remake option, 2026-11-06, after a survey of ES2's AI: es2_ships_importer `research/npc_ai.md`; Options >
+  Gameplay "EVERSPACE 2 NPC aiming", `Settings.Es2Aiming`, a session rule `SessionRules.Es2Aiming`, server flag `-es2aiming`;
+  apart from "NPC dogfighting"): `Flight.Es2Aim` + `Es2Director` (Core), run by `NpcShipEs2` (`Es2Reticule` in `Steer`).
+  ES2's `FBehaviourTreeTaskLib::Attack`: every T s a new aim point (the target's aim spot + its smoothed velocity x T + a
+  smooth 3D miss of distance x tan(deviation)); each frame the lead for it (`Es2Aim.InterceptTime`, the gun's speed) and the
+  reticule eased onto it by dt / the time left (`CalcLeadingReticuleWithAimingInertia`); the ship turns at the reticule and
+  fires on GoF2's cone (its fixed guns: ES2's swivel). `DT_AimingNoiseTable`: Projectile (every NPC gun) 0.2 s / 0.1 deg
+  against players, 0.6 s / 1 deg against NPCs; Sniper (`NpcRoles` snipers) 0.3 s, no miss, no difficulty. Difficulty
+  (ES2's `DifficultyAimingInertias` on GoF2's four, against players only): Easy 1.3, Normal 1, Hard 0.5, Extreme 0.25 x T.
+  The director (`FAiDirectorParameter`'s mouse set): with n NPCs on one player each holds fire while its noise (8 s
+  wavelength) + 0.5 <= clamp(1 - u(n)/n, 0, 0.9), u from 3 at 3 attackers to 6 at 12: a dozen shoot about 6 at a time
+  (counted every 0.5 s among `Traffic.Ships`; players = `isPlayer` or `netPilot`). With GoF3's dogfighting its own lead
+  and miss give way to this. Left out: ES2's player-acceleration and NPC-level factors, the gamepad / Nightmare Rift sets,
+  turrets (still `NpcShipTurrets`' own aim). Tests `Es2AiTests`, `SettingsTests.Es2AimingIsAnOptionOfItsOwn`. Not tried in
+  Play mode.
+- **ES2 dogfighting** (remake, 2026-11-06; "NPC dogfighting" "ES2 for all", or `"traffic": { "ai": "es2" }` under "Mod hulls'
+  own"): `Flight.Es2Dogfight` (Core) run by `NpcShipEs2` (`UpdateEs2` from `UpdateDogfight`, `Es2FightGoal` in `Steer`).
+  BP_Ship_NPC's BT_Default: Attack (BTT_Attack: at a point 45..85 m off the line to the target at a random angle, until
+  within 160 m of it) -> 6.5 s +-25 % of gaining distance (20 % BTT_OrbitAttack round it at 500 m, 45 deg ahead, for
+  3 s +-50 %; else BTT_FlyAwayFrom: zig-zag legs of 200..350 m within 55 deg of away until 400 m off) -> the next run.
+  Tailed (BTS_DetectIfTailed every 2.5 +-0.75 s: behind us, nose on us, within 3 x our radius of its line) ends the
+  fly-away: 65 % zig-zag (350..550 m, 35 deg), else 30 % a barrel roll (1.5 s, the GoF3 roll's spin and side step, no
+  invulnerability, no fire) then zig-zag, else turn and fight; each till the window ends. BT_FleeSubtree below 20 % hull
+  (BP_Ship_NPC's FleeThreshHealthRatio 0.2): zig-zag away to 1000 m, then loiter; GoF2's NPCs have no shield to recharge
+  (ES2 stops at 75 %), so once, for 20 s at most, then back (missions that need every kill still end). ES2's metres x 72
+  units (3.6 x 20, the importer's ship scale). GoF2's fixed guns: a run flies at the reticule until within 1.25 x the
+  arrival distance, then swerves to its point; the guns fire whenever the nose is on the aim (no break-off circling
+  meanwhile). Difficulty: no barrel roll on Easy (as GoF3's evasive roll); the rest is ES2's on every level. Same
+  exclusions as GoF3's; no formations. Tests `Es2AiTests`. Not tried in Play mode.
 - **Turned ships pick at any range** (`PlayerFighter::update` 0xf131e / 0xf1444, `NpcShip.TakesAtAnyRange`): a turned
   ship (`turnedEnemy`, Player+0xe0) of any race but the pirates' takes the player outside its ±50 000 box when it picks
   (not attacking, or the re-roll's random tries); the 5 s re-roll still drops a pick outside the box, and as it leaves

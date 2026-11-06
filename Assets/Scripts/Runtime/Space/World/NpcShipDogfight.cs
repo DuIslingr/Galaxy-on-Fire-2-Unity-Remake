@@ -29,12 +29,16 @@ namespace GoF2Remake.World
         void SetupDogfight(SpawnSpec spec, Database db)
         {
             dogfight = null;
+            es2Fight = null;
             dogTarget = null;
+            SetupEs2Aim(spec);   // remake option: EVERSPACE 2's aim, apart from the way of fighting (NpcShipEs2)
             if (spec.freighter || spec.fixedObject != null || spec.turretAssembly != null || spec.capital != 0 || spec.capitalPart || spec.modCapital) return;
             int mode = Settings.NpcDogfight;
             if (mode == SessionRules.DogfightOriginalMode) return;
-            if (mode == SessionRules.DogfightModHulls
-                && !string.Equals((db?.Ship(spec.ship) as CustomShipData)?.traffic?.ai, "gof3", System.StringComparison.OrdinalIgnoreCase)) return;
+            string ai = mode == SessionRules.DogfightAll ? "gof3" : mode == SessionRules.DogfightEs2All ? "es2"
+                      : (db?.Ship(spec.ship) as CustomShipData)?.traffic?.ai;
+            if (string.Equals(ai, "es2", System.StringComparison.OrdinalIgnoreCase)) { SetupEs2Fight(); return; }   // (NpcShipEs2)
+            if (!string.Equals(ai, "gof3", System.StringComparison.OrdinalIgnoreCase)) return;
             bool boss = spec.wantedIndex >= 0 || spec.pirateEvent == SpawnSpec.EventBoss;
             dogfight = new Gof3Dogfight(Gof3Dogfight.EvadeChance(Session.Difficulty, boss), () => Random.value);
         }
@@ -45,6 +49,7 @@ namespace GoF2Remake.World
         /// <summary>After the targeting: the target's motion (for the lead), the mode, the roll's invulnerability.</summary>
         void UpdateDogfight(float dtMs)
         {
+            UpdateEs2(dtMs);   // remake options: EVERSPACE 2's aim and way of fighting (NpcShipEs2)
             if (dogfight == null) return;
             dogfight.Tick(dtMs);
             if (target != dogTarget)
@@ -78,8 +83,8 @@ namespace GoF2Remake.World
 
         /// <summary>Steer's point to fly at instead of the aim spot (Unity space) and whether to hold fire: away from the
         /// target veering off, across it holding back, ahead of its nose teasing, behind it chasing until lined up; at it,
-        /// led by its motion with the settling miss, while approaching.</summary>
-        Vector3 DogfightAim(Vector3 aimSpot, out bool holdFire)
+        /// led by its motion with the settling miss, while approaching ('aimed': ES2's reticule, taken as it is).</summary>
+        Vector3 DogfightAim(Vector3 aimSpot, out bool holdFire, bool aimed = false)
         {
             var t = target.transform;
             var pos = transform.position;
@@ -110,6 +115,7 @@ namespace GoF2Remake.World
                 }
             }
             holdFire = false;
+            if (aimed) return aimSpot;   // EVERSPACE 2's aim led it already (NpcShipEs2)
             // AIJob aiming (ECS::aimingPoint): the target's place when the shot gets there, and a miss settling to 0
             float shotSpeed = Mathf.Max(0.1f, gunSpeed) * M;   // metres a ms
             float flightMs = Vector3.Distance(pos, aimSpot) / shotSpeed;

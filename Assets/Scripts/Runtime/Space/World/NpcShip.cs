@@ -287,6 +287,17 @@ namespace GoF2Remake.World
         Target dogTarget;
         Vector3 dogTargetLast, dogTargetVel;
         bool rollInvulnerable;
+        /// <summary>Remake options (NpcShipEs2): EVERSPACE 2's aim (Settings.Es2Aiming; null = GoF2's) with its aim point and
+        /// reticule, its noise and suppression seed, the attackers on its target counted every half second; EVERSPACE 2's way of
+        /// fighting (Settings.NpcDogfight; null = another) with its zig-zag leg and the leg's age.</summary>
+        Es2Aim es2Aim;
+        Target es2AimFor;
+        Vector3 es2AimPoint, es2Reticule;
+        int es2Seed, es2Attackers;
+        float es2CountMs;
+        Es2Dogfight es2Fight;
+        Vector3 es2Leg;
+        float es2LegMs;
         WingmanCrew wingCrew;
         int[] wingFace;
         bool wingHelpSaid;
