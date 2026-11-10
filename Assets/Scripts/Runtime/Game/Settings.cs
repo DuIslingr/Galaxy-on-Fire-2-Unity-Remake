@@ -248,6 +248,11 @@ namespace GoF2Remake.Data
         /// <summary>The chase camera follows at the original's damping and looks at its eased point (#114, ChaseCamera); off
         /// (default) = the remake's tighter follow (2026.10.09's: twice the rate, a slerped rotation).</summary>
         public static bool OriginalChaseCamera { get => GetBool("originalChaseCamera", false); set => SetBool("originalChaseCamera", value); }
+        /// <summary>Remake (the user's request 2026-11-10): in free flight the chase camera is EVERSPACE 2's (Flight.Es2ChaseRig:
+        /// a pivot ahead of the ship its rotation lags, the camera rolling with the ship and trailing its velocity, the boost's
+        /// wider view); off: the chase camera above (OriginalChaseCamera's follow). On by default; the original flight style
+        /// keeps the chase camera either way.</summary>
+        public static bool Es2FreeFlightCamera { get => GetBool("es2FreeFlightCamera", true); set => SetBool("es2FreeFlightCamera", value); }
 
         // ---- controls ----------------------------------------------------------------------------------------
 
@@ -859,7 +864,7 @@ namespace GoF2Remake.Data
         {
             "displayMode", "resolutionWidth", "resolutionHeight", "frameRate", "quality", "fireSmoke", "fog", "detailDistance", "textureFiltering", "renderScale", "upscaler", "upscalerQuality",
             "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "npcPlayerEngines", "rebuiltPlanets", "fov",
-            "cameraShake", "originalChaseCamera", "originalUi", "uiWidth", "uiMargin", "showFps", "fpsPosition", "gameCursor",
+            "cameraShake", "originalChaseCamera", "es2FreeFlightCamera", "originalUi", "uiWidth", "uiMargin", "showFps", "fpsPosition", "gameCursor",
         };
         public static readonly string[] ControlsKeys =
         {
