@@ -189,6 +189,11 @@ namespace GoF2Remake.UI
             list.Add(Toggle("lensFlare", OptionPage.Graphics, () => X("lensFlare", "Lens flare"), () => Settings.LensFlare, v => Settings.LensFlare = v));
             list.Add(Toggle("npcPlayerEngines", OptionPage.Graphics, () => X("npcPlayerEngines", "Other ships' engines like yours"),
                 () => Settings.NpcPlayerEngines, v => Settings.NpcPlayerEngines = v));
+            // Remake: the planets as the rebuilt 3D spheres (World.RebuiltPlanets); on by default.
+            var rebuiltPlanets = Toggle("rebuiltPlanets", OptionPage.Graphics, () => X("rebuiltPlanets", "3D planets"),
+                () => Settings.RebuiltPlanets, v => Settings.RebuiltPlanets = v);
+            rebuiltPlanets.description = () => X("rebuiltPlanetsHelp", "The planets in orbit, on the star map and in slipstream are lit 3D spheres rebuilt from the original planet images. Off: the original flat images. From the next orbit or star map view.");
+            list.Add(rebuiltPlanets);
             list.Add(Slider("fov", OptionPage.Graphics, () => X("fov", "Field of view"), 55f, 95f,
                 () => Settings.FieldOfView, v => Settings.FieldOfView = Mathf.Round(v), v => $"{Mathf.RoundToInt(v)}°"));
             list.Add(Slider("cameraShake", OptionPage.Graphics, () => X("cameraShake", "Camera shake"), 0f, 1f,

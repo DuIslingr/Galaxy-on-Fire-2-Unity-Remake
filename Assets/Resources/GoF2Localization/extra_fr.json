@@ -225,6 +225,8 @@
  "hangarShadowsPlayer": "Seulement le vaisseau du joueur",
  "lods": "Niveaux de détail",
  "lodsHelp": "Les vaisseaux, stations et autres objets lointains sont dessinés avec moins de triangles, pour une fréquence d'images plus fluide. Désactivé : chaque modèle en détail complet.",
+ "rebuiltPlanets": "Planètes en 3D",
+ "rebuiltPlanetsHelp": "Les planètes en orbite, sur la carte stellaire et dans le slipstream sont des sphères 3D éclairées, reconstruites à partir des images d'origine des planètes. Désactivé : les images plates d'origine. À partir de la prochaine orbite ou vue de la carte stellaire.",
  "graphicsPreset": "Préréglage graphique",
  "presetCustom": "Personnalisé",
  "graphicsPresetHelp": "Règle d'un coup l'échelle de rendu, les effets, les ombres et les détails. Bas convient aux téléphones et appareils lents, Haut est le rendu complet, Ultra pousse chaque option au maximum, pour les cartes graphiques rapides.",

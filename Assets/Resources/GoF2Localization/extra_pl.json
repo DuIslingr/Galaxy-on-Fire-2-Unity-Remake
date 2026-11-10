@@ -225,6 +225,8 @@
  "hangarShadowsPlayer": "Tylko statek gracza",
  "lods": "Poziomy szczegółowości",
  "lodsHelp": "Odległe statki, stacje i inne obiekty są rysowane z mniejszą liczbą trójkątów, dla płynniejszej liczby klatek. Wyłączone: każdy model w pełnej szczegółowości.",
+ "rebuiltPlanets": "Planety 3D",
+ "rebuiltPlanetsHelp": "Planety na orbicie, na mapie gwiezdnej i w slipstreamie to oświetlone kule 3D odtworzone z oryginalnych obrazów planet. Wył.: oryginalne płaskie obrazy. Od następnej orbity lub widoku mapy gwiezdnej.",
  "graphicsPreset": "Ustawienie wstępne grafiki",
  "presetCustom": "Własne",
  "graphicsPresetHelp": "Ustawia naraz skalę renderowania, efekty, cienie i detale. Niski pasuje do telefonów i wolniejszych urządzeń, Wysoki to pełny wygląd, Ultra ustawia każdą opcję na maksimum, dla szybkich kart graficznych.",

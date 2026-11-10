@@ -225,6 +225,8 @@
  "hangarShadowsPlayer": "Só a nave do jogador",
  "lods": "Níveis de detalhe",
  "lodsHelp": "Naves, estações e outros objetos distantes são desenhados com menos triângulos, para uma taxa de quadros mais fluida. Desligado: todos os modelos com detalhe total.",
+ "rebuiltPlanets": "Planetas em 3D",
+ "rebuiltPlanetsHelp": "Os planetas em órbita, no mapa estelar e no slipstream são esferas 3D iluminadas, reconstruídas a partir das imagens originais dos planetas. Desligado: as imagens planas originais. A partir da próxima órbita ou visualização do mapa estelar.",
  "graphicsPreset": "Predefinição gráfica",
  "presetCustom": "Personalizado",
  "graphicsPresetHelp": "Ajusta de uma vez a escala de renderização, os efeitos, as sombras e o detalhe. Baixo serve para celulares e aparelhos lentos, Alto é o visual completo, Ultra leva cada opção ao máximo, para placas de vídeo rápidas.",

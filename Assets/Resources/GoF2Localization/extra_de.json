@@ -225,6 +225,8 @@
  "hangarShadowsPlayer": "Nur das eigene Schiff",
  "lods": "Detailstufen",
  "lodsHelp": "Weit entfernte Schiffe, Stationen und andere Objekte werden mit weniger Dreiecken gezeichnet, für eine flüssigere Bildrate. Aus: jedes Modell in voller Detailstufe.",
+ "rebuiltPlanets": "3D-Planeten",
+ "rebuiltPlanetsHelp": "Die Planeten im Orbit, auf der Sternenkarte und im Slipstream sind beleuchtete 3D-Kugeln, nachgebaut aus den originalen Planetenbildern. Aus: die originalen flachen Bilder. Ab dem nächsten Orbit oder Aufruf der Sternenkarte.",
  "graphicsPreset": "Grafik-Voreinstellung",
  "presetCustom": "Benutzerdefiniert",
  "graphicsPresetHelp": "Stellt Renderauflösung, Effekte, Schatten und Details auf einmal ein. Niedrig passt zu Handys und langsameren Geräten, Hoch ist der volle Look, Ultra stellt jede Option aufs Maximum, für schnelle Grafikkarten.",
