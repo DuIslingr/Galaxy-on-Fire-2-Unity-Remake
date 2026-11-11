@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Chorus-stijl",
  "flightStyleChorusHelp": "Chorus: W vliegt op volle snelheid, S remt, Shift boost, houd Spatie ingedrukt om te driften, A / D ontwijken. Eigen toetsindeling.",
  "ctlDrift": "Driften (vasthouden)",
- "hudDrift": "DRIFTEN"
+ "hudDrift": "DRIFTEN",
+ "ctlTravelBoost": "Reisboost aan / uit",
+ "hudTravelBoost": "REISBOOST"
 }

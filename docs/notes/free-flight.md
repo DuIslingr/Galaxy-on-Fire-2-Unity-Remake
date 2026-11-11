@@ -151,8 +151,23 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   secondary fire here), the controller's LB drift, no strafe / up-down / dampeners rows (hidden) and no roll on the
   controller. HUD hints DRIFT (HOLD) and DODGE instead of strafe / up-down / dampeners. Tests `ChorusFlightTests` (every
   timing above integrated by hand, the min boost, no booster, turn ratios, ramp and snap, drift and recovery, the
-  layout, the names). Not done: the touch controls (they keep free flight's layout: no drift button), the Set Flight
-  Model node's choice, Chorus's dash speed / boost cooldown (unread C++ defaults), the travel boost (x5.5).
+  layout, the names). Later the same day:
+  - **Travel boost:** L-Ctrl (`travelBoost` row, Chorus layout only), `FlightModel.ToggleTravelBoost`. It's Chorus's
+    TravelBoostConfig: Mode AfterBurner; the player controller's constructor gives ChargeDuration 0 and bHoldButton false,
+    so a press switches it on or off at once.
+    - x5.5, the throttle held full, angular acceleration x0.5, no booster needed.
+    - Allowed only where `Navigation.TravelBoostAllowed`: no hostiles, not jumping, not interstellar, no time extender,
+      not on the autopilot.
+    - It ends on: a second press, the brake, a drift, the regular boost's key (inferred), leaving the allowed state, or
+      slowing below x4.4 after reaching x5 (TravelBoostCancel / BreakSpeedMultiplier).
+    - No controller default: Chorus's stick press and Y are taken here.
+  - **Touch:** `Frame.chorus`. The column's pill holds the drift (`TouchControls.DriftHeld` ->
+    `ShipController.SetTouchFree`'s drift), and up / down are hidden.
+  - **Set Flight Model node:** offers `ChorusFlight`, added at the end of `EventFlightModel`, since graphs store the
+    number.
+  - **Boost and dash defaults:** read from the constructors. FBoostCfg's Cooldown is 0, so the boost has no cooldown.
+    FDashCfg's Speed is 7000 cm/s: Chorus's normal dash is half the top speed sideways, 0.25 s, with 0.15 s in and
+    0.75 s out. The remake's dodge (the original's manoeuvre) still does the dodging.
 - **Free flight on touch** (remake, 2026-11-06, the user's request: there was no way to strafe on a phone; `TouchControlsFreeFlight`,
   `Frame.freeFlight`, `ShipController.TouchFree` / `SetTouchFree`): with the free flight style and touch input (not tilt)
   the touch controls take a layout after the controller's, as EVERSPACE 2 has no touch version: the stick thrusts (up /

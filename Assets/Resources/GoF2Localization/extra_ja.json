@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Chorus風",
  "flightStyleChorusHelp": "Chorus：Wで全速前進、Sでブレーキ、Shiftでブースト、Spaceを押し続けてドリフト、A / Dで回避。専用のキー配置。",
  "ctlDrift": "ドリフト（長押し）",
- "hudDrift": "ドリフト"
+ "hudDrift": "ドリフト",
+ "ctlTravelBoost": "巡航ブースト オン / オフ",
+ "hudTravelBoost": "巡航ブースト"
 }

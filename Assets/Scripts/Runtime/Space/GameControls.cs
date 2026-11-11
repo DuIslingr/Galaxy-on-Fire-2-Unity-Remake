@@ -64,7 +64,7 @@ namespace GoF2Remake.Flight
             FirePrimary, FireSecondary, SwitchSecondary, UnlockTarget, Action, AutopilotMenu, ActionsMenu, Wingmen, KhadorDrive, FastForward,
             Camera, CockpitView, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, ChatSend, ChatChannel, Screenshot,
             HudToggle, MultiplayerWindow, DistressCall,
-            Thrust, StrafeAxis, Hover, Dampeners, FreeLookHold, Drift,
+            Thrust, StrafeAxis, Hover, Dampeners, FreeLookHold, Drift, TravelBoost,
             Device1, Device2, Device3,
             Headlights;
 
@@ -159,6 +159,7 @@ namespace GoF2Remake.Flight
             Dampeners = Button("dampeners", () => X("ctlDampeners", "Inertial dampeners on / off"), null, null, null);
             // Remake (2026-11-11): Chorus flight's drift, held (FlightModel.DriftHeld); bound only in its layout.
             Drift = Button("drift", () => X("ctlDrift", "Drift (hold)"), null, null, null);
+            TravelBoost = Button("travelBoost", () => X("ctlTravelBoost", "Travel boost on / off"), null, null, null);
             FreeLookHold = Button("freeLookHold", () => X("ctlFreeLookHold", "Free look (hold)"), null, null, null);
             // Remake: the first three active devices (PlayerDevices, mod items; Flight.Device) on 4 / 5 / 6, free in both layouts
             // (1-3 roll and level out). No controller default (every button is taken): the quick menu (D-pad left) has them.
@@ -177,7 +178,7 @@ namespace GoF2Remake.Flight
                     case "throttle": case "brake": case "strafeLeft": case "strafeRight": r.visible = () => !Free(); break;
                     case "thrust": r.visible = Free; break;
                     case "strafe": case "hover": case "dampeners": r.visible = Es2; break;
-                    case "drift": r.visible = Chorus; break;
+                    case "drift": case "travelBoost": r.visible = Chorus; break;
                 }
         }
 
@@ -231,8 +232,8 @@ namespace GoF2Remake.Flight
 
         /// <summary>Per row id and slot, over FreeFlightDefaults: Chorus's PC defaults (its DefaultInput.ini: W / S thrust,
         /// A / D dash, L-Shift boost) with the drift on Space (Chorus's right mouse button fires the secondary here) and the
-        /// controller's left shoulder (Chorus's); no strafe, up / down or dampeners (Chorus has none), no roll on the controller
-        /// (its shoulder drifts).</summary>
+        /// controller's left shoulder (Chorus's), the travel boost on L-Ctrl (Chorus's); no strafe, up / down or dampeners
+        /// (Chorus has none), no roll on the controller (its shoulder drifts).</summary>
         static readonly Dictionary<string, Dictionary<BindSlot, string[]>> ChorusDefaults = new Dictionary<string, Dictionary<BindSlot, string[]>>
         {
             ["strafe"] = new Dictionary<BindSlot, string[]> { [BindSlot.Key1] = new[] { "", "" }, [BindSlot.Pad] = new[] { "", "" } },
@@ -244,6 +245,8 @@ namespace GoF2Remake.Flight
                 [BindSlot.Pad] = new[] { "<Gamepad>/leftShoulder" },
             },
             ["roll"] = new Dictionary<BindSlot, string[]> { [BindSlot.Pad] = new[] { "", "" } },
+            // Chorus's TravelBoost key (L-Ctrl); no controller default (its stick press and Y are taken here).
+            ["travelBoost"] = new Dictionary<BindSlot, string[]> { [BindSlot.Key1] = new[] { "<Keyboard>/leftCtrl" } },
             ["dodgeLeft"] = new Dictionary<BindSlot, string[]> { [BindSlot.Key1] = new[] { "<Keyboard>/a" } },
             ["dodgeRight"] = new Dictionary<BindSlot, string[]> { [BindSlot.Key1] = new[] { "<Keyboard>/d" } },
         };

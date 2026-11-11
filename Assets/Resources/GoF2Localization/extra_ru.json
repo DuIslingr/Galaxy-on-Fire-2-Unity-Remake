@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "В стиле Chorus",
  "flightStyleChorusHelp": "Chorus: W — полёт на полной скорости, S — торможение, Shift — ускорение, удерживайте Пробел для дрифта, A / D — уклонение. Своя раскладка клавиш.",
  "ctlDrift": "Дрифт (удерживать)",
- "hudDrift": "ДРИФТ"
+ "hudDrift": "ДРИФТ",
+ "ctlTravelBoost": "Походное ускорение вкл. / выкл.",
+ "hudTravelBoost": "ПОХОДНОЕ УСКОРЕНИЕ"
 }

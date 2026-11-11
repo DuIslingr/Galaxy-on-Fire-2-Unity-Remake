@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Estilo Chorus",
  "flightStyleChorusHelp": "Chorus: W vuela a toda velocidad, S frena, Mayús acelera, mantén Espacio para derrapar, A / D esquivan. Distribución de teclas propia.",
  "ctlDrift": "Derrape (mantener)",
- "hudDrift": "DERRAPE"
+ "hudDrift": "DERRAPE",
+ "ctlTravelBoost": "Impulso de viaje sí / no",
+ "hudTravelBoost": "IMPULSO DE VIAJE"
 }

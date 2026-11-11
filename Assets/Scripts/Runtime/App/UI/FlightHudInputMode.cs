@@ -184,6 +184,7 @@ namespace GoF2Remake.UI
                 Hint(T("hudBoost", "BOOST") + " (" + T("hudHold", "HOLD") + ")", GameControls.Boost);
                 if (chorus) Hint(T("hudDrift", "DRIFT") + " (" + T("hudHold", "HOLD") + ")", GameControls.Drift);
                 if (chorus) Hint(T("hudDodge", "DODGE"), GameControls.DodgeLeft, GameControls.DodgeRight);
+                if (chorus) Hint(T("hudTravelBoost", "TRAVEL BOOST"), GameControls.TravelBoost);   // out of combat (FlightModel.ToggleTravelBoost)
                 if (lastLockFastForward) Hint(ff, GameControls.FastForward);   // remake: toward a stationary lock (Navigation.LockFastForward)
                 else if (nav != null && nav.Drive != null) Hint(T("hudCruiseDrive", "CRUISE") + " (" + T("hudHold", "HOLD") + ")", GameControls.FastForward);   // remake: a cruise drive
                 if (!chorus) Hint(T("hudDampeners", "DAMPENERS"), GameControls.Dampeners);

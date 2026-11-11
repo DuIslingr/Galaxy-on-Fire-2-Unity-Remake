@@ -522,7 +522,8 @@ namespace GoF2Remake.Flight
             EnginesOff = false;   // another mode flies the ship: its engines run
             FreeVelocity = forward * unitsPerMs;
             freeYaw = freePitch = freeRoll = 0f;
-            chorusDrift = 0;      // Chorus flight: a drift ends where another mode takes over
+            chorusDrift = 0;      // Chorus flight: a drift ends where another mode takes over, the travel boost too
+            chorusTravel = false;
         }
 
         /// <summary>The held boost on its energy pool: drains in the booster's duration (FreeBoostDurationMs without one),
@@ -570,7 +571,15 @@ namespace GoF2Remake.Flight
         /// <summary>Chorus flight: the recovery after a drift (the forward speed pulled back up, the slide fading).</summary>
         public bool DriftRecovering => ChorusFlight && chorusDrift == 2;
 
+        /// <summary>Chorus flight: the travel boost may run now (ShipController: no hostiles, not jumping or in interstellar
+        /// space, as the remake's fast-forward); while false it ends and doesn't start.</summary>
+        public bool TravelBoostAllowed;
+        /// <summary>Chorus flight: the travel boost runs (x5.5, ToggleTravelBoost).</summary>
+        public bool TravelBoosting => ChorusFlight && chorusTravel;
+
         int chorusDrift;          // EDriftState: 0 inactive, 1 drifting, 2 recovery (USteeringComponent+0xB38)
+        bool chorusTravel;        // UBoostComponent's travel boost (+0x2AD)
+        bool chorusTravelReached; // it has reached TravelBoostBreakSpeedMultiplierThreshold
         float chorusRecovery;     // DriftRecoverySpeed (+0xB3C), units / ms
         float chorusBoostMs;      // how long the boost has run (MinBoostDuration)
         bool chorusBoostWas, chorusDriftWas;
@@ -592,6 +601,10 @@ namespace GoF2Remake.Flight
         const float ChorusBoostFactor = 2f;          // RegularBoostConfig.SpeedMultiplier
         const float ChorusMinBoostMs = 600f;         // RegularBoostConfig.MinBoostDuration
         const float ChorusBrakeAxis = -0.05f;        // a thrust axis below this holds the brake (the over-speed latch's test)
+        const float ChorusTravelFactor = 5.5f;       // TravelBoostConfig.SpeedMultiplier
+        const float ChorusTravelTurnAccel = 0.5f;    // TravelBoostConfig.AngularAccelModifier
+        const float ChorusTravelReached = 5f;        // TravelBoostBreakSpeedMultiplierThreshold
+        const float ChorusTravelCancel = 4.4f;       // TravelBoostCancelSpeedMultiplier: slowed below it once reached, it ends
 
         static float ChorusCurve(float[] keys, float x)
         {
@@ -601,8 +614,22 @@ namespace GoF2Remake.Flight
             return keys[keys.Length - 1];
         }
 
-        /// <summary>Chorus flight: the boost's top speed, of the forward one: a mod's (ModFlight boostFactor) or Chorus's x2.</summary>
-        float ChorusBoostTop => OverheatedBoost(Style.boostFactor > 0 ? Style.boostFactor / 100f : ChorusBoostFactor);
+        /// <summary>Chorus flight: the boost's top speed, of the forward one: the travel boost's x5.5, else a mod's (ModFlight
+        /// boostFactor) or Chorus's x2.</summary>
+        float ChorusBoostTop => chorusTravel ? ChorusTravelFactor : OverheatedBoost(Style.boostFactor > 0 ? Style.boostFactor / 100f : ChorusBoostFactor);
+
+        /// <summary>Chorus flight: the travel boost key (TravelBoostConfig: Mode AfterBurner, no ChargeDuration, bHoldButton
+        /// false, so a press switches it on or off at once). Only while TravelBoostAllowed, and not while drifting.</summary>
+        public void ToggleTravelBoost()
+        {
+            if (!ChorusFlight) return;
+            if (chorusTravel) { EndTravelBoost(); return; }
+            if (!TravelBoostAllowed || chorusDrift == 1) return;
+            chorusTravel = true;
+            chorusTravelReached = false;
+        }
+
+        void EndTravelBoost() { chorusTravel = false; chorusTravelReached = false; }
 
         /// <summary>Chorus flight's buttons and boost, each frame (UpdateBoost): ASpacePlayerController's OnDriftPressed (the
         /// boost stops, the drift starts), OnDriftReleased / OnBoostPressed (the drift goes into its recovery), and
@@ -614,9 +641,12 @@ namespace GoF2Remake.Flight
             bool boostPress = BoostHeld && !chorusBoostWas, driftPress = DriftHeld && !chorusDriftWas;
             chorusBoostWas = BoostHeld;
             chorusDriftWas = DriftHeld;
-            if (driftPress && chorusDrift != 1) { chorusDrift = 1; IsBoosting = false; }
+            if (driftPress && chorusDrift != 1) { chorusDrift = 1; IsBoosting = false; EndTravelBoost(); }
             else if (chorusDrift == 1 && (!DriftHeld || boostPress)) StopChorusDrift();
-            bool boost = hasBooster && chorusDrift != 1 && (BoostHeld || (IsBoosting && chorusBoostMs < ChorusMinBoostMs));
+            // The travel boost ends where it isn't allowed (hostiles), for the regular boost's key (inferred: Chorus's
+            // boost component runs one boost at a time), and when it has slowed below x4.4 after reaching x5.
+            if (chorusTravel && (!TravelBoostAllowed || boostPress)) EndTravelBoost();
+            bool boost = chorusTravel || (hasBooster && chorusDrift != 1 && (BoostHeld || (IsBoosting && chorusBoostMs < ChorusMinBoostMs)));
             if (boost && !IsBoosting) chorusBoostMs = 0f;
             IsBoosting = boost;
             if (boost) chorusBoostMs += dtMs;
@@ -648,7 +678,8 @@ namespace GoF2Remake.Flight
             float baseRate = FreeTopTurnRate(he) * ChorusTurnShare;
             float factor = chorusDrift == 1 ? ChorusCurve(ChorusDriftTurn, speedShare) : ChorusCurve(ChorusTurnBySpeed, Mathf.Max(0f, v.z) / top);
             float maxRate = baseRate * factor;
-            float step = baseRate / (ChorusTurnRampMs / Mathf.Max(0.05f, Inertia)) * (IsBoosting ? ChorusBoostTurnAccel : 1f) * dtMs;
+            float step = baseRate / (ChorusTurnRampMs / Mathf.Max(0.05f, Inertia))
+                         * (chorusTravel ? ChorusTravelTurnAccel : IsBoosting ? ChorusBoostTurnAccel : 1f) * dtMs;
             freeYaw = ChorusRate(freeYaw, Mathf.Clamp(input.aim.x, -1f, 1f) * maxRate, step);
             freePitch = ChorusRate(freePitch, Mathf.Clamp(input.aim.y, -1f, 1f) * maxRate, step);
             float roll = Mathf.Clamp(input.roll, -1f, 1f);
@@ -666,6 +697,8 @@ namespace GoF2Remake.Flight
 
             // ---- moving (UpdateLinearVelocity)
             float thrust = Mathf.Clamp(input.thrust, -1f, 1f);
+            if (chorusTravel && thrust < ChorusBrakeAxis) EndTravelBoost();   // the brake ends it
+            if (chorusTravel) thrust = 1f;   // ApplyThrustInput: the throttle is held full while it runs
             ThrustInput = new Vector3(0f, 0f, thrust);
             float accelScale = Style.accelScale * FreeEaseFwdMs / (FreeEaseFwdMs + AccelMs);   // a mod's bonus, a heavy hull
             if (chorusDrift == 1)
@@ -713,6 +746,11 @@ namespace GoF2Remake.Flight
                 }
                 v = new Vector3(side.x, side.y, fwd);
                 if (chorusDrift == 2 && fwd >= chorusRecovery) chorusDrift = 0;
+                if (chorusTravel)
+                {
+                    if (fwd >= ChorusTravelReached * top) chorusTravelReached = true;
+                    else if (chorusTravelReached && fwd < ChorusTravelCancel * top) EndTravelBoost();
+                }
                 FreeVelocity = rotation * v;
             }
 

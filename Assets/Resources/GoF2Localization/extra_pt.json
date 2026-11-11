@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Estilo Chorus",
  "flightStyleChorusHelp": "Chorus: W voa a toda a velocidade, S trava, Shift ativa o boost, segure Espaço para derrapar, A / D esquivam. Layout de teclas próprio.",
  "ctlDrift": "Derrapagem (segurar)",
- "hudDrift": "DERRAPAGEM"
+ "hudDrift": "DERRAPAGEM",
+ "ctlTravelBoost": "Boost de viagem liga / desliga",
+ "hudTravelBoost": "BOOST DE VIAGEM"
 }

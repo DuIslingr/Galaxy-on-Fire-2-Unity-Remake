@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Style Chorus",
  "flightStyleChorusHelp": "Chorus : W vole à pleine vitesse, S freine, Maj active le boost, maintenez Espace pour déraper, A / D esquivent. Disposition des touches propre.",
  "ctlDrift": "Dérapage (maintenir)",
- "hudDrift": "DÉRAPAGE"
+ "hudDrift": "DÉRAPAGE",
+ "ctlTravelBoost": "Boost de voyage oui / non",
+ "hudTravelBoost": "BOOST DE VOYAGE"
 }

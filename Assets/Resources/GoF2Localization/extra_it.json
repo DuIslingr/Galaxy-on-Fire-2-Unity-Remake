@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Stile Chorus",
  "flightStyleChorusHelp": "Chorus: W vola a piena velocità, S frena, Maiusc attiva il boost, tieni premuto Spazio per derapare, A / D schivano. Disposizione dei tasti propria.",
  "ctlDrift": "Derapata (tieni premuto)",
- "hudDrift": "DERAPATA"
+ "hudDrift": "DERAPATA",
+ "ctlTravelBoost": "Boost di viaggio sì / no",
+ "hudTravelBoost": "BOOST DI VIAGGIO"
 }

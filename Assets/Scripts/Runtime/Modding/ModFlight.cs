@@ -21,7 +21,7 @@
 //                                    meanings (new ships and overrides).
 //   campaign.json:       "flightStyle": the mod campaign's games fly so.
 //   gameoptions.json:    "flightStyle": a new-game option that, while on, sets the style.
-//   event graphs:        /flightstyle [players] <free | original | player> (the Set Flight Model node; undone when the event
+//   event graphs:        /flightstyle [players] <free | chorus | original | player> (the Set Flight Model node; undone when the event
 //                        ends), and the expression "freeflight" (1 in free flight).
 // Who decides, first match: an event, the ship flown, the mod campaign, a new-game option, then the player's option.
 // The bonuses add up (the ship's, then every mounted item's; a total never below -90 %); an item's freeBoostFactor wins over

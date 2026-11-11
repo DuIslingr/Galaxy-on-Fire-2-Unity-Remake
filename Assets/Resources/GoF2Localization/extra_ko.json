@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Chorus 방식",
  "flightStyleChorusHelp": "Chorus: W로 최고 속도로 비행, S로 제동, Shift로 부스트, Space를 누르고 있으면 드리프트, A / D로 회피. 전용 키 배치.",
  "ctlDrift": "드리프트 (누르기)",
- "hudDrift": "드리프트"
+ "hudDrift": "드리프트",
+ "ctlTravelBoost": "순항 부스트 켜기 / 끄기",
+ "hudTravelBoost": "순항 부스트"
 }

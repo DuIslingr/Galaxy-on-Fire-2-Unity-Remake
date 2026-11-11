@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "بأسلوب Chorus",
  "flightStyleChorusHelp": "Chorus: W للطيران بأقصى سرعة، وS للكبح، وShift للتعزيز، واضغط مطولًا على Space للانجراف، وA / D للتفادي. تخطيط مفاتيح خاص.",
  "ctlDrift": "انجراف (مطوّل)",
- "hudDrift": "انجراف"
+ "hudDrift": "انجراف",
+ "ctlTravelBoost": "تعزيز السفر تشغيل / إيقاف",
+ "hudTravelBoost": "تعزيز السفر"
 }

@@ -198,6 +198,31 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheTravelBoostTogglesToFiveAndAHalfTimesOutOfCombatOnly()
+        {
+            var m = Model(booster: false);   // a ship feature in Chorus: no booster needed
+            Fly(m, 1500f, 1f);
+            m.ToggleTravelBoost();
+            Assert.IsFalse(m.TravelBoosting, "not allowed (hostiles, a jump...): nothing");
+            m.TravelBoostAllowed = true;
+            m.ToggleTravelBoost();
+            Assert.IsTrue(m.TravelBoosting);
+            Assert.AreEqual(550f, Fly(m, 3000f, 0f), 0.05f, "x5.5, the throttle held full whatever is pressed");
+            m.ToggleTravelBoost();
+            Assert.IsFalse(m.TravelBoosting, "a second press ends it");
+
+            m.ToggleTravelBoost();
+            Fly(m, 500f, 0f);
+            Fly(m, Step, -1f);
+            Assert.IsFalse(m.TravelBoosting, "the brake ends it");
+            m.ToggleTravelBoost();
+            Fly(m, 500f, 0f);
+            m.TravelBoostAllowed = false;
+            Fly(m, Step, 0f);
+            Assert.IsFalse(m.TravelBoosting, "hostiles end it");
+        }
+
+        [Test]
         public void TheStyleIsNamedChorusEverywhere()
         {
             Assert.IsTrue(Modding.ModFlight.TryParseStyle("chorus", out int style));
@@ -219,6 +244,7 @@ namespace GoF2Remake.Tests
                 Assert.AreEqual("<keyboard>/space", GameControls.Paths(DataUiTestKit.Row("drift"), BindSlot.Key1)[0].ToLowerInvariant());
                 Assert.AreEqual("<gamepad>/leftshoulder", GameControls.Paths(DataUiTestKit.Row("drift"), BindSlot.Pad)[0].ToLowerInvariant());
                 Assert.AreEqual("<keyboard>/a", GameControls.Paths(DataUiTestKit.Row("dodgeLeft"), BindSlot.Key1)[0].ToLowerInvariant());
+                Assert.AreEqual("<keyboard>/leftctrl", GameControls.Paths(DataUiTestKit.Row("travelBoost"), BindSlot.Key1)[0].ToLowerInvariant());
                 Assert.AreEqual("<keyboard>/w", GameControls.Paths(DataUiTestKit.Row("thrust"), BindSlot.Key1)[0].ToLowerInvariant(), "free flight's thrust");
                 Assert.AreEqual("<keyboard>/leftshift", GameControls.Paths(DataUiTestKit.Row("boost"), BindSlot.Key1)[0].ToLowerInvariant());
                 foreach (var p in GameControls.Paths(DataUiTestKit.Row("strafe"), BindSlot.Key1)) Assert.AreEqual("", p, "no strafe");

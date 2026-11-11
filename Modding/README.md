@@ -992,6 +992,10 @@ The Mod Builder has them on a ship's page under **Camera and damage**.
 - `boostDepleted`: played once, beside `boostStop`, when a free-flight boost dies because its booster ran empty (EVERSPACE 2's empty-tank sound); a held key then has to be pressed again.
 - `boostLoop`: a loop while boosting, from its first values as the boost starts to its second at full strength.
 - `charger`: a loop while the booster recharges, from empty to full.
+- `driftStart` / `driftStop`: played once when a drift starts / ends (Chorus flight); `driftLoop`: a loop while drifting,
+  from its first values at a standstill to its second at top speed, like the engine.
+- `dodge`: played once when a dodge starts (any flight style).
+- `travelStart` / `travelLoop` / `travelStop`: Chorus flight's travel boost, in place of the boost's sounds while it runs.
 
 Each sound is a file name, a list of files (one at random each time), or `{ "file" (or "files"), "volume", "pitch" }`
 (`volume` / `pitch` a number or `[from, to]`). The files (`.ogg`, `.wav` or `.mp3`) may sit anywhere in the mod, but not in
@@ -2360,7 +2364,7 @@ Everything else is the event graphs' toolbox: **Dialog** (conversations with por
 **Spawn** (ships, friendly or hostile, named; objects as scenery; `wreck`: a hackable freighter wreck), **Wait Until**, **On**
 triggers (docked, entered an orbit, destroyed, a spawned ship destroyed, all enemies cleared, arriving near a point, a wreck
 hacked, docked at a station's pad outside), **Set Waypoint**, **Open Wormhole** / **Close Wormhole** (see below), **Restrict Travel**,
-**Give Item**, **Take Item** (a hand-in; Mounted takes mounted ones too), **Spawn NPC Type**, **Reward**, **Title**, **Timer**, **Play Music**, **Set Flight Model** (free flight or the original for a race
+**Give Item**, **Take Item** (a hand-in; Mounted takes mounted ones too), **Spawn NPC Type**, **Reward**, **Title**, **Timer**, **Play Music**, **Set Flight Model** (free flight, Chorus flight or the original for a race
 or a chase, undone when the graph ends; see [Flight styles](#flight-styles)) and more. Game values for conditions: `campaign` (the story
 step, -1 without one), `credits`, `rank`, `station`, `system`, `ship`, `kills`, `freeflight` (1 in free flight), and the functions `cargo(item)`, `has(item)`
 (in the hold or mounted), `visited(station)` and `quest(name)` (0 not started, 1 under way, 2 done); items and stations by

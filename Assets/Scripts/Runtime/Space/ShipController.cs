@@ -48,11 +48,12 @@ namespace GoF2Remake.Flight
 
         Vector2 touchMove;
         float touchHover;
-        bool touchBoost, touchBoostWas;
+        bool touchBoost, touchBoostWas, touchDrift;
         /// <summary>The touch controls' free-flight input (FlightHud): the stick's thrust (y) and strafe (x), up / down, the boost
         /// button held. Added to the bindings' axes in StepFree; zero when touch isn't in use.</summary>
-        public void SetTouchFree(Vector2 move, float hover, bool boost)
+        public void SetTouchFree(Vector2 move, float hover, bool boost, bool drift = false)
         {
+            touchDrift = drift;   // Chorus flight: the touch column's drift pill
             touchMove = Vector2.ClampMagnitude(move, 1f);
             touchHover = Mathf.Clamp(hover, -1f, 1f);
             touchBoost = boost;
@@ -339,6 +340,7 @@ namespace GoF2Remake.Flight
                 Model.ChorusFlight = ChorusFlightActive;
                 Model.BoostHeld = Model.FreeFlight && BoostInput(useBuiltInInput && !inputLocked && !Navigation.InputHalted);
                 Model.DriftHeld = false;
+                Model.TravelBoostAllowed = false;
                 Model.TickBoost(dtMs);   // PlayerEgo::update: the boost and its recharge run on (the mining approach boosts)
                 SpeedMetersPerSecond = ExternalSpeedMetersPerSecond;
                 Model.SyncFree(transform.forward, ExternalSpeedMetersPerSecond / 1000f / metersPerUnit);
@@ -410,7 +412,10 @@ namespace GoF2Remake.Flight
             Model.BoostHeld = Model.FreeFlight && BoostInput(live);
             // Chorus flight's drift is held (Drift binding; GameControls' Chorus layout); not while a mode or menu holds the ship.
             Model.DriftHeld = Model.ChorusFlight && live && autopilotTarget == null && !steeringLocked && !Navigation.PressesBlocked
-                              && GameControls.Drift.IsPressed();
+                              && (GameControls.Drift.IsPressed() || touchDrift);
+            // Chorus flight's travel boost: toggled by its key (GameControls' Chorus layout), allowed where Navigation says so.
+            Model.TravelBoostAllowed = Model.ChorusFlight && Navigation.TravelBoostAllowed && autopilotTarget == null && !steeringLocked;
+            if (Model.ChorusFlight && live && !Navigation.PressesBlocked && GameControls.TravelBoost.WasPressedThisFrame()) Model.ToggleTravelBoost();
             if (Model.FreeFlight && autopilotTarget == null && !inputLocked && !steeringLocked)
             {
                 // In free look the stick (the right one in this layout) and the mouse turn the camera: the ship flies on.

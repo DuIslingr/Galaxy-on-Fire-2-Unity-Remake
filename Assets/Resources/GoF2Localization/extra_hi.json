@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Chorus शैली",
  "flightStyleChorusHelp": "Chorus: W पूरी गति से उड़ाता है, S ब्रेक लगाता है, Shift बूस्ट करता है, ड्रिफ़्ट के लिए Space दबाए रखें, A / D बचाव करते हैं। अपना की लेआउट।",
  "ctlDrift": "ड्रिफ़्ट (दबाए रखें)",
- "hudDrift": "ड्रिफ़्ट"
+ "hudDrift": "ड्रिफ़्ट",
+ "ctlTravelBoost": "यात्रा बूस्ट चालू / बंद",
+ "hudTravelBoost": "यात्रा बूस्ट"
 }

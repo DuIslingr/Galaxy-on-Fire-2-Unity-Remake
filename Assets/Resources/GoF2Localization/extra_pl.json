@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Styl Chorus",
  "flightStyleChorusHelp": "Chorus: W leci z pełną prędkością, S hamuje, Shift włącza dopalacz, przytrzymaj Spację, aby driftować, A / D robią unik. Własny układ klawiszy.",
  "ctlDrift": "Drift (przytrzymaj)",
- "hudDrift": "DRIFT"
+ "hudDrift": "DRIFT",
+ "ctlTravelBoost": "Dopalacz podróżny wł. / wył.",
+ "hudTravelBoost": "DOPALACZ PODRÓŻNY"
 }

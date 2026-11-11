@@ -3386,5 +3386,7 @@
  "flightStyleChorus": "Chorus-Stil",
  "flightStyleChorusHelp": "Chorus: W fliegt mit voller Geschwindigkeit, S bremst, Shift boostet, Leertaste halten zum Driften, A / D weicht aus. Eigene Tastenaufteilung.",
  "ctlDrift": "Driften (halten)",
- "hudDrift": "DRIFTEN"
+ "hudDrift": "DRIFTEN",
+ "ctlTravelBoost": "Reiseboost an / aus",
+ "hudTravelBoost": "REISEBOOST"
 }

@@ -123,7 +123,11 @@ Computed from the curves (240 Hz steps):
   Acceleration uses the BOOSTING curve (state table above).
 - **Travel boost** (out of combat, "afterburner" mode): speed ×5.5 (770 m/s), angular acceleration ×0.5. It breaks
   at ×5.0 and cancels below ×4.4 of normal speed. Max banking ×0.5.
-- **Cooldown** (`FBoostCfg.Cooldown`): not set by the blueprint, and the C++ default hasn't been read.
+- **Cooldown** (`FBoostCfg.Cooldown`): not set by the blueprint, and the C++ default (UBoostComponent's constructor,
+  read 2026-11-11) is 0, so a boost can start again at once. The C++ MinBoostDuration is 2.0 s; the blueprint's 0.6 s
+  replaces it.
+- **Travel boost activation:** the player controller's TravelBoostConfig is Mode AfterBurner (blueprint) with
+  ChargeDuration 0 and bHoldButton false (constructor), so a press toggles it, with no charge.
 
 ### 5. Dodge (`UDashComponent`), for later
 
@@ -136,7 +140,8 @@ A sideways dash:
 - **Protection:** invulnerable for 0.6 s.
 - **Repeats:** re-triggers inside 1.5 s are penalised.
 
-The normal dash's **speed** isn't in the blueprint, and its C++ default hasn't been read.
+The normal dash's **speed** isn't in the blueprint. The C++ default (FDashCfg's constructor, read 2026-11-11) is
+7000 cm/s: 70 m/s sideways, half the top speed. Its CooldownTime is 0.
 
 ### 6. Input (`ASpacePlayerController`)
 
