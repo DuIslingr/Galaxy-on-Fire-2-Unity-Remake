@@ -198,6 +198,33 @@ TEXTURE2D(_ChorusPalette);
 TEXTURE2D(_ChorusDirtRough);
 UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_BaseMap);
 
+// GoF2: Chorus's M_Guilt_Shell (_ChorusParams.x 3; ModMaterials.ChorusShell): its noise flowing along its flow map, as its
+// compiled depth and vertex passes have it: two copies of the tiled UVs (x tiling, drifting 0.3 a second) pushed along the
+// flow vectors (_DetailNormalMap RG x 2 - 1 x flowStrength, x mirrored) by two phases half a cycle apart (time - the phase
+// map's R x 0.5, x flowSpeed), blended by a triangle wave so neither phase's jump shows. -> (uvA, uvB, the blend), and the
+// noise (_OcclusionMap R) through them.
+void ChorusShellFlow(float2 uv0, out float2 uvA, out float2 uvB, out float blend)
+{
+    float t = _Time.y;
+    float2 uvT = uv0 * _ChorusParams.y - t * 0.3;
+    float ph = t - SAMPLE_TEXTURE2D_LOD(_DetailMask, sampler_LinearRepeat, uv0 * _ChorusParams.z, 0).r * 0.5;
+    float fa = frac(ph * _ChorusAccent2.z - 0.5), fb = frac(ph * _ChorusAccent2.z);
+    float2 fv = (SAMPLE_TEXTURE2D_LOD(_DetailNormalMap, sampler_LinearRepeat, uv0, 0).rg * 2.0 - 1.0) * _ChorusAccent2.w * float2(-1.0, 1.0);
+    uvA = uvT + fv * fb;
+    uvB = frac(uvT + fv * fa) + 0.5;
+    blend = fb < 0.5 ? 2.0 * fb : 2.0 - 2.0 * fb;
+}
+
+float ChorusShellNoiseLod(float2 uv0)
+{
+    float2 a, b; float k;
+    ChorusShellFlow(uv0, a, b, k);
+    return lerp(SAMPLE_TEXTURE2D_LOD(_OcclusionMap, sampler_LinearRepeat, b, 0).r, SAMPLE_TEXTURE2D_LOD(_OcclusionMap, sampler_LinearRepeat, a, 0).r, k);
+}
+
+// The vertex shader's push, model units: push + pushNoise x (1 - the noise)
+float ChorusShellPush(float2 uv0) { return _ChorusEmitG.x + _ChorusEmitG.y * (1.0 - ChorusShellNoiseLod(uv0)); }
+
 // Simple getters for the material properties above. All raw material input (constant buffer
 // values, texture samples) is accessed through these; the feature helpers build on them.
 half4 GetBaseColor()            { return _BaseColor; }

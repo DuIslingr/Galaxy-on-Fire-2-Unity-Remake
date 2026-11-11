@@ -499,6 +499,7 @@ namespace GoF2Remake.Modding
         {
             var c = e.chorus;
             if (c == null || !c.On) return;
+            if (c.Shell) { ChorusShell(mod, c, m); return; }
             var palette = Texture(mod, c.palette, true);
             if (palette == null) return;
             bool plating = c.Plating;
@@ -545,6 +546,37 @@ namespace GoF2Remake.Modding
                 var dr = Texture(mod, c.dirtRoughness, true);
                 m.SetTexture("_ChorusDirtRough", dr != null ? dr : Solid(new Color(0.5f, 0f, 1f, 1f)));
             }
+        }
+
+        /// <summary>Chorus's M_Guilt_Shell (a "chorus" block of kind "shell"; GoF2/Hull's ChorusShell): the mask in _BaseMap
+        /// (the shadow pass reads its alpha), the flowing noise in _OcclusionMap, the flow vectors in _DetailNormalMap (read as
+        /// plain data), the flow's phase in _DetailMask; its values in _ChorusParams (x 3, y tiling, z randomness, w the
+        /// emission's scale), _ChorusAccent (rgb emissiveColor, a emissiveIntensity), _ChorusAccent2 (x emissiveExponent, y
+        /// centerRadius, z flowSpeed, w flowStrength), _ChorusEmitR (x armsFade, y coverage, z erode, w masterAlpha),
+        /// _ChorusEmitG (x push, y pushNoise, z baseColor, w metallic), _ChorusEmitB (x roughness).</summary>
+        static void ChorusShell(ModInfo mod, ChorusLayersSpec c, Material m)
+        {
+            var mask = Texture(mod, c.mask, true);
+            if (mask == null) return;
+            m.SetTexture("_BaseMap", mask); m.SetTexture("_MainTex", mask);
+            m.SetTextureScale("_BaseMap", Vector2.one); m.SetTextureScale("_MainTex", Vector2.one);
+            m.SetColor("_BaseColor", Color.white);
+            var noise = Texture(mod, c.noise, true);
+            m.SetTexture("_OcclusionMap", noise != null ? noise : Solid(new Color(0.5f, 0.5f, 0.5f, 1f)));
+            var flow = Texture(mod, c.flow, true);
+            m.SetTexture("_DetailNormalMap", flow != null ? flow : Solid(new Color(0.5f, 0.5f, 1f, 1f)));
+            var phase = Texture(mod, c.phase, true);
+            m.SetTexture("_DetailMask", phase != null ? phase : Solid(new Color(0.5f, 0.5f, 0.5f, 1f)));
+            m.SetTexture("_EmissionMap", null);
+            m.SetColor("_EmissionColor", Color.black);
+            m.SetVector(ChorusParamsId, new Vector4(3f, Mathf.Max(1e-4f, c.tiling), Mathf.Max(1e-4f, c.randomness), Mathf.Max(0f, c.emissionScale)));
+            m.SetVector(ChorusAccentId, Rgba(c.emissiveColor, Mathf.Max(0f, c.emissiveIntensity)));
+            m.SetVector(ChorusAccent2Id, new Vector4(c.emissiveExponent, Mathf.Max(1e-4f, c.centerRadius), c.flowSpeed, c.flowStrength));
+            m.SetVector(ChorusEmitRId, new Vector4(c.armsFade, c.coverage, Mathf.Max(1e-4f, c.erode), c.masterAlpha));
+            m.SetVector(ChorusEmitGId, new Vector4(c.push, c.pushNoise, Mathf.Clamp01(c.baseColor), Mathf.Clamp01(c.metal)));
+            m.SetVector(ChorusEmitBId, new Vector4(Mathf.Clamp01(c.roughness), 0f, 0f, 0f));
+            m.SetVector(ChorusKickerId, Vector4.zero);
+            m.SetVector(ChorusDirtId, Vector4.zero);
         }
 
         public static Material FromSpec(ModInfo mod, CustomShipMaterial e, string name)

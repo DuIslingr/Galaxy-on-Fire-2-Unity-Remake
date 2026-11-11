@@ -331,6 +331,36 @@ void ChorusLayers(Varyings input, inout SurfaceData s)
     s.emission = e * (half)(_ChorusKicker2.z * _ChorusParams.w);
 }
 
+// Chorus's M_Guilt_Shell (_ChorusParams.x 3; Guilt's two shells), after its compiled base and masked depth passes: a dither
+// (screen noise) and the flowing noise (HullInput.hlsl ChorusShellFlow) dissolve it, ((mask.r + Arms Fade) x 0.5 + dither -
+// 0.5) x saturate(2 Coverage - (1 - noise) x (1 - mask.g)^Erode Exponent) - (1 - MasterAlpha) clipped below 1/3; its colour,
+// metal and roughness flat; its glow the mask flowing the same way, less Emissive Exponent, x Emissive Color x Intensity x
+// saturate(1 - the distance from the model's origin / Center Emissive Radius)^2. (The base pass's normal from the flowing
+// noise is left flat.)
+void ChorusShell(Varyings input, inout SurfaceData s)
+{
+    float2 uv0 = input.uv, a, b; float k;
+    ChorusShellFlow(uv0, a, b, k);
+    float2 dx = ddx(uv0 * _ChorusParams.y), dy = ddy(uv0 * _ChorusParams.y);   // (the flowed UVs jump; their gradients don't)
+    half n = lerp(SAMPLE_TEXTURE2D_GRAD(_OcclusionMap, sampler_LinearRepeat, b, dx, dy).r, SAMPLE_TEXTURE2D_GRAD(_OcclusionMap, sampler_LinearRepeat, a, dx, dy).r, (half)k);
+    half4 mask = SAMPLE_TEXTURE2D(_BaseMap, sampler_LinearRepeat, uv0);
+    half erode = pow(max(1.0h - mask.g, 1e-4h), (half)_ChorusEmitR.z);
+    half dither = InterleavedGradientNoise(input.positionCS.xy, 0);
+    half vis = ((mask.r + (half)_ChorusEmitR.x) * 0.5h + dither - 0.5h) * saturate(2.0h * (half)_ChorusEmitR.y - (1.0h - n) * erode) - (1.0h - (half)_ChorusEmitR.w);
+    clip(vis - 0.3333h);
+    s.albedo = (half)_ChorusEmitG.z;
+    s.metallic = (half)_ChorusEmitG.w;
+    s.smoothness = 1.0h - (half)_ChorusEmitB.x;
+    s.occlusion = 1.0h;
+    s.normalTS = half3(0.0h, 0.0h, 1.0h);
+    s.alpha = 1.0h;
+    half3 at = lerp(SAMPLE_TEXTURE2D_GRAD(_BaseMap, sampler_LinearRepeat, b, dx, dy).rgb, SAMPLE_TEXTURE2D_GRAD(_BaseMap, sampler_LinearRepeat, a, dx, dy).rgb, (half)k);
+    float d = length(TransformWorldToObject(input.positionWS));
+    half fall = saturate(1.0h - (half)(d / _ChorusAccent2.y)); fall *= fall;
+    s.emission = max(at - (half)_ChorusAccent2.x, 0.0h) * _ChorusAccent.rgb * (half)(_ChorusAccent.a * _ChorusParams.w) * fall;
+    gChorusEmissive = 0.0h;
+}
+
 // M_NPCShipTrimMaster's far emission: past Kicker Fade Offset (view depth), over Kicker Fade Length, the kicker rim
 // ((1 - N.V)^Kicker Exp x 0.96 + 0.04 in Kicker Color) and the trim emissive x (Emissive Channel Distance Boost - 1) on top.
 half3 ChorusFarEmission(InputData inputData)
@@ -362,7 +392,8 @@ void HullPassFragment(
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(input.uv, surfaceData);
     if (_Es2Wear2.z > 0.0) Es2StructureLayers(input, surfaceData);   // GoF2: EVERSPACE 2's structure layers
-    if (_ChorusParams.x > 0.0) ChorusLayers(input, surfaceData);     // GoF2: Chorus's trim sheets and platings
+    if (_ChorusParams.x > 2.5) ChorusShell(input, surfaceData);      // GoF2: Chorus's shell (Guilt)
+    else if (_ChorusParams.x > 0.0) ChorusLayers(input, surfaceData);   // GoF2: Chorus's trim sheets and platings
 
     LODFadeCrossFade(input.positionCS);
 

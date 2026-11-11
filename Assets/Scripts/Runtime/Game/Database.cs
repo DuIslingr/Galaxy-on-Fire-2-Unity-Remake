@@ -232,6 +232,9 @@ namespace GoF2Remake.Data
         public float[] engineGlowColor;    // RGB 0..1: every exhaust's flame colour (a mount's glowColor wins); none = the original glow
         public List<CustomShipMaterial> materials;   // replace the model's materials on the renderers / submeshes they name
         public ShipAnimations animations;  // Remake: the model's clips by what the ship does (Modding.ModShipAnimator); null = its first clip loops
+        // Remake: keep the model's skinned meshes skinned, so clips that bend it (a creature's tentacles: Chorus's Guilt) play;
+        // otherwise they are baked to their rest pose (ModShipBuilder.FlattenSkinned). Measuring and collision read the bind pose.
+        public bool skinned;
         public CustomThrottleGlow throttleGlow;   // a glow on part of the hull that follows the throttle (no mask = none)
         public List<CustomThrottleGlow> extraGlows;   // more of them (each its own mask, colour, levels and trail)
         public CustomEngineFx engineFx;    // remake mods: Galaxy on Fire 3's engine effect at every exhaust (Modding.EngineFx); null = none
@@ -495,9 +498,21 @@ namespace GoF2Remake.Data
         public float[] dirtTint;
         public float dirtUvScale = 1f, dirtMaskUvScale = 1f, dirtAo = 1f, dirtContrast;
         public bool dirtAlpha;
+        // kind "shell" (Chorus's M_Guilt_Shell, its compiled base, depth and vertex passes): no palette; 'mask' (T_Guilt_A: R the
+        // body, G the arms), 'noise' (the grey that flows), 'flow' (RG its flow vectors), 'phase' (R the flow's offset) over UV0.
+        // A noise flowing at flowSpeed along the flow x flowStrength over UV0 x tiling (the phase's at UV0 x randomness) dissolves
+        // it: ((mask.r + armsFade) x 0.5 + a dither - 0.5) x saturate(2 coverage - (1 - noise) x (1 - mask.g)^erode) - (1 -
+        // masterAlpha) >= 1/3; pushes it out along its normals by push + pushNoise x (1 - noise) (model units); glows (the mask
+        // flowing the same way - emissiveExponent) x emissiveColor x emissiveIntensity x saturate(1 - distance from the model's
+        // origin / centerRadius)^2; base colour, metallic and roughness flat.
+        public string mask, noise, flow, phase;
+        public float randomness = 1f, flowSpeed = 1f, flowStrength = 1f, armsFade = 1f, coverage = 0.5f, erode = 1f, masterAlpha = 1f;
+        public float push, pushNoise, baseColor, metal = 0.5f, roughness = 0.5f, emissiveExponent = 1f, emissiveIntensity, centerRadius = 1f;
+        public float[] emissiveColor;
 
-        public bool On => !string.IsNullOrEmpty(kind) && !string.IsNullOrEmpty(palette);
+        public bool On => !string.IsNullOrEmpty(kind) && (Shell ? !string.IsNullOrEmpty(mask) : !string.IsNullOrEmpty(palette));
         public bool Plating => kind == "plating";
+        public bool Shell => kind == "shell";
 
         /// <summary>The PNGs it reads, and how (linear, normal map): ModMaterials.ChorusLayers, the preloads.</summary>
         public System.Collections.Generic.IEnumerable<(string path, bool linear, bool normal)> Textures()
@@ -505,7 +520,8 @@ namespace GoF2Remake.Data
             if (!On) yield break;
             foreach (var t in new[] { (palette, true, false), (tilingDiffuse, false, false), (tilingRmo, true, false), (tilingNormal, true, true),
                                       (trimAo, true, false), (trimNormal, true, true), (trimEmissive, false, false), (dirt, false, false),
-                                      (dirtMask, true, false), (dirtRoughness, true, false) })
+                                      (dirtMask, true, false), (dirtRoughness, true, false), (mask, true, false), (noise, true, false),
+                                      (flow, true, false), (phase, true, false) })
                 if (!string.IsNullOrEmpty(t.Item1)) yield return t;
         }
     }

@@ -114,6 +114,37 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AShellEntryTakesItsMasksAndFlowValues()
+        {
+            // Chorus's M_Guilt_Shell: the mask in _BaseMap (the shadow pass reads its alpha), the flowing noise in _OcclusionMap,
+            // the flow's numbers and the push in the vectors
+            var mod = ModWithMaps();
+            var c = new ChorusLayersSpec { kind = "shell", mask = "maps/aao.png", noise = "maps/palette.png", tiling = 8f, randomness = 3f,
+                flowSpeed = 2.2f, flowStrength = 4f, armsFade = 2f, coverage = 0.17f, erode = 0.056f, push = 17.6f, pushNoise = 35.3f,
+                metal = 0.5f, roughness = 0.5f, emissiveExponent = 20f, emissiveIntensity = 0.05f, emissiveColor = new[] { 1f, 0.016f, 0.016f }, centerRadius = 1613f };
+            var m = ModMaterials.FromSpec(mod, new CustomShipMaterial { chorus = c, doubleSided = true }, "guilt shell");
+            try
+            {
+                Assert.IsTrue(c.On && c.Shell);
+                Assert.AreEqual(new Vector4(3f, 8f, 3f, 1f), m.GetVector("_ChorusParams"));
+                Assert.IsNotNull(m.GetTexture("_BaseMap"));
+                Assert.IsNotNull(m.GetTexture("_OcclusionMap"));
+                Assert.Less(Vector4.Distance(new Vector4(2f, 0.17f, 0.056f, 1f), m.GetVector("_ChorusEmitR")), 1e-5f);
+                Assert.Less(Vector4.Distance(new Vector4(17.6f, 35.3f, 0f, 0.5f), m.GetVector("_ChorusEmitG")), 1e-4f);
+                Assert.Less(Vector4.Distance(new Vector4(20f, 1613f, 2.2f, 4f), m.GetVector("_ChorusAccent2")), 1e-3f);
+                Assert.AreEqual(0f, m.GetVector("_ChorusKicker").w);
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
+        public void AShipCanKeepItsSkinnedMeshes()
+        {
+            Assert.IsTrue(JsonUtility.FromJson<CustomShipData>("{ \"id\": \"guilt\", \"skinned\": true }").skinned);
+            Assert.IsFalse(JsonUtility.FromJson<CustomShipData>("{ \"id\": \"ship\" }").skinned, "baked to the rest pose by default");
+        }
+
+        [Test]
         public void TheBlockReadsFromJsonAndListsItsMaps()
         {
             var e = JsonUtility.FromJson<CustomShipMaterial>("{ \"material\": \"hull\", \"chorus\": { \"kind\": \"trim\", \"palette\": \"p.png\", " +

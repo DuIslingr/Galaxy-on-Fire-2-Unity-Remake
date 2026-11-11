@@ -340,6 +340,17 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   _EmissionMap Trim Emissive, _DetailAlbedoMap / _DetailMask the dirt; the dirt's roughness in _ChorusDirtRough. glTFast
   flips V, so the masters' emissive "UV shift" mask (UV3.v < 0) is UV3.y > 1 here. M_NPCShipTrimMaster's emissive is 2x up
   close; past Kicker Fade Offset (view depth) it fades to the kicker rim plus the emissive x Emissive Channel Distance Boost.
+  Kind "shell" (`_ChorusParams.x` 3, 2026-11-11, Chorus's Guilt; `ModMaterials.ChorusShell`, HullForwardPass.hlsl
+  `ChorusShell`, HullInput.hlsl `ChorusShellFlow` / `ChorusShellPush`): M_Guilt_Shell after its compiled base, masked depth
+  and vertex passes. Its flowing noise (two phases half a cycle apart, a triangle-wave blend) dissolves it in the forward
+  pass (clip, with InterleavedGradientNoise for UE's screen dither) and pushes it out along its normals in LitPassVertex
+  (forward only: depth priming is off and the depth texture is copied from the forward depth; the shadow pass draws it
+  whole and unpushed). Slots: _BaseMap the mask (the shadow pass reads its alpha), _OcclusionMap the noise, _DetailNormalMap
+  the flow vectors (loaded as plain data), _DetailMask the phase.
+- **Skinned mod ships** (2026-11-11, ships.json `skinned`; `CustomShipData.skinned`, `ModShipBuilder.KeepSkinned`): the
+  model's SkinnedMeshRenderers are kept (updateWhenOffscreen, its arms swing past the bind pose's bounds) instead of
+  `FlattenSkinned`, so `animations` play on the bones (Chorus's Guilt: a soft skin, 26 joints, its 42 s idle). Measuring,
+  collision and the LODs (AutoLods takes MeshFilters only: none for it) read or skip the bind pose.
 - **Image formats** (`ImageImport`): every mod image (ModMaterials' `Texture` and background `PreloadTexture`, so skins,
   portraits, icons, hull textures, planets / suns / skies; ModInfo's preview; ModTextures' file list) and the Mod Builder's
   pickers (which store a picked image as PNG) read PNG / JPG by Unity's decoders and TGA (plain / RLE), BMP (8 / 24 / 32-bit),

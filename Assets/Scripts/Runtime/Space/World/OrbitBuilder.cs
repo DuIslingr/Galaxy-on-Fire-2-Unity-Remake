@@ -71,6 +71,8 @@ namespace GoF2Remake.World
                 else if (mod.starsLayer >= 0) sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{mod.starsLayer:000}"));
                 sky.SetFloat("_NebulaGain", mod.nebulaBrightness);
                 sky.SetFloat("_StarsGain", mod.starsLayer == -2 ? 0f : mod.starsBrightness);
+                // "chorus": Chorus's sky drawn live (the image layers above stay set: the crossfade between systems reads them)
+                if (mod.chorus != null && Settings.LiveSkies) SetChorusSky(sky, mod.chorus);
                 // "sunAligned": +Y toward this orbit's sun like the supernova system (a fixed "rotation" turns the image first).
                 if (mod.sunAligned) rotation = SunAlignedSky(layout) * (mod.rotation.HasValue ? Quaternion.Euler(mod.rotation.Value) : Quaternion.identity);
                 else if (mod.rotation.HasValue) rotation = Quaternion.Euler(mod.rotation.Value);
@@ -81,6 +83,42 @@ namespace GoF2Remake.World
             // The shader maps world directions into the baked cube: the inverse of the sky's Unity rotation.
             sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(rotation)));
             return sky;
+        }
+
+        /// <summary>A skybox's "chorus" block on GoF2/SpaceSky (_CHORUS_SKY, SpaceSkyCore's ChorusSky): Chorus's M_Skybox_MASTER
+        /// values as its compiled shader reads them, the angles' sines and cosines worked out here (its preshader's: heading
+        /// x 2 pi, elevation x -pi / 2, rotation x 2 pi).</summary>
+        public static void SetChorusSky(Material sky, Modding.ModWorld.ChorusSky c)
+        {
+            Texture2D Image(string name)
+            {
+                var t = name != null ? Modding.ModBackdrop.Texture(name) : null;
+                if (t != null) t.wrapMode = TextureWrapMode.Repeat;
+                return t;
+            }
+            var up = c.gradientUp ?? Vector3.forward;
+            sky.SetVector("_ChorusGradUp", new Vector4(up.x, up.y, up.z, c.gradientBias));
+            sky.SetVector("_ChorusGradA", new Vector4(c.gradientA.r, c.gradientA.g, c.gradientA.b, c.gradientGamma));
+            sky.SetVector("_ChorusGradB", new Vector4(c.gradientB.r, c.gradientB.g, c.gradientB.b, c.gradientUp.HasValue ? c.gradientOpacity : 0f));
+            var stars = Image(c.stars);
+            sky.SetTexture("_ChorusStarsMap", stars != null ? stars : Texture2D.blackTexture);
+            sky.SetVector("_ChorusStars", new Vector4(c.starsTiling, c.starsOffset.x, c.starsOffset.y, c.starsBrightness));
+            sky.SetVector("_ChorusCurve0", c.curve0);
+            sky.SetVector("_ChorusCurve1", c.curve1);
+            int n = 0;
+            foreach (var l in c.layers)
+            {
+                var map = Image(l.image);
+                if (map == null) continue;   // (unreadable: the layers after it move up)
+                n++;
+                float h = l.heading * 2f * Mathf.PI, e = -l.elevation * 0.5f * Mathf.PI, r = l.rotation * 2f * Mathf.PI;
+                sky.SetTexture($"_ChorusLayer{n}", map);
+                sky.SetVector($"_ChorusL{n}A", new Vector4(Mathf.Sin(h), Mathf.Cos(h), Mathf.Sin(e), Mathf.Cos(e)));
+                sky.SetVector($"_ChorusL{n}B", new Vector4(Mathf.Abs(l.scale) > 1e-4f ? l.scale : 1e-4f, Mathf.Cos(r), Mathf.Sin(r), l.emissive));
+                sky.SetVector($"_ChorusL{n}C", new Vector4(l.exponent, l.opacity, 0f, 0f));
+            }
+            sky.SetVector("_ChorusMisc", new Vector4(c.starsExponent, c.emissive, n, 0f));
+            sky.EnableKeyword("_CHORUS_SKY");
         }
 
         /// <summary>A mod's sky image on a GoF2/SpaceSky layer: 2:1 = a panorama, 6:1 = a strip of cube faces (else a warning
