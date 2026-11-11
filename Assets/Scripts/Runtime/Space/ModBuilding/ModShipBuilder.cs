@@ -54,6 +54,7 @@ namespace GoF2Remake.Modding
             model.transform.localRotation = kitScale > 0f ? Quaternion.Euler(0f, kitYaw, 0f) : Quaternion.Euler(c.modelPitch, c.modelYaw, c.modelRoll);
             FlattenSkinned(model);
             ModGltf.LoopAnimations(model);   // its glTF node animations (moving parts) play on a loop, a kit's parts' too
+            ModShipAnimator.Attach(root, c.animations);   // or by what the ship does: idle, the drift (ships.json "animations")
             var renderers = model.GetComponentsInChildren<Renderer>(true);
             var specs = c.materials ?? new List<CustomShipMaterial>();
             var mats = new Material[specs.Count];

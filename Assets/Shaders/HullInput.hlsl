@@ -67,6 +67,27 @@ half4 _GoF3Params;
 float4 _Es2Wear;
 float4 _Es2Wear2;
 float4 _Es2Grunge;
+// GoF2: Chorus's trim sheets and platings (M_TrimLayersMaster / M_NPCShipTrimMaster / M_PlatingMaster's compiled base passes;
+// ModMaterials.ChorusLayers, HullForwardPass.hlsl ChorusLayers), on when _ChorusParams.x > 0. _ChorusParams: x 1 trim / 2
+// plating, y the tiling layer's scale (trim: UV1 x Base UV Tile Amount; plating: UV0 x Tiling), z Trim AO Intensity, w the
+// emission's scale; _ChorusAccent: rgb Accent 1 Color, a 1 = Trim AAO's red masks the accent; _ChorusAccent2: x Accent 1
+// Metallic Override, y Accent 1 Roughness Bias, z Accent 1 Tiling Base Normal Intensity; _ChorusEmitR / G / B: rgb the Trim
+// Emissive channel tints, R.a Trim Emissive Amount, G.a 1 = only on faces shifted out of the palette (UV3 past 1 after the
+// loader's V flip), B.a Emissive Channel Distance Boost; _ChorusKicker: rgb Kicker Color, a Kicker Exp (0 = no kicker);
+// _ChorusKicker2: x Kicker Fade Offset, y Kicker Fade Length (world units), z the near emission's factor; _ChorusDirt: rgb
+// Dirt Tint, a 1 = dirt on; _ChorusDirt2: x Dirt UV Scale, y Dirt Mask UV Scale, z Dirt from Material AO Intensity, w Dirt
+// Contrast; _ChorusDirt3: x 0 = weighted by the vertex colour's red (trim), 1 = its alpha too (plating).
+float4 _ChorusParams;
+float4 _ChorusAccent;
+float4 _ChorusAccent2;
+float4 _ChorusEmitR;
+float4 _ChorusEmitG;
+float4 _ChorusEmitB;
+float4 _ChorusKicker;
+float4 _ChorusKicker2;
+float4 _ChorusDirt;
+float4 _ChorusDirt2;
+float4 _ChorusDirt3;
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -171,6 +192,10 @@ TEXTURE2D(_Es2WearMap);
 TEXTURE2D(_Es2WearNormalMap);
 TEXTURE2D(_Es2WearNoiseMap);
 TEXTURE2D(_Es2GrungeMap);
+// GoF2: Chorus's layers: the palette (left half: LayerColors, linear; right half: LayerData), read by texel; the dirt's
+// roughness (sampled with the global linear-repeat sampler). Their other maps take URP's slots (ModMaterials.ChorusLayers).
+TEXTURE2D(_ChorusPalette);
+TEXTURE2D(_ChorusDirtRough);
 UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_BaseMap);
 
 // Simple getters for the material properties above. All raw material input (constant buffer

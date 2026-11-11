@@ -11,7 +11,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   baked into a plain one in its drawn pose first,
   `ModShipBuilder.FlattenSkinned`: the sizing, collision, shadows and the Mod Builder read the bind-pose mesh, which the
   bones drew elsewhere and at another size, so bone animations don't play; the GLB's node animations, parts moving on
-  their own, loop: `ModGltf.LoopAnimations`, glTFast's legacy Animation at the default wrap mode played its clip once),
+  their own, loop: `ModGltf.LoopAnimations`, glTFast's legacy Animation at the default wrap mode played its clip once;
+  2026-11-11: ships.json `animations` names clips by state instead, `ModShipAnimator` on the built ship: idle on a loop,
+  Chorus flight's drift start / loop / end cross-faded, driven by `PlayerEngine` from `FlightModel.Drifting`; for Chorus's
+  Forsaken, whose rigid skin the importer splits into parts on its skeleton's nodes),
   engine glow discs at the
   slot-3 mounts on mat_34813 (a mount's `glowSize` [half width, half height, flame length] makes an ellipse, its
   `glowShape` another outline in that box: rounded / square / hexagon / diamond / triangle, `EngineGlowShape`, the
@@ -322,6 +325,21 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   roughness map (0.5 = as it is); the rim x (1 + `rimBoost` (1 - N.V)^3). The vertex colour reaches the fragment through
   HullLitForwardPass.hlsl, URP 17.7's LitForwardPass.hlsl copied with the lines marked GoF2 (copy it again when URP is
   updated). The ModLit / ModSpec materials gain the new properties' defaults when Unity imports the shader. Landed 2026-11-06.
+- **Chorus's layers** (remake 2026-11-11, the Chorus importer's NPC hulls; a material's `chorus` block, `ChorusLayersSpec` in
+  Database.cs, `ModMaterials.ChorusLayers`; GoF2/Hull's `ChorusLayers` / `ChorusFarEmission` in HullForwardPass.hlsl, on
+  while `_ChorusParams.x` > 0: 1 trim, 2 plating; `ChorusLayersTests`): Chorus's M_TrimLayersMaster, M_NPCShipTrimMaster
+  and M_PlatingMaster after their compiled base-pass pixel and vertex shaders (the exporter's `shaders` command, d3dcompiler's
+  disassembly; the importer's tools/npcs.py TRIM_SHADER has the formulas). A baked texture set over the lightmap UVs lost the
+  trim sheet's detail (a 2K map over a 4 km warship: metres a texel), so the hull keeps Chorus's UV sets: UV0 the trim sheet
+  (or plating), UV1 the tiling layer and dirt (Attributes .staticLightmapUV: mod hulls have no lightmaps), UV3 the palette
+  (a new TEXCOORD3 attribute), both carried in Varyings .chorusUV. The palette PNG is LayerColors and LayerData side by
+  side, read by texel (`LOAD_TEXTURE2D`, frac of the UVs: UE wraps it) so no filtering bleeds between swatches. The other
+  maps take URP's slots, which the template's keywords (no detail, no occlusion) leave unread by Lit itself: _BaseMap the
+  tiling diffuse, _MetallicGlossMap its RMO, _DetailNormalMap the tiling normal (in its own UVs' frame from the derivatives,
+  as Chorus builds it, then reoriented onto the trim normal in _BumpMap), _OcclusionMap Trim AAO (R the accent mask),
+  _EmissionMap Trim Emissive, _DetailAlbedoMap / _DetailMask the dirt; the dirt's roughness in _ChorusDirtRough. glTFast
+  flips V, so the masters' emissive "UV shift" mask (UV3.v < 0) is UV3.y > 1 here. M_NPCShipTrimMaster's emissive is 2x up
+  close; past Kicker Fade Offset (view depth) it fades to the kicker rim plus the emissive x Emissive Channel Distance Boost.
 - **Image formats** (`ImageImport`): every mod image (ModMaterials' `Texture` and background `PreloadTexture`, so skins,
   portraits, icons, hull textures, planets / suns / skies; ModInfo's preview; ModTextures' file list) and the Mod Builder's
   pickers (which store a picked image as PNG) read PNG / JPG by Unity's decoders and TGA (plain / RLE), BMP (8 / 24 / 32-bit),

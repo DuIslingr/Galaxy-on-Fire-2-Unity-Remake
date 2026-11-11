@@ -1,7 +1,8 @@
 // HullLitForwardPass.hlsl
 // GoF2: URP's Shaders/LitForwardPass.hlsl (com.unity.render-pipelines.universal 17.7), copied for GoF2/Hull's ForwardLit pass
-// with one change: the mesh's vertex colour reaches the fragment (Attributes / Varyings .color, LitPassVertex), for EVERSPACE 2's
-// structure layers (HullForwardPass.hlsl Es2StructureLayers: its alpha the ambient occlusion and wear mask). When URP is
+// with two changes: the mesh's vertex colour reaches the fragment (Attributes / Varyings .color, LitPassVertex), for EVERSPACE 2's
+// structure layers (HullForwardPass.hlsl Es2StructureLayers: its alpha the ambient occlusion and wear mask) and Chorus's dirt;
+// and UV sets 1 and 3 (Varyings .chorusUV) for Chorus's tiling layer and palette (HullForwardPass.hlsl ChorusLayers). When URP is
 // updated, copy it again and repeat the lines marked GoF2.
 #ifndef UNIVERSAL_FORWARD_LIT_PASS_INCLUDED
 #define UNIVERSAL_FORWARD_LIT_PASS_INCLUDED
@@ -38,6 +39,7 @@ struct Attributes
     float2 staticLightmapUV   : TEXCOORD1;
     float2 dynamicLightmapUV  : TEXCOORD2;
     half4 color               : COLOR;   // GoF2
+    float2 chorusUV3          : TEXCOORD3;   // GoF2: Chorus's palette UVs (staticLightmapUV is its UV1: mod hulls have no lightmaps)
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -86,6 +88,7 @@ struct Varyings
 #endif
 
     half4 color                     : COLOR;   // GoF2
+    float4 chorusUV                 : CHORUSUV;   // GoF2: Chorus's layers, xy UV1, zw UV3 (HullForwardPass.hlsl ChorusLayers)
     float4 positionCS               : SV_POSITION;
 
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -202,6 +205,7 @@ Varyings LitPassVertex(Attributes input)
 
     output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
     output.color = input.color;   // GoF2
+    output.chorusUV = float4(input.staticLightmapUV, input.chorusUV3);   // GoF2
 
     // already normalized from normal transform to WS.
     output.normalWS = normalInput.normalWS;
