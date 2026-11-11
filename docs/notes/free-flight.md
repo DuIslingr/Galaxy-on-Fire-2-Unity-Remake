@@ -167,7 +167,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
     number.
   - **Boost and dash defaults:** read from the constructors. FBoostCfg's Cooldown is 0, so the boost has no cooldown.
     FDashCfg's Speed is 7000 cm/s: Chorus's normal dash is half the top speed sideways, 0.25 s, with 0.15 s in and
-    0.75 s out. The remake's dodge (the original's manoeuvre) still does the dodging.
+    0.75 s out.
+  - **Dash:** `FlightModel.ChorusDash`, replacing the original's manoeuvre in Chorus flight (`ShipController.RequestDodge`).
+    - A sideways move of its own on top of the velocity, which it doesn't touch: half the top speed, reached in 0.15 s,
+      held to 0.25 s, eased out over 0.75 s (27.5 m at the remake's 100 m/s).
+    - A press within the last 0.2 s of a running dash is buffered (BufferTriggerWhenIdle) and follows at once.
+    - Not ported: the protected phase, the perfect dodge's slow motion, the lateral damping x1.5.
+    - `FlightModel.Dashing` plays the ship's `dodge` sound.
 - **Free flight on touch** (remake, 2026-11-06, the user's request: there was no way to strafe on a phone; `TouchControlsFreeFlight`,
   `Frame.freeFlight`, `ShipController.TouchFree` / `SetTouchFree`): with the free flight style and touch input (not tilt)
   the touch controls take a layout after the controller's, as EVERSPACE 2 has no touch version: the stick thrusts (up /

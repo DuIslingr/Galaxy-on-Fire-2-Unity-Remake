@@ -161,7 +161,7 @@ scaled: every speed is a share of the ship's own top speed (the user's choice), 
 - **Turn rate:** 108 °/s, scaled by handling the same way as free flight's 125 °/s.
 - **Easing a turn:** when the stick is eased back (a smaller input in the same direction), the rate drops straight to
   the new target. That is inferred from the missing deceleration; the decompile only shows release and reversal.
-- **Keys:** drift on Space / LB, and the dash is the remake's dodge on A / D.
+- **Keys:** drift on Space / LB, and Chorus's dash on the dodge keys (A / D).
 
 `ChorusFlightTests` checks the timings.
 

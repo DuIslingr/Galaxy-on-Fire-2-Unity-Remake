@@ -522,8 +522,9 @@ namespace GoF2Remake.Flight
             EnginesOff = false;   // another mode flies the ship: its engines run
             FreeVelocity = forward * unitsPerMs;
             freeYaw = freePitch = freeRoll = 0f;
-            chorusDrift = 0;      // Chorus flight: a drift ends where another mode takes over, the travel boost too
+            chorusDrift = 0;      // Chorus flight: a drift ends where another mode takes over, the travel boost and a dash too
             chorusTravel = false;
+            chorusDashMs = chorusDashBufferMs = -1f;
         }
 
         /// <summary>The held boost on its energy pool: drains in the booster's duration (FreeBoostDurationMs without one),
@@ -577,7 +578,14 @@ namespace GoF2Remake.Flight
         /// <summary>Chorus flight: the travel boost runs (x5.5, ToggleTravelBoost).</summary>
         public bool TravelBoosting => ChorusFlight && chorusTravel;
 
+        /// <summary>Chorus flight: a dash runs (ChorusDash).</summary>
+        public bool Dashing => ChorusFlight && chorusDashMs >= 0f;
+
         int chorusDrift;          // EDriftState: 0 inactive, 1 drifting, 2 recovery (USteeringComponent+0xB38)
+        float chorusDashMs = -1f; // the dash's time, -1 = none
+        int chorusDashDir;        // -1 left, +1 right
+        float chorusDashBufferMs = -1f;   // a press buffered for the end of the running dash (BufferTimeWindow)
+        int chorusDashBufferDir;
         bool chorusTravel;        // UBoostComponent's travel boost (+0x2AD)
         bool chorusTravelReached; // it has reached TravelBoostBreakSpeedMultiplierThreshold
         float chorusRecovery;     // DriftRecoverySpeed (+0xB3C), units / ms
@@ -601,6 +609,11 @@ namespace GoF2Remake.Flight
         const float ChorusBoostFactor = 2f;          // RegularBoostConfig.SpeedMultiplier
         const float ChorusMinBoostMs = 600f;         // RegularBoostConfig.MinBoostDuration
         const float ChorusBrakeAxis = -0.05f;        // a thrust axis below this holds the brake (the over-speed latch's test)
+        // UDashComponent's DashNormalConfig (BP_Player_Ship_Base) with FDashCfg's constructor speed (7000 cm/s): sideways at
+        // half the top speed, reached in AccelerationDuration, held until MinimumDuration, eased out over DecelerationDuration.
+        const float ChorusDashSpeed = 7000f / 14000f;
+        const float ChorusDashAccelMs = 150f, ChorusDashHoldMs = 250f, ChorusDashDecelMs = 750f;
+        const float ChorusDashBufferMs = 200f;       // RetriggerCondition BufferTriggerWhenIdle, BufferTimeWindow 0.2 s
         const float ChorusTravelFactor = 5.5f;       // TravelBoostConfig.SpeedMultiplier
         const float ChorusTravelTurnAccel = 0.5f;    // TravelBoostConfig.AngularAccelModifier
         const float ChorusTravelReached = 5f;        // TravelBoostBreakSpeedMultiplierThreshold
@@ -630,6 +643,25 @@ namespace GoF2Remake.Flight
         }
 
         void EndTravelBoost() { chorusTravel = false; chorusTravelReached = false; }
+
+        /// <summary>Chorus flight's dash (UDashComponent, the dodge keys): -1 left, +1 right. A press while one runs is kept
+        /// for its end when it comes within the last BufferTimeWindow; true = started or buffered.</summary>
+        public bool ChorusDash(int dir)
+        {
+            if (!ChorusFlight || dir == 0) return false;
+            dir = dir < 0 ? -1 : 1;
+            if (chorusDashMs < 0f) { chorusDashMs = 0f; chorusDashDir = dir; return true; }
+            if (ChorusDashHoldMs + ChorusDashDecelMs - chorusDashMs <= ChorusDashBufferMs) { chorusDashBufferMs = 0f; chorusDashBufferDir = dir; return true; }
+            return false;
+        }
+
+        /// <summary>The dash's sideways speed now, in shares of the top speed (0 without one).</summary>
+        static float ChorusDashShare(float ms) =>
+            ms < 0f ? 0f
+            : ms < ChorusDashAccelMs ? ChorusDashSpeed * ms / ChorusDashAccelMs
+            : ms < ChorusDashHoldMs ? ChorusDashSpeed
+            : ms < ChorusDashHoldMs + ChorusDashDecelMs ? ChorusDashSpeed * (1f - (ms - ChorusDashHoldMs) / ChorusDashDecelMs)
+            : 0f;
 
         /// <summary>Chorus flight's buttons and boost, each frame (UpdateBoost): ASpacePlayerController's OnDriftPressed (the
         /// boost stops, the drift starts), OnDriftReleased / OnBoostPressed (the drift goes into its recovery), and
@@ -754,6 +786,21 @@ namespace GoF2Remake.Flight
                 FreeVelocity = rotation * v;
             }
 
+            // The dash: a sideways move of its own on top of the velocity (it leaves the ship's momentum as it was).
+            var dashMove = Vector3.zero;
+            if (chorusDashMs >= 0f)
+            {
+                dashMove = rotation * Vector3.right * (chorusDashDir * ChorusDashShare(chorusDashMs) * top * dtMs);
+                chorusDashMs += dtMs;
+                if (chorusDashBufferMs >= 0f) chorusDashBufferMs += dtMs;
+                if (chorusDashMs >= ChorusDashHoldMs + ChorusDashDecelMs)
+                {
+                    chorusDashMs = chorusDashBufferMs >= 0f ? 0f : -1f;   // a buffered press starts the next at once
+                    chorusDashDir = chorusDashBufferDir;
+                    chorusDashBufferMs = -1f;
+                }
+            }
+
             var fwdDir = rotation * Vector3.forward;
             float forwardSpeed = Vector3.Dot(FreeVelocity, fwdDir);
             MoveSpeed = Mathf.Max(0f, forwardSpeed);
@@ -777,7 +824,7 @@ namespace GoF2Remake.Flight
                 pitchDeg = freePitch * dtMs * Mathf.Rad2Deg,
                 yawDeg = freeYaw * dtMs * Mathf.Rad2Deg,
                 rollDeg = rollRad * Mathf.Rad2Deg,
-                move = FreeVelocity * dtMs,
+                move = FreeVelocity * dtMs + dashMove,
                 forwardUnits = forwardSpeed * dtMs,
                 sidePushUnits = pushUnits,
             };

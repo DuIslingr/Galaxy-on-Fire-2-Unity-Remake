@@ -166,6 +166,8 @@ namespace GoF2Remake.Flight
         {
             if (inputLocked || externalControl || steeringLocked || Navigation.InputHalted) return false;
             DodgeRequested?.Invoke();
+            // Chorus flight: Chorus's dash (FlightModel.ChorusDash) instead of the original's manoeuvre.
+            if (Model.ChorusFlight) return Model.ChorusDash(type == 1 ? -1 : 1);
             return Maneuver.Start(type);
         }
         public void SetThrottle(float t) => Model.SetThrottle(t);

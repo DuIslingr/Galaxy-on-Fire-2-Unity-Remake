@@ -223,6 +223,34 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheDashSlidesTheShipSidewaysWithoutTouchingItsVelocity()
+        {
+            var m = Model();
+            Fly(m, 1500f, 1f);
+            var before = m.FreeVelocity;
+            Assert.IsTrue(m.ChorusDash(-1));
+            float side = 0f;
+            var input = new FlightModel.FreeInput { thrust = 1f };
+            for (float t = 0; t < 1100f; t += Step)
+            {
+                var r = m.StepFree(input, Step, Quaternion.identity, Vector3.up, Vector3.right);
+                side += r.move.x;
+            }
+            // 70 m/s (half the top speed) in 0.15 s, held to 0.25 s, gone over 0.75 s: 0.5 x 100 x 0.55 s.
+            Assert.AreEqual(-27.5f, side * 0.05f, 0.3f, "metres to the left");
+            Assert.IsFalse(m.Dashing);
+            Assert.AreEqual(before.x, m.FreeVelocity.x, 1e-6f, "the momentum is untouched");
+
+            Assert.IsTrue(m.ChorusDash(1));
+            Fly(m, 100f, 1f);
+            Assert.IsFalse(m.ChorusDash(1), "too early to buffer");
+            Fly(m, 750f, 1f);
+            Assert.IsTrue(m.ChorusDash(-1), "within the last 0.2 s: buffered");
+            Fly(m, 200f, 1f);
+            Assert.IsTrue(m.Dashing, "the buffered dash follows at once");
+        }
+
+        [Test]
         public void TheStyleIsNamedChorusEverywhere()
         {
             Assert.IsTrue(Modding.ModFlight.TryParseStyle("chorus", out int style));

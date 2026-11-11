@@ -211,7 +211,7 @@ namespace GoF2Remake.Flight
             if (on && drifting != wasDrifting) OneShot(drifting ? modSounds.driftStart : modSounds.driftStop, gain, deep);
             wasDrifting = drifting;
             // The dodge (the original's manoeuvre, any style): one shot as it starts.
-            bool dodging = ship.Maneuver.Active;
+            bool dodging = ship.Maneuver.Active || (model != null && model.Dashing);
             if (on && dodging && !wasDodging) OneShot(modSounds.dodge, gain, deep);
             wasDodging = dodging;
             if (boostSource != null && on && boosting != wasBoosting && !travelEdge)
