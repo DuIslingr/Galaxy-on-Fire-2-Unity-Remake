@@ -27,9 +27,9 @@ namespace GoF2Remake.World
 
         // ---- sky, light, fog ---------------------------------------------------------------------------------
 
-        public static void SetupSky(OrbitLayout layout, float ambientIntensity = 1f, int nebulaOverride = -1)
+        public static void SetupSky(OrbitLayout layout, float ambientIntensity = 1f, int nebulaOverride = -1, Modding.ModWorld.Skybox skyOverride = null)
         {
-            var sky = MakeSky(layout, nebulaOverride);
+            var sky = MakeSky(layout, nebulaOverride, skyOverride);
             if (sky == null) return;
             RenderSettings.skybox = sky;
             RenderSettings.ambientMode = AmbientMode.Skybox;
@@ -50,7 +50,7 @@ namespace GoF2Remake.World
 
         /// <summary>The orbit's sky as a material, set nowhere (InterstellarField blends a system's in on approach); null without
         /// the baked skies.</summary>
-        public static Material MakeSky(OrbitLayout layout, int nebulaOverride = -1)
+        public static Material MakeSky(OrbitLayout layout, int nebulaOverride = -1, Modding.ModWorld.Skybox skyOverride = null)
         {
             var template = Resources.Load<Material>("GoF2Sky/SpaceSky");
             if (template == null) { Debug.LogWarning("OrbitBuilder: run GoF2 > Build > Space Skies"); return null; }
@@ -64,6 +64,7 @@ namespace GoF2Remake.World
             var mod = layout.systemIndex >= 0 && nebulaOverride < 0 ? Modding.ModWorld.SkyOf(layout.systemIndex) : null;
             // (a station's orbit may have its own: stations.json orbit "skybox", the GoF3 Systems mod's sky of each GoF3 level)
             if (layout.systemIndex >= 0 && nebulaOverride < 0 && Modding.ModWorld.OrbitOf(layout.stationIndex)?.skybox is Modding.ModWorld.Skybox own) mod = own;
+            if (skyOverride != null) mod = skyOverride;   // (a rift run's sky: ModEncounters' rift look, World.RiftEncounter)
             if (mod != null)
             {
                 SetModLayer(sky, mod.nebula, "_NebulaMap", "_NEBULA_PANORAMA", "_NEBULA_STRIP");

@@ -613,6 +613,9 @@ namespace GoF2Remake.Modding
         public static Skybox SkyOf(int system) => skyboxes.TryGetValue(system, out var s) ? s : null;
         /// <summary>"skybox": { "nebula": "sky/x.png", "stars": "sky/s.png" | 0-2 | "none", "nebulaBrightness", "starsBrightness",
         /// "rotation": [x, y, z], "sunAligned": true }.</summary>
+        /// <summary>A "skybox" block outside systems.json (a rift look's, ModEncounters): the same fields, its images in 'mod'.</summary>
+        public static Skybox ParseSkyboxOf(ModInfo mod, JToken t, string where) => ParseSkybox(mod, t, where);
+
         static Skybox ParseSkybox(ModInfo mod, JToken t, string where)
         {
             if (!(t is JObject o)) throw new ModJsonException($"{where}: \"skybox\" must be an object {{ \"nebula\": \"sky/....png\", ... }}");
@@ -929,6 +932,11 @@ namespace GoF2Remake.Modding
                 if (o.asteroidModels != null) foreach (var p in o.asteroidModels) l.Add((o.owner, p, o.asteroidMaterials));   // (and its asteroids')
                 if (o.wreckModels != null) foreach (var p in o.wreckModels) l.Add((o.owner, p, o.wreckMaterials));   // (and its wrecks')
                 if (o.props != null) foreach (var p in o.props) l.Add((o.owner, p.model, o.propMaterials));   // (and its props)
+            }
+            foreach (var look in ModEncounters.RiftLooks())   // (the rifts' looks: their rift and portal models)
+            {
+                if (look.rift != null) l.Add((look.mod, look.rift, look.materials));
+                if (look.portal != null) l.Add((look.mod, look.portal, look.materials));
             }
             return l;
         }
