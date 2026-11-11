@@ -158,6 +158,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   in every orbit so its +Y points at that orbit's sun (`OrbitBuilder.SunAlignedSky`, the supernova system's R_sky; a sun on
   game x takes game z for its side axis instead of a zero vector), a `rotation` with it applied to the image first; the
   builder's Systems page has it. Test `ModWorldTests.ASkyFollowsTheSun`.
+- **A gate's own centre** (remake, 2026-11-11, for Chorus's jumpgate, a ring tunnel at one end of a 9.7 km frame):
+  systems.json `"jumpgate"` `"centre": false` keeps the model's origin as the gate's middle (`StationModel.centre`, as a
+  station's `modelCentre`; `ModStations.Build` skips its bounds-centring), so the jump sphere and the arrivals sit in
+  the ring, not halfway down the frame. Test `ModWorldTests.ASystemsOwnJumpgate`.
 - **Chorus planets** (remake, 2026-11-11, the user's request for Chorus's planets in the Chorus systems): planetSphere
   `"look": "chorus"` (`ModWorld.ChorusPlanetSpec`, `ParseChorusPlanet`; `Backdrop.ChorusPlanetMaterial`, GoF2/ChorusPlanet in
   Resources/GoF2Sky) from the compiled shaders of Chorus's two planet masters: **M_Planet03** (`kind` surface;
