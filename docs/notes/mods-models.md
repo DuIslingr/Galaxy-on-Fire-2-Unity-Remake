@@ -376,3 +376,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   -UV, lerp(Color1 x g, the curve, LerpColorParm) x g, additive). `World.PortalRefraction` switches the opaque texture on
   for the main camera while a gate with one is in the orbit (`OrbitBuilder.SpawnJumpgate`, `Flight.OpaqueTexture`).
   Tests `ChorusPortalTests`.
+- **Chorus rifts** (remake, 2026-11-11, for the Chorus rift look and Nimika's dormant rift): a material's `"rift"` block
+  (`ChorusRiftSpec` in Database.cs, `ModMaterials.Rift`, GoF2/ChorusRift in Resources/GoF2Fx) after M_PortalRift_2's
+  compiled base pass (MI_PortalRift_2_LocAST_Outside's parameters as the defaults; its uniform slots decoded from the
+  preshaders): two T_HeroRift_Tileable samples (one at v^Acc_pow_Main, one offset ^ pow x mul) and their product x v^9 (the
+  red centre, x mul_RedCenter), T_Cloud_03's R pushed along the view by its G (a bump offset, Height Ratio), an N x N
+  flipbook of T_Lightning_Random over UV0 x T_CloudMask over UV1 pulsed by two T_NoiseStrip_B reads, the obsidian rock as the
+  dark background where the sum is under 1; colour lerp(Color Outer, Color Inner) x the sum plus those, opacity from
+  v^pow_Gradation; additive. The hard-wired textures (T_NoiseStrip_B, T_Cloud_03) come from the material's referenced
+  textures by their slot order. Left out: the vertex shader's world position offset (T_Noise_Tiled04 x WP_Strenth), the
+  fog, the pre-exposure (`exposure` instead: the importer's 0.4 puts the vortex's 99th-percentile brightness, about 5 in
+  Chorus's units, near 2). Tests `ChorusRiftTests`.

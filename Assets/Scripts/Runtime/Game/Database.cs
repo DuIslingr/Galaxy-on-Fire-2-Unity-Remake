@@ -463,6 +463,8 @@ namespace GoF2Remake.Data
         public ChorusLayersSpec chorus;
         /// <summary>Remake (2026-11-11): Chorus's FTL portal or its glow (GoF2/ChorusPortal, ModMaterials.Portal).</summary>
         public ChorusPortalSpec portal;
+        /// <summary>Remake (2026-11-11): Chorus's rift vortex (GoF2/ChorusRift, ModMaterials.Rift).</summary>
+        public ChorusRiftSpec rift;
         // An engine flame (GoF2/ModEngineFlame, Modding.EngineFlame): the surfaces are flame stubs whose UV u runs from the
         // nozzle (0) to the tip (1), stretched backward by the throttle; emissionColor x emissionIntensity is its colour.
         public bool flame;
@@ -507,6 +509,31 @@ namespace GoF2Remake.Data
             if (!On) yield break;
             foreach (var t in new[] { (noise, true, false), (height, true, false), (curve, true, false), (sphereNormal, true, false), (ringNormal, true, false), (gradient, true, false) })
                 if (!string.IsNullOrEmpty(t.Item1)) yield return t;
+        }
+    }
+
+    /// <summary>A material's "rift" block: Chorus's rift vortex (M_PortalRift_2, on SM_Rift_Vortex), drawn added by
+    /// GoF2/ChorusRift. Its maps (each read as data, R unless said): 'tiled' (T_HeroRift_Tileable), 'strip' (the bolts' 1D
+    /// pulse), 'lightning' / 'cloudMask' (N x N flipbooks, 'frames' N, over UV0 / UV1), 'cloud' (R the clouds, G their
+    /// height), 'rock' (the dark background). Each "...UV" is [tiling u, v, pan u, v a second]; the rest as the material
+    /// instance's parameters (see the shader's header). 'exposure' scales the whole (Chorus's HDR to the remake's).</summary>
+    [System.Serializable] public class ChorusRiftSpec
+    {
+        public string tiled, strip, lightning, cloudMask, cloud, rock;
+        public float[] mainUV, detailUV, cloudsUV, rockUV, detailOffset, heightPan;
+        public float mainPow = 0.7f, detailPow = 7f, detailMul = 1f, redCenter = 1794f, cloudsPow = 2f, heightRatio = 1.5f;
+        public float cloudPow = 15f, cloudMul = 100f, boltSpeed = 0.1f, pulseRate1 = 0.05f, pulseRate2 = 0.02f, sequenceTime = 0.1f;
+        public float frames = 4f, lightningMul = 100000f, lightningCloud = 200f, gradation = 4f;
+        public float blendExp = 1f, blendMult = 1f, corePow = 35f, coreTint = 0.05f, exposure = 0.4f;
+        public float[] inner, outer, core, brightness, background, clouds;
+        public bool On => !string.IsNullOrEmpty(tiled);
+
+        /// <summary>Its maps: (path, linear, normal map).</summary>
+        public System.Collections.Generic.IEnumerable<(string path, bool linear, bool normal)> Textures()
+        {
+            if (!On) yield break;
+            foreach (var t in new[] { tiled, strip, lightning, cloudMask, cloud, rock })
+                if (!string.IsNullOrEmpty(t)) yield return (t, true, false);
         }
     }
 

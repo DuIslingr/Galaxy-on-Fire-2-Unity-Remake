@@ -610,11 +610,52 @@ namespace GoF2Remake.Modding
             return m;
         }
 
+        static Shader riftShader;
+
+        /// <summary>A "rift" block (Chorus's rift vortex) on GoF2/ChorusRift: its maps as data (linear), repeating.</summary>
+        static Material Rift(ModInfo mod, ChorusRiftSpec r, string name)
+        {
+            if (riftShader == null) riftShader = Resources.Load<Shader>("GoF2Fx/ChorusRift");
+            if (riftShader == null) return null;
+            var m = new Material(riftShader) { name = name };
+            void Map(string prop, string path)
+            {
+                var t = Texture(mod, path, true);
+                if (t == null) return;
+                t.wrapMode = TextureWrapMode.Repeat;
+                m.SetTexture(prop, t);
+            }
+            Map("_Tiled", r.tiled); Map("_Strip", r.strip); Map("_Lightning", r.lightning);
+            Map("_CloudMask", r.cloudMask); Map("_Cloud", r.cloud); Map("_Rock", r.rock);
+            Vector4 V(float[] f, Vector4 d) => f == null ? d : new Vector4(f.Length > 0 ? f[0] : d.x, f.Length > 1 ? f[1] : d.y, f.Length > 2 ? f[2] : d.z, f.Length > 3 ? f[3] : d.w);
+            m.SetVector("_MainUV", V(r.mainUV, new Vector4(1.5f, 1f, 0.01f, 0.03f)));
+            m.SetVector("_DetailUV", V(r.detailUV, new Vector4(1f, 1.5f, 0f, 0.02f)));
+            m.SetVector("_ParUV", V(r.cloudsUV, new Vector4(2f, 1f, 0.018f, 0.02f)));
+            m.SetVector("_RockUV", V(r.rockUV, new Vector4(3f, 1f, 0.009f, 0.018f)));
+            m.SetVector("_Shape", new Vector4(r.mainPow, r.detailPow, r.detailMul, r.redCenter));
+            var off = V(r.detailOffset, new Vector4(0.4f, 0.4f, 0f, 0f));
+            m.SetVector("_Detail2", new Vector4(off.x, off.y, r.cloudsPow, r.heightRatio));
+            var pan = V(r.heightPan, new Vector4(0.018f, 0.02f, 0f, 0f));
+            m.SetVector("_HeightPan", new Vector4(pan.x, pan.y, r.cloudPow, r.cloudMul));
+            m.SetVector("_Bolts", new Vector4(r.boltSpeed, r.pulseRate1, r.pulseRate2, r.sequenceTime));
+            m.SetVector("_Bolts2", new Vector4(Mathf.Max(1f, r.frames), r.lightningMul, r.lightningCloud, r.gradation));
+            m.SetVector("_Blend", new Vector4(r.blendExp, r.blendMult, r.corePow, r.coreTint));
+            m.SetVector("_Inner", V(r.inner, new Vector4(0.1f, 0f, 0.003f, 0f)));
+            m.SetVector("_Outer", V(r.outer, new Vector4(0.1f, 0f, 0.0333f, 0f)));
+            m.SetVector("_Core", V(r.core, Vector4.zero));
+            m.SetVector("_Brightness", V(r.brightness, new Vector4(200f, 0.8f, 5f, 0f)));
+            m.SetVector("_Background", V(r.background, new Vector4(0.01f, 0.013f, 0.02f, 0f)));
+            m.SetVector("_Clouds", V(r.clouds, new Vector4(0.0064f, 0.0061f, 0.02f, 0f)));
+            m.SetFloat("_Exposure", Mathf.Max(0f, r.exposure));
+            return m;
+        }
+
         public static Material FromSpec(ModInfo mod, CustomShipMaterial e, string name)
         {
             var a = ModAssets.Get();
             if (a == null) return null;
             if (e.portal != null && e.portal.On) return Portal(mod, e.portal, name);
+            if (e.rift != null && e.rift.On) return Rift(mod, e.rift, name);
             if (e.flame) return Flame(mod, e, name, a);
             if (e.hologram) return Hologram(mod, e, name, a);
             if (e.shimmer) return Shimmer(mod, e, name, a);
