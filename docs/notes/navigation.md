@@ -13,6 +13,9 @@ the player ship) and `NavigationView` (flight HUD).
   planets beat asteroids (`Mining` asks `BlocksAsteroidLock`). HUD: bracket + name + "Tech level" + distance
   (`Radar::calcDistance`, the original's own "m/km") near the centre, jumpgate icon elsewhere (off screen on the radar
   ellipse), planet names only while in the lock box, top plate with the system's race icon.
+  Distance checked against iOS 1.1.19 `Radar::calcDistance` 0x100114c98 (2026-11-09): from the camera (`Radar::draw`
+  copies the camera matrix's translation to +0x2cc), half the per-axis differences truncated, `8 * (int)(sqrt(sum) / 64)`
+  "m" (units / 16), "x.ykm" from 1000 m: what `Navigation.FormatDistance` does with the camera (0.05 m a unit in Unity).
 - **Crosshair on the autopilot** (`PlayerEgo::draw` 0xae4d0, #85): not drawn while the autopilot flies (+0x158), outside the turret
   view; the remake makes it transparent (`.crosshair--autopilot`) so the throttle gauge and lock rings keep its place.
 - **Menu presses** (remake, #85): `Navigation.PressesBlocked`, true while a menu, conversation or map halts the controls and for
