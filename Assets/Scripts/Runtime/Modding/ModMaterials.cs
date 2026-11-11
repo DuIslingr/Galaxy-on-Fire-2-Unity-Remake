@@ -579,10 +579,42 @@ namespace GoF2Remake.Modding
             m.SetVector(ChorusDirtId, Vector4.zero);
         }
 
+        static Shader portalShader;
+
+        /// <summary>A "portal" block (Chorus's FTL portal or its glow) on GoF2/ChorusPortal: its maps as data (linear), the curve
+        /// row clamped; World.PortalRefraction gives it the scene behind (URP's opaque texture).</summary>
+        static Material Portal(ModInfo mod, ChorusPortalSpec p, string name)
+        {
+            if (portalShader == null) portalShader = Resources.Load<Shader>("GoF2Fx/ChorusPortal");
+            if (portalShader == null) return null;
+            var m = new Material(portalShader) { name = name };
+            void Map(string prop, string path, TextureWrapMode wrap)
+            {
+                var t = Texture(mod, path, true);
+                if (t == null) return;
+                t.wrapMode = wrap;
+                m.SetTexture(prop, t);
+            }
+            Map("_Noise", p.noise, TextureWrapMode.Repeat);
+            Map("_Height", p.height, TextureWrapMode.Clamp);
+            Map("_Curve", p.curve, TextureWrapMode.Clamp);
+            Map("_SphereNormal", p.sphereNormal, TextureWrapMode.Clamp);
+            Map("_RingNormal", p.ringNormal, TextureWrapMode.Clamp);
+            Map("_Gradient", p.gradient, TextureWrapMode.Repeat);
+            m.SetFloat("_Kind", p.Glow ? 1f : 0f);
+            m.SetVector("_Polar", new Vector4(p.tilingV, p.panningV, p.structurePower, p.structureMult));
+            m.SetVector("_Bump", new Vector4(p.heightRatio, p.fade, p.ior, p.refraction));
+            m.SetVector("_Pulse", new Vector4(p.pulseSpeed, p.pulseB, 0f, 0f));
+            var c = p.color != null && p.color.Length >= 3 ? p.color : new[] { 1f, 1f, 1f };
+            m.SetVector("_GlowColor", new Vector4(c[0], c[1], c[2], p.lerpColor));
+            return m;
+        }
+
         public static Material FromSpec(ModInfo mod, CustomShipMaterial e, string name)
         {
             var a = ModAssets.Get();
             if (a == null) return null;
+            if (e.portal != null && e.portal.On) return Portal(mod, e.portal, name);
             if (e.flame) return Flame(mod, e, name, a);
             if (e.hologram) return Hologram(mod, e, name, a);
             if (e.shimmer) return Shimmer(mod, e, name, a);

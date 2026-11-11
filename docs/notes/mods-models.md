@@ -364,3 +364,15 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   colours, alpha), a PC `.aei` skin identical to an independent decode and shown on the turntable through the background
   loader; PVRTC 4bpp on that iOS file (the Midorian ships' atlas, identical to an independent Python decode); PVRTC 2bpp
   and ATC only against hand-built blocks (`ImageImportTests`), no real file.
+
+- **Chorus portals** (remake, 2026-11-11, for Chorus's jumpgate): a material's `"portal"` block (`ChorusPortalSpec` in
+  Database.cs, `ModMaterials.Portal`, GoF2/ChorusPortal in Resources/GoF2Fx) after Chorus's FTL portal's compiled shaders:
+  M_FTL_Portal's base pass (a bump offset by HeightRatioInput x the spherical gradient along the view, the UVs to polar
+  coordinates about the card's middle x (1, Tiling V) scrolling by Panning V, T_main there ^ Structure Power x Structure
+  Mult into a CA_BaseVFX row, x FadeInAndOut, additive) and its distortion pass (SphericalNormal_001 zoomed about the
+  middle by frac(t x VeinPulse_speed) x B - 2, plus T_Circle_N, in view space, x (IOR - 1) x the gradient's mask squared;
+  here a pass before the veins sampling URP's opaque texture at that offset x `refraction`, blended in by the mask, as
+  Chorus's screen offsets aren't the remake's: the scale is the remake's own); M_FTL_PortalGlow (T_Gradient_Vertical_04 at
+  -UV, lerp(Color1 x g, the curve, LerpColorParm) x g, additive). `World.PortalRefraction` switches the opaque texture on
+  for the main camera while a gate with one is in the orbit (`OrbitBuilder.SpawnJumpgate`, `Flight.OpaqueTexture`).
+  Tests `ChorusPortalTests`.

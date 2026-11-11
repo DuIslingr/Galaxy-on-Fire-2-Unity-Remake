@@ -461,6 +461,8 @@ namespace GoF2Remake.Data
         // Chorus's trim sheets and platings (GoF2/Hull's ChorusLayers; ChorusLayersSpec): drawn from Chorus's own maps over the
         // model's UV sets 0, 1 and 3 instead of this entry's diffuse / normal / metallicSmoothness. Off without a "kind".
         public ChorusLayersSpec chorus;
+        /// <summary>Remake (2026-11-11): Chorus's FTL portal or its glow (GoF2/ChorusPortal, ModMaterials.Portal).</summary>
+        public ChorusPortalSpec portal;
         // An engine flame (GoF2/ModEngineFlame, Modding.EngineFlame): the surfaces are flame stubs whose UV u runs from the
         // nozzle (0) to the tip (1), stretched backward by the throttle; emissionColor x emissionIntensity is its colour.
         public bool flame;
@@ -483,6 +485,31 @@ namespace GoF2Remake.Data
     /// 'kickerColor' / 'kickerExp' (0 = none): the far rim, faded in past 'kickerFadeOffset' over 'kickerFadeLength' (world
     /// units), with the emissive x 'distanceBoost' there; 'nearEmission' the emissive's factor up close (M_NPCShipTrimMaster's
     /// 2). Every emission x 'emissionScale' (Chorus's HDR to the remake's bloom).</summary>
+    /// <summary>A material's "portal" block: Chorus's FTL portal (M_FTL_Portal) or its glow (M_FTL_PortalGlow), drawn by
+    /// GoF2/ChorusPortal. kind "portal": 'noise' (T_main) in polar coordinates x (1, tilingV), scrolling by panningV, ^
+    /// structurePower x structureMult into the colour 'curve' (one row), 'height' (its bump offset by heightRatio and the
+    /// refraction's mask), 'sphereNormal' / 'ringNormal' and 'ior' / 'pulseSpeed' / 'pulseB' / 'refraction' the scene
+    /// bent behind it, x 'fade'. kind "glow": 'gradient' at -UV, lerp(color x g, the curve at g, lerpColor) x g.</summary>
+    [System.Serializable] public class ChorusPortalSpec
+    {
+        public string kind;   // "portal" or "glow"; empty = off
+        public string noise, height, curve, sphereNormal, ringNormal, gradient;
+        public float tilingV = 0.15f, panningV = 0.33f, structurePower = 1.5f, structureMult = 1f, heightRatio = -1f, fade = 1f;
+        public float ior = 1.5f, pulseSpeed = -0.4f, pulseB = 3f, refraction = 0.05f;
+        public float[] color;
+        public float lerpColor = 1f;
+        public bool On => kind == "portal" ? !string.IsNullOrEmpty(noise) : kind == "glow" && !string.IsNullOrEmpty(gradient);
+        public bool Glow => kind == "glow";
+
+        /// <summary>Its maps: (path, linear, normal map).</summary>
+        public System.Collections.Generic.IEnumerable<(string path, bool linear, bool normal)> Textures()
+        {
+            if (!On) yield break;
+            foreach (var t in new[] { (noise, true, false), (height, true, false), (curve, true, false), (sphereNormal, true, false), (ringNormal, true, false), (gradient, true, false) })
+                if (!string.IsNullOrEmpty(t.Item1)) yield return t;
+        }
+    }
+
     [System.Serializable] public class ChorusLayersSpec
     {
         public string kind;   // "trim" or "plating"; empty = off

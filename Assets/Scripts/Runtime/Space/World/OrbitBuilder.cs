@@ -427,6 +427,7 @@ namespace GoF2Remake.World
                 foreach (var pa in go.GetComponentsInChildren<PartAnimation>(true))
                     if (pa.gameObject.name.EndsWith("_anim_add") && !pa.gameObject.name.EndsWith("_jump_anim_add")) pa.applyMaterialChannels = true;
             if (go != null && layout.JumpgateAssembly == TerranGate) PlayTerranGateRing(go);
+            if (go != null) PortalRefraction.AttachIfPortal(go);   // (a mod gate's Chorus portal bends the scene behind it)
             return go;
         }
 
