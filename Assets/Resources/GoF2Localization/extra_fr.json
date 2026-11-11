@@ -1618,7 +1618,7 @@
  "flightStyleOriginal": "Original",
  "flightForcedNote": "Actuellement imposé par {0} : {1}.",
  "flightStyleHelp": "Vol libre : W / S poussée, A / D latéral, Espace / Ctrl monter et descendre, Q / E roulis, Maj boost, Z amortisseurs. Touches propres.",
- "bindingsLayout": "Disposition des touches : {0}. L'option Vol libre sous {1} la change.",
+ "bindingsLayout": "Disposition des touches : {0}. L'option Style de vol sous {1} la change.",
  "targetLockBeams": "Les lasers à faisceau visent alors seulement les hostiles ou ta cible.",
  "targetLockAsteroids": "Astéroïdes : celui sous le réticule d'abord.",
  "modShipTraffic": "Vaisseaux de mods dans le trafic",
@@ -3381,5 +3381,10 @@
  "musicWanted": "Musique de combat : criminel Most Wanted",
  "musicTrackHelp": "Désactivé : ce morceau ne joue plus ; la musique calme de l'orbite continue.",
  "musicTrackSpecialHelp": "Désactivé : ce morceau ne joue plus ; la musique de combat habituelle le remplace.",
- "flightStyleTouchHelp": "Tactile : le stick pousse et se déplace latéralement, glisser sur l'écran (ou sur le bouton de tir maintenu) vise, les boutons à côté du stick montent, descendent et basculent les amortisseurs ; le vaisseau se remet à l'horizontale tout seul."
+ "flightStyleTouchHelp": "Tactile : le stick pousse et se déplace latéralement, glisser sur l'écran (ou sur le bouton de tir maintenu) vise, les boutons à côté du stick montent, descendent et basculent les amortisseurs ; le vaisseau se remet à l'horizontale tout seul.",
+ "flightStyle": "Style de vol",
+ "flightStyleChorus": "Style Chorus",
+ "flightStyleChorusHelp": "Chorus : W vole à pleine vitesse, S freine, Maj active le boost, maintenez Espace pour déraper, A / D esquivent. Disposition des touches propre.",
+ "ctlDrift": "Dérapage (maintenir)",
+ "hudDrift": "DÉRAPAGE"
 }

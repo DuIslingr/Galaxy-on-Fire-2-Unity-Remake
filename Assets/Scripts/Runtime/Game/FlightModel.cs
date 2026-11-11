@@ -394,6 +394,7 @@ namespace GoF2Remake.Flight
         /// (FrameResult.move) and the collision push.</summary>
         public FrameResult StepFree(FreeInput input, float dtMs, Quaternion rotation, Vector3 shipUp, Vector3 shipRight)
         {
+            if (ChorusFlight) return StepChorus(input, dtMs, rotation, shipUp, shipRight);
             float he = EffectiveHandling;
             UpdateBoost(dtMs);
 
@@ -521,6 +522,7 @@ namespace GoF2Remake.Flight
             EnginesOff = false;   // another mode flies the ship: its engines run
             FreeVelocity = forward * unitsPerMs;
             freeYaw = freePitch = freeRoll = 0f;
+            chorusDrift = 0;      // Chorus flight: a drift ends where another mode takes over
         }
 
         /// <summary>The held boost on its energy pool: drains in the booster's duration (FreeBoostDurationMs without one),
@@ -547,6 +549,209 @@ namespace GoF2Remake.Flight
             }
             CurrentSpeed = IsBoosting ? TopSpeed * FreeBoostFactor : TopSpeed;
             freeBoostVisual = Mathf.MoveTowards(freeBoostVisual, IsBoosting ? 1f : 0f, dtMs / 200f);
+        }
+
+        // ---- remake: Chorus flight (FlightStyles.Chorus, 2026-11-11) ------------------------------------------------
+        // After Chorus (Deep Silver FISHLABS, 2021), decompiled from the player's own installation: USteeringComponent's
+        // UpdateLinearVelocity / UpdateAngularVelocity / ApplyAngularRotation / TickComponent, its constructor's defaults, the
+        // player ship blueprints' curves (BP_Player_Ship_Base / _Phoenix) and UBoostComponent's tick
+        // (Reference/research/chorus_flight.md). An arcade model: forward-only thrust along speed-dependent acceleration
+        // curves, the turn rate set by the speed and stopping dead on release, a held boost (x2, no energy), a held drift (no
+        // thrust, the velocity keeps its world direction while the nose turns) with a recovery after it. Chorus's speeds are
+        // kept as shares of its top speed (140 m/s), so here they scale with the ship's own top speed and every timing stays
+        // Chorus's: standstill to top speed in 1.0 s, a coast to rest in 2.0 s, the brake in 1.0 s, a boost to x2 in 0.5 s.
+
+        /// <summary>Chorus flight is the style in use (ShipController, with FreeFlight): StepFree runs StepChorus.</summary>
+        public bool ChorusFlight;
+        /// <summary>Chorus flight: the drift key is held (ShipController).</summary>
+        public bool DriftHeld;
+        /// <summary>Chorus flight: drifting now (the drift key held: no thrust, the velocity keeps its direction).</summary>
+        public bool Drifting => ChorusFlight && chorusDrift == 1;
+        /// <summary>Chorus flight: the recovery after a drift (the forward speed pulled back up, the slide fading).</summary>
+        public bool DriftRecovering => ChorusFlight && chorusDrift == 2;
+
+        int chorusDrift;          // EDriftState: 0 inactive, 1 drifting, 2 recovery (USteeringComponent+0xB38)
+        float chorusRecovery;     // DriftRecoverySpeed (+0xB3C), units / ms
+        float chorusBoostMs;      // how long the boost has run (MinBoostDuration)
+        bool chorusBoostWas, chorusDriftWas;
+
+        // The curves, keyed by a speed in shares of the top speed (Chorus's 14000 cm/s), giving shares of the top speed per
+        // second (an acceleration) or a factor: (key, value) pairs, linear between, clamped outside (FRichCurve::Eval).
+        static readonly float[] ChorusAccelCurve = { 0f, 0.5f, 0.5f, 1.25f, 1f, 1.25f };          // AccelerationCurve: 0 -> 7000, 7000 -> 17500 cm/s^2
+        static readonly float[] ChorusBoostCurve = { 0f, 24000f / 14000f, 180000f / 14000f, 77000f / 14000f };   // BoostAccelerationCurve
+        static readonly float[] ChorusDecelCurve = { 0f, 0.5f, 1.5f, 0.5f, 5.5f, 1.5f };          // DecelerationCurve: 7000 to 21000 cm/s, 21000 at 77000
+        static readonly float[] ChorusBrakeCurve = { 0f, 0.9375f, 0.5f, 0.9375f, 2f, 1.5f };      // BrakingCurve: 13125 to 7000 cm/s, 21000 at 28000
+        const float ChorusRecoveryAccel = 22000f / 14000f;                                         // DriftRecoveryAccelerationCurve, flat
+        static readonly float[] ChorusLateralCurve = { 0f, 0.75f, 1f, 0.75f, 2f, 1.25f };         // LateralVerticalDecelerationCurve, by |V|
+        static readonly float[] ChorusDriftDecelCurve = { 0f, 0.2f, 2f, 0.2f, 3f, 1.5f };         // DriftDecelerationCurve, by |V|, above the top speed
+        static readonly float[] ChorusTurnBySpeed = { 0.01f / 14000f, 0.5f, 0.5f, 1f, 1f, 1f, 1.5f, 0.7f, 2f, 0.35f, 8f, 0.3f };   // MaxAngularFromLinearSpeedCurve
+        static readonly float[] ChorusDriftTurn = { 0f, 0.5f, 0.5f, 1.2f };                       // DriftMaxAngularSpeedFromLinearSpeedCurve, by |V|
+        const float ChorusTurnShare = 108f / 125f;   // MaxAngularVelocity 108 deg/s against free flight's 125 (the handling scales both)
+        const float ChorusTurnRampMs = 200f;         // AngularAcceleration = MaxAngularVelocity / SteerAccelerationTime (the setting's 0.2 s)
+        const float ChorusBoostTurnAccel = 0.66f;    // RegularBoostConfig.AngularAccelModifier
+        const float ChorusBoostFactor = 2f;          // RegularBoostConfig.SpeedMultiplier
+        const float ChorusMinBoostMs = 600f;         // RegularBoostConfig.MinBoostDuration
+        const float ChorusBrakeAxis = -0.05f;        // a thrust axis below this holds the brake (the over-speed latch's test)
+
+        static float ChorusCurve(float[] keys, float x)
+        {
+            if (x <= keys[0]) return keys[1];
+            for (int i = 2; i < keys.Length; i += 2)
+                if (x <= keys[i]) return Mathf.Lerp(keys[i - 1], keys[i + 1], (x - keys[i - 2]) / Mathf.Max(1e-9f, keys[i] - keys[i - 2]));
+            return keys[keys.Length - 1];
+        }
+
+        /// <summary>Chorus flight: the boost's top speed, of the forward one: a mod's (ModFlight boostFactor) or Chorus's x2.</summary>
+        float ChorusBoostTop => OverheatedBoost(Style.boostFactor > 0 ? Style.boostFactor / 100f : ChorusBoostFactor);
+
+        /// <summary>Chorus flight's buttons and boost, each frame (UpdateBoost): ASpacePlayerController's OnDriftPressed (the
+        /// boost stops, the drift starts), OnDriftReleased / OnBoostPressed (the drift goes into its recovery), and
+        /// UBoostComponent's tick (held, at least MinBoostDuration, no energy, never while drifting). A ship needs a booster
+        /// to boost, as in the rest of the game.</summary>
+        void UpdateChorusBoost(float dtMs)
+        {
+            BoostRanDry = false;
+            bool boostPress = BoostHeld && !chorusBoostWas, driftPress = DriftHeld && !chorusDriftWas;
+            chorusBoostWas = BoostHeld;
+            chorusDriftWas = DriftHeld;
+            if (driftPress && chorusDrift != 1) { chorusDrift = 1; IsBoosting = false; }
+            else if (chorusDrift == 1 && (!DriftHeld || boostPress)) StopChorusDrift();
+            bool boost = hasBooster && chorusDrift != 1 && (BoostHeld || (IsBoosting && chorusBoostMs < ChorusMinBoostMs));
+            if (boost && !IsBoosting) chorusBoostMs = 0f;
+            IsBoosting = boost;
+            if (boost) chorusBoostMs += dtMs;
+            CurrentSpeed = IsBoosting ? TopSpeed * ChorusBoostTop : TopSpeed;
+            freeBoostVisual = Mathf.MoveTowards(freeBoostVisual, IsBoosting ? 1f : 0f, dtMs / 200f);
+        }
+
+        /// <summary>USteeringComponent::StopDrift: into the recovery, toward the speed it had (at most the top speed).</summary>
+        void StopChorusDrift()
+        {
+            chorusRecovery = Mathf.Min(FreeVelocity.magnitude, TopSpeed);
+            chorusDrift = 2;
+        }
+
+        /// <summary>Chorus flight: one frame (StepFree's contract). input.thrust: forward asks for the top speed, back brakes;
+        /// strafe and up / down aren't read (Chorus's player ship has no strafe: its sideways moves are the dodge).</summary>
+        FrameResult StepChorus(FreeInput input, float dtMs, Quaternion rotation, Vector3 shipUp, Vector3 shipRight)
+        {
+            float he = EffectiveHandling;
+            UpdateBoost(dtMs);
+            float top = Mathf.Max(1e-6f, TopSpeed);
+            float perMs = top / 1000f;   // one share of the top speed per second, in units / ms per ms
+            var v = Quaternion.Inverse(rotation) * FreeVelocity;   // ship frame: x right, y up, z forward
+            float speedShare = v.magnitude / top;
+
+            // ---- turning (UpdateAngularVelocity): the top rate by the forward speed (the drift's by the whole speed), reached
+            // at the angular acceleration (the top rate in 0.2 s, x0.66 boosting); bHasAngularDeceleration is false, so a
+            // released or reversed input stops the rate at once (a smaller one too: no deceleration to ease it down).
+            float baseRate = FreeTopTurnRate(he) * ChorusTurnShare;
+            float factor = chorusDrift == 1 ? ChorusCurve(ChorusDriftTurn, speedShare) : ChorusCurve(ChorusTurnBySpeed, Mathf.Max(0f, v.z) / top);
+            float maxRate = baseRate * factor;
+            float step = baseRate / (ChorusTurnRampMs / Mathf.Max(0.05f, Inertia)) * (IsBoosting ? ChorusBoostTurnAccel : 1f) * dtMs;
+            freeYaw = ChorusRate(freeYaw, Mathf.Clamp(input.aim.x, -1f, 1f) * maxRate, step);
+            freePitch = ChorusRate(freePitch, Mathf.Clamp(input.aim.y, -1f, 1f) * maxRate, step);
+            float roll = Mathf.Clamp(input.roll, -1f, 1f);
+            if (Mathf.Abs(roll) > 0.01f) StopLeveling();
+            UpdateLevelRequest(input.aim, dtMs);
+            SteeringEndsLevelOut(input.aim, dtMs);
+            if (Mathf.Abs(roll) <= 0.01f && !IsLeveling) roll = AutoRollInput(dtMs, rotation * Vector3.forward, shipUp, shipRight, input.aim.y);
+            else autoRolling = false;
+            freeRoll = roll * baseRate * RollScale;   // the roll isn't accelerated: AngularVelocity.Z = input x max
+            float rollRad = -freeRoll * dtMs;
+            rollLevelled = false;
+            if (IsLeveling) { rollRad += AutoLevelRoll(dtMs, shipUp, shipRight) * RollScale; if (rollLevelled) IsLeveling = false; }
+            YawRate = freeYaw / RateToRadiansPerMs;
+            PitchRate = freePitch / RateToRadiansPerMs;
+
+            // ---- moving (UpdateLinearVelocity)
+            float thrust = Mathf.Clamp(input.thrust, -1f, 1f);
+            ThrustInput = new Vector3(0f, 0f, thrust);
+            float accelScale = Style.accelScale * FreeEaseFwdMs / (FreeEaseFwdMs + AccelMs);   // a mod's bonus, a heavy hull
+            if (chorusDrift == 1)
+            {
+                // Drifting: no thrust and no lateral damping; the world-space velocity keeps its direction while the nose turns
+                // (Chorus counter-rotates its ship-frame velocity). Above the top speed it bleeds off (DriftDecelerationCurve).
+                float s = FreeVelocity.magnitude;
+                if (s > top)
+                {
+                    float drop = ChorusCurve(ChorusDriftDecelCurve, s / top) * perMs * dtMs;
+                    FreeVelocity *= Mathf.Max(0f, s - drop) / s;
+                }
+            }
+            else
+            {
+                float max = IsBoosting ? top * ChorusBoostTop : top;
+                float fwd = v.z;
+                if (chorusDrift == 2 && thrust < 0f) chorusDrift = 0;   // reverse input ends the recovery
+                float target;
+                if (chorusDrift == 2)
+                {
+                    // The recovery speed: raised to the boost's top while boosting, never above the top speed otherwise.
+                    chorusRecovery = IsBoosting ? Mathf.Max(chorusRecovery, max) : Mathf.Min(chorusRecovery, max);
+                    target = chorusRecovery;
+                }
+                else if (thrust > 0f) target = max;                     // JetModeLinearSpeedModifier.Upper (1)
+                else if (thrust < 0f) target = 0f;                      // .Lower (0): no reverse flight
+                else target = fwd > max ? max : 0f;                     // no input: back to the top speed, then on to rest
+                float[] curve = null;
+                float rate;
+                if (target < fwd) curve = thrust < ChorusBrakeAxis ? ChorusBrakeCurve : ChorusDecelCurve;   // BRAKING / DECELERATING
+                else if (IsBoosting) curve = ChorusBoostCurve;                                                 // BOOSTING
+                else if (chorusDrift != 2) curve = ChorusAccelCurve;                                           // ACCELERATING
+                rate = curve != null ? ChorusCurve(curve, fwd / top) : ChorusRecoveryAccel;                    // DRIFT RECOVERING
+                // The input's size scales the rate, not the target (1 with no input); LinearAccelX on every state.
+                rate *= perMs * accelScale * (thrust == 0f ? 1f : Mathf.Abs(thrust));
+                fwd = Mathf.MoveTowards(fwd, target, rate * dtMs);
+                // Sideways and up / down (a drift's slide, a hit) fade together, by the whole speed's curve.
+                var side = new Vector2(v.x, v.y);
+                float sm = side.magnitude;
+                if (sm > 0f)
+                {
+                    float drop = ChorusCurve(ChorusLateralCurve, v.magnitude / top) * perMs * dtMs;
+                    side *= Mathf.Max(0f, sm - drop) / sm;
+                }
+                v = new Vector3(side.x, side.y, fwd);
+                if (chorusDrift == 2 && fwd >= chorusRecovery) chorusDrift = 0;
+                FreeVelocity = rotation * v;
+            }
+
+            var fwdDir = rotation * Vector3.forward;
+            float forwardSpeed = Vector3.Dot(FreeVelocity, fwdDir);
+            MoveSpeed = Mathf.Max(0f, forwardSpeed);
+            UpdateSpeedBonuses(dtMs, FreeVelocity.magnitude);
+            Throttle = IsBoosting ? 1f : Mathf.Clamp01(thrust);
+            EnginesOff = chorusDrift == 1 || (thrust <= 0f && !IsBoosting && chorusDrift != 2);
+            Braking = false;
+
+            // Cosmetic: the model banks into turns and with the sideways speed (Chorus's RollByLinearLateralSpeed: 45 deg at
+            // twice the top speed sideways), tilts with the nose.
+            float lateral = Vector3.Dot(FreeVelocity, rotation * Vector3.right) / top;
+            VisualYawBank = Mathf.Clamp(input.aim.x * 0.8f - lateral * 0.5f, -1f, 1f) * he;
+            VisualPitchBank = Mathf.Clamp(input.aim.y * 0.8f, -1f, 1f) * he;
+
+            float pushUnits = 0f;
+            if (Mathf.Abs(collisionPush) > CollisionPushCutoff) { pushUnits = collisionPush * dtMs; collisionPush *= CollisionPushDecay; }
+            else collisionPush = 0f;
+
+            return new FrameResult
+            {
+                pitchDeg = freePitch * dtMs * Mathf.Rad2Deg,
+                yawDeg = freeYaw * dtMs * Mathf.Rad2Deg,
+                rollDeg = rollRad * Mathf.Rad2Deg,
+                move = FreeVelocity * dtMs,
+                forwardUnits = forwardSpeed * dtMs,
+                sidePushUnits = pushUnits,
+            };
+        }
+
+        /// <summary>One turn axis in Chorus flight: toward the target at 'step', but straight to 0 (or to a smaller target) when
+        /// the input is let go, eased off or reversed (bHasAngularDeceleration false).</summary>
+        static float ChorusRate(float rate, float target, float step)
+        {
+            if (rate != 0f && (target == 0f || Mathf.Sign(target) != Mathf.Sign(rate))) rate = 0f;
+            else if (Mathf.Abs(target) < Mathf.Abs(rate)) return target;
+            return Mathf.MoveTowards(rate, target, step);
         }
 
         public void Configure(FlightStats s)
@@ -985,7 +1190,7 @@ namespace GoF2Remake.Flight
 
         void UpdateBoost(float dtMs)
         {
-            if (FreeFlight) { UpdateFreeBoost(dtMs); return; }
+            if (FreeFlight) { if (ChorusFlight) UpdateChorusBoost(dtMs); else UpdateFreeBoost(dtMs); return; }
             if (!IsBoosting) CurrentSpeed = TopSpeed;   // the style's (a mod's top speed bonus; switched in flight)
             // Timer counts up every frame; negative values mean "recharging" (PlayerEgo::update).
             // Remake: the frame's own dt, unrounded. The original's dt is a whole ms for both the timer and the move

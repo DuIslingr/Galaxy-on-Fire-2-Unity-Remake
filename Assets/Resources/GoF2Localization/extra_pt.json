@@ -1623,7 +1623,7 @@
  "flightStyleOriginal": "Original",
  "flightForcedNote": "Agora definido por {0}: {1}.",
  "flightStyleHelp": "Voo livre: W / S impulso, A / D lateral, Espaço / Ctrl subir e descer, Q / E rolagem, Shift turbo, Z amortecedores. Teclas próprias.",
- "bindingsLayout": "Layout de teclas: {0}. A opção Voo livre em {1} troca o layout.",
+ "bindingsLayout": "Layout de teclas: {0}. A opção Estilo de voo em {1} troca o layout.",
  "targetLockBeams": "Lasers de feixe miram só hostis ou seu alvo.",
  "targetLockAsteroids": "Asteroides: primeiro o que está sob a mira.",
  "modShipTraffic": "Naves de mods no tráfego",
@@ -3381,5 +3381,10 @@
  "musicWanted": "Música de combate: criminoso Most Wanted",
  "musicTrackHelp": "Desligado: esta faixa não toca mais; a música calma da órbita continua.",
  "musicTrackSpecialHelp": "Desligado: esta faixa não toca mais; toca a música de combate habitual no lugar.",
- "flightStyleTouchHelp": "Toque: o stick dá impulso e desloca para o lado, arrastar no ecrã (ou no botão de disparo premido) aponta, os botões ao lado do stick sobem, descem e ligam os amortecedores; a nave nivela-se sozinha."
+ "flightStyleTouchHelp": "Toque: o stick dá impulso e desloca para o lado, arrastar no ecrã (ou no botão de disparo premido) aponta, os botões ao lado do stick sobem, descem e ligam os amortecedores; a nave nivela-se sozinha.",
+ "flightStyle": "Estilo de voo",
+ "flightStyleChorus": "Estilo Chorus",
+ "flightStyleChorusHelp": "Chorus: W voa a toda a velocidade, S trava, Shift ativa o boost, segure Espaço para derrapar, A / D esquivam. Layout de teclas próprio.",
+ "ctlDrift": "Derrapagem (segurar)",
+ "hudDrift": "DERRAPAGEM"
 }

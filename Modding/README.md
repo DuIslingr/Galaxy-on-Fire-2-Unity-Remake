@@ -1595,13 +1595,14 @@ bonuses instead.
 
 | Field | |
 |---|---|
-| `flightStyle` | `"free"` or `"original"`: this ship always flies so, whatever the player's option (`"player"` or no field: the player's). |
+| `flightStyle` | `"free"`, `"chorus"` or `"original"`: this ship always flies so, whatever the player's option (`"player"` or no field: the player's). Chorus flight is a free-flight style: the `free` bonuses and `flightScope` 2 count in it too. |
 | `flight` | Bonuses in % for both styles: `topSpeed`, `turnRate`, `strafeSpeed`, `acceleration` (free flight only: the original has none), `boostFactor` (free flight's boost in hundredths of the top speed), `fullStopDamage` and `lowSpeedResistance` (EVERSPACE 2's ship passives, see the [stats](#stats) 138 / 139: the guns hit harder while the ship stands still, it takes less once it has flown slower than 30 m/s for a second). `original` / `free` inside it: the same, for one style only. |
 
 **Who decides the style**, first match: an event or mission (the **Set Flight Model** node, `/flightstyle`), the ship flown,
 the mod campaign (`campaign.json`'s `"flightStyle"`), a new-game option that is on (`gameoptions.json`'s `"flightStyle"`), then
 the player's own option. The Options page says so while a mod decides, and the key layout follows the style in use. Touch,
-tilt and VR always fly the original. Missions can ask with `freeflight` (1 in free flight, 0 in the original).
+tilt and VR always fly the original. Missions can ask with `freeflight` (1 in free flight, 0 otherwise) and `chorusflight`
+(1 in Chorus flight).
 
 In the original a top speed bonus speeds the boost up too, and a turn rate bonus keeps the time the ship takes to reach its
 turn rate. Free flight's top speed, turn rate and acceleration otherwise come from the ship's handling (with its Steering
@@ -1933,7 +1934,7 @@ story off.
 | `items` | `"mod"`: shops and bar sellers offer only mods' items (sell the player anything they find; mining still brings the game's ores). Default `"all"`. Give the campaign its own goods and energy cells if it needs them. |
 | `ships` | `"mod"`: dealers sell only mods' ships. Default `"all"`. |
 | `trafficShips` | The ships NPC fighters fly, per race (`terran`, `vossk`, `nivelian`, `midorian`, `pirate`). Default: the game's. |
-| `flightStyle` | `"free"` or `"original"`: the campaign's games always fly so (see [Flight styles](#flight-styles)). Default: the player's option. |
+| `flightStyle` | `"free"`, `"chorus"` or `"original"`: the campaign's games always fly so (see [Flight styles](#flight-styles)). Default: the player's option. |
 
 A campaign's mod usually depends on the mods with its galaxy, ships and items, so turning it on turns them on too. Saves
 remember the campaign; loading one asks for its mods like any modded save.
@@ -1996,7 +1997,7 @@ game remembers it in its saves, and your content asks for it with `option(...)` 
 | `imageHover` | Optional. The art while the card is selected. |
 | `showTitle` | `true` (default): the name and the mod on a plate at the card's foot; `false` when the art has its own title. |
 | `default` | The switch's position the first time (afterwards the player's last choice). Also what a multiplayer session plays with. |
-| `flightStyle` | `"free"` or `"original"`: while the option is on, the game flies so (see [Flight styles](#flight-styles)). |
+| `flightStyle` | `"free"`, `"chorus"` or `"original"`: while the option is on, the game flies so (see [Flight styles](#flight-styles)). |
 | `setting` | `true`: no card, a switch in **Options > Gameplay** instead, shown only while your mod is on and the player's own for every game (it starts at `default`; Default settings puts it back). `option(...)` reads it the same way. For what a player may want to turn off at any time (the ES2 Ships mod's Dreadnought raids). |
 
 Two cards show at a time; more scroll sideways (drag, wheel, or the arrow keys / D-pad). A game started before your mod was

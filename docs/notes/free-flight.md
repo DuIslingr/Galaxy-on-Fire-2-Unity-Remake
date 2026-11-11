@@ -127,6 +127,32 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `Es2ChaseRigTests` (the steady turn's lag at 30-240 fps, the roll followed, the frame cap, the velocity offset's clamps,
   the swing round the pivot, the boost's +15 deg, the dolly, the blend's ease, the shakes' weights, lifetimes, amplitudes,
   the cockpit's scale and the class scale).
+- **Chorus flight** (remake, 2026-11-11, the user's request: "port Chorus stuff like ES2"; Options > Controls "Flight
+  style", now a choice Original / Free flight (EVERSPACE 2 style) / Chorus style, `Settings.FlightStyle` 2,
+  `FlightStyles.Chorus`; `FlightStyles.IsFree` is true for it, so it runs free flight's whole path: `ShipController.
+  FreeFlightActive`, `StepFree` handing over to `FlightModel.StepChorus` while `Model.ChorusFlight`, `SyncFree`, the HUD,
+  the ES2 camera, mods' free bonuses). After Chorus (Deep Silver FISHLABS, UE 4.26), decompiled from the player's
+  install (`Reference/research/chorus_flight.md`: USteeringComponent's UpdateLinearVelocity / UpdateAngularVelocity /
+  TickComponent and constructor, BP_Player_Ship_Base / _Phoenix's curves, UBoostComponent's tick, the player
+  controller's drift / boost buttons). Chorus's speeds are kept as shares of its 140 m/s top speed, so they scale with
+  the ship's own (the user chose scaling over Chorus's raw m/s): forward-only thrust, W asks for the top speed and S
+  brakes, both along speed-keyed curves at a constant rate (MoveTowards; the input's size scales the rate, not the
+  target): standstill to top 1.01 s, let go and it coasts to rest in 2.0 s, the brake 1.02 s, no reverse; the turn rate
+  keyed by the forward speed (x0.5 at rest, x1 from half to full speed, x0.7 at 1.5x, x0.35 at 2x; 108 deg/s against
+  free flight's 125 at the same handling scaling), reached in 0.2 s (the game's SteerAccelerationTime default) and
+  dropped at once when the input is let go, eased or reversed (`bHasAngularDeceleration` false); the roll at once; a
+  held boost (a booster needed, as everywhere in the remake) to x2 at the BOOSTING curve (x2 in 0.47 s), no energy, at
+  least 0.6 s, angular acceleration x0.66; a held drift (the Drift row, Space / LB): no thrust, no lateral damping, the
+  world velocity kept while the nose turns (up to x1.2 the turn rate), slowed only above the top speed; on release a
+  recovery pulls the forward speed back up at 1.57 tops/s to what it had (at most the top speed) while the sideways part
+  fades (LateralVerticalDeceleration by the whole speed: 0.75 tops/s); pressing the drift stops a boost, pressing the
+  boost ends a drift. Its own key layout (`GameControls.ChorusDefaults` over free flight's, overrides
+  `controls_bindings_chorus`): A / D the remake's dodge (Chorus's dash), Space drift (Chorus's right mouse button is the
+  secondary fire here), the controller's LB drift, no strafe / up-down / dampeners rows (hidden) and no roll on the
+  controller. HUD hints DRIFT (HOLD) and DODGE instead of strafe / up-down / dampeners. Tests `ChorusFlightTests` (every
+  timing above integrated by hand, the min boost, no booster, turn ratios, ramp and snap, drift and recovery, the
+  layout, the names). Not done: the touch controls (they keep free flight's layout: no drift button), the Set Flight
+  Model node's choice, Chorus's dash speed / boost cooldown (unread C++ defaults), the travel boost (x5.5).
 - **Free flight on touch** (remake, 2026-11-06, the user's request: there was no way to strafe on a phone; `TouchControlsFreeFlight`,
   `Frame.freeFlight`, `ShipController.TouchFree` / `SetTouchFree`): with the free flight style and touch input (not tilt)
   the touch controls take a layout after the controller's, as EVERSPACE 2 has no touch version: the stick thrusts (up /

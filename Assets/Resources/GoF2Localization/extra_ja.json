@@ -1618,7 +1618,7 @@
  "flightStyleOriginal": "オリジナル",
  "flightForcedNote": "現在は{0}により設定：{1}。",
  "flightStyleHelp": "フリーフライト：W / S推進、A / D横移動、Space / Ctrl上下、Q / Eロール、Shiftブースト、Zダンパー。専用キー配置。",
- "bindingsLayout": "キー配置：{0}。{1}のフリーフライト設定で切り替わります。",
+ "bindingsLayout": "キー配置：{0}。{1}の飛行スタイル設定で切り替わります。",
  "targetLockBeams": "ビームレーザーは敵かロック対象のみを狙う。",
  "targetLockAsteroids": "小惑星は照準の下にあるものを優先。",
  "modShipTraffic": "交通にMODの船を登場",
@@ -3381,5 +3381,10 @@
  "musicWanted": "戦闘BGM：Most Wanted の犯罪者",
  "musicTrackHelp": "オフ：この曲は流れなくなり、軌道の穏やかな音楽が続きます。",
  "musicTrackSpecialHelp": "オフ：この曲は流れなくなり、代わりに通常の戦闘BGMが流れます。",
- "flightStyleTouchHelp": "タッチ：スティックで推進と横移動、画面（または押したままの発射ボタン）をドラッグして照準、スティック横のボタンで上昇・下降とダンパー切替。機体は自動で水平に戻ります。"
+ "flightStyleTouchHelp": "タッチ：スティックで推進と横移動、画面（または押したままの発射ボタン）をドラッグして照準、スティック横のボタンで上昇・下降とダンパー切替。機体は自動で水平に戻ります。",
+ "flightStyle": "飛行スタイル",
+ "flightStyleChorus": "Chorus風",
+ "flightStyleChorusHelp": "Chorus：Wで全速前進、Sでブレーキ、Shiftでブースト、Spaceを押し続けてドリフト、A / Dで回避。専用のキー配置。",
+ "ctlDrift": "ドリフト（長押し）",
+ "hudDrift": "ドリフト"
 }

@@ -1618,7 +1618,7 @@
  "flightStyleOriginal": "Originale",
  "flightForcedNote": "Ora lo imposta {0}: {1}.",
  "flightStyleHelp": "Volo libero: W / S spinta, A / D laterale, Spazio / Ctrl su e giù, Q / E rollio, Maiusc boost, Z smorzatori. Tasti propri.",
- "bindingsLayout": "Disposizione dei tasti: {0}. La cambia l'opzione Volo libero in {1}.",
+ "bindingsLayout": "Disposizione dei tasti: {0}. La cambia l'opzione Stile di volo in {1}.",
  "targetLockBeams": "I laser a raggio mirano solo ai nemici o al tuo bersaglio.",
  "targetLockAsteroids": "Asteroidi: prima quello sotto il mirino.",
  "modShipTraffic": "Navi delle mod nel traffico",
@@ -3381,5 +3381,10 @@
  "musicWanted": "Musica di battaglia: criminale Most Wanted",
  "musicTrackHelp": "Disattivo: questo brano non suona più; continua la musica tranquilla dell'orbita.",
  "musicTrackSpecialHelp": "Disattivo: questo brano non suona più; al suo posto suona la solita musica di battaglia.",
- "flightStyleTouchHelp": "Touch: lo stick dà spinta e sposta di lato, trascinare sullo schermo (o sul pulsante di fuoco tenuto premuto) mira, i pulsanti accanto allo stick salgono, scendono e attivano gli smorzatori; la nave si raddrizza da sola."
+ "flightStyleTouchHelp": "Touch: lo stick dà spinta e sposta di lato, trascinare sullo schermo (o sul pulsante di fuoco tenuto premuto) mira, i pulsanti accanto allo stick salgono, scendono e attivano gli smorzatori; la nave si raddrizza da sola.",
+ "flightStyle": "Stile di volo",
+ "flightStyleChorus": "Stile Chorus",
+ "flightStyleChorusHelp": "Chorus: W vola a piena velocità, S frena, Maiusc attiva il boost, tieni premuto Spazio per derapare, A / D schivano. Disposizione dei tasti propria.",
+ "ctlDrift": "Derapata (tieni premuto)",
+ "hudDrift": "DERAPATA"
 }
