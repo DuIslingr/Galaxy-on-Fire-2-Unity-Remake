@@ -109,6 +109,13 @@ Shader "GoF2/Hull"
         [HideInInspector] _ChorusDirt3("Chorus dirt 3", Vector) = (0, 0, 0, 0)
         [HideInInspector] _ChorusPalette("Chorus palette", 2D) = "grey" {}
         [HideInInspector] _ChorusDirtRough("Chorus dirt roughness", 2D) = "grey" {}
+        // GoF2: a glow travelling along a pattern (Chorus's M_Phoenix glow lines; HullForwardPass.hlsl GlowWave; ModMaterials
+        // GlowWave): x its multiplier (0 = off), y the pattern's tiling, z its speed, w the mask's channel (0 R, 1 G, 2 B)
+        [HideInInspector] _WaveParams("Glow wave", Vector) = (0, 1, 1, 1)
+        [HideInInspector] _WaveMin("Glow wave min", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _WaveMax("Glow wave max", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _WavePattern("Glow wave pattern", 2D) = "black" {}
+        [HideInInspector] _WaveMask("Glow wave mask", 2D) = "black" {}
         // GoF2: a mod specular material's GoF3 terms (HullForwardPass.hlsl GoF3ShipShader; ModMaterials): x environment, y rim,
         // z GoF3's specular multiplier, w 1 = that multiplier is in the map (on the whole specular) / 0 = on the highlight
         [HideInInspector] _GoF3Params("GoF3 params", Vector) = (1, 1, 1, 0)

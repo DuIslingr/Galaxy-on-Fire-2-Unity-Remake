@@ -361,6 +361,19 @@ void ChorusShell(Varyings input, inout SurfaceData s)
     gChorusEmissive = 0.0h;
 }
 
+// GoF2: Chorus's M_Phoenix glow lines (its compiled base pass): the Magnetic Plates Pattern (R its strength, G and B its
+// phase) over UV0 x Magnetic Pattern Tiling; frac(G - (B + time)) a triangle wave 1 - 2 |phase - 0.5| running along it;
+// lerp(Emissive02 Min, Max, wave) x wave x R x the emissive masks' green x Emissive02_Multiplier, added.
+half3 GlowWave(float2 uv)
+{
+    half3 p = SAMPLE_TEXTURE2D(_WavePattern, sampler_LinearRepeat, uv * _WaveParams.y).rgb;
+    half4 m = SAMPLE_TEXTURE2D(_WaveMask, sampler_LinearRepeat, uv);
+    half mask = _WaveParams.w < 0.5 ? m.r : (_WaveParams.w < 1.5 ? m.g : m.b);
+    half phase = frac(p.g - p.b - (half)(_Time.y * _WaveParams.z));
+    half t = 1.0h - 2.0h * abs(phase - 0.5h);
+    return lerp((half3)_WaveMin.rgb, (half3)_WaveMax.rgb, t) * (t * p.r * mask * (half)_WaveParams.x);
+}
+
 // M_NPCShipTrimMaster's far emission: past Kicker Fade Offset (view depth), over Kicker Fade Length, the kicker rim
 // ((1 - N.V)^Kicker Exp x 0.96 + 0.04 in Kicker Color) and the trim emissive x (Emissive Channel Distance Boost - 1) on top.
 half3 ChorusFarEmission(InputData inputData)
@@ -394,6 +407,7 @@ void HullPassFragment(
     if (_Es2Wear2.z > 0.0) Es2StructureLayers(input, surfaceData);   // GoF2: EVERSPACE 2's structure layers
     if (_ChorusParams.x > 2.5) ChorusShell(input, surfaceData);      // GoF2: Chorus's shell (Guilt)
     else if (_ChorusParams.x > 0.0) ChorusLayers(input, surfaceData);   // GoF2: Chorus's trim sheets and platings
+    if (_WaveParams.x > 0.0) surfaceData.emission += GlowWave(input.uv);   // GoF2: a glow along a pattern (Chorus's M_Phoenix)
 
     LODFadeCrossFade(input.positionCS);
 

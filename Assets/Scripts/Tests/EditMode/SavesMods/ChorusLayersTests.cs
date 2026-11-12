@@ -114,6 +114,46 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AWaveEntryTurnsOnTheGlowAlongItsPattern()
+        {
+            // Chorus's M_Phoenix glow lines: the pattern and the masks as data, the wave's numbers in _WaveParams
+            var mod = ModWithMaps();
+            var e = JsonUtility.FromJson<CustomShipMaterial>("{ \"material\": \"wing\", \"wave\": { \"pattern\": \"maps/palette.png\", " +
+                "\"mask\": \"maps/emissive.png\", \"tiling\": 10, \"min\": [0.015, 0.05, 0.0383], \"max\": [0.3, 1, 0.7667] } }");
+            Assert.IsTrue(e.wave.On);
+            Assert.AreEqual(1, e.wave.channel, "the masks' green by default");
+            var m = ModMaterials.FromSpec(mod, e, "wing");
+            try
+            {
+                Assert.AreEqual(new Vector4(1f, 10f, 1f, 1f), m.GetVector("_WaveParams"));
+                Assert.IsNotNull(m.GetTexture("_WavePattern"));
+                Assert.AreEqual(TextureWrapMode.Repeat, m.GetTexture("_WavePattern").wrapMode);
+                Assert.Less(Vector4.Distance(new Vector4(0.3f, 1f, 0.7667f, 1f), m.GetVector("_WaveMax")), 1e-5f);
+                var plain = ModMaterials.FromSpec(mod, new CustomShipMaterial { material = "hull" }, "hull");
+                Assert.AreEqual(0f, plain.GetVector("_WaveParams").x, "off without a wave");
+                Object.DestroyImmediate(plain);
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
+        public void TheHullsForwardPassCompilesWithTheWave()
+        {
+            var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);
+            var m = new Material(a.litOpaque);
+            try
+            {
+                m.SetVector("_WaveParams", new Vector4(1f, 10f, 1f, 1f));
+                int pass = m.FindPass("ForwardLit");
+                UnityEditor.ShaderUtil.CompilePass(m, pass, true);
+                var errors = System.Linq.Enumerable.Where(UnityEditor.ShaderUtil.GetShaderMessages(m.shader),
+                    x => x.severity == UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error);
+                CollectionAssert.IsEmpty(System.Linq.Enumerable.Select(errors, x => $"{x.file}:{x.line} {x.message}"));
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
         public void AShellEntryTakesItsMasksAndFlowValues()
         {
             // Chorus's M_Guilt_Shell: the mask in _BaseMap (the shadow pass reads its alpha), the flowing noise in _OcclusionMap,

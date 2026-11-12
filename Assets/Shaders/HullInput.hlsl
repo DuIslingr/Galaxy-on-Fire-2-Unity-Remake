@@ -88,6 +88,11 @@ float4 _ChorusKicker2;
 float4 _ChorusDirt;
 float4 _ChorusDirt2;
 float4 _ChorusDirt3;
+// GoF2: a glow travelling along a pattern (Chorus's M_Phoenix glow lines; HullForwardPass.hlsl GlowWave), on when
+// _WaveParams.x > 0: x its multiplier, y the pattern's tiling, z its speed, w the mask's channel; _WaveMin / _WaveMax rgb.
+float4 _WaveParams;
+float4 _WaveMin;
+float4 _WaveMax;
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -194,6 +199,8 @@ TEXTURE2D(_Es2WearNoiseMap);
 TEXTURE2D(_Es2GrungeMap);
 // GoF2: Chorus's layers: the palette (left half: LayerColors, linear; right half: LayerData), read by texel; the dirt's
 // roughness (sampled with the global linear-repeat sampler). Their other maps take URP's slots (ModMaterials.ChorusLayers).
+TEXTURE2D(_WavePattern);
+TEXTURE2D(_WaveMask);
 TEXTURE2D(_ChorusPalette);
 TEXTURE2D(_ChorusDirtRough);
 UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_BaseMap);

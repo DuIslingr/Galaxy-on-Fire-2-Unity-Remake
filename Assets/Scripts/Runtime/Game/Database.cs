@@ -520,6 +520,8 @@ namespace GoF2Remake.Data
         public ChorusPortalSpec portal;
         /// <summary>Remake (2026-11-11): Chorus's rift vortex (GoF2/ChorusRift, ModMaterials.Rift).</summary>
         public ChorusRiftSpec rift;
+        /// <summary>Remake (2026-11-11): a glow that travels along a pattern (Chorus's M_Phoenix glow lines; GoF2/Hull GlowWave).</summary>
+        public GlowWaveSpec wave;
         // An engine flame (GoF2/ModEngineFlame, Modding.EngineFlame): the surfaces are flame stubs whose UV u runs from the
         // nozzle (0) to the tip (1), stretched backward by the throttle; emissionColor x emissionIntensity is its colour.
         public bool flame;
@@ -565,6 +567,20 @@ namespace GoF2Remake.Data
             foreach (var t in new[] { (noise, true, false), (height, true, false), (curve, true, false), (sphereNormal, true, false), (ringNormal, true, false), (gradient, true, false) })
                 if (!string.IsNullOrEmpty(t.Item1)) yield return t;
         }
+    }
+
+    /// <summary>A material's "wave" block (GoF2/Hull's GlowWave; ModMaterials.GlowWave), after Chorus's M_Phoenix (its compiled
+    /// base pass): the 'pattern' (R its strength, G and B its phase) over UV0 x 'tiling'; at each texel the phase
+    /// frac(G - B - time x 'speed') makes a triangle wave t (0 at its ends, 1 in its middle) that runs along the pattern;
+    /// the glow lerp('min', 'max', t) x t x R x the 'mask' image's 'channel' (0 R, 1 G, 2 B; over UV0) x 'multiplier', added to
+    /// the emission. Both images read as data.</summary>
+    [System.Serializable] public class GlowWaveSpec
+    {
+        public string pattern, mask;
+        public int channel = 1;
+        public float tiling = 1f, speed = 1f, multiplier = 1f;
+        public float[] min, max;
+        public bool On => !string.IsNullOrEmpty(pattern) && !string.IsNullOrEmpty(mask);
     }
 
     /// <summary>A material's "rift" block: Chorus's rift vortex (M_PortalRift_2, on SM_Rift_Vortex), drawn added by

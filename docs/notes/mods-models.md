@@ -387,6 +387,16 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   explosion: `NpcShipDamage.UpdateDying` (not fixed objects, turrets or ships with the game's wreck; the dying fighter's
   tumble velocity, a freighter's none; the model hidden) and `PlayerHealth.UpdateDeath` (at 3 s). Local only (proxies
   explode plainly). Tests `WreckBreakupTests`.
+- **Glow waves** (remake, 2026-11-11, Chorus's M_Phoenix glow lines, from its compiled base pass): a material's `"wave"`
+  block (`GlowWaveSpec` in Database.cs, `ModMaterials.GlowWave`, GoF2/Hull's `GlowWave` in HullForwardPass.hlsl, on when
+  `_WaveParams.x` > 0: x multiplier, y tiling, z speed, w the mask's channel; `_WaveMin` / `_WaveMax`; `_WavePattern`,
+  `_WaveMask` linear). The pattern P over UV0 x tiling: phase = frac(P.g - P.b - time x speed), t = 1 - 2|phase - 0.5|,
+  lerp(min, max, t) x t x P.r x mask x multiplier added to `surfaceData.emission` after the layers. M_Phoenix reads
+  Emissive02 Min / Max there (its plain Emissive02 isn't in its uniforms), the Magnetic Plates Pattern
+  (T_HexPatternNoise_01_A) x Magnetic Pattern Tiling, the emissive masks' green x Emissive02_Multiplier; left out: its
+  hit flash (HitColor about HitLocation for HitEffectDuration) and its world-space AFX pattern (scaled by a per-primitive
+  value, 0 at rest). Maps preloaded with the ship's (`ModShips`) and stations' (`ModStations`). Tests in
+  `ChorusLayersTests`.
 - **Death effects** (remake, 2026-11-11, after Chorus's death effect configs and their Cascade explosions): ships.json
   `"deathFx"` (`CustomShipData.deathFx`, a JSON file: `CustomFxFile` / `CustomFx` / `CustomFxEmitter` in Database.cs).
   `World.ModDeathFx`: the files read once per mod revision (by ship); `SpawnMain` in place of `Explosion.Spawn` at the

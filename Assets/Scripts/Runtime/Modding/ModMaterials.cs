@@ -480,6 +480,23 @@ namespace GoF2Remake.Modding
             m.SetVector(Es2GrungeId, new Vector4(grunge != null ? Mathf.Clamp01(e.grungeAmount) : 0f, Mathf.Max(0.01f, e.grungeTiling), Mathf.Max(0f, e.rimBoost), 0f));
         }
 
+        /// <summary>A "wave" block (GlowWaveSpec, GoF2/Hull's GlowWave): its pattern and mask as data; off (_WaveParams.x 0)
+        /// without one, as the templates have it.</summary>
+        static void GlowWave(ModInfo mod, CustomShipMaterial e, Material m)
+        {
+            var w = e.wave;
+            if (w == null || !w.On || !m.HasProperty("_WaveParams")) return;
+            var pattern = Texture(mod, w.pattern, true);
+            var mask = Texture(mod, w.mask, true);
+            if (pattern == null || mask == null) return;
+            pattern.wrapMode = TextureWrapMode.Repeat;
+            m.SetTexture("_WavePattern", pattern);
+            m.SetTexture("_WaveMask", mask);
+            m.SetVector("_WaveParams", new Vector4(Mathf.Max(0f, w.multiplier), Mathf.Max(1e-3f, w.tiling), w.speed, Mathf.Clamp(w.channel, 0, 2)));
+            m.SetVector("_WaveMin", Rgb(w.min, Color.black));
+            m.SetVector("_WaveMax", Rgb(w.max, Color.white));
+        }
+
         static readonly int ChorusParamsId = Shader.PropertyToID("_ChorusParams"), ChorusAccentId = Shader.PropertyToID("_ChorusAccent"),
             ChorusAccent2Id = Shader.PropertyToID("_ChorusAccent2"), ChorusEmitRId = Shader.PropertyToID("_ChorusEmitR"),
             ChorusEmitGId = Shader.PropertyToID("_ChorusEmitG"), ChorusEmitBId = Shader.PropertyToID("_ChorusEmitB"),
@@ -701,6 +718,7 @@ namespace GoF2Remake.Modding
             m.SetFloat("_Smoothness", e.smoothness);
             Es2Layers(mod, e, m);
             ChorusLayers(mod, e, m);
+            GlowWave(mod, e, m);
             var em = Texture(mod, e.emission, false);
             bool emColor = e.emissionColor != null && e.emissionColor.Length >= 3;
             if (em != null || emColor)
