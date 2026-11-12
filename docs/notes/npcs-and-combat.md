@@ -555,8 +555,14 @@ battle spawns in 156 ms with its hulls.
   only) and `ChorusJump`s (behind the target, facing it, `HullWarpIn`); Steer takes `ChorusFightGoal` (the target, a point
   past it, a break or a retreat point by the mode's side), its speed factor and hold, no formation or break-off box. The
   attack tokens (Gen1 / Gen11 / Gen14, the AI director's counts) are the remake's: the nearest MaxAttackers (3) on a player
-  fire. Not the EQS queries' own scoring (the attack and flee points are the remake's), nor the gunships' and scouts'
-  trees (they take the fighters'). Tests `ChorusDogfightTests`.
+  fire. The pass and the run away fly to EQQuery_PassByPosition's point (2026-11-11, `ChorusFleePoint`: 32 points on a
+  sphere at DistanceOfTargetPoint 75000 cm, scored by `ChorusDogfight.FleeScore`: ExclusionAngle x5, FleeDirection x10,
+  SetPredefinedScores x2 as a random share, once per mode entry (`Entries`); the two native tests' curves are the
+  remake's linear reading, InCombatArea / NearGeometry left out); the attack point stays the target. `"ai":
+  "chorusScout"` (BT_Scout_CombatRoam: its break also on CheckForTargetAligned's 25 deg within 500 m, at x1.5, every 4 s)
+  and `"chorusGunship"` (BT_Gunship_CombatRoam_New: in at x2 to 600 m, `Mode.Hold` there at speed x0.1 facing and firing,
+  in again past 800 m; no break, run away or jump; its line-of-sight repositioning left out) by `ChorusDogfight.Kind`
+  (`KindOf`). Tests `ChorusDogfightTests`.
 - **A ship type's own drops** (remake 2026-11-04, for mods; ships.json `traffic.loot` [ { item, chance, min, max } ] and
   `lootDrops`, `CustomTraffic.loot` / `CustomLoot`, `NpcShip.AddOwnLoot` at Setup and Revive): after EVERSPACE 2's
   loot_npcs.csv (a blueprint, its drop count, then item / chance / amount range triples): each entry by its chance, at most

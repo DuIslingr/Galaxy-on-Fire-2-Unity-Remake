@@ -4,6 +4,7 @@
 // point on past it on a pass, a break to its side when the target aims at it, a run away below half hull; out of the
 // player's view beyond 1.2 km it jumps to 400 m from its target (materializing, HullWarpIn, as Chorus's warp). Of a crowd on
 // one player at most ChorusDogfight.MaxAttackers fire at once (Chorus's attack tokens). For fighters only, like the others.
+// "chorusScout" breaks also when the target's nose is near it, faster; "chorusGunship" holds 600 m off as a turret.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -24,8 +25,9 @@ namespace GoF2Remake.World
             var t = target.transform;
             var toMe = transform.position - t.position;
             float d = toMe.magnitude / M;
-            // the target's nose on it, within its firing distance (BTService_CheckForEnemyAttack's question)
-            bool aimed = d <= ChorusDogfight.FireStartUnits && Vector3.Dot(t.forward, toMe.normalized) > Mathf.Cos(10f * Mathf.Deg2Rad);
+            // the target's nose on it, within its firing distance (BTService_CheckForEnemyAttack's question; a scout's
+            // CheckForTargetAligned: 25 deg within 500 m)
+            bool aimed = d <= chorusFight.AimRange && Vector3.Dot(t.forward, toMe.normalized) > Mathf.Cos(chorusFight.AimCone * Mathf.Deg2Rad);
             bool hidden = false;
             if (PlayerTarget(target) && Camera.main is Camera cam)
             {
@@ -54,21 +56,47 @@ namespace GoF2Remake.World
             var me = transform.position;
             var toT = t - me;
             float d = toT.magnitude / M;
-            var away = toT.sqrMagnitude > 1e-8f ? -toT.normalized : -transform.forward;
             var side = transform.right * chorusFight.Side;
             bool tooMany = PlayerTarget(target) && ChorusAttackers() > ChorusDogfight.MaxAttackers;
             hold = !chorusFight.Fires(d) || tooMany;
             switch (chorusFight.Current)
             {
-                case ChorusDogfight.Mode.PassBy:   // on past it and off to a side
-                    return t - away * (ChorusDogfight.FireStartUnits * 0.5f * M) + side * (ChorusDogfight.FireStartUnits * 0.3f * M);
+                case ChorusDogfight.Mode.PassBy:   // on past it: its EQS point
+                    return ChorusFleePoint(ChorusDogfight.PassMinAngle);
                 case ChorusDogfight.Mode.Evade:   // a hard break to the side
                     return me + (side * 2f + transform.forward).normalized * (ChorusDogfight.FireStartUnits * 0.5f * M);
-                case ChorusDogfight.Mode.Retreat:   // away
-                    return me + (away * 2f + side).normalized * (ChorusDogfight.FireStartUnits * M);
+                case ChorusDogfight.Mode.Retreat:   // away: its EQS point past 60 deg from the target
+                    return ChorusFleePoint(ChorusDogfight.RetreatMinAngle);
+                case ChorusDogfight.Mode.Hold:   // a gunship's turret mode: where it is, its nose on the target
+                    return aimPos;
                 default:
                     return aimPos;
             }
+        }
+
+        /// <summary>The flee task's point (ChorusDogfight's EQS reading): of 32 points on a sphere round the ship at
+        /// FleePointUnits, the best scored by its angle away from the target, its turn from the heading and a random share;
+        /// chosen once as the mode starts.</summary>
+        Vector3 ChorusFleePoint(float minAngle)
+        {
+            if (chorusGoalEntry == chorusFight.Entries && chorusGoalMode == chorusFight.Current) return chorusGoal;
+            chorusGoalEntry = chorusFight.Entries; chorusGoalMode = chorusFight.Current;
+            var me = transform.position;
+            var toT = target.transform.position - me;
+            var dirT = toT.sqrMagnitude > 1e-8f ? toT.normalized : transform.forward;
+            var heading = transform.forward;
+            const int n = 32;
+            float best = float.MinValue;
+            var pick = heading;
+            for (int i = 0; i < n; i++)   // (a Fibonacci sphere: evenly spread)
+            {
+                float y = 1f - 2f * (i + 0.5f) / n, r = Mathf.Sqrt(1f - y * y), a = i * 2.39996323f;
+                var dir = new Vector3(Mathf.Cos(a) * r, y, Mathf.Sin(a) * r);
+                float s = ChorusDogfight.FleeScore(Vector3.Angle(dir, dirT), Vector3.Angle(dir, heading), Random.value, minAngle);
+                if (s > best) { best = s; pick = dir; }
+            }
+            chorusGoal = me + pick * (ChorusDogfight.FleePointUnits * M);
+            return chorusGoal;
         }
 
         /// <summary>The ships on Chorus's way attacking this one's target (the attack tokens' count), ranked by their distance to

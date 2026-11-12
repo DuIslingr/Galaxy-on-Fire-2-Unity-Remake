@@ -11,6 +11,14 @@
 //   Retreat    BTDecorator_CompareHealthPercent < 0.5: a 5 s flight away (BTTask_Flee_14), at most every 15 s
 //   Teleport   BTDecorator_CheckForOutOfView (2 s) with CheckInDistance beyond 1200 m: it jumps to 400 m from the target
 //              (BTTask_Teleport TeleportToDistance), at most every 15 s
+// Two more kinds (2026-11-11, "ai": "chorusScout" / "chorusGunship"):
+//   Scout      BT_Scout_CombatRoam: the fighter's, its break also when the target's nose is within 25 deg of it within
+//              500 m (BTService_CheckForTargetAligned TargetAimingAngle / TargetDist: bAlignedToPlayer), at x1.5 (the
+//              "Very Challenging Flee", BTTask_Flee_4's LinearSpeedMultiplier), every 4 s at most (BTDecorator_Cooldown 4)
+//   Gunship    BT_Gunship_CombatRoam_New: flies at the target at x2 until 600 m off (BTTask_FlyToTarget TargetReachedDistance
+//              60000, LinearSpeedMultiplier 2), then holds there facing it and firing (BTT_TurretMode_Gunship,
+//              BTTask_LookAtTarget, BTTask_AIAttackTargetWithWeapon) until it is past 800 m (BTDecorator_CompareDistance
+//              80000): no break, run away or jump (its tree has none; the line-of-sight repositioning is left out)
 // Its distances are Chorus's centimetres x 0.72 game units (the Chorus ships' scale). The attack tokens (Gen1 / Gen11 / Gen14:
 // how many may attack at once, the AI director's) are the remake's: at most MaxAttackers of a crowd on one player fire.
 // Plain C#; 'random' gives 0..1.
@@ -19,7 +27,8 @@ namespace GoF2Remake.Flight
 {
     public class ChorusDogfight
     {
-        public enum Mode { Approach, PassBy, Evade, Retreat }
+        public enum Mode { Approach, PassBy, Evade, Retreat, Hold }
+        public enum Kind { Fighter, Scout, Gunship }
 
         public const float UnitsPerCm = 0.72f;
         public const float FireStartUnits = 60000f * UnitsPerCm, ClosestUnits = 5000f * UnitsPerCm;
@@ -28,6 +37,31 @@ namespace GoF2Remake.Flight
         public const float TeleportBeyondUnits = 120000f * UnitsPerCm, TeleportToUnits = 40000f * UnitsPerCm;
         public const float OutOfViewMs = 2000f, TeleportCooldownMs = 15000f;
         public const int MaxAttackers = 3;
+        public const float AimConeDegrees = 10f, ScoutAimConeDegrees = 25f, ScoutAimUnits = 50000f * UnitsPerCm;
+        public const float ScoutEvadeSpeed = 1.5f, ScoutEvadeCooldownMs = 4000f;
+        public const float GunshipHoldUnits = 60000f * UnitsPerCm, GunshipReengageUnits = 80000f * UnitsPerCm, HoldSpeed = 0.1f;
+
+        public Kind Type { get; }
+        /// <summary>How many times it has entered a mode (a new pass or run away asks for a new EQS point).</summary>
+        public int Entries { get; private set; }
+
+        // EQQuery_PassByPosition (EQQuery_FindFleePosition_2): points on spheres round the ship at the flee task's
+        // DistanceOfTargetPoint (75000), scored ExclusionAngle x5 (away from the target past MinAngleToTarget: the pass 0, the
+        // run away BTTask_Flee_14's 60), FleeDirection x10 (a turn within FleeDirectionAngleChange of its heading; the task's
+        // range isn't in the assets: 0 - 60 deg here), SetPredefinedScores x2 (a random share); InCombatArea and
+        // NearGeometry (the orbit has no combat area or level geometry in the remake) left out. The two native tests' curves
+        // are the remake's reading: linear in the angle.
+        public const float FleePointUnits = 75000f * UnitsPerCm, PassMinAngle = 0f, RetreatMinAngle = 60f, TurnMaxAngle = 60f;
+        public const float ExclusionWeight = 5f, DirectionWeight = 10f, RandomWeight = 2f;
+
+        /// <summary>One candidate's EQS score: 'awayDeg' its angle from the direction to the target, 'turnDeg' from its heading,
+        /// 'random' 0..1, 'minAngle' the exclusion's.</summary>
+        public static float FleeScore(float awayDeg, float turnDeg, float random, float minAngle)
+        {
+            float excl = awayDeg >= minAngle ? (awayDeg - minAngle) / System.Math.Max(1f, 180f - minAngle) : 0f;
+            float turn = turnDeg <= TurnMaxAngle ? 1f : System.Math.Max(0f, 1f - (turnDeg - TurnMaxAngle) / 45f);
+            return ExclusionWeight * excl + DirectionWeight * turn + RandomWeight * random;
+        }
 
         /// <summary>What it sees this step: the target's distance (game units), whether the target's nose is on it, its hull
         /// share, whether it is out of the player's view.</summary>
@@ -44,19 +78,37 @@ namespace GoF2Remake.Flight
         float modeMs, waitMs, evadeCdMs, retreatCdMs, teleportCdMs, hiddenMs;
         readonly System.Func<float> random;
 
-        public ChorusDogfight(System.Func<float> random) { this.random = random ?? (() => 0.5f); }
+        public ChorusDogfight(System.Func<float> random, Kind kind = Kind.Fighter) { this.random = random ?? (() => 0.5f); Type = kind; }
 
-        /// <summary>Its speed now: x2 on an approach.</summary>
-        public float SpeedFactor => Current == Mode.Approach && waitMs <= 0f ? ApproachSpeed : 1f;
+        /// <summary>The kind for a traffic "ai" word: "chorus" a fighter, "chorusScout", "chorusGunship"; null = not Chorus's.</summary>
+        public static Kind? KindOf(string ai)
+        {
+            if (string.IsNullOrEmpty(ai)) return null;
+            if (string.Equals(ai, "chorus", System.StringComparison.OrdinalIgnoreCase)) return Kind.Fighter;
+            if (string.Equals(ai, "chorusScout", System.StringComparison.OrdinalIgnoreCase)) return Kind.Scout;
+            if (string.Equals(ai, "chorusGunship", System.StringComparison.OrdinalIgnoreCase)) return Kind.Gunship;
+            return null;
+        }
 
-        /// <summary>It may fire now: on an approach, within its firing distance.</summary>
-        public bool Fires(float distance) => Current == Mode.Approach && waitMs <= 0f && distance <= FireStartUnits;
+        /// <summary>Its speed now: x2 on an approach, a scout's break x1.5, all but still while a gunship holds.</summary>
+        public float SpeedFactor => Current == Mode.Hold ? HoldSpeed
+            : Current == Mode.Approach && waitMs <= 0f ? ApproachSpeed
+            : Current == Mode.Evade && Type == Kind.Scout ? ScoutEvadeSpeed : 1f;
+
+        /// <summary>The target's nose counts as on it within this cone (degrees) and distance (units).</summary>
+        public float AimCone => Type == Kind.Scout ? ScoutAimConeDegrees : AimConeDegrees;
+        public float AimRange => Type == Kind.Scout ? ScoutAimUnits : FireStartUnits;
+
+        /// <summary>It may fire now: on an approach within its firing distance; a gunship while it holds.</summary>
+        public bool Fires(float distance) => Type == Kind.Gunship ? Current == Mode.Hold && distance <= GunshipReengageUnits
+            : Current == Mode.Approach && waitMs <= 0f && distance <= FireStartUnits;
 
         /// <summary>A new target: a fresh approach.</summary>
         public void NewTarget() { Enter(Mode.Approach); waitMs = 0f; hiddenMs = 0f; }
 
         void Enter(Mode m)
         {
+            Entries++;
             Current = m;
             modeMs = 0f;
             Side = random() < 0.5f ? -1 : 1;
@@ -67,6 +119,13 @@ namespace GoF2Remake.Flight
         {
             modeMs += dtMs;
             evadeCdMs -= dtMs; retreatCdMs -= dtMs; teleportCdMs -= dtMs; waitMs -= dtMs;
+            if (Type == Kind.Gunship)   // (BT_Gunship_CombatRoam_New: in to 600 m, hold, back in past 800 m)
+            {
+                if (Current != Mode.Hold && v.distance <= GunshipHoldUnits) Enter(Mode.Hold);
+                else if (Current == Mode.Hold && v.distance > GunshipReengageUnits) Enter(Mode.Approach);
+                else if (Current != Mode.Hold && Current != Mode.Approach) Enter(Mode.Approach);
+                return false;
+            }
             hiddenMs = v.outOfView && v.distance > TeleportBeyondUnits ? hiddenMs + dtMs : 0f;
             if (hiddenMs >= OutOfViewMs && teleportCdMs <= 0f)
             {
@@ -82,7 +141,7 @@ namespace GoF2Remake.Flight
             }
             if (v.aimedAt && evadeCdMs <= 0f && (Current == Mode.Approach || Current == Mode.PassBy))
             {
-                evadeCdMs = EvadeCooldownMs;
+                evadeCdMs = Type == Kind.Scout ? ScoutEvadeCooldownMs : EvadeCooldownMs;
                 Enter(Mode.Evade);
                 return false;
             }

@@ -58,6 +58,59 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AScoutBreaksFasterWhenYourNoseIsOnIt()
+        {
+            Assert.AreEqual(ChorusDogfight.Kind.Scout, ChorusDogfight.KindOf("chorusScout"));
+            Assert.AreEqual(ChorusDogfight.Kind.Fighter, ChorusDogfight.KindOf("Chorus"));
+            Assert.IsNull(ChorusDogfight.KindOf("gof3"));
+            var s = new ChorusDogfight(() => 0.7f, ChorusDogfight.Kind.Scout);
+            Assert.AreEqual(25f, s.AimCone);
+            Assert.AreEqual(36000f, s.AimRange, 1e-3f, "500 m");
+            s.Step(100f, At(30000f, aimed: true));
+            Assert.AreEqual(ChorusDogfight.Mode.Evade, s.Current);
+            Assert.AreEqual(1.5f, s.SpeedFactor, "the Very Challenging Flee");
+            s.Step(2000f, At(30000f));
+            s.Step(2100f, At(30000f, aimed: true));
+            Assert.AreEqual(ChorusDogfight.Mode.Evade, s.Current, "again after its 4 s");
+            var f = new ChorusDogfight(() => 0.7f);
+            f.Step(100f, At(30000f, aimed: true));
+            Assert.AreEqual(ChorusDogfight.Mode.Evade, f.Current);
+            Assert.AreEqual(1f, f.SpeedFactor, "a fighter's break at its own speed");
+            Assert.IsFalse(new ChorusDogfight(() => 0.7f).Step(100f, At(40000f, aimed: false)), "(nothing)");
+        }
+
+        [Test]
+        public void AGunshipHoldsAsATurret()
+        {
+            var g = new ChorusDogfight(() => 0.5f, ChorusDogfight.Kind.Gunship);
+            Assert.AreEqual(ChorusDogfight.Mode.Approach, g.Current);
+            Assert.AreEqual(2f, g.SpeedFactor, "in at x2");
+            Assert.IsFalse(g.Fires(50000f), "not on its way in");
+            g.Step(100f, At(50000f, aimed: true, hull: 0.2f));
+            Assert.AreEqual(ChorusDogfight.Mode.Approach, g.Current, "no break, no run away");
+            g.Step(100f, At(43000f));
+            Assert.AreEqual(ChorusDogfight.Mode.Hold, g.Current, "600 m off");
+            Assert.IsTrue(g.Fires(43000f));
+            Assert.Less(g.SpeedFactor, 0.5f, "all but still");
+            g.Step(100f, At(55000f));
+            Assert.AreEqual(ChorusDogfight.Mode.Hold, g.Current, "within 800 m it stays");
+            Assert.IsFalse(g.Step(5000f, At(90000f, hidden: true)), "it never jumps");
+            Assert.AreEqual(ChorusDogfight.Mode.Approach, g.Current, "past 800 m: in again");
+        }
+
+        [Test]
+        public void TheFleePointIsScoredAwayAndAhead()
+        {
+            // straight away from the target, along its heading: the best; back at the target or a U-turn: the worst
+            float ahead = ChorusDogfight.FleeScore(180f, 0f, 0f, 0f);
+            Assert.AreEqual(15f, ahead, 1e-4f, "5 away + 10 the turn");
+            Assert.Less(ChorusDogfight.FleeScore(0f, 0f, 0f, 0f), ahead, "at the target scores no exclusion");
+            Assert.AreEqual(0f, ChorusDogfight.FleeScore(180f, 180f, 0f, 0f) - 5f, 1e-4f, "a U-turn loses the turn's 10");
+            Assert.AreEqual(10f, ChorusDogfight.FleeScore(50f, 30f, 0f, 60f), 1e-4f, "within the run away's 60 deg: excluded");
+            Assert.AreEqual(2f, ChorusDogfight.FleeScore(0f, 200f, 1f, 0f), 1e-4f, "the random share");
+        }
+
+        [Test]
         public void TrafficPrimariesKeepTheirDamageASecond()
         {
             // Chorus's BP_NPC_Weapon_Main_Scout: 35 every 0.2 s against the fighter's 70 every 0.25 s (0.625 of its damage a

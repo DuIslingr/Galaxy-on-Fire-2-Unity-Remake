@@ -41,7 +41,7 @@ namespace GoF2Remake.World
             string ai = mode == SessionRules.DogfightAll ? "gof3" : mode == SessionRules.DogfightEs2All ? "es2"
                       : (db?.Ship(spec.ship) as CustomShipData)?.traffic?.ai;
             if (string.Equals(ai, "es2", System.StringComparison.OrdinalIgnoreCase)) { SetupEs2Fight(); return; }   // (NpcShipEs2)
-            if (string.Equals(ai, "chorus", System.StringComparison.OrdinalIgnoreCase)) { chorusFight = new ChorusDogfight(() => Random.value); return; }   // (NpcShipChorus)
+            if (ChorusDogfight.KindOf(ai) is ChorusDogfight.Kind ck) { chorusFight = new ChorusDogfight(() => Random.value, ck); return; }   // (NpcShipChorus)
             if (!string.Equals(ai, "gof3", System.StringComparison.OrdinalIgnoreCase)) return;
             bool boss = spec.wantedIndex >= 0 || spec.pirateEvent == SpawnSpec.EventBoss;
             float evadeBase = (db?.Ship(spec.ship) as CustomShipData)?.traffic?.evade ?? -1f;   // (GoF3's evadeChanceBase by class and tier)
