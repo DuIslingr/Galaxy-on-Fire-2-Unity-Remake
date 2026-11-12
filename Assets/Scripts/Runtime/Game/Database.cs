@@ -270,9 +270,46 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods (2026-11-11, Chorus's wrecks): what the ship breaks into where it explodes (World.WreckBreakup);
         /// null = it explodes and is gone.</summary>
         public CustomWreck wreck;
+        /// <summary>Remake mods (2026-11-11, Chorus's explosions): a JSON file in the mod with the ship's own death effects
+        /// (CustomFxFile, World.ModDeathFx) instead of the game's explosion; null = the game's.</summary>
+        public string deathFx;
         /// <summary>Remake mods (after Galaxy on Fire 3's wingmen): the device a hired wingman flying this hull uses: "repair",
         /// "ammo" or "charged" (Flight.WingmanDevice); none = none, like the game's wingmen.</summary>
         public string wingmanDevice;
+    }
+
+    /// <summary>Remake mods (ships.json "deathFx", 2026-11-11, after Chorus's Cascade explosions): the ship's death effects,
+    /// a JSON file in the mod: 'main' at the explosion, 'dying' 'dyingCount' times over its tumble (at points on the hull),
+    /// in place of the game's explosion (its sound stays).</summary>
+    [System.Serializable] public class CustomFxFile
+    {
+        public CustomFx main, dying;
+        public int[] dyingCount;
+    }
+
+    /// <summary>One effect: its emitters, each a particle system, together.</summary>
+    [System.Serializable] public class CustomFx
+    {
+        public CustomFxEmitter[] emitters;
+    }
+
+    /// <summary>A particle emitter (after a Cascade emitter's level 0): sizes and speeds in game units, times in seconds.
+    /// 'image' a PNG in the mod (white on black, added; 'sheet' [columns, rows] of frames, 'frames' the frame over the
+    /// particle's life as samples 0..1 of the sheet, else 'randomFrame' one at random), 'bursts' [time, count, ...], 'rate'
+    /// a second over 'duration'; 'life' / 'size' / 'speed' (outward, or along the effect's forward with 'forward') / 'spin'
+    /// (deg a second) [min, max]; 'sphere' the radius they start in; 'drag' as Unreal's (velocity lost a second x it);
+    /// 'inherit' of the ship's motion; 'color' its brightest colour (HDR), 'colorOverLife' [r, g, b, ...] and
+    /// 'alphaOverLife' samples 0..1 times it, 'sizeOverLife' samples times 'size'; 'stretch' > 0: drawn along its
+    /// flight, that long for its width.</summary>
+    [System.Serializable] public class CustomFxEmitter
+    {
+        public string image;
+        public int[] sheet;
+        public float[] frames;
+        public bool randomFrame, forward, randomRotation;
+        public float[] bursts;
+        public float rate, duration = 1f, sphere, drag, inherit = 1f, stretch;
+        public float[] life, size, speed, spin, color, colorOverLife, alphaOverLife, sizeOverLife;
     }
 
     /// <summary>Remake mods (ships.json "wreck", 2026-11-11, after Chorus's ExplosionPhysics wrecks): 'model' a glTF / GLB in the

@@ -257,6 +257,8 @@ namespace GoF2Remake.World
         float dyingMs, deadMs;
         Vector3 spinAxis, deathDir;
         Explosion explosion;
+        /// <summary>Remake mods: the death tumble's own effects still to come (ms left of dyingMs when each plays; ModDeathFx).</summary>
+        readonly List<float> dyingFxMs = new List<float>();
         int explosionSerial;   // the explosions are pooled: this one's Spawn (Explosion.Done)
         GameObject wreck;
         float wreckDamageMs;   // until the wreck takes its damaged material (CombatAssets.ApplyWreckDamage)

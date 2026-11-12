@@ -241,6 +241,9 @@ namespace GoF2Remake.World
             // PlayerFixedObject::update: every turret of the level goes too (remake, CapitalShips: an enhanced one's own only; in a
             // fleet battle the Vossk battleship's stay).
             if (Spec.ship == 14) { if (Spec.capitalEnhanced) traffic.DestroyCapitalTurrets(Spec); else traffic.DestroyTurrets(); }
+            // Remake mods: the ship's own death tumble effects (ModDeathFx "dying"), spread over the dying time below
+            dyingFxMs.Clear();
+            int dyingFx = IsFixed ? 0 : ModDeathFx.DyingCount(Spec.ship);
             if (IsFixed || IsFreighter)
             {
                 // PlayerFixedObject::update 0x17f6b4: record 22 (23 for the battleship and the Pirate Outpost) on the wreck,
@@ -283,10 +286,12 @@ namespace GoF2Remake.World
                     modelGo.SetActive(false);
                 }
                 DropCrate();
+                for (int i = 0; i < dyingFx; i++) dyingFxMs.Add(dyingMs * Random.Range(0.05f, 0.95f));
             }
             else
             {
                 dyingMs = 1500f + Random.Range(0, 1500);
+                for (int i = 0; i < dyingFx; i++) dyingFxMs.Add(dyingMs * Random.Range(0.05f, 0.95f));
                 // PlayerFighter: the death burn (record 9, +0x19c) through the tumble.
                 burn ??= new ShipBurn(transform);
                 burn.SetBurning(true);
@@ -345,9 +350,21 @@ namespace GoF2Remake.World
                 transform.position += deathDir * speed * dtMs * M;
             }
             dyingMs -= dtMs;
+            for (int i = dyingFxMs.Count - 1; i >= 0; i--)
+                if (dyingMs <= dyingFxMs[i])
+                {
+                    dyingFxMs.RemoveAt(i);
+                    // (a point on the hull: within its hit boxes' reach, else a few metres off its middle)
+                    float reach = model != null ? Mathf.Max(1f, PlayerHull.HullBounds(transform, model).extents.magnitude * 0.6f) : 5f;
+                    ModDeathFx.SpawnDying(Spec.ship, transform.position + Random.insideUnitSphere * reach, transform.rotation,
+                                          IsFreighter ? Vector3.zero : deathDir * speed * M * 1000f);
+                }
             if (dyingMs > 0f) return;
             // PlayerFixedObject::update: setScaling(6), 8 for the Terran battleship (0x37e7) and the pirate outpost (0x37a3).
-            explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? FreighterExplosionScale : FighterExplosionScale);
+            // Remake mods: the ship's own death effect (ModDeathFx "main") instead of the game's explosion, its sound kept
+            if (IsFixed || !ModDeathFx.SpawnMain(Spec.ship, transform.position, transform.rotation, IsFreighter ? Vector3.zero : deathDir * speed * M * 1000f))
+                explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? FreighterExplosionScale : FighterExplosionScale);
+            else explosion = null;
             // Remake mods: a ship with a "wreck" breaks into its pieces there (World.WreckBreakup), its hull gone with the blast.
             if (!IsFixed && !IsTurret && wreck == null && model != null)
             {

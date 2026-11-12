@@ -387,6 +387,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   explosion: `NpcShipDamage.UpdateDying` (not fixed objects, turrets or ships with the game's wreck; the dying fighter's
   tumble velocity, a freighter's none; the model hidden) and `PlayerHealth.UpdateDeath` (at 3 s). Local only (proxies
   explode plainly). Tests `WreckBreakupTests`.
+- **Death effects** (remake, 2026-11-11, after Chorus's death effect configs and their Cascade explosions): ships.json
+  `"deathFx"` (`CustomShipData.deathFx`, a JSON file: `CustomFxFile` / `CustomFx` / `CustomFxEmitter` in Database.cs).
+  `World.ModDeathFx`: the files read once per mod revision (by ship); `SpawnMain` in place of `Explosion.Spawn` at the
+  NPC's final explosion (`NpcShipDamage.UpdateDying`, not fixed objects; `explosion` left null, which reads as played
+  out) and the player's (`PlayerHealth.UpdateDeath`), with the game's explosion sound (`Sfx.PlayAt`); `SpawnDying`
+  `DyingCount` times at random moments of the tumble (`NpcShip.dyingFxMs`, scheduled in `OnDied` for fighters and
+  freighters) at random points within 0.6 of the hull's bounds. `Build`: one ParticleSystem an emitter (bursts / rate,
+  life, size, speed from a sphere or a zero-angle cone along +Z, Limit Velocity's drag, a custom emitter velocity for the
+  inherited motion, rotation, size and colour over life, the texture sheet, the stretched renderer), on the mods' glow
+  material (`ModMaterials.FromSpec` with an additive entry: the image as its emission map, the colour's brightness its HDR
+  emission, the particles' colours the fade; cached by image and colour). The root destroys itself after its longest
+  emitter. Local only. Tests `ModDeathFxTests`.
 - **Chorus rifts** (remake, 2026-11-11, for the Chorus rift look and Nimika's dormant rift): a material's `"rift"` block
   (`ChorusRiftSpec` in Database.cs, `ModMaterials.Rift`, GoF2/ChorusRift in Resources/GoF2Fx) after M_PortalRift_2's
   compiled base pass (MI_PortalRift_2_LocAST_Outside's parameters as the defaults; its uniform slots decoded from the
