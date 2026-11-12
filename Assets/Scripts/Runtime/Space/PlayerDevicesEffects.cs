@@ -284,6 +284,11 @@ namespace GoF2Remake.Flight
                 case Device.Type.RepairKit:
                     Overheat.CoolRandom(Random.value);
                     break;
+                case Device.Type.ShieldOvercharge:
+                    if (self.hitpoints == null) break;
+                    self.hitpoints.shield = self.hitpoints.maxShield;
+                    self.hitpoints.shieldLocked = true;
+                    break;
                 case Device.Type.Recovery:
                     PlayerDebuffs.Lift();
                     break;
@@ -417,6 +422,9 @@ namespace GoF2Remake.Flight
                 case Device.Type.Deflector:
                     if ((object)self.Deflects == (object)deflect) self.Deflects = null;
                     deflector = null;
+                    break;
+                case Device.Type.ShieldOvercharge:
+                    if (self.hitpoints != null) self.hitpoints.shieldLocked = false;
                     break;
                 case Device.Type.SensorCloud:
                     if (cloud == e) { cloud = null; Unhide(); }

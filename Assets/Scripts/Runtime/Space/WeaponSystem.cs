@@ -206,6 +206,8 @@ namespace GoF2Remake.Flight
         public bool PrimaryBlocked { get; set; }
         /// <summary>Raised when a player bullet hits something (the crosshair turns orange for 200 ms).</summary>
         public event Action Hit;
+        /// <summary>Remake: a HUD message (a weapon overheated, heatShots).</summary>
+        public event Action<string> Message;
         /// <summary>A bomb, mine or blast went off (the explosion's world position).</summary>
         public event Action<Vector3> Detonated;
         /// <summary>Remake (Flight.Device): a primary shot's damage on a ship (the strike charge fills from it).</summary>
@@ -322,6 +324,10 @@ namespace GoF2Remake.Flight
                     gun.reloadMs = Mathf.Max(1f, (int)(gun.reloadMs * fireRate));
                 }
                 if (gun.isBeam) gun.AutoAim = BeamTarget;
+                if (gun.beamRadius > 0f) gun.BeamSweeps = t => t.isShip ? t.hostileToPlayer || t == LockTarget : !t.friendToPlayer;   // remake mods: a wide beam
+                if (gun.heatShots > 0)   // remake mods: a gun that overheats (heatShots)
+                    gun.OverheatStarted += g => Message?.Invoke(string.Format(Localization.Extra("weaponOverheated", "{0} overheated"),
+                                                                              GameNames.Item(g.itemIndex)));
                 gun.Guided = item.Attr(15) == 1;
                 var rig = BuildRig(gun);
                 if (secondary) rig.stack = equipment[e];

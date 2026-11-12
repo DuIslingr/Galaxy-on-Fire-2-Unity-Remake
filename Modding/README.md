@@ -336,6 +336,8 @@ energy cells.
 | `slowFreeze` | 167 | 1: the slow also stops the ship turning (EVERSPACE 2's frozen: controls disabled); with `slowPercent` 0 the ship hangs still |
 | `dotDamage`, `dotMs` | 168, 169 | A hit adds `dotDamage` every 0.95 s for `dotMs`, past the shield, counted as yours; hits stack (EVERSPACE 2's corrosion and infestation). NPC ships only |
 | `vulnerablePercent`, `vulnerableMs` | 170, 171 | A hit makes the ship take `vulnerablePercent` % more from every hit for `vulnerableMs`; hits stack, up to +100 % (EVERSPACE 2's destabilized). NPC ships only |
+| `beamRadius` | 172 | A beam laser (an item based on 9, 10, 11 or 228) that also hits every hostile ship (and your lock) within this many game units of its line, out to its target or 1.5 km, the further; its beam is drawn as wide (Chorus's Death Ray). Friendly ships and asteroids beside the line are left alone |
+| `heatShots`, `heatCoolMs`, `overheatMs` | 173, 174, 175 | The gun overheats after `heatShots` shots in a row ("... overheated"): no shots for `overheatMs` (default 5000), then it is cool again; not firing, it cools from full in `heatCoolMs` (default 10000). A beam with a `loadingTimeMs` of 50 and a `range` (its life in ms) under that fires as a beam held on |
 | `device` | 150 | An active device's type (see [Devices](#devices)): 1 EMP wave, 2 EMP shot, 3 shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector |
 | `deviceCooldownMs` | 151 | Device: its cooldown after a run (default 60000) |
 | `deviceDurationMs` | 152 | Device: how long it runs: the slow on its targets, the strike charge's boost, the deflector (0 = at once) |
@@ -452,6 +454,7 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 19 Repair kit | One of your overheated items (a rift's Overheated Systems) works again at once (EVERSPACE 2's Nano Repair Kit); refused with none overheated | |
 | 20 Recovery | Lifts the debuffs on your ship: a web's slow, a rift's corrosion (EVERSPACE 2's System Recovery Routine); refused with none on | |
 | 21 Virus | Infects the locked ship (within `deviceRadius`); every `deviceGrowMs` (default 1 s) it spreads to the nearest hostile ship within `deviceRadius` of an infected one, up to 6; after `deviceDurationMs` every infected ship takes `deviceDamagePercent` % of a pirate raider's hull (EVERSPACE 2's Annihilator Virus) | radius, grow, duration, damage percent |
+| 22 ShieldOvercharge | The shield full at once, and for `deviceDurationMs` every hit stops at it: nothing reaches the armour or the hull, and the shield doesn't drop (Chorus's capital ship's Shield Overcharge: 5 s, a 10 s cooldown) | duration, cooldown |
 
 A **consumable** device (`"deviceConsumable": 1`, EVERSPACE 2's consumables) is used up one unit per use and has no
 cooldown unless given one: the hangar stacks bought units like a secondary's ammo (mounting moves the whole stack,
@@ -833,6 +836,7 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `id`, `name`, `description` | As for items. |
 | `race` | Who builds it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirate, 9 Void, or a [mod's race](#races) (`"guild"`, `"mod_id:guild"`). Prices are 1 % lower in its race's systems. |
 | `armor`, `cargo`, `handling` | Hull points, hold size (t), handling (the originals use 60 to 160). |
+| `hullRegen` | Optional. Your hull mends by this many points a second while you fly it, beside any repair bot's (Chorus's capital ship: 5 % of its hull a second). |
 | `price`, `priceDefault` | The price, and the price in the Default Economy (0 = the same). |
 | `slots` | `primary`, `secondary`, `turret`, `equipment`. A ship may have several turret slots, one per turret mount. |
 | `model` | **Required.** The ship's model, a `.glb` (or `.gltf`) file in the mod, or one of the game's (`"gof2:ship_028_terran"`, see [The game's own models](#the-games-own-models)). Shots hit its real shape, and the player's ship slides along it: every mesh counts except those with an additive / glow material, so keep invisible helper meshes out of the file. |

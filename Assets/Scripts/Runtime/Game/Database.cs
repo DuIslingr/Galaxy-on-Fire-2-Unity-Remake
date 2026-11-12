@@ -255,6 +255,9 @@ namespace GoF2Remake.Data
         // hurt only through its weak spots (their passed-on hits and bonuses), Chorus's DefaultDamageMultiplier 0.
         public float hullDamage = 1f;
         public float hullFactor = 1f;     // remake mods: a mod capital ship's hull x this (Modding.ModCapitalShips.Spawn)
+        /// <summary>Remake mods (Chorus's player capital ship): the player's hull mends by this many points a second
+        /// (PlayerHealth, Hitpoints.RegenerateHull); 0 = only a repair bot's.</summary>
+        public float hullRegen;
         /// <summary>"es2": EVERSPACE 2's engine effects (Modding.Es2EngineVfx: the glow, trails and lights at the exhaust and
         /// booster mounts) without flame materials of its own and without the glow discs (a capital ship's sockets).</summary>
         public string engineStyle;

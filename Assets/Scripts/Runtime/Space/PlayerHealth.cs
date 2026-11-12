@@ -65,6 +65,8 @@ namespace GoF2Remake.Flight
         int shieldRechargeMs;
         float repairHullMs, repairArmorMs;
         bool hasRepair, exploded;
+        /// <summary>Remake mods: the ship's own hull regeneration a second (ships.json "hullRegen"), 0 = none.</summary>
+        float hullRegen;
         float lastCombined, deathMs;
         // emergency system
         bool hasEmergency;
@@ -99,6 +101,7 @@ namespace GoF2Remake.Flight
             HasShield = shield > 0;
             HasArmor = armor > 0;
             if (repair != null) { hasRepair = true; RepairRates(repair, out repairHullMs, out repairArmorMs); }
+            hullRegen = Mathf.Max(0f, CustomShips.Get(Session.ShipIndex)?.hullRegen ?? 0f);
 
             Target = gameObject.AddComponent<Target>();
             Target.isPlayer = true;
@@ -155,6 +158,7 @@ namespace GoF2Remake.Flight
             HasArmor = armor > 0;
             hasRepair = repair != null;
             if (repair != null) RepairRates(repair, out repairHullMs, out repairArmorMs);
+            hullRegen = Mathf.Max(0f, CustomShips.Get(Session.ShipIndex)?.hullRegen ?? 0f);
             Hp.maxHull = hull; Hp.hull = keepFractions ? Mathf.Clamp(Mathf.RoundToInt(hull * hullShare), 1, hull) : hull;
             Hp.maxShield = shield; Hp.shield = keepFractions ? shield * shieldShare : shield;
             Hp.maxArmor = armor; Hp.armor = keepFractions ? Mathf.RoundToInt(armor * armorShare) : armor;
@@ -521,6 +525,7 @@ namespace GoF2Remake.Flight
             Hp.RegenerateShield(dtMs * GoF2Remake.Flight.Overheat.Factor(GoF2Remake.Flight.Overheat.Slot.Shield), shieldRechargeMs);   // (remake: overheated, Overheat)
             UpdateInjector(dtMs);
             if (hasRepair) Hp.Repair(dtMs, repairHullMs, repairArmorMs);
+            if (hullRegen > 0f) Hp.RegenerateHull(dtMs, hullRegen);   // remake mods: the ship's own (ships.json "hullRegen")
             Target.hp = Hp.hull;
 
             float combined = Hp.Combined;
