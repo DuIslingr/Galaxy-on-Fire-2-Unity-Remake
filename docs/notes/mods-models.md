@@ -380,6 +380,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   model's SkinnedMeshRenderers are kept (updateWhenOffscreen, its arms swing past the bind pose's bounds) instead of
   `FlattenSkinned`, so `animations` play on the bones (Chorus's Guilt: a soft skin, 26 joints, its 42 s idle). Measuring,
   collision and the LODs (AutoLods takes MeshFilters only: none for it) read or skip the bind pose.
+- **Quantized models** (2026-11-11): glTFast 6.20 reads KHR_mesh_quantization (`GltfImport`'s supported extensions), so a
+  mod model may carry its normals and tangents as normalized bytes and its vertex colours as normalized unsigned bytes
+  (the Chorus importer's stations, `glb.save(quantize=True)`: a third smaller, as Unreal itself keeps them); `ModGltf`
+  needs nothing for it. The test assembly references glTFast for it. Tests `ModGltfQuantizedTests` (a `[UnityTest]`
+  loading a quantized triangle through `ModGltf.Load` / `InstantiateMain`).
 - **Image formats** (`ImageImport`): every mod image (ModMaterials' `Texture` and background `PreloadTexture`, so skins,
   portraits, icons, hull textures, planets / suns / skies; ModInfo's preview; ModTextures' file list) and the Mod Builder's
   pickers (which store a picked image as PNG) read PNG / JPG by Unity's decoders and TGA (plain / RLE), BMP (8 / 24 / 32-bit),
