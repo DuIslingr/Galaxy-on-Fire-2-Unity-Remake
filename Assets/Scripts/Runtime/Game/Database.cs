@@ -204,6 +204,7 @@ namespace GoF2Remake.Data
         public string idle;                 // loops whenever nothing else plays
         public ShipStateAnimation drift;    // Chorus flight's drift
         public ShipStateAnimation travel;   // Chorus flight's travel boost
+        public ShipStateAnimation braking;  // while the brake is held (Chorus's player capital ship's flaps)
         public ShipStateAnimation weapons;  // while the player fires: deploy (start), deployed (loop), undeploy (end)
         public string steerLeft, steerRight, thrust, brake, bankLeft, bankRight;   // poses laid over it by the input (each clip's last frame)
         public ShipStateAnimation dodgeLeft, dodgeRight;   // Chorus flight's dash: played once (start, then end)

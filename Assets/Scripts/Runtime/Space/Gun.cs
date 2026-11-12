@@ -198,6 +198,17 @@ namespace GoF2Remake.Flight
         /// MaxHeat / HeatDissipationRate), 175 overheatMs (overheated: no shots for that long, then cool: OverheatCooldownDuration,
         /// bResetHeatAfterCooldown).</summary>
         public const int BeamRadiusAttr = 172, HeatShotsAttr = 173, HeatCoolMsAttr = 174, OverheatMsAttr = 175, BeamReachAttr = 176;
+        /// <summary>177 chargeMs: the trigger held this long before the gun fires (Chorus's Death Ray's ChargeDuration 1 s);
+        /// letting go starts it over.</summary>
+        public const int ChargeMsAttr = 177;
+        public readonly float chargeMs;
+        float chargedMs;
+        /// <summary>It may fire: no charge-up, or the trigger held through it.</summary>
+        public bool Charged => chargeMs <= 0f || chargedMs >= chargeMs;
+        /// <summary>The charge-up's share done (0..1; 1 without one).</summary>
+        public float Charge01 => chargeMs <= 0f ? 1f : Mathf.Clamp01(chargedMs / chargeMs);
+        /// <summary>'dtMs' on with the trigger 'held' (or not: it starts over).</summary>
+        public void Charge(float dtMs, bool held) => chargedMs = held ? chargedMs + dtMs : 0f;
         /// <summary>Game units around a beam's line it hits (0 = only what it meets, the original's).</summary>
         public readonly float beamRadius;
         /// <summary>A wide beam's length with nothing aimed, and how far past its target it sweeps (176 beamReach, game units;
@@ -248,6 +259,7 @@ namespace GoF2Remake.Flight
             beamRadius = isBeam ? Mathf.Max(0, item.Attr(BeamRadiusAttr)) : 0f;
             if (beamRadius > 0f) beamReach = Mathf.Max(1, item.Attr(BeamReachAttr, (int)BeamRangeUnits));
             heatShots = Mathf.Max(0, item.Attr(HeatShotsAttr));
+            chargeMs = Mathf.Max(0, item.Attr(ChargeMsAttr));
             heatCoolMs = Mathf.Max(1, item.Attr(HeatCoolMsAttr, 10000));
             overheatMs = Mathf.Max(0, item.Attr(OverheatMsAttr, 5000));
             emp = item.Attr(10);

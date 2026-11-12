@@ -115,6 +115,22 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AChargedGunFiresOnlyAfterItsChargeUp()
+        {
+            var gun = new Gun(Item(0, 1, 9, 10, 11, 50, Gun.ChargeMsAttr, 1000), Vector3.zero, false);
+            Assert.IsFalse(gun.Charged);
+            gun.Charge(600f, true);
+            Assert.AreEqual(0.6f, gun.Charge01, 1e-5f);
+            Assert.IsFalse(gun.Charged);
+            gun.Charge(500f, true);
+            Assert.IsTrue(gun.Charged, "held through its 1 s");
+            gun.Charge(16f, false);
+            Assert.IsFalse(gun.Charged, "let go: it starts over");
+            Assert.IsTrue(new Gun(Item(0, 1, 9, 10), Vector3.zero, false).Charged, "no charge-up");
+            Assert.AreEqual(Gun.ChargeMsAttr, GoF2Remake.Modding.ItemStats.IdOf("chargeMs"));
+        }
+
+        [Test]
         public void AnOverchargedShieldStopsEveryHit()
         {
             var hp = new Hitpoints(100, 50, 20) { shield = 10f };

@@ -13,7 +13,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   bones drew elsewhere and at another size, so bone animations don't play; the GLB's node animations, parts moving on
   their own, loop: `ModGltf.LoopAnimations`, glTFast's legacy Animation at the default wrap mode played its clip once;
   2026-11-11: ships.json `animations` names clips by state instead, `ModShipAnimator` on the built ship: idle on a loop,
-  Chorus flight's drift start / loop / end cross-faded, driven by `PlayerEngine` from `FlightModel.Drifting`; for Chorus's
+  Chorus flight's drift start / loop / end cross-faded, driven by `PlayerEngine` from `FlightModel.Drifting` (and a `braking`
+  state the same way while `SetPoses`' brake is past half, Chorus's capital ship's flaps); for Chorus's
   Forsaken, whose rigid skin the importer splits into parts on its skeleton's nodes),
   engine glow discs at the
   slot-3 mounts on mat_34813 (a mount's `glowSize` [half width, half height, flame length] makes an ellipse, its

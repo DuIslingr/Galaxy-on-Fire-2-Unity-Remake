@@ -203,6 +203,9 @@ namespace GoF2Remake.Flight
 
         // the running devices' state: the corrosion's target and tick, the hook, the tether, the entangler's sum
         Target corroding; float corrosionTickMs; Entry corrosionEntry;
+        // the Shield Overcharge's look (Chorus's BP_Effect_Auxiliary_Shield_PlayerCapitalShip: a shield round the hull): the
+        // emergency system's refraction bubble while it runs
+        EmergencyBubble overchargeBubble; Entry overchargeEntry;
         Target hooked; Entry hookEntry; float hookMs, hookPullSpeed, hookTargetSpeed, hookBeamMs;
         Target tethered; Entry tetherEntry; bool sharing;
         Target entangled; Entry entanglerEntry; float entangledDamage;
@@ -285,10 +288,18 @@ namespace GoF2Remake.Flight
                     Overheat.CoolRandom(Random.value);
                     break;
                 case Device.Type.ShieldOvercharge:
+                {
                     if (self.hitpoints == null) break;
                     self.hitpoints.shield = self.hitpoints.maxShield;
                     self.hitpoints.shieldLocked = true;
+                    var hull = GetComponent<ShipController>();
+                    var model = hull != null ? hull.visualModel : null;
+                    overchargeBubble?.Hide();
+                    overchargeBubble = assets != null ? EmergencyBubble.Show(assets, model != null ? model : transform,
+                                                                              model != null ? model.GetComponentInChildren<Renderer>() : null) : null;
+                    overchargeEntry = e;
                     break;
+                }
                 case Device.Type.Recovery:
                     PlayerDebuffs.Lift();
                     break;
@@ -425,6 +436,7 @@ namespace GoF2Remake.Flight
                     break;
                 case Device.Type.ShieldOvercharge:
                     if (self.hitpoints != null) self.hitpoints.shieldLocked = false;
+                    overchargeBubble?.Hide(); overchargeBubble = null; overchargeEntry = null;
                     break;
                 case Device.Type.SensorCloud:
                     if (cloud == e) { cloud = null; Unhide(); }
@@ -469,6 +481,8 @@ namespace GoF2Remake.Flight
         void UpdateRunning(float dtMs)
         {
             float dt = dtMs / 1000f;
+            if (overchargeBubble != null && overchargeEntry != null)   // (the bubble grows in and fades out with the overcharge)
+                overchargeBubble.Update(overchargeEntry.rules.ActiveLeft * overchargeEntry.rules.durationMs, overchargeEntry.rules.durationMs);
             if (corrosionEntry != null && corrosionEntry.rules.Active)
             {
                 if (!Affects(corroding)) { if (corrosionEntry.rules.Cancel()) End(corrosionEntry); }

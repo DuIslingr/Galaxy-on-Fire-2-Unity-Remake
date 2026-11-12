@@ -87,6 +87,7 @@ namespace GoF2Remake.Modding
             // Chorus's capital ship's Death Ray (2026-11-11; Flight.Gun): a beam that hits everything within beamRadius of its line
             // out to beamReach (game units), and a gun's heat (shots before it overheats, cooling from full, overheated)
             ["beamRadius"] = 172, ["heatShots"] = 173, ["heatCoolMs"] = 174, ["overheatMs"] = 175, ["beamReach"] = 176,
+            ["chargeMs"] = 177,
             // items.json's statList names
             ["steerable"] = 15, ["handling"] = 17,
             ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,

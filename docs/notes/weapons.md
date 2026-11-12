@@ -43,7 +43,8 @@ is generated from it by `Reference/tools/weapons/build_weapon_fx.py`; **GoF2 > B
   `beamRadius` (172, `Gun.WideBeamHit`: every target BeamSweeps allows within it and its own radius of the line, out to
   max(its length, `beamReach` 176, default 30000 units, its length with nothing aimed), but the one met; `GunRig.BeamWidthScale` widens the mesh to it) and gun heat
   (`heatShots` / `heatCoolMs` / `overheatMs`, 173-175, `Gun.AddHeat` / `Cool`: MaxHeat / HeatPerShot, MaxHeat /
-  HeatDissipationRate, OverheatCooldownDuration with bResetHeatAfterCooldown; "{0} overheated" via WeaponSystem.Message)), scatter guns
+  HeatDissipationRate, OverheatCooldownDuration with bResetHeatAfterCooldown; "{0} overheated" via WeaponSystem.Message;
+  `chargeMs` 177, ChargeDuration: `Gun.Charge` each frame with the trigger, `Charged` gates WeaponSystem's primary fire)), scatter guns
   (burst cube: a target's cube x1.5 / x2 / x3 by the shooter's distance; remake, `Gun.InScatterCube`, 2026-10-30: not a
   big object's, a hit radius past 2000 units, which keeps its plain cube: the pirate outpost's +-7500 grown x3 reached
   1.1 km out, so under Original collision every scatter shot near it burst at the ship's nose, a player's video; the

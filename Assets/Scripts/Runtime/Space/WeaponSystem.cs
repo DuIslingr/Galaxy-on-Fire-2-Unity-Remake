@@ -503,7 +503,8 @@ namespace GoF2Remake.Flight
             foreach (var r in rigs)
             {
                 var gun = r.gun;
-                if (!gun.isSecondary && primaryHeld)
+                if (!gun.isSecondary) gun.Charge(dtMs, primaryHeld);   // remake mods: a charge-up (chargeMs)
+                if (!gun.isSecondary && primaryHeld && gun.Charged)
                 {
                     // Remake debug: reloaded as fast as the bullet pool sustains (every frame emptied it in a burst).
                     if (Cheats.NoPrimaryCooldown && gun.reloadAcc >= gun.SustainedReloadMs) gun.reloadAcc = gun.WaitMs + 1f;
