@@ -627,13 +627,26 @@ namespace GoF2Remake.Data
         public float frames = 4f, lightningMul = 100000f, lightningCloud = 200f, gradation = 4f;
         public float blendExp = 1f, blendMult = 1f, corePow = 35f, coreTint = 0.05f, exposure = 0.4f;
         public float[] inner, outer, core, brightness, background, clouds;
+        /// <summary>Remake (2026-11-11): "bottom": Chorus's M_PortalRift_BOTTOM (the Rift seen from inside, LocRFA's vortex):
+        /// one 'emissive' colour for the inner / outer blend, the rock in 'baseColor', the bolts and the cloud lightning not
+        /// held to the red centre, the clouds in the emissive colour without the g^2; alpha-blended, fading out within
+        /// 'depthFade' of what is behind it and nearer than 'fadeOffset' + 'fadeLength' to the camera (game units).</summary>
+        public string mode;
+        public float[] emissive, baseColor;
+        public float depthFade, fadeOffset, fadeLength;
+        /// <summary>The vertex shader's world position offset (M_PortalRift_2's / _BOTTOM's: the vertex along its normal by
+        /// 'wpoMap' (R) at uv x tiling + t x pan, x saturate(5 g (1 - g)) x the strength): 'wpo' [strength in the model's
+        /// own units, tiling u, v, pan u, v]; none = still.</summary>
+        public string wpoMap;
+        public float[] wpo;
+        public bool Bottom => string.Equals(mode, "bottom", System.StringComparison.OrdinalIgnoreCase);
         public bool On => !string.IsNullOrEmpty(tiled);
 
         /// <summary>Its maps: (path, linear, normal map).</summary>
         public System.Collections.Generic.IEnumerable<(string path, bool linear, bool normal)> Textures()
         {
             if (!On) yield break;
-            foreach (var t in new[] { tiled, strip, lightning, cloudMask, cloud, rock })
+            foreach (var t in new[] { tiled, strip, lightning, cloudMask, cloud, rock, wpoMap })
                 if (!string.IsNullOrEmpty(t)) yield return (t, true, false);
         }
     }

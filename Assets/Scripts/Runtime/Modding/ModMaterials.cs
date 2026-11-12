@@ -752,6 +752,19 @@ namespace GoF2Remake.Modding
             m.SetVector("_Background", V(r.background, new Vector4(0.01f, 0.013f, 0.02f, 0f)));
             m.SetVector("_Clouds", V(r.clouds, new Vector4(0.0064f, 0.0061f, 0.02f, 0f)));
             m.SetFloat("_Exposure", Mathf.Max(0f, r.exposure));
+            // M_PortalRift_BOTTOM ("bottom"): its colours, alpha-blended, its fades (game units -> metres)
+            bool bottom = r.Bottom;
+            m.SetFloat("_Mode", bottom ? 1f : 0f);
+            m.SetFloat("_SrcBlend", (float)(bottom ? UnityEngine.Rendering.BlendMode.SrcAlpha : UnityEngine.Rendering.BlendMode.One));
+            m.SetFloat("_DstBlend", (float)(bottom ? UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha : UnityEngine.Rendering.BlendMode.One));
+            m.SetVector("_Emissive", V(r.emissive, new Vector4(0.05f, 0.0075f, 0.0088f, 0f)));
+            m.SetVector("_BaseCol", V(r.baseColor, new Vector4(0.05f, 0.0097f, 0.0092f, 0f)));
+            m.SetVector("_Fade", new Vector4(Mathf.Max(0f, r.depthFade) * 0.05f, Mathf.Max(0f, r.fadeOffset) * 0.05f, Mathf.Max(0f, r.fadeLength) * 0.05f, 0f));
+            // the vertex shader's offset along the normal
+            Map("_WpoMap", r.wpoMap);
+            var w = V(r.wpo, new Vector4(0f, 1f, 2f, 0f));
+            m.SetVector("_Wpo", new Vector4(string.IsNullOrEmpty(r.wpoMap) ? 0f : w.x, 0f, 0f, 0f));
+            m.SetVector("_WpoUV", r.wpo != null && r.wpo.Length >= 5 ? new Vector4(r.wpo[1], r.wpo[2], r.wpo[3], r.wpo[4]) : new Vector4(1f, 2f, 0.01f, 0.04f));
             return m;
         }
 

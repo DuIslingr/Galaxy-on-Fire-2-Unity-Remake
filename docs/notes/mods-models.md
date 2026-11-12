@@ -443,6 +443,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   flipbook of T_Lightning_Random over UV0 x T_CloudMask over UV1 pulsed by two T_NoiseStrip_B reads, the obsidian rock as the
   dark background where the sum is under 1; colour lerp(Color Outer, Color Inner) x the sum plus those, opacity from
   v^pow_Gradation; additive. The hard-wired textures (T_NoiseStrip_B, T_Cloud_03) come from the material's referenced
-  textures by their slot order. Left out: the vertex shader's world position offset (T_Noise_Tiled04 x WP_Strenth), the
+  textures by their slot order. Its vertex shader's world position offset (2026-11-11, decoded from the VS:
+  normalWS x T_Noise_Tiled04.R at UV x (ucoord_WP, Vcoord_WP) + t x (Upannel_WP, Vpannel_WP) x saturate(5 v (1 - v)) x
+  WP_Strenth, in world cm): `wpoMap` / `wpo` (the strength in the model's units: the importer divides by the actor's
+  scale), applied in object space along the normal. `"mode": "bottom"` (2026-11-11): M_PortalRift_BOTTOM's base pass
+  (MI_PortalRift_2_RFA_Outside, LocRFA's vortex: the Rift from inside): the same layers but Emmisive_Color for the blend
+  and the clouds (no g^2), Base_Color for the rock, the bolts and the cloud lightning not x r, translucent (`_SrcBlend` /
+  `_DstBlend`) with its depth fade (Dapthfade, `SampleSceneDepth`; without a depth texture on a non-reversed-Z device
+  none) and camera fade (Fade Offset / Length); its D x cb2[0].x (a parameter collection) taken as 1. Left out: the
   fog, the pre-exposure (`exposure` instead: the importer's 0.4 puts the vortex's 99th-percentile brightness, about 5 in
   Chorus's units, near 2). Tests `ChorusRiftTests`.
