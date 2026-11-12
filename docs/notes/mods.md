@@ -369,6 +369,15 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   station's stations.json `materials`, and an interiors.json room's, ignored their `material` filter
   (`ModStations.Build` / `ModInteriors.Build` passed no glTF material name to `ModShipBuilder.MaterialFor`), so such a
   station showed its model's own white materials.
+- **Hurt only through its parts** (remake, 2026-11-11, Chorus's warships: BP_NPC_Warship_Base's DamageReceiverComponent
+  DefaultDamageMultiplier 0, their health from their weakpoints): ships.json `"hullDamage"` (`CustomShipData.hullDamage`,
+  default 1) is `Target.directFactor`, set with the shields (`CapitalSubsystems.ApplyShields`): a direct hit x it before
+  `damageFactor`; a weak spot's passed-on hit and its death bonus go through `Target.PassOn` (`Target.PassingOn` while
+  dealt), which skips it (the shields' `damageFactor` still applies). `OnHostDamaged` no longer warns on a passed-on hit,
+  and with `hullDamage` 0 answers a bare hit "Its armour holds: shoot its weak points!" (Extra `capitalWeakPoints`).
+  A subsystem's `"turretForward"` (`CapitalSubsystem.forward`, game axes) turns a part that isn't a turret fully with its
+  up (`CapitalSubsystems.PartTurn`: LookRotation in the ship's Unity frame, x mirrored), for Chorus's devices on their
+  sockets. Tests `ModCapitalShipsTests` (AHullHurtOnlyThroughItsWeakSpots, the parse test).
 - **NPC ships** (remake, 2026-11-02, the user's request: "just like flyable ships", ships nobody flies, new or replaced, with
   loot, escorts and their strength, hardpoints, spawn rate and places, a capital ship's docking and shop; `npcships.json`,
   Modding/README.md "NPC ships"): `Modding.ModNpcShips` (Game layer; parsed in `ModContent.Parse` into `Parsed.npcShips`,

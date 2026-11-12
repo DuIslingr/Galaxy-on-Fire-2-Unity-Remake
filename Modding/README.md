@@ -935,6 +935,11 @@ hull (EVERSPACE 2's warships): `"subsystems"`, each placed like a mount (`positi
 - `weakspot`: hits on it also go to the hull x this; its destruction takes `bonus` (a share) of the hull's maximum.
 - `stage`: a part can't be harmed while a part of a lower stage still stands (an encounter's order: fields, then guns, then
   the weak points).
+- `turretForward` (with `turretUp`, game axes): turns a part that isn't a turret fully, its model's nose that way (a device
+  set at an angle on its socket); without it a part is turned by its up alone.
+- `"hullDamage"` (the ship's own field, default 1): the share of a direct hit on the hull it takes. `0` makes a ship that
+  is hurt only through its parts (Chorus's warships): a weak spot's passed-on hits and death bonus still get through, and a
+  hit on the bare hull is answered "Its armour holds: shoot its weak points!" now and then.
 
 Parts take the capital ship's side, go when it dies, and a mission's `alive("<name>")` counts them. Every turret (these, the
 `npcTurrets` on a ship's mounts, the game's own capital ship turrets, your own) holds its fire while its barrel points into

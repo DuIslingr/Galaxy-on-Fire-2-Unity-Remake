@@ -249,6 +249,9 @@ namespace GoF2Remake.Data
         // none) and its renderers with a material named like 'shieldMaterial' show (its energy fields), hidden once they fall.
         public string shieldMaterial;
         public float shieldedDamage;
+        // Remake mods (2026-11-11, Chorus's warships): the share of a direct hit on the hull it takes (after the shields); 0 = it is
+        // hurt only through its weak spots (their passed-on hits and bonuses), Chorus's DefaultDamageMultiplier 0.
+        public float hullDamage = 1f;
         public float hullFactor = 1f;     // remake mods: a mod capital ship's hull x this (Modding.ModCapitalShips.Spawn)
         /// <summary>"es2": EVERSPACE 2's engine effects (Modding.Es2EngineVfx: the glow, trails and lights at the exhaust and
         /// booster mounts) without flame materials of its own and without the glow discs (a capital ship's sockets).</summary>
@@ -290,6 +293,7 @@ namespace GoF2Remake.Data
     {
         public string kind = "object", name, model;
         public Vector3 position, up = Vector3.up;
+        public Vector3 forward;   // remake (2026-11-11, Chorus's warship devices): a part's facing with 'up' (game axes); zero = by 'up' alone
         public int item = -1, hull = -1, stage;
         public bool shields;
         public float weakspot, bonus, scale = 1f, radius = -1f;
