@@ -376,6 +376,17 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   -UV, lerp(Color1 x g, the curve, LerpColorParm) x g, additive). `World.PortalRefraction` switches the opaque texture on
   for the main camera while a gate with one is in the orbit (`OrbitBuilder.SpawnJumpgate`, `Flight.OpaqueTexture`).
   Tests `ChorusPortalTests`.
+- **Wrecks that break apart** (remake, 2026-11-11, after Chorus's wrecks: SK_*_Wreck skeletal meshes, a bone a piece, flung
+  apart by their ABP_Explosion_* blueprints' ExplosionPhysics node, a C++ node whose impulses aren't in the assets):
+  ships.json `"wreck"` (`CustomWreck` in Database.cs: model, seconds 6, speed 1, spin 1). `ModCrates` loads its model with
+  the crates (`wreckKeys`, painted with the ship's `materials`; `InstantiateWreck` at the hull node's world pose and
+  scale: ModShipBuilder's "hull" child carries the glTF scene's turn and size). `World.WreckBreakup` (`Spawn` / `Break`,
+  `Step`): each renderer a piece, out from the wreck's bounds' middle at speed x length / 10 per second (x 0.6-1.4, a
+  little scatter) plus the ship's motion, x2/3 a second, turning about its own bounds' middle, the two largest with a
+  `ShipBurn` for the first half, shrunk about their middles over the last quarter, gone at the end. Hooked at the final
+  explosion: `NpcShipDamage.UpdateDying` (not fixed objects, turrets or ships with the game's wreck; the dying fighter's
+  tumble velocity, a freighter's none; the model hidden) and `PlayerHealth.UpdateDeath` (at 3 s). Local only (proxies
+  explode plainly). Tests `WreckBreakupTests`.
 - **Chorus rifts** (remake, 2026-11-11, for the Chorus rift look and Nimika's dormant rift): a material's `"rift"` block
   (`ChorusRiftSpec` in Database.cs, `ModMaterials.Rift`, GoF2/ChorusRift in Resources/GoF2Fx) after M_PortalRift_2's
   compiled base pass (MI_PortalRift_2_LocAST_Outside's parameters as the defaults; its uniform slots decoded from the

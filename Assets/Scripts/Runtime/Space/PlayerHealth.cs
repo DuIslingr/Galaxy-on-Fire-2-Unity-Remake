@@ -611,6 +611,10 @@ namespace GoF2Remake.Flight
                 Haptics.Play(Haptics.Death);   // remake (the frozen camera takes no explosion rumble)
                 // At 3000 ms: the burn stops and record 11 bursts once at the ship.
                 if (burn != null) { burn.SetBurning(false); burn.Burst(); }
+                // Remake mods: a ship with a "wreck" breaks into its pieces (World.WreckBreakup)
+                if (ship.visualModel != null)
+                    GoF2Remake.World.WreckBreakup.Spawn(Session.ShipIndex, ship.visualModel.Find("hull") ?? ship.visualModel,
+                                                        transform.forward * ship.ExternalSpeedMetersPerSecond);
                 if (ship.visualModel != null) ship.visualModel.gameObject.SetActive(false);
                 ship.ExternalSpeedMetersPerSecond = 0f;
             }

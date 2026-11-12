@@ -348,6 +348,13 @@ namespace GoF2Remake.World
             if (dyingMs > 0f) return;
             // PlayerFixedObject::update: setScaling(6), 8 for the Terran battleship (0x37e7) and the pirate outpost (0x37a3).
             explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? FreighterExplosionScale : FighterExplosionScale);
+            // Remake mods: a ship with a "wreck" breaks into its pieces there (World.WreckBreakup), its hull gone with the blast.
+            if (!IsFixed && !IsTurret && wreck == null && model != null)
+            {
+                var hull = model.Find("hull") ?? model;
+                var velocity = IsFreighter ? Vector3.zero : deathDir * speed * M * 1000f;
+                if (WreckBreakup.Spawn(Spec.ship, hull, velocity) != null && modelGo != null) modelGo.SetActive(false);
+            }
             explosionSerial = explosion != null ? explosion.Serial : 0;
             wreckBurn?.SetEmitting(false);   // state 4: enableSystemEmit(false)
             Current = State.Dead;

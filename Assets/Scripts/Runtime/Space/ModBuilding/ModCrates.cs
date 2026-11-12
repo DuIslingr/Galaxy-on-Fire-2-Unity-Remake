@@ -5,7 +5,8 @@
 // models when the mods change (Preload; ModLoading), into a hidden DontDestroyOnLoad holder; a crate made before its model
 // is there shows the race's container. Instantiate fits the copy to the race's container (its largest extent) unless the
 // entry gives "crateSize" (game units). A crate's model key is "<mod id>|<path>". The orbits' containers', asteroids' and
-// wrecks' models (stations.json "orbit.containers" / "asteroids" / "wrecks", ModWorld.ContainerModels) load with them.
+// wrecks' models (stations.json "orbit.containers" / "asteroids" / "wrecks", ModWorld.ContainerModels) load with them, and
+// the ships' own wrecks (ships.json "wreck": World.WreckBreakup), with their ships' materials.
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<string, float> extents = new Dictionary<string, float>();   // a template's largest extent (Unity)
         static readonly Dictionary<string, List<CustomShipMaterial>> materials = new Dictionary<string, List<CustomShipMaterial>>();   // an orbit container model's own
         static readonly Dictionary<int, string> shipKeys = new Dictionary<int, string>();
+        static readonly Dictionary<int, string> wreckKeys = new Dictionary<int, string>();   // a ship's "wreck" model
         static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();   // a key's "crateSize" (game units)
         static readonly Dictionary<int, float> raceExtents = new Dictionary<int, float>();
         static readonly List<GLTFast.GltfImport> imports = new List<GLTFast.GltfImport>();
@@ -34,7 +36,7 @@ namespace GoF2Remake.Modding
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            templates.Clear(); extents.Clear(); shipKeys.Clear(); sizes.Clear(); raceExtents.Clear(); imports.Clear();
+            templates.Clear(); extents.Clear(); shipKeys.Clear(); wreckKeys.Clear(); sizes.Clear(); raceExtents.Clear(); imports.Clear();
             holder = null; agent = null; loadingRevision = loadedRevision = keysRevision = -1;
         }
 
@@ -85,6 +87,20 @@ namespace GoF2Remake.Modding
             if (!templates.TryGetValue(key, out var template) || template == null) return null;
             var go = Object.Instantiate(template, at, rotation, parent);
             if (extent > 0f && extents.TryGetValue(key, out float have) && have > 1e-6f) go.transform.localScale = Vector3.one * (extent / have);
+            return go;
+        }
+
+        /// <summary>A copy of ship 'ship''s "wreck" model at the world pose and scale of 'like' (the dead ship's hull: the wreck
+        /// is made in its frame); null with none or while it isn't loaded.</summary>
+        public static GameObject InstantiateWreck(int ship, Transform like)
+        {
+            Keys();
+            if (like == null || !wreckKeys.TryGetValue(ship, out var key)) return null;
+            if (loadedRevision != ModManager.Revision) { Preload(); return null; }
+            if (!templates.TryGetValue(key, out var template) || template == null) return null;
+            var go = Object.Instantiate(template, like.position, like.rotation);
+            go.transform.localScale = like.lossyScale;
+            go.SetActive(true);
             return go;
         }
 
@@ -146,9 +162,10 @@ namespace GoF2Remake.Modding
         {
             if (keysRevision == ModManager.Revision) return;
             keysRevision = ModManager.Revision;
-            shipKeys.Clear(); sizes.Clear();
+            shipKeys.Clear(); sizes.Clear(); wreckKeys.Clear();
             foreach (var (mod, ship) in ModContent.ActiveShips())
             {
+                if (ship != null && !string.IsNullOrEmpty(ship.wreck?.model)) wreckKeys[ship.index] = mod.Id + "|" + ship.wreck.model;
                 if (ship == null || string.IsNullOrEmpty(ship.crate)) continue;
                 string key = mod.Id + "|" + ship.crate;
                 shipKeys[ship.index] = key;
@@ -166,7 +183,16 @@ namespace GoF2Remake.Modding
             try
             {
                 foreach (var (mod, ship) in ModContent.ActiveShips())
+                {
                     if (ship != null && !string.IsNullOrEmpty(ship.crate)) files[mod.Id + "|" + ship.crate] = mod;
+                    // (a ship's wreck, painted with the ship's own materials: World.WreckBreakup)
+                    if (ship != null && !string.IsNullOrEmpty(ship.wreck?.model))
+                    {
+                        string key = mod.Id + "|" + ship.wreck.model;
+                        files[key] = mod;
+                        if (ship.materials != null && ship.materials.Count > 0 && !materials.ContainsKey(key)) materials[key] = ship.materials;
+                    }
+                }
                 foreach (var (mod, path, mats) in ModWorld.ContainerModels())   // (the orbits' containers, with their materials)
                 {
                     files[mod.Id + "|" + path] = mod;

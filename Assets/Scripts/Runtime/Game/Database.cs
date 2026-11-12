@@ -267,9 +267,23 @@ namespace GoF2Remake.Data
         /// extent, game units) says otherwise; none = the race's.</summary>
         public string crate;
         public float crateSize;
+        /// <summary>Remake mods (2026-11-11, Chorus's wrecks): what the ship breaks into where it explodes (World.WreckBreakup);
+        /// null = it explodes and is gone.</summary>
+        public CustomWreck wreck;
         /// <summary>Remake mods (after Galaxy on Fire 3's wingmen): the device a hired wingman flying this hull uses: "repair",
         /// "ammo" or "charged" (Flight.WingmanDevice); none = none, like the game's wingmen.</summary>
         public string wingmanDevice;
+    }
+
+    /// <summary>Remake mods (ships.json "wreck", 2026-11-11, after Chorus's ExplosionPhysics wrecks): 'model' a glTF / GLB in the
+    /// mod made in the ship model's own frame and units (it is placed exactly where the hull was), each node with a mesh one
+    /// piece, painted with the ship's "materials"; the pieces fly apart from the wreck's middle at 'speed' (x a tenth of the
+    /// ship's length a second) with the ship's own motion, turn at 'spin' (x 20-90 deg a second), slow down, burn and are
+    /// gone after 'seconds' (shrinking away over the last quarter).</summary>
+    [System.Serializable] public class CustomWreck
+    {
+        public string model;
+        public float seconds = 6f, speed = 1f, spin = 1f;
     }
 
     /// <summary>Remake mods: EVERSPACE 2's per-ship switches of its engine effects (a ship blueprint's SpawnEngineGlow /
