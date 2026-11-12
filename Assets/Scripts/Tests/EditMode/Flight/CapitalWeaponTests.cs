@@ -151,6 +151,9 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(250f, JsonUtility.FromJson<CustomShipData>("{ \"id\": \"x\", \"hullRegen\": 250 }").hullRegen);
             Assert.AreEqual(0f, JsonUtility.FromJson<CustomShipData>("{ \"id\": \"x\" }").hullRegen);
             Assert.AreEqual(Device.Type.ShieldOvercharge, (Device.Type)22);
+            foreach (var (name, id) in new[] { ("beamRadius", Gun.BeamRadiusAttr), ("heatShots", Gun.HeatShotsAttr),
+                                               ("heatCoolMs", Gun.HeatCoolMsAttr), ("overheatMs", Gun.OverheatMsAttr), ("beamReach", Gun.BeamReachAttr) })
+                Assert.AreEqual(id, GoF2Remake.Modding.ItemStats.IdOf(name), name);
         }
     }
 }
