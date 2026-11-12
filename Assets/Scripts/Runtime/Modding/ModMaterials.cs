@@ -740,6 +740,39 @@ namespace GoF2Remake.Modding
             return m;
         }
 
+        static Shader shieldShader;
+
+        /// <summary>A "shield" block (Chorus's M_Shield) on GoF2/ChorusShield: its maps as data (linear), repeating; its lengths
+        /// as given (model units), the fades game units to metres.</summary>
+        static Material Shield(ModInfo mod, ChorusShieldSpec p, string name)
+        {
+            if (shieldShader == null) shieldShader = Resources.Load<Shader>("GoF2Fx/ChorusShield");
+            if (shieldShader == null) return null;
+            var m = new Material(shieldShader) { name = name };
+            void Map(string prop, string path)
+            {
+                var t = Texture(mod, path, true);
+                if (t == null) return;
+                t.wrapMode = TextureWrapMode.Repeat;
+                m.SetTexture(prop, t);
+            }
+            Map("_Mask", p.mask); Map("_Noise", p.noise);
+            Vector4 V(float[] f, Vector4 d) => f == null ? d : new Vector4(f.Length > 0 ? f[0] : d.x, f.Length > 1 ? f[1] : d.y, f.Length > 2 ? f[2] : d.z, f.Length > 3 ? f[3] : d.w);
+            const float M = 0.05f;
+            m.SetVector("_ShieldPan", V(p.pan, new Vector4(-0.42435f, 0f, 0f, -0.37348f)));
+            m.SetVector("_ShieldNoise", new Vector4(p.noiseScale, p.noiseTimeScalar, p.noisePanSpeed, p.timeExponent));
+            m.SetVector("_ShieldEdge", new Vector4(p.edgeModulateAmount, p.edgeModulateIntensity, Mathf.Max(1e-5f, p.edgeModulateWidth), p.fresnelExponent));
+            m.SetVector("_ShieldMod", new Vector4(p.modulateColorAmount, p.timeModulationAmount, p.opacityNoise, 0f));
+            var r = V(p.radius, new Vector4(0f, 4.5f, 0f, 0f));
+            m.SetVector("_ShieldRadius", new Vector4(r.x, r.y, p.radiusExponent, p.radiusIntensity));
+            m.SetVector("_ShieldRing", V(p.ring, new Vector4(0f, 3.5f, 0.25f, 0f)));
+            m.SetVector("_ShieldRing2", new Vector4(p.ringExponent, p.ringIntensity, p.opacityStart, p.opacityEnd));
+            var cf = V(p.cameraFade, new Vector4(720f, 288f, 0f, 0f));
+            m.SetVector("_ShieldFade", new Vector4(p.opacityFacing, p.opacityBackface, Mathf.Max(0f, cf.x) * M, Mathf.Max(0f, p.exposure)));
+            m.SetVector("_ShieldDepth", new Vector4(Mathf.Max(1e-3f, cf.y * M), Mathf.Max(0f, p.depthFade) * M, 0f, 0f));
+            return m;
+        }
+
         static Shader riftShader;
 
         /// <summary>A "rift" block (Chorus's rift vortex) on GoF2/ChorusRift: its maps as data (linear), repeating.</summary>
@@ -799,6 +832,7 @@ namespace GoF2Remake.Modding
             if (a == null) return null;
             if (e.portal != null && e.portal.On) return Portal(mod, e.portal, name);
             if (e.rift != null && e.rift.On) return Rift(mod, e.rift, name);
+            if (e.shield != null && e.shield.On) return Shield(mod, e.shield, name);
             if (e.flame) return Flame(mod, e, name, a);
             if (e.hologram) return Hologram(mod, e, name, a);
             if (e.shimmer) return Shimmer(mod, e, name, a);

@@ -276,6 +276,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods (2026-11-11, Chorus's wrecks): what the ship breaks into where it explodes (World.WreckBreakup);
         /// null = it explodes and is gone.</summary>
         public CustomWreck wreck;
+        /// <summary>Remake mods (2026-11-11, Chorus's BP_Effect_Auxiliary_Shield_PlayerCapitalShip): the Shield Overcharge's look
+        /// on this ship (Flight.ShieldShell): a shell model in the ship model's own frame, painted with the ship's materials (a
+        /// "shield" block); null = the emergency system's bubble.</summary>
+        public CustomOvercharge overcharge;
         /// <summary>Remake mods (2026-11-11, Chorus's explosions): a JSON file in the mod with the ship's own death effects
         /// (CustomFxFile, World.ModDeathFx) instead of the game's explosion; null = the game's.</summary>
         public string deathFx;
@@ -369,6 +373,18 @@ namespace GoF2Remake.Data
     /// piece, painted with the ship's "materials"; the pieces fly apart from the wreck's middle at 'speed' (x a tenth of the
     /// ship's length a second) with the ship's own motion, turn at 'spin' (x 20-90 deg a second), slow down, burn and are
     /// gone after 'seconds' (shrinking away over the last quarter).</summary>
+    /// <summary>A ship's Shield Overcharge look (CustomShipData.overcharge; Chorus's P_Buff_Auxiliary_Shield_PlayerCapitalShip,
+    /// one mesh particle): 'model' (a glTF / GLB in the mod, made in the ship model's frame and units, its materials from the
+    /// ship's "materials": a "shield" block) shown 'delay' seconds after the overcharge starts for 'seconds', its tint 'color'
+    /// (RGB, HDR) x 'colorOverLife' (brightness samples over its life, evenly spaced; none: 1) with 'alpha' x 'alphaOverLife'
+    /// (likewise).</summary>
+    [System.Serializable] public class CustomOvercharge
+    {
+        public string model;
+        public float seconds = 4.8f, delay = 0.5f, alpha = 1f;
+        public float[] color, colorOverLife, alphaOverLife;
+    }
+
     [System.Serializable] public class CustomWreck
     {
         public string model;
@@ -586,6 +602,9 @@ namespace GoF2Remake.Data
         public ChorusPortalSpec portal;
         /// <summary>Remake (2026-11-11): Chorus's rift vortex (GoF2/ChorusRift, ModMaterials.Rift).</summary>
         public ChorusRiftSpec rift;
+        /// <summary>Remake (2026-11-11): Chorus's shield shell (M_Shield; GoF2/ChorusShield, ModMaterials.Shield; a ship's
+        /// "overcharge" model, Flight.ShieldShell).</summary>
+        public ChorusShieldSpec shield;
         /// <summary>Remake (2026-11-11): a glow that travels along a pattern (Chorus's M_Phoenix glow lines; GoF2/Hull GlowWave).</summary>
         public GlowWaveSpec wave;
         /// <summary>Remake (2026-11-11): the hull's flash where the player's ship is hit (Chorus's M_Phoenix MF_HitEffect; GoF2/Hull
@@ -707,6 +726,31 @@ namespace GoF2Remake.Data
             if (!On) yield break;
             foreach (var t in new[] { tiled, strip, lightning, cloudMask, cloud, rock, wpoMap })
                 if (!string.IsNullOrEmpty(t)) yield return (t, true, false);
+        }
+    }
+
+    /// <summary>A material's "shield" block: Chorus's M_Shield (its compiled translucent pass on MI_Shield_PlayerCapital_Auxiliary),
+    /// drawn added by GoF2/ChorusShield on both faces; the formula is in the shader's header. 'mask' (R, over UV0 x
+    /// 'noiseScale', panned by 'pan' [u1, v1, u2, v2]), 'noise' (R, over UV1); lengths ('radius' [start, end], 'ring' [radius
+    /// start, end, width start, end]) in the model's own units from its origin; 'cameraFade' [offset, length] and 'depthFade'
+    /// in game units; 'exposure' scales it (Chorus's HDR to the remake's).</summary>
+    [System.Serializable] public class ChorusShieldSpec
+    {
+        public string mask, noise;
+        public float[] pan, radius, ring, cameraFade;
+        public float noiseScale = 4f, noiseTimeScalar = 0.01f, noisePanSpeed = 0.01f, timeExponent = 0.37f;
+        public float edgeModulateAmount = 0.2f, edgeModulateIntensity = 10f, edgeModulateWidth = 0.08f, fresnelExponent = 1f;
+        public float modulateColorAmount = 0.3f, timeModulationAmount = 0.2f, opacityNoise = 0.571429f;
+        public float radiusExponent = 3f, radiusIntensity = 1f, ringExponent = 3f, ringIntensity = 1f;
+        public float opacityStart = 1f, opacityEnd, opacityFacing = 1f, opacityBackface = 0.1f, depthFade, exposure = 1f;
+        public bool On => !string.IsNullOrEmpty(mask);
+
+        /// <summary>Its maps: (path, linear, normal map).</summary>
+        public System.Collections.Generic.IEnumerable<(string path, bool linear, bool normal)> Textures()
+        {
+            if (!On) yield break;
+            yield return (mask, true, false);
+            if (!string.IsNullOrEmpty(noise)) yield return (noise, true, false);
         }
     }
 

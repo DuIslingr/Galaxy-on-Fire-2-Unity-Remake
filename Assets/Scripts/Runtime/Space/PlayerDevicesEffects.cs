@@ -204,8 +204,9 @@ namespace GoF2Remake.Flight
         // the running devices' state: the corrosion's target and tick, the hook, the tether, the entangler's sum
         Target corroding; float corrosionTickMs; Entry corrosionEntry;
         // the Shield Overcharge's look (Chorus's BP_Effect_Auxiliary_Shield_PlayerCapitalShip: a shield round the hull): the
-        // emergency system's refraction bubble while it runs
-        EmergencyBubble overchargeBubble; Entry overchargeEntry;
+        // ship's own shell (ships.json "overcharge": ShieldShell, Chorus's M_Shield), else the emergency system's refraction
+        // bubble while it runs
+        EmergencyBubble overchargeBubble; ShieldShell overchargeShell; Entry overchargeEntry;
         Target hooked; Entry hookEntry; float hookMs, hookPullSpeed, hookTargetSpeed, hookBeamMs;
         Target tethered; Entry tetherEntry; bool sharing;
         Target entangled; Entry entanglerEntry; float entangledDamage;
@@ -294,9 +295,11 @@ namespace GoF2Remake.Flight
                     self.hitpoints.shieldLocked = true;
                     var hull = GetComponent<ShipController>();
                     var model = hull != null ? hull.visualModel : null;
-                    overchargeBubble?.Hide();
-                    overchargeBubble = assets != null ? EmergencyBubble.Show(assets, model != null ? model : transform,
-                                                                              model != null ? model.GetComponentInChildren<Renderer>() : null) : null;
+                    overchargeBubble?.Hide(); overchargeShell?.Hide(); overchargeBubble = null;
+                    overchargeShell = model != null ? ShieldShell.Show(Session.ShipIndex, model.Find("hull") ?? model) : null;
+                    if (overchargeShell == null)
+                        overchargeBubble = assets != null ? EmergencyBubble.Show(assets, model != null ? model : transform,
+                                                                                  model != null ? model.GetComponentInChildren<Renderer>() : null) : null;
                     overchargeEntry = e;
                     break;
                 }
@@ -437,6 +440,7 @@ namespace GoF2Remake.Flight
                 case Device.Type.ShieldOvercharge:
                     if (self.hitpoints != null) self.hitpoints.shieldLocked = false;
                     overchargeBubble?.Hide(); overchargeBubble = null; overchargeEntry = null;
+                    overchargeShell?.Hide(); overchargeShell = null;
                     break;
                 case Device.Type.SensorCloud:
                     if (cloud == e) { cloud = null; Unhide(); }
@@ -483,6 +487,11 @@ namespace GoF2Remake.Flight
             float dt = dtMs / 1000f;
             if (overchargeBubble != null && overchargeEntry != null)   // (the bubble grows in and fades out with the overcharge)
                 overchargeBubble.Update(overchargeEntry.rules.ActiveLeft * overchargeEntry.rules.durationMs, overchargeEntry.rules.durationMs);
+            if (overchargeShell != null)   // (the shell plays its own life: Chorus's particle, 0.5 s in, 4.8 s)
+            {
+                overchargeShell.Step(dt);
+                if (!overchargeShell.Alive) overchargeShell = null;
+            }
             if (corrosionEntry != null && corrosionEntry.rules.Active)
             {
                 if (!Affects(corroding)) { if (corrosionEntry.rules.Cancel()) End(corrosionEntry); }

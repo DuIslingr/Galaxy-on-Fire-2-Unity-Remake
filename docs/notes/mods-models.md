@@ -431,6 +431,20 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   it cools; its glow Chorus's Planckian-locus blackbody at b x T x (b T / 2500)^4, scaled so a full burn's brightest
   channel is `burnColor`'s; the burnt part rough. The cut keeps the value noise (no UVs in the depth passes); the burn's
   map is the wreck's first material's (the trims' over UV1, Burn_Noise_UseUV1; M_WreckBurn's over UV0).
+- **Chorus shield shell** (remake, 2026-11-11, the player capital ship's Shield Overcharge: BP_Effect_Auxiliary_Shield_
+  PlayerCapitalShip's P_Buff_Auxiliary_Shield_PlayerCapitalShip, one mesh particle of SM_PlayerControlledLargeShip_01_Shield in
+  MI_Shield_PlayerCapital_Auxiliary on M_Shield, EmitterDelay 0.5, Lifetime 4.8, colour (0.7, 10, 3.025) x alpha 25 and
+  its colour / alpha over life): ships.json `"overcharge"` (`CustomOvercharge`) and a material's `"shield"` block
+  (`ChorusShieldSpec`, `ModMaterials.Shield`, Resources/GoF2Fx/ChorusShield.shader after M_Shield's compiled translucent
+  pass; its formula in the shader's header: the ModulationMask (T_ShieldPattern_M) panned two ways, T_Mosaic_A over UV1
+  turned, the reversed time ^ TimeExponent, the fresnel, a glow and a ring from the model's origin, the facing and
+  backface scales, the camera and depth fades; additive; the flicker below StartFrizzHealthPercentage and CompAmount
+  left out; the shell's distances in object space, the particle's pivot the model's origin). `ModCrates` loads the model
+  with the crates (`overchargeKeys`, the ship's materials; `InstantiateOvercharge` under the hull node, inactive).
+  `Flight.ShieldShell` (plain C#: `Show` / `Wrap`, `Step`, `LifeAt`, `TintAt` through `FxFlash.Sample`) shows it after
+  the delay, sets `_ShieldLife` / `_ShieldTint` per renderer (a property block), and is gone at its end;
+  `PlayerDevices` shows it on overcharge (`model.Find("hull")`), else `EmergencyBubble` as before. Tests
+  `ChorusShieldTests`.
 - **Glow waves** (remake, 2026-11-11, Chorus's M_Phoenix glow lines, from its compiled base pass): a material's `"wave"`
   block (`GlowWaveSpec` in Database.cs, `ModMaterials.GlowWave`, GoF2/Hull's `GlowWave` in HullForwardPass.hlsl, on when
   `_WaveParams.x` > 0: x multiplier, y tiling, z speed, w the mask's channel; `_WaveMin` / `_WaveMax`; `_WavePattern`,

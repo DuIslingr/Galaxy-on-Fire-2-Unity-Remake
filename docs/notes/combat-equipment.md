@@ -183,8 +183,9 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   Shield Overcharge (22, remake 2026-11-11, Chorus's player capital ship: BP_Player_Auxiliary_ShieldOvercharge_PlayerCapitalShip,
   Duration 5, Cooldown 10; its native AAuxiliaryShieldOvercharge::OnActivation isn't readable, so the effect is the name's
   and the HUD's overcharge bar's): the shield filled, then `Hitpoints.shieldLocked` until its end (`Damage` stops every hit
-  at the shield, `shieldHit` for the hit feedback, nothing taken off); its look the emergency system's `EmergencyBubble`
-  while it runs (Chorus's BP_Effect_Auxiliary_Shield_PlayerCapitalShip: a shield round the hull).
+  at the shield, `shieldHit` for the hit feedback, nothing taken off); its look the ship's own shell where ships.json has
+  an `"overcharge"` (`ShieldShell`, Chorus's BP_Effect_Auxiliary_Shield_PlayerCapitalShip on M_Shield: mods-models.md
+  "Chorus shield shell"), else the emergency system's `EmergencyBubble` while it runs.
 - **Hull regeneration** (remake 2026-11-11, for mods): ships.json `"hullRegen"` (points a second; Chorus's PCLS
   PlayerHealthComponent HealthRegenRate 250 of its 5000) -> `PlayerHealth` (`Hitpoints.RegenerateHull`, fractions carried,
   nothing at 0 or full), beside a repair bot.
