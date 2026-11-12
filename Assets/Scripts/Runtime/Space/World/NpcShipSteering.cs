@@ -115,7 +115,7 @@ namespace GoF2Remake.World
             bool noSteer = drift || (IsWingman && traffic != null && traffic.LaunchCameraRunning != null && traffic.LaunchCameraRunning())
                            || !slow.CanTurn;   // remake: an EMP device's slow
             float dogSpeed = dog ? dogfight.SpeedFactor * Gof3EasySlowdown() : formationSpeed;   // (GoF3's Easy: slower in your sights)
-            float topSpeed = speed * slow.SpeedFactor * roleSpeedFactor * dogSpeed;   // units a ms (remake: a rift's)
+            float topSpeed = speed * slow.SpeedFactor * roleSpeedFactor * dogSpeed * RolePace;   // (remake mods: a pursuer's pace)   // units a ms (remake: a rift's)
             if (!noSteer && !Hp.empDisabled)
             {
                 Vector3 h;

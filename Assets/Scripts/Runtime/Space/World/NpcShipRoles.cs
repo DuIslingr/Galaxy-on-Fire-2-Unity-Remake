@@ -40,7 +40,10 @@ namespace GoF2Remake.World
         bool RoleFires => NpcRoles.Fires(Role);
         float RoleRangeFactor => Role == NpcRoles.Role.Sniper ? NpcRoles.FireRangeFactor : 1f;
         /// <summary>The detonator flies into its target instead of circling away at the break-off range.</summary>
-        bool RoleBreaksOff => Role != NpcRoles.Role.Detonator && !RoleFlees;
+        bool RoleBreaksOff => Role != NpcRoles.Role.Detonator && Role != NpcRoles.Role.Pursuer && !RoleFlees;
+        /// <summary>The pursuer's speed factor now (NpcRoles.ChaseFactor), 1 for the rest.</summary>
+        float RolePace => Role == NpcRoles.Role.Pursuer ? pursuitPace : 1f;
+        float pursuitPace = 1f;
         /// <summary>A loot drone that was found: it flies away from the player.</summary>
         bool RoleFlees => Role == NpcRoles.Role.LootDrone && lootAwake && FleeFrom != null;
         Target FleeFrom => traffic != null && traffic.Player != null && traffic.Player.Alive ? traffic.Player : null;
@@ -86,6 +89,26 @@ namespace GoF2Remake.World
             dropAt = NpcRoles.DropThresholds(n, () => Random.value);
         }
 
+        /// <summary>The pursuer (Chorus's Guilt): unharmed, its pace by the player's distance, the wither and the screen.</summary>
+        void UpdatePursuer(float dtMs)
+        {
+            Hp.vulnerable = false;
+            var player = FleeFrom;
+            if (player == null) { pursuitPace = 1f; return; }
+            float d = Vector3.Distance(player.transform.position, transform.position) / M;
+            pursuitPace = NpcRoles.ChaseFactor(d);
+            PursuerFx.Near(NpcRoles.Proximity(d));
+            roleTickMs += dtMs;
+            if (roleTickMs < 250f) return;
+            float step = roleTickMs;
+            roleTickMs = 0f;
+            var hp = player.hitpoints;
+            if (d > NpcRoles.WitherUnits || hp == null || !player.Alive) return;
+            // the wither: past the shield (shield factor 0), a share of the maximum hull a second
+            player.Damage(Mathf.Max(1f, hp.maxHull * NpcRoles.WitherShare * step / 1000f), true,
+                          (player.transform.position - transform.position).normalized, 0f);
+        }
+
         void TeardownRole()
         {
             Unlink();
@@ -112,6 +135,7 @@ namespace GoF2Remake.World
         void UpdateRole(float dtMs)
         {
             if (Role == NpcRoles.Role.LootDrone) { if (Target.Alive) UpdateLootDrone(dtMs); return; }
+            if (Role == NpcRoles.Role.Pursuer) { UpdatePursuer(dtMs); return; }
             if (Role == NpcRoles.Role.None || !Target.Alive || Hp.empDisabled) { Unlink(); return; }
             if (Role == NpcRoles.Role.Detonator) { UpdateDetonator(); return; }
             roleTickMs += dtMs;

@@ -531,6 +531,15 @@ battle spawns in 156 ms with its hulls.
   `JumpOut` (state 6, gone with the rest, nobody's kill). Never a traffic fighter (`ModTraffic.Scan`); the cruise drive's
   `lootdrone` encounter flies it, neutral; the other ships leave it out of their enemy lists (`Traffic.ConnectPlayers`, ES2's
   bIgnoredByAI).
+  pursuer (2026-11-11, Chorus's Guilt: BT_Guilt's BTService_CheckDistance steps 8000 / 60000 / 100000 / 300000 cm and its
+  FlyToTarget tasks' LinearSpeedMultiplier 0.5 (TargetReachedDistance 2000) / 3 / 5 / 7, else 1; BTService_SelectTarget
+  bPreferPlayer; BP_Guilt_Debuff MaxWither 5; BP_NPC_Guilt ProximityIntensityMax 0.4, PP_Guilt): `UpdateTargeting` takes the
+  player, `RolePace` (`NpcRoles.ChaseFactor` on the distance in game units, Chorus's cm x 0.72) multiplies its top speed, no
+  break-off, `Hp.vulnerable` false; every 250 ms within 11520 units (160 m) the player takes 5 % of its maximum hull a second
+  past the shield (the wither, the remake's reading of MaxWither), and within 108000 units `World.PursuerFx` (a global URP
+  volume: a dark red vignette, saturation drained) follows `NpcRoles.Proximity`. Never traffic (`ModTraffic.Scan`): npcships.json
+  or an event graph spawns it. Not done: the mission's MTAction_ManageGuiltNPC (parking or stopping it: an event graph
+  despawns it), its combat area.
 - **A ship type's own drops** (remake 2026-11-04, for mods; ships.json `traffic.loot` [ { item, chance, min, max } ] and
   `lootDrops`, `CustomTraffic.loot` / `CustomLoot`, `NpcShip.AddOwnLoot` at Setup and Revive): after EVERSPACE 2's
   loot_npcs.csv (a blueprint, its drop count, then item / chance / amount range triples): each entry by its chance, at most

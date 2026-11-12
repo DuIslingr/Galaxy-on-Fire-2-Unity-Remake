@@ -123,6 +123,7 @@ namespace GoF2Remake.Modding
                 if (boss != (key == BossKey)) continue;   // (a boss hull is never a fighter)
                 if (!string.IsNullOrEmpty(c.traffic?.capital)) continue;   // a capital ship or freighter (ModCapitalShips)
                 if (IsLootDrone(c)) continue;   // (PickLootDrone)
+                if (Flight.NpcRoles.Parse(c.traffic?.role) == Flight.NpcRoles.Role.Pursuer) continue;   // (a pursuer comes by npcships.json or a story, never as traffic)
                 bool flies = boss || (c.traffic?.races != null && c.traffic.races.Length > 0 ? c.traffic.races.Any(r => Key(r) == key) : Key(c.race) == key);
                 if (!flies || !ModUnlocks.ShipAvailable(c.index)) continue;
                 float length = Length(c.index);
