@@ -86,6 +86,9 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0f, NpcRoles.Proximity(NpcRoles.ProximityUnits));
             Assert.AreEqual(NpcRoles.ProximityMax, NpcRoles.Proximity(0f), 1e-6f);
             Assert.AreEqual(-40f, GoF2Remake.World.PursuerFx.Strength(0.4f).saturation, 1e-4f);
+            Assert.IsFalse(NpcRoles.PursuitPaused(false, false));
+            Assert.IsTrue(NpcRoles.PursuitPaused(true, false), "an event graph's order (MTAction_ManageGuiltNPC's)");
+            Assert.IsTrue(NpcRoles.PursuitPaused(false, true), "a hold");
         }
 }
 }

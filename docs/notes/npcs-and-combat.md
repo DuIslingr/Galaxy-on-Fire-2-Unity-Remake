@@ -543,8 +543,10 @@ battle spawns in 156 ms with its hulls.
   break-off, `Hp.vulnerable` false; every 250 ms within 11520 units (160 m) the player takes 5 % of its maximum hull a second
   past the shield (the wither, the remake's reading of MaxWither), and within 108000 units `World.PursuerFx` (a global URP
   volume: a dark red vignette, saturation drained) follows `NpcRoles.Proximity`. Never traffic (`ModTraffic.Scan`): npcships.json
-  or an event graph spawns it. Not done: the mission's MTAction_ManageGuiltNPC (parking or stopping it: an event graph
-  despawns it), its combat area.
+  or an event graph spawns it. Chorus's MTAction_ManageGuiltNPC (a blueprint finding Guilt in the mission's whiteboard;
+  the parking itself is native MTAction_ManageGuiltNPCBase) is the event graphs' orders: a hold parks it (`NpcShip.Update`
+  returns before `UpdateRole` while parked), any other order pauses its chase, wither and screen
+  (`NpcRoles.PursuitPaused`, 2026-11-11), Resume sets it on the player again. Not done: its combat area.
 - **Chorus's way of fighting** (remake 2026-11-11, for mods; ships.json `traffic.ai` "chorus"; `Flight.ChorusDogfight` plain +
   `World.NpcShip` part NpcShipChorus): after BT_Fighter_CombatRoam (BTTask_AttackApproach FiringStartDistance 60000 /
   ClosestDistance 5000 cm, TaskDuration 10, LinearSpeedMultiplier 2; BTTask_Flee with EQQuery_PassByPosition 4 s;

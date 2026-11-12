@@ -94,7 +94,9 @@ namespace GoF2Remake.World
         {
             Hp.vulnerable = false;
             var player = FleeFrom;
-            if (player == null) { pursuitPace = 1f; return; }
+            // an event graph's order or hold (Chorus's MTAction_ManageGuiltNPC, parking or stopping Guilt): no chase, wither
+            // or screen while it lasts (Resume lets it go after you again)
+            if (player == null || NpcRoles.PursuitPaused(order != null, parked)) { pursuitPace = 1f; return; }
             float d = Vector3.Distance(player.transform.position, transform.position) / M;
             pursuitPace = NpcRoles.ChaseFactor(d);
             PursuerFx.Near(NpcRoles.Proximity(d));

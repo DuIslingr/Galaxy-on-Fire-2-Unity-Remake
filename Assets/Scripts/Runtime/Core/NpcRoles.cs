@@ -56,6 +56,10 @@ namespace GoF2Remake.Flight
         public const float StopUnits = 1440f, WitherUnits = 11520f, WitherShare = 0.05f, ProximityUnits = 108000f, ProximityMax = 0.4f;
 
         /// <summary>The pursuer's speed factor 'distance' game units from the player (0: close enough to stop).</summary>
+        /// <summary>A pursuer an event graph has given an order or a hold (Chorus's MTAction_ManageGuiltNPC): it neither
+        /// chases nor withers while that lasts.</summary>
+        public static bool PursuitPaused(bool ordered, bool parked) => ordered || parked;
+
         public static float ChaseFactor(float distance)
         {
             if (distance <= StopUnits) return 0f;
