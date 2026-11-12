@@ -368,11 +368,6 @@ namespace GoF2Remake.Data
         public float every = 100f;
     }
 
-    /// <summary>Remake mods (ships.json "wreck", 2026-11-11, after Chorus's ExplosionPhysics wrecks): 'model' a glTF / GLB in the
-    /// mod made in the ship model's own frame and units (it is placed exactly where the hull was), each node with a mesh one
-    /// piece, painted with the ship's "materials"; the pieces fly apart from the wreck's middle at 'speed' (x a tenth of the
-    /// ship's length a second) with the ship's own motion, turn at 'spin' (x 20-90 deg a second), slow down, burn and are
-    /// gone after 'seconds' (shrinking away over the last quarter).</summary>
     /// <summary>A ship's Shield Overcharge look (CustomShipData.overcharge; Chorus's P_Buff_Auxiliary_Shield_PlayerCapitalShip,
     /// one mesh particle): 'model' (a glTF / GLB in the mod, made in the ship model's frame and units, its materials from the
     /// ship's "materials": a "shield" block) shown 'delay' seconds after the overcharge starts for 'seconds', its tint 'color'
@@ -385,6 +380,11 @@ namespace GoF2Remake.Data
         public float[] color, colorOverLife, alphaOverLife;
     }
 
+    /// <summary>Remake mods (ships.json "wreck", 2026-11-11, after Chorus's ExplosionPhysics wrecks): 'model' a glTF / GLB in the
+    /// mod made in the ship model's own frame and units (it is placed exactly where the hull was), each node with a mesh one
+    /// piece, painted with the ship's "materials"; the pieces fly apart from the wreck's middle at 'speed' (x a tenth of the
+    /// ship's length a second) with the ship's own motion, turn at 'spin' (x 20-90 deg a second), slow down, burn and are
+    /// gone after 'seconds' (shrinking away over the last quarter).</summary>
     [System.Serializable] public class CustomWreck
     {
         public string model;
