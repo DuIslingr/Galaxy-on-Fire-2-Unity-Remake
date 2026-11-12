@@ -757,6 +757,11 @@ namespace GoF2Remake.Data
         public string thickness, outerVariation, innerVariation, ice, normal, ao;
         public float[] outerGlow;   // (and 'innerGlow', 'dirt', 'breath' as the other kinds')
         public float noiseTiling = 1f, depth = 0.1f, strength = 1f, roughnessIntensity = 1f;
+        // Its core (Enable Core: the Omen drones' and the bat swarms' cores): + m x (the glow + saturate(N.V)^'coreContrast' x
+        // 'coreColor'), m = saturate(1 - the distance from 'sphereOffset' / 'sphereRadius' (object space, Chorus's cm)) x the
+        // thickness x the inverse fresnel^5. No 'coreColor' or a 'coreContrast' of 0: none.
+        public float[] coreColor, sphereOffset;
+        public float coreContrast, sphereRadius = 1000000f;
 
         public bool On => !string.IsNullOrEmpty(kind) && (Shell ? !string.IsNullOrEmpty(mask) : Crystal ? !string.IsNullOrEmpty(diffuseA)
             : Tissue ? !string.IsNullOrEmpty(thickness) : !string.IsNullOrEmpty(palette));

@@ -522,7 +522,10 @@ void ChorusCrystal(Varyings input, inout SurfaceData s)
 // _Es2WearMap the inner variation, _Es2WearNoiseMap the ice mask, _ChorusPalette T_Dirt_02, _ChorusDirtRough the breath
 // row. _ChorusEmitR / G rgb the outer / inner glow; _ChorusEmitB x NoiseTiling, y Depth, z Strength, w RoughnessIntensity;
 // _ChorusKicker x Breath Interval (0: none), y Pulse Wave Period UU; _ChorusParams.w the emission's scale. The warp-in
-// dissolve's edge glow (Driver, Edge Thickness) is left out (at rest it shows none).
+// dissolve's edge glow (Driver, Edge Thickness) is left out (at rest it shows none). Enable Core (MI_JTU_OmenDroneCore's
+// compiled base pass): the glow + m x (the glow + saturate(N.V)^Inner Contrast x Inner Core Color), m = saturate(1 - the
+// distance from Sphere Offset / sphere radius (object space, Chorus's cm)) x Thickness.r x (1 - (0.04 + 0.96 (1 - N.V)^5));
+// _ChorusAccent rgb Inner Core Color, a Inner Contrast (0: no core); _ChorusDirt xyz Sphere Offset, w sphere radius.
 void ChorusTissue(Varyings input, inout SurfaceData s)
 {
     half3 n = normalize(input.normalWS.xyz);
@@ -561,6 +564,16 @@ void ChorusTissue(Varyings input, inout SurfaceData s)
     half3 breath = SAMPLE_TEXTURE2D_LOD(_ChorusDirtRough, sampler_LinearClamp, float2(phase, 0.5), 0).rgb;
     half3 w = clamp((outer + inner) * k + breath, 0.5h, 1.0h);
     half3 glow = lerp((half3)_ChorusEmitR.rgb * (dirt + outer), (half3)_ChorusEmitG.rgb * (ice * fres + inner), w);
+    if (_ChorusAccent.a > 0.0)
+    {
+        half ndv = max(dot(nW, view), 0.0h);
+        half x = 1.0h - ndv;
+        half rim = x > 0.0h ? 1.0h - (x * x * x * x * x * 0.96h + 0.04h) : 0.96h;
+        half m = saturate(1.0h - (half)(length(p - _ChorusDirt.xyz) / max(_ChorusDirt.w, 1e-5))) * thick.r * rim;
+        half c = min(ndv, 1.0h);
+        half3 core = c > 0.0h ? pow(c, (half)_ChorusAccent.a) * (half3)_ChorusAccent.rgb : 0.0h;
+        glow += m * (glow + core);
+    }
 
     s.albedo = 0.0h;
     s.metallic = 0.0h;

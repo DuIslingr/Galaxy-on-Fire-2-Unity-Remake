@@ -177,8 +177,19 @@ namespace GoF2Remake.Tests
                 Assert.AreEqual(new Vector4(3f, 0f, 0.08f, 0f), m.GetVector("_ChorusEmitG"));
                 Assert.IsNotNull(m.GetTexture("_Es2WearNoiseMap"), "the ice");
                 Assert.AreEqual(4f, m.GetVector("_ChorusKicker").x);
+                Assert.AreEqual(Vector4.zero, m.GetVector("_ChorusAccent"), "no core");
             }
             finally { Object.DestroyImmediate(m); }
+
+            // Enable Core (MI_JTU_OmenDroneCore): its colour and contrast, its sphere
+            c.coreColor = new[] { 3f, 0.75f, 0f }; c.coreContrast = 6.59f; c.sphereRadius = 3798869.8f;
+            var cored = ModMaterials.FromSpec(mod, new CustomShipMaterial { chorus = c }, "core");
+            try
+            {
+                Assert.AreEqual(new Vector4(3f, 0.75f, 0f, 6.59f), cored.GetVector("_ChorusAccent"));
+                Assert.AreEqual(new Vector4(0f, 0f, 0f, 3798869.8f), cored.GetVector("_ChorusDirt"));
+            }
+            finally { Object.DestroyImmediate(cored); }
         }
 
         [Test]

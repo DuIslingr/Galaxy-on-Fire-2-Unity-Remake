@@ -548,13 +548,15 @@ namespace GoF2Remake.Modding
             m.SetTexture("_EmissionMap", null);
             m.SetColor("_EmissionColor", Color.black);   // (the layer makes the emission itself)
             m.SetVector(ChorusParamsId, new Vector4(5f, 1f, 1f, Mathf.Max(0f, c.emissionScale)));
-            m.SetVector(ChorusAccentId, Vector4.zero);
+            bool core = c.coreColor != null && c.coreColor.Length >= 3 && c.coreContrast > 0f;
+            m.SetVector(ChorusAccentId, core ? Rgba(c.coreColor, c.coreContrast) : Vector4.zero);
             m.SetVector(ChorusEmitRId, Rgba(c.outerGlow ?? new[] { 0.17f, 0f, 0f }, 0f));
             m.SetVector(ChorusEmitGId, Rgba(c.innerGlow ?? new[] { 3f, 0f, 0.08f }, 0f));
             m.SetVector(ChorusEmitBId, new Vector4(Mathf.Max(1e-3f, c.noiseTiling), c.depth, Mathf.Max(0f, c.strength), Mathf.Clamp01(c.roughnessIntensity)));
             m.SetVector(ChorusKickerId, new Vector4(Mathf.Max(0f, c.breathInterval), Mathf.Max(1f, c.pulsePeriod), 0f, 0f));
             m.SetVector(ChorusKicker2Id, new Vector4(0f, 1f, 1f, 0f));
-            m.SetVector(ChorusDirtId, Vector4.zero);
+            var so = c.sphereOffset != null && c.sphereOffset.Length >= 3 ? c.sphereOffset : new float[3];
+            m.SetVector(ChorusDirtId, core ? new Vector4(so[0], so[1], so[2], Mathf.Max(1e-3f, c.sphereRadius)) : Vector4.zero);
             m.SetVector(ChorusDirt2Id, Vector4.one);
             m.SetVector(ChorusDirt3Id, Vector4.zero);
         }

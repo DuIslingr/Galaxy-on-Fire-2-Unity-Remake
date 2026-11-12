@@ -361,10 +361,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   noise texture stands in) and the breath, height-blended against A's mask by VC Transition Softness; macro tint and
   roughness; overlay with the inner variation (green) read through the vein heightmap's parallax and the normal's tilt;
   the glow variation x Inner Glow x the breath (CA_BaseVFX row: R glow, G blend) x each surface's mask and intensities.
-  A Breath Interval of 0 (the Prophet's) holds the breath at the row's start. Tissue (M_JTU_Faceless, the non-core
-  permutation): the formula above `_faceless` in the importer, with the ice scrolling 0.1 a second, the parallax and
-  fresnel per pixel and the breath rippling from the origin; its warp-in dissolve edge left out. Tests in
-  `ChorusLayersTests`.
+  A Breath Interval of 0 (the Prophet's) holds the breath at the row's start. Tissue (M_JTU_Faceless): the formula above
+  `_faceless` in the importer, with the ice scrolling 0.1 a second, the parallax and fresnel per pixel and the breath
+  rippling from the origin; its warp-in dissolve edge left out (the remake's `warpIn`). Its core permutation (Enable Core,
+  2026-11-11, MI_JTU_OmenDroneCore's compiled base pass: the Omen drones' and bat swarms' cores) adds m x (the glow +
+  saturate(N.V)^Inner Contrast x Inner Core Color), m = saturate(1 - |p - Sphere Offset| / sphere radius) (object space,
+  cm, as the breath's) x Thickness.r x (1 - (0.04 + 0.96 (1 - N.V)^5)): `coreColor` / `coreContrast` in `_ChorusAccent`,
+  `sphereOffset` / `sphereRadius` in `_ChorusDirt` (both unused by the tissue otherwise). Tests in `ChorusLayersTests`.
 - **Skinned mod ships** (2026-11-11, ships.json `skinned`; `CustomShipData.skinned`, `ModShipBuilder.KeepSkinned`): the
   model's SkinnedMeshRenderers are kept (updateWhenOffscreen, its arms swing past the bind pose's bounds) instead of
   `FlattenSkinned`, so `animations` play on the bones (Chorus's Guilt: a soft skin, 26 joints, its 42 s idle). Measuring,
