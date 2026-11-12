@@ -115,9 +115,9 @@ namespace GoF2Remake.Tests
         {
             string dir = WriteMod("c", "t_sub", "1.0", "", ("ships.json",
                 "[ { 'id': 'fort', 'name': 'Fort', 'race': 8, 'model': 'big.glb', 'traffic': { 'capital': 'battleship', 'weight': 0 }," +
-                "    'shieldMaterial': 'energyfield|', 'shieldedDamage': 0.1, 'hullDamage': 0, 'hullFactor': 3, 'engineStyle': 'es2', 'es2Engine': { 'glow': false }," +
+                "    'shieldMaterial': 'energyfield|', 'shieldedDamage': 0.1, 'hullDamage': 0, 'shieldBlocks': true, 'deathThroes': { 'seconds': 10, 'radius': 50000, 'blasts': 6 }, 'hullFactor': 3, 'engineStyle': 'es2', 'es2Engine': { 'glow': false }," +
                 "    'subsystems': [" +
-                "      { 'kind': 'turret', 'name': 'Gun', 'position_engine': [100, 200, 300], 'item': 48, 'stage': 2, 'turretUp': [1, 0, 0] }," +
+                "      { 'kind': 'turret', 'name': 'Gun', 'position_engine': [100, 200, 300], 'item': 48, 'stage': 2, 'turretUp': [1, 0, 0], 'shield': 0.75 }," +
                 "      { 'kind': 'object', 'name': 'Emitter', 'position_engine': [0, 0, 0], 'shields': true, 'stage': 1, 'hull': 900, 'model': 'gof2:v_station_battlestation_shield' }," +
                 "      { 'kind': 'object', 'name': 'Weak', 'position_engine': [1, 2, 3], 'upsideDown': true, 'turretForward': [1, 0, 0], 'weakspot': 2.5, 'bonus': 0.08 }," +
                 "      { 'kind': 'hangar', 'model': 'none', 'position_engine': [5, 0, 0], 'ships': [ 2, 't_sub:fort' ], 'every': 10, 'perWave': 3, 'maxAlive': 5, 'total': 9 }," +
@@ -146,7 +146,9 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(new[] { "2", "t_sub:fort" }, subs[3].ships.ToArray());
             Assert.AreEqual(10000f, subs[3].everyMs); Assert.AreEqual(3, subs[3].perWave); Assert.AreEqual(5, subs[3].maxAlive); Assert.AreEqual(9, subs[3].total);
             var c = CustomShips.Get(fort);
-            Assert.AreEqual("energyfield|", c.shieldMaterial); Assert.AreEqual(0.1f, c.shieldedDamage, 1e-5f); Assert.AreEqual(0f, c.hullDamage); Assert.AreEqual("es2", c.engineStyle);
+            Assert.AreEqual("energyfield|", c.shieldMaterial); Assert.AreEqual(0.1f, c.shieldedDamage, 1e-5f); Assert.AreEqual(0f, c.hullDamage); Assert.IsTrue(c.shieldBlocks);
+            Assert.AreEqual(10f, c.deathThroes.seconds); Assert.AreEqual(50000f, c.deathThroes.radius); Assert.AreEqual(6, c.deathThroes.blasts); Assert.AreEqual(1f, c.deathThroes.damage, "its default");
+            Assert.AreEqual(0.75f, subs[0].shield, 1e-5f, "a part's own shield"); Assert.AreEqual("es2", c.engineStyle);
             Assert.IsFalse(c.es2Engine.glow, "EVERSPACE 2's SpawnEngineGlow off"); Assert.IsTrue(c.es2Engine.trails, "left out: on");
             Assert.AreEqual(Mathf.RoundToInt(NpcTables.Hull(1, 14) * 3f), ModCapitalShips.Spawn(fort, 8, Vector3.zero).hitpoints, "hullFactor");
             Assert.IsEmpty(ModCapitalShips.Candidates(8, ModCapitalShips.Battleship), "weight 0: never in the traffic (the encounter brings it)");

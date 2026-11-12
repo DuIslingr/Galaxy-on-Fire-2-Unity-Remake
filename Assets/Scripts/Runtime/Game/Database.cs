@@ -249,6 +249,8 @@ namespace GoF2Remake.Data
         // none) and its renderers with a material named like 'shieldMaterial' show (its energy fields), hidden once they fall.
         public string shieldMaterial;
         public float shieldedDamage;
+        // Remake mods (2026-11-11, Chorus's warship barriers): the shield fields (shieldMaterial) block the way while they show.
+        public bool shieldBlocks;
         // Remake mods (2026-11-11, Chorus's warships): the share of a direct hit on the hull it takes (after the shields); 0 = it is
         // hurt only through its weak spots (their passed-on hits and bonuses), Chorus's DefaultDamageMultiplier 0.
         public float hullDamage = 1f;
@@ -273,9 +275,23 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods (2026-11-11, Chorus's explosions): a JSON file in the mod with the ship's own death effects
         /// (CustomFxFile, World.ModDeathFx) instead of the game's explosion; null = the game's.</summary>
         public string deathFx;
+        /// <summary>Remake mods (2026-11-11, Chorus's warships): a capital ship's reactor going critical when its hull runs out
+        /// (CustomDeathThroes, NpcShipDamage); null = it burns and explodes as the game's do.</summary>
+        public CustomDeathThroes deathThroes;
         /// <summary>Remake mods (after Galaxy on Fire 3's wingmen): the device a hired wingman flying this hull uses: "repair",
         /// "ammo" or "charged" (Flight.WingmanDevice); none = none, like the game's wingmen.</summary>
         public string wingmanDevice;
+    }
+
+    /// <summary>Remake mods (ships.json "deathThroes", 2026-11-11, after Chorus's BP_NPC_Warship_Base: StartDeathThroes, its
+    /// countdown and its blast): when the hull runs out, "{name}'s reactor is going critical" and 'seconds' of blasts over the
+    /// hull ('blasts' of them, the ship's "dying" death effect where it has one), then the explosion hurts everything within
+    /// 'radius' game units: 'damage' x a ship's maximum hull (shields first) at its middle, falling off to nothing at the
+    /// edge; the player's camera shakes within twice that.</summary>
+    [System.Serializable] public class CustomDeathThroes
+    {
+        public float seconds = 10f, radius = 16000f, damage = 1f;
+        public int blasts = 12;
     }
 
     /// <summary>Remake mods (ships.json "deathFx", 2026-11-11, after Chorus's Cascade explosions): the ship's death effects,
@@ -348,6 +364,7 @@ namespace GoF2Remake.Data
         public int item = -1, hull = -1, stage;
         public bool shields;
         public float weakspot, bonus, scale = 1f, radius = -1f;
+        public float shield;   // remake (2026-11-11, Chorus's shielded turret mounts): shield points = its hull x this, taken first, not recharged
         public List<string> ships = new List<string>();
         public float everyMs = 25000f;
         public int perWave = 2, maxAlive = 6, total = -1;

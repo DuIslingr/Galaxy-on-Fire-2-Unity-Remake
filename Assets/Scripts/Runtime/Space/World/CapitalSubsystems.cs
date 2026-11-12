@@ -148,12 +148,22 @@ namespace GoF2Remake.World
                 s.transform.SetParent(host.transform, true);
                 if (d.kind != "turret") s.shootingEnabled = false;
                 if (d.weakspot > 0f) { s.Target.forwardTo = host.Target; s.Target.forwardFactor = d.weakspot; }
+                if (d.shield > 0f && s.Target.hitpoints != null)
+                {
+                    // (a shield of its own, shot down first: Chorus's shielded turret mounts; it doesn't recharge)
+                    s.Target.hitpoints.maxShield = Mathf.RoundToInt(hull * d.shield);
+                    s.Target.hitpoints.shield = s.Target.hitpoints.maxShield;
+                }
                 parts.Add(new Part { data = d, ship = s, waveMs = d.everyMs * 0.5f });
             }
             if (data != null && !string.IsNullOrEmpty(data.shieldMaterial))
                 foreach (var r in host.GetComponentsInChildren<Renderer>(true))
                     foreach (var m in r.sharedMaterials)
                         if (m != null && m.name.IndexOf(data.shieldMaterial, System.StringComparison.OrdinalIgnoreCase) >= 0) { fields.Add(r); break; }
+            // (shield fields that block the way: their meshes in the hull while they show; Chorus's warship barriers)
+            if (data != null && data.shieldBlocks && host.Target.hull != null)
+                foreach (var r in fields)
+                    if (r != null) Flight.HullCollision.AddShape(host.Target.hull, r.GetComponent<MeshFilter>());
             traffic.ConnectPlayers();
         }
 

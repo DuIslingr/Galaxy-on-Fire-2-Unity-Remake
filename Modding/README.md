@@ -939,6 +939,14 @@ hull (EVERSPACE 2's warships): `"subsystems"`, each placed like a mount (`positi
   the weak points).
 - `turretForward` (with `turretUp`, game axes): turns a part that isn't a turret fully, its model's nose that way (a device
   set at an angle on its socket); without it a part is turned by its up alone.
+- `shield` (a part's): a shield of its own, its hull x this in shield points, shot down before the part takes damage; it
+  doesn't recharge.
+- `"shieldBlocks": true` (the ship's): its shield fields (`shieldMaterial`) block the way while they show, and fall open
+  with the shield generators.
+- `"deathThroes": { "seconds": 10, "radius": 16000, "damage": 1, "blasts": 12 }` (the ship's): when its hull runs out its
+  reactor goes critical ("Get clear!"): `seconds` of blasts over the hull (its `deathFx` "dying" effect, else the game's
+  explosion), then the blast hurts every ship within `radius` game units, `damage` x a ship's whole hull and shields at
+  the middle, falling off to nothing at the edge (you too).
 - `"hullDamage"` (the ship's own field, default 1): the share of a direct hit on the hull it takes. `0` makes a ship that
   is hurt only through its parts (Chorus's warships): a weak spot's passed-on hits and death bonus still get through, and a
   hit on the bare hull is answered "Its armour holds: shoot its weak points!" now and then.

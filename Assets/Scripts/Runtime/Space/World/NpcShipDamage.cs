@@ -271,6 +271,16 @@ namespace GoF2Remake.World
             else if (IsFreighter)
             {
                 dyingMs = 10000f;
+                // Remake mods (Chorus's warships): the reactor going critical, its countdown and its hull blasts
+                throes = Spec.modCapital ? CustomShips.Get(Spec.ship)?.deathThroes : null;
+                throesBlastMs.Clear();
+                if (throes != null)
+                {
+                    dyingMs = Mathf.Max(1f, throes.seconds) * 1000f;
+                    for (int i = 0; i < Mathf.Clamp(throes.blasts, 0, 60); i++) throesBlastMs.Add(dyingMs * Random.Range(0.02f, 0.98f));
+                    traffic.Warn(string.Format(Localization.Extra("capitalCritical", "{0}'s reactor is going critical! Get clear!"),
+                        Target.displayName ?? GameNames.Ship(Spec.ship)));
+                }
                 var wreckPrefab = Spec.modCapital ? null : WreckPrefab(assets, Spec.ship, Race);   // a mod's hull burns as it is
                 if (wreckPrefab != null && model != null)
                 {
@@ -297,6 +307,27 @@ namespace GoF2Remake.World
                 burn.SetBurning(true);
                 spinAxis = new Vector3(Random.Range(0, 200) - 100, Random.Range(0, 200) - 100, Random.Range(0, 200) - 100).normalized;
             }
+        }
+
+        /// <summary>The reactor's blast at the end of the death throes (CustomDeathThroes): every target within its radius takes
+        /// 'damage' x its maximum hull at the middle, falling off to the edge (shields first; the player too, as an NPC's hit);
+        /// the player's camera shakes within twice the radius.</summary>
+        void ThroesBlast()
+        {
+            float radius = Mathf.Max(1f, throes.radius);
+            var centre = transform.position;
+            var list = new List<Target>(Target.All);
+            foreach (var t in list)
+            {
+                if (t == null || t == Target || !t.Alive || t.phased) continue;
+                float d = (t.transform.position - centre).magnitude / M;
+                if (d >= radius) continue;
+                float f = 1f - d / radius;
+                float max = t.hitpoints != null ? t.hitpoints.maxHull + t.hitpoints.maxShield : t.maxHp;
+                t.Damage(Mathf.Max(0f, throes.damage) * max * f, true);
+            }
+            var cam = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;
+            if (cam != null && (cam.transform.position - centre).magnitude / M < radius * 2f) cam.Shake(1500f, Mathf.Min(600f, radius * 0.02f));
         }
 
         /// <summary>A freighter's wreck (setWreckedMeshId: cargo_00N_(race)_explosion_anim by race, the battleship's for
@@ -350,6 +381,16 @@ namespace GoF2Remake.World
                 transform.position += deathDir * speed * dtMs * M;
             }
             dyingMs -= dtMs;
+            for (int i = throesBlastMs.Count - 1; i >= 0; i--)
+                if (dyingMs <= throesBlastMs[i])
+                {
+                    // (the countdown's blasts over the hull: the ship's own dying effect, else the game's explosion, smaller)
+                    throesBlastMs.RemoveAt(i);
+                    float reach = model != null ? Mathf.Max(1f, PlayerHull.HullBounds(transform, model).extents.magnitude * 0.6f) : 20f;
+                    var at = transform.position + Random.insideUnitSphere * reach;
+                    if (ModDeathFx.DyingCount(Spec.ship) > 0) ModDeathFx.SpawnDying(Spec.ship, at, transform.rotation, Vector3.zero);
+                    else Explosion.Spawn(at, Mathf.Max(1f, FreighterExplosionScale * 0.25f), Random.value < 0.4f);
+                }
             for (int i = dyingFxMs.Count - 1; i >= 0; i--)
                 if (dyingMs <= dyingFxMs[i])
                 {
@@ -365,6 +406,7 @@ namespace GoF2Remake.World
             if (IsFixed || !ModDeathFx.SpawnMain(Spec.ship, transform.position, transform.rotation, IsFreighter ? Vector3.zero : deathDir * speed * M * 1000f))
                 explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? FreighterExplosionScale : FighterExplosionScale);
             else explosion = null;
+            if (throes != null) ThroesBlast();
             // Remake mods: a ship with a "wreck" breaks into its pieces there (World.WreckBreakup), its hull gone with the blast.
             if (!IsFixed && !IsTurret && wreck == null && model != null)
             {

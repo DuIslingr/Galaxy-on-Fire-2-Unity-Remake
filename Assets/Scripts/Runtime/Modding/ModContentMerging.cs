@@ -286,7 +286,7 @@ namespace GoF2Remake.Modding
                 p.stage = ModJson.Int(o, "stage", 0, file);
                 p.shields = ModJson.Get(o, "shields") is JValue sh && sh.Type == JTokenType.Boolean && (bool)sh;
                 float F(string k, float def) => ModJson.Get(o, k) is JValue v && (v.Type == JTokenType.Float || v.Type == JTokenType.Integer) ? (float)v : def;
-                p.weakspot = F("weakspot", 0f); p.bonus = F("bonus", 0f); p.scale = F("scale", 1f); p.radius = F("radius", -1f);
+                p.weakspot = F("weakspot", 0f); p.bonus = F("bonus", 0f); p.shield = Mathf.Max(0f, F("shield", 0f)); p.scale = F("scale", 1f); p.radius = F("radius", -1f);
                 p.everyMs = Mathf.Max(3f, F("every", 25f)) * 1000f;
                 p.perWave = Mathf.Max(1, ModJson.Int(o, "perWave", 2, file));
                 p.maxAlive = Mathf.Max(1, ModJson.Int(o, "maxAlive", 6, file));
