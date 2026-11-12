@@ -407,8 +407,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   lerp(min, max, t) x t x P.r x mask x multiplier added to `surfaceData.emission` after the layers. M_Phoenix reads
   Emissive02 Min / Max there (its plain Emissive02 isn't in its uniforms), the Magnetic Plates Pattern
   (T_HexPatternNoise_01_A) x Magnetic Pattern Tiling, the emissive masks' green x Emissive02_Multiplier; left out: its
-  hit flash (HitColor about HitLocation for HitEffectDuration) and its world-space AFX pattern (scaled by a per-primitive
-  value, 0 at rest). Maps preloaded with the ship's (`ModShips`) and stations' (`ModStations`). Tests in
+  world-space AFX pattern (scaled by a per-primitive value, 0 at rest). Its hit flash (2026-11-11, MF_HitEffect in the
+  same pass): a material's `"hit"` block (`HitFlashSpec`, `ModMaterials.HitFlash`: `_HitFx` y radius m, z duration, w 1
+  pattern / 2 none; `_HitColor`), HullForwardPass.hlsl `HitFlash`: the ring max(1 - |max(1 - d / (uR), 0) - 0.07| / 0.07, 0)
+  plus (1 - N.V)^7 x saturate(1 - d / R), x (1 - u) x colour x min(((P(2uv) + P(turned 5uv)) / 2)^4, 1), P =
+  T_Lu_Noise_29 (M_Phoenix's referenced texture 1) in `_WavePattern.a` (no 19th texture on the hull shader).
+  `World.HullHitFlash` (PlayerHealth.OnHit on armour / hull hits) puts `_HitPos` on the hull's box toward the shooter
+  (Target.lastHitVector) and ages `_HitFx.x` over the duration; rescans its renderers when the hierarchy changes. Maps preloaded with the ship's (`ModShips`) and stations' (`ModStations`). Tests in
   `ChorusLayersTests`.
 - **Wreck burn and disintegration** (remake, 2026-11-11, Chorus's MF_WreckBurn (Burn_Amount, Burn_Temperature 1500,
   Burn_Tiling 4) and the masters' Dissolve / DissolveWidth / DissolveBoost 2): `HullWreck.hlsl` (GoF2/Hull's

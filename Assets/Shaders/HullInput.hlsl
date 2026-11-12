@@ -97,6 +97,12 @@ float4 _WaveMax;
 // y the share cut away, z the pattern's cells a unit, w the cut edge's width; _WreckBurnColor rgb the glow (HDR)
 float4 _WreckFx;
 float4 _WreckBurnColor;
+// GoF2: the hull's hit flash (Chorus's M_Phoenix; HullForwardPass.hlsl HitFlash; World.HullHitFlash's property block): x the
+// flash's age 0..1 (1 = none), y its radius (m), z its duration (s), w 1 its pattern in _WavePattern.a / 2 none / 0 off;
+// _HitPos xyz the hit (world); _HitColor rgb (HDR)
+float4 _HitFx;
+float4 _HitPos;
+float4 _HitColor;
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 

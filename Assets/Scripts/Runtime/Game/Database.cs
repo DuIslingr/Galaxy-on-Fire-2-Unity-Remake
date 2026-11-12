@@ -552,6 +552,9 @@ namespace GoF2Remake.Data
         public ChorusRiftSpec rift;
         /// <summary>Remake (2026-11-11): a glow that travels along a pattern (Chorus's M_Phoenix glow lines; GoF2/Hull GlowWave).</summary>
         public GlowWaveSpec wave;
+        /// <summary>Remake (2026-11-11): the hull's flash where the player's ship is hit (Chorus's M_Phoenix MF_HitEffect; GoF2/Hull
+        /// HitFlash, World.HullHitFlash).</summary>
+        public HitFlashSpec hit;
         // An engine flame (GoF2/ModEngineFlame, Modding.EngineFlame): the surfaces are flame stubs whose UV u runs from the
         // nozzle (0) to the tip (1), stretched backward by the throttle; emissionColor x emissionIntensity is its colour.
         public bool flame;
@@ -604,6 +607,16 @@ namespace GoF2Remake.Data
     /// frac(G - B - time x 'speed') makes a triangle wave t (0 at its ends, 1 in its middle) that runs along the pattern;
     /// the glow lerp('min', 'max', t) x t x R x the 'mask' image's 'channel' (0 R, 1 G, 2 B; over UV0) x 'multiplier', added to
     /// the emission. Both images read as data.</summary>
+    /// <summary>Chorus's hit flash (M_Phoenix's compiled base pass): for 'duration' seconds after a hit, 'color' (HDR: HitColor x
+    /// HitEmissiveStrength) fading out, in a ring growing from the hit to 'radius' (game units) and a fresnel^7 glow within it,
+    /// x the pattern (the wave pattern's alpha: T_Lu_Noise_29 at 2 uv and at 5 uv turning, ((a + b) / 2)^4) with 'pattern'.</summary>
+    [System.Serializable] public class HitFlashSpec
+    {
+        public float[] color;
+        public float radius = 648f, duration = 0.04f;
+        public bool pattern;
+    }
+
     [System.Serializable] public class GlowWaveSpec
     {
         public string pattern, mask;

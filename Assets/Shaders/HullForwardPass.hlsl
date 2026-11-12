@@ -376,6 +376,31 @@ half3 GlowWave(float2 uv)
     return lerp((half3)_WaveMin.rgb, (half3)_WaveMax.rgb, t) * (t * p.r * mask * (half)_WaveParams.x);
 }
 
+// GoF2: Chorus's hit flash (M_Phoenix's compiled base pass, its MF_HitEffect): u = the flash's age 0..1; a ring
+// max(1 - |max(1 - d / (u R), 0) - 0.07| / 0.07, 0) growing from the hit to R, plus (1 - N.V)^7 x saturate(1 - d / R);
+// x (1 - u) x HitColor x HitEmissiveStrength, x min(((P(2 uv) + P(5 uv - 0.5 turned by 0.1 t, + 0.5)) / 2)^4, 1) with P
+// T_Lu_Noise_29's red (here _WavePattern.a; none: 1).
+half3 HitFlash(float2 uv, float3 positionWS, float3 normalWS)
+{
+    float u = _HitFx.x, R = max(_HitFx.y, 1e-5);
+    float d = distance(positionWS, _HitPos.xyz);
+    float3 v = normalize(GetCameraPositionWS() - positionWS);
+    float rim = 1.0 - max(dot(normalize(normalWS), v), 0.0);
+    float glow = rim > 0.0 ? pow(rim, 7.0) * saturate(1.0 - d / R) : 0.0;
+    float ring = max(1.0 - abs(max(1.0 - d / max(u * R, 1e-5), 0.0) - 0.07) * 14.285714, 0.0);
+    float mask = 1.0;
+    if (_HitFx.w < 1.5)
+    {
+        float s, c;
+        sincos(_Time.y * 0.1, s, c);
+        float2 q = uv * 5.0 - 0.5;
+        float2 turned = float2(c * q.x - s * q.y, s * q.x + c * q.y) + 0.5;
+        float p = (SAMPLE_TEXTURE2D(_WavePattern, sampler_LinearRepeat, uv * 2.0).a + SAMPLE_TEXTURE2D(_WavePattern, sampler_LinearRepeat, turned).a) * 0.5;
+        mask = min(p * p * p * p, 1.0);
+    }
+    return (half3)(_HitColor.rgb * ((ring + glow) * (1.0 - u) * mask));
+}
+
 // GoF2: Chorus's crystal (M_JTU_Blend's compiled base pass: the Omen crystal, the Prophet's crown), _ChorusParams.x 4. Two
 // surfaces A and B, each mapped along the mesh's own tangent frame at a world scale (the object-space position in cm on
 // its tangent and bitangent / A or B - Surface Textures World Scale), blended by the vertex colour's red: sharpened by a
@@ -578,6 +603,7 @@ void HullPassFragment(
     else if (_ChorusParams.x > 2.5) ChorusShell(input, surfaceData);      // GoF2: Chorus's shell (Guilt)
     else if (_ChorusParams.x > 0.0) ChorusLayers(input, surfaceData);   // GoF2: Chorus's trim sheets and platings
     if (_WaveParams.x > 0.0) surfaceData.emission += GlowWave(input.uv);   // GoF2: a glow along a pattern (Chorus's M_Phoenix)
+    if (_HitFx.w > 0.0 && _HitFx.x < 1.0) surfaceData.emission += HitFlash(input.uv, input.positionWS, input.normalWS);   // GoF2: a hit (Chorus's M_Phoenix)
     if (_WreckFx.x > 0.0 || _WreckFx.y > 0.0)   // GoF2: a wreck piece's burn and disintegration (HullWreck.hlsl)
     {
         HullWreckClip(input.positionWS);

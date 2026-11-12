@@ -551,6 +551,7 @@ namespace GoF2Remake.Flight
             else if (Hp.shieldHit) clip = CombatAssets.Pick(assets?.hitShield);
             // Remake: haptics by the deepest layer hit, like the sound.
             Haptics.Play(Hp.hullHit ? Haptics.HitHull : Hp.armorHit ? Haptics.HitArmor : Haptics.HitShield);
+            if (Hp.hullHit || Hp.armorHit) GoF2Remake.World.HullHitFlash.For(gameObject).Flash(Target.lastHitVector);   // remake mods: a "hit" block (Chorus's)
             Hp.shieldHit = Hp.armorHit = Hp.hullHit = false;
             if (clip != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
 

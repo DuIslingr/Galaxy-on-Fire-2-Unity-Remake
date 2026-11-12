@@ -119,6 +119,10 @@ Shader "GoF2/Hull"
         // unit, w the edge's width; the glow's colour
         [HideInInspector] _WreckFx("Wreck burn / dissolve", Vector) = (0, 0, 1, 0.1)
         [HideInInspector] _WreckBurnColor("Wreck burn colour", Vector) = (0, 0, 0, 0)
+        // GoF2: the hit flash (HullForwardPass.hlsl HitFlash; World.HullHitFlash): age, radius (m), duration, pattern mode
+        [HideInInspector] _HitFx("Hit flash", Vector) = (1, 1, 0.04, 0)
+        [HideInInspector] _HitPos("Hit position", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _HitColor("Hit colour", Vector) = (0, 0, 0, 0)
         [HideInInspector] _WaveMask("Glow wave mask", 2D) = "black" {}
         // GoF2: a mod specular material's GoF3 terms (HullForwardPass.hlsl GoF3ShipShader; ModMaterials): x environment, y rim,
         // z GoF3's specular multiplier, w 1 = that multiplier is in the map (on the whole specular) / 0 = on the highlight
