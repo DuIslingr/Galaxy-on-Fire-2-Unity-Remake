@@ -319,10 +319,14 @@ namespace GoF2Remake.Data
     /// (deg a second) [min, max]; 'sphere' the radius they start in; 'drag' as Unreal's (velocity lost a second x it);
     /// 'inherit' of the ship's motion; 'color' its brightest colour (HDR), 'colorOverLife' [r, g, b, ...] and
     /// 'alphaOverLife' samples 0..1 times it, 'sizeOverLife' samples times 'size'; 'stretch' > 0: drawn along its
-    /// flight, that long for its width.</summary>
+    /// flight, that long for its width. Remake (2026-11-11): 'blend' "alpha" draws the image over what is behind instead of
+    /// adding it (smoke, debris; its colour then a plain tint, 0..1); 'light' &gt; 0 makes it a light, no particles: a point
+    /// light of that range (game units) and 'lightIntensity', the colour, colour / alpha / size over its life
+    /// (World.FxFlash), from the first burst.</summary>
     [System.Serializable] public class CustomFxEmitter
     {
-        public string image;
+        public string image, blend;
+        public float light, lightIntensity = 1f;
         public int[] sheet;
         public float[] frames;
         public bool randomFrame, forward, randomRotation;

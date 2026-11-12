@@ -422,6 +422,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   material (`ModMaterials.FromSpec` with an additive entry: the image as its emission map, the colour's brightness its HDR
   emission, the particles' colours the fade; cached by image and colour). The root destroys itself after its longest
   emitter. Local only. Tests `ModDeathFxTests`.
+  `"blend": "alpha"` (Chorus's fireball smoke and impostor debris): `ModAssets.fxAlpha` (GoF2/AlphaBlend, the weapon
+  smoke's; `_MainTex`, `_Color` the tint) instead of the additive glow, `sortingFudge` 10 behind the added fire.
+  `"light"` (Chorus's lights-only emitters, ParticleModuleLight): `World.FxFlash`, one point light an emitter (not the
+  particle Lights module: its light template would be a scene object), its range x size over life, colour / alpha over
+  life, from its first burst; `ModDeathFx.Play` spawns it instead of a particle system.
 - **Chorus rifts** (remake, 2026-11-11, for the Chorus rift look and Nimika's dormant rift): a material's `"rift"` block
   (`ChorusRiftSpec` in Database.cs, `ModMaterials.Rift`, GoF2/ChorusRift in Resources/GoF2Fx) after M_PortalRift_2's
   compiled base pass (MI_PortalRift_2_LocAST_Outside's parameters as the defaults; its uniform slots decoded from the

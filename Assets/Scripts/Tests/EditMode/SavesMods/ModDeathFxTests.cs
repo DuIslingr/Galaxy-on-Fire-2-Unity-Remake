@@ -52,5 +52,49 @@ namespace GoF2Remake.Tests
             }
             finally { Object.DestroyImmediate(root); }
         }
+
+        [Test]
+        public void ALightEmitterIsAPointLightOverItsLife()
+        {
+            var e = JsonUtility.FromJson<CustomFxEmitter>("{ \"light\": 4000, \"lightIntensity\": 3, \"bursts\": [0.5, 1], \"life\": [1, 2], " +
+                "\"color\": [8, 4, 2], \"colorOverLife\": [1, 1, 1, 0.5, 0.5, 0.5], \"alphaOverLife\": [1, 0], \"sizeOverLife\": [1, 2] }");
+            var root = new GameObject("fx");
+            try
+            {
+                var f = GoF2Remake.World.FxFlash.Spawn(e, root.transform, 1f);
+                Assert.AreEqual(2.5f, f.Lasts, 1e-4f, "from its first burst for its longest life");
+                Assert.IsFalse(f.Light.enabled, "dark before its burst");
+                var (c, i, r) = f.At(0f);
+                Assert.AreEqual(new Color(1f, 0.5f, 0.25f), c, "the colour normalised");
+                Assert.AreEqual(3f, i, 1e-4f);
+                Assert.AreEqual(4000f * 0.05f / 2f, r, 1e-3f, "its range x the size over life (at half its top)");
+                var (_, half, r2) = f.At(0.5f);
+                Assert.AreEqual(3f * 0.75f * 0.5f, half, 1e-4f, "dimmer with the colour and the alpha");
+                Assert.AreEqual(4000f * 0.05f * 0.75f, r2, 1e-3f);
+                f.Step(0.6f);
+                Assert.IsTrue(f.Light.enabled);
+                f.Step(2f);
+                Assert.IsFalse(f.Light.enabled, "gone after its life");
+                Assert.AreEqual(0.5f, GoF2Remake.World.FxFlash.Sample(new[] { 0f, 1f }, 0.5f));
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void AnAlphaEmitterIsDrawnOverWhatIsBehind()
+        {
+            var smoke = JsonUtility.FromJson<CustomFxEmitter>("{ \"image\": \"fx/smoke.png\", \"blend\": \"alpha\", \"bursts\": [0, 1], \"color\": [0.1, 0.1, 0.1] }");
+            Assert.IsTrue(GoF2Remake.World.ModDeathFx.Alpha(smoke));
+            Assert.IsFalse(GoF2Remake.World.ModDeathFx.Alpha(JsonUtility.FromJson<CustomFxEmitter>("{ \"image\": \"x.png\" }")), "added by default");
+            var root = new GameObject("fx");
+            try
+            {
+                var ps = GoF2Remake.World.ModDeathFx.Build(null, smoke, root.transform, Vector3.zero, 1f, out _);
+                var r = ps.GetComponent<ParticleSystemRenderer>();
+                StringAssert.Contains("AlphaBlend", r.sharedMaterial.shader.name);
+                Assert.Greater(r.sortingFudge, 0f, "behind the fire");
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
     }
 }

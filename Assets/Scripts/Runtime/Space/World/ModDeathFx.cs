@@ -8,7 +8,8 @@
 // outward from a sphere (or along the effect's forward), Unreal's drag (Limit Velocity's drag), the ship's motion
 // inherited, a turn and spin, stretched along its flight. Built at each spawn, gone when the last particle is; the game's
 // explosion sound plays with "main". A look only: no damage (the game's explosions do none either), nothing other players
-// see (their copies explode the game's way).
+// see (their copies explode the game's way). "blend": "alpha" emitters (smoke, debris) are drawn over what is behind on the
+// weapon smoke's material (ModAssets.fxAlpha), behind the added fire; "light" emitters are point lights (FxFlash).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -100,6 +101,7 @@ namespace GoF2Remake.World
             foreach (var e in fx.emitters)
             {
                 if (e == null) continue;
+                if (e.light > 0f) { longest = Mathf.Max(longest, FxFlash.Spawn(e, root.transform, scale).Lasts); continue; }   // a light, no particles
                 var ps = Build(mod, e, root.transform, velocity, scale, out float lasts);
                 if (ps == null) continue;
                 longest = Mathf.Max(longest, lasts);
@@ -230,6 +232,7 @@ namespace GoF2Remake.World
             }
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             r.receiveShadows = false;
+            if (Alpha(e)) r.sortingFudge = 10f;   // (smoke and debris behind the fire added over them)
             return ps;
         }
 
@@ -278,8 +281,23 @@ namespace GoF2Remake.World
         {
             var c = e.color != null && e.color.Length >= 3 ? new Color(e.color[0], e.color[1], e.color[2]) : Color.white;
             float peak = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
-            string key = (mod != null ? mod.Id : "") + "|" + e.image + "|" + c;
+            bool alpha = Alpha(e);
+            string key = (mod != null ? mod.Id : "") + "|" + e.image + "|" + c + (alpha ? "|alpha" : "");
             if (materials.TryGetValue(key, out var m) && m != null) return m;
+            if (alpha)
+            {
+                // "blend": "alpha": the weapon smoke's template (GoF2/AlphaBlend: the image x the tint x the particles' colour)
+                var template = Modding.ModAssets.Get()?.fxAlpha;
+                if (template != null)
+                {
+                    m = new Material(template) { name = "Death effect " + e.image };
+                    var tex = mod != null && !string.IsNullOrEmpty(e.image) ? Modding.ModMaterials.Texture(mod, e.image, false) : null;
+                    if (tex != null) m.SetTexture("_MainTex", tex);
+                    m.SetColor("_Color", new Color(c.r, c.g, c.b, 1f));
+                    materials[key] = m;
+                    return m;
+                }
+            }
             var spec = new CustomShipMaterial
             {
                 material = "fx", additive = true, emission = e.image,
@@ -291,6 +309,9 @@ namespace GoF2Remake.World
             materials[key] = m;
             return m;
         }
+
+        /// <summary>The emitter draws its image alpha-blended ("blend": "alpha"), not added.</summary>
+        public static bool Alpha(CustomFxEmitter e) => e != null && string.Equals(e.blend, "alpha", System.StringComparison.OrdinalIgnoreCase);
 
         static void Warn(Modding.ModInfo mod, string message)
         {
