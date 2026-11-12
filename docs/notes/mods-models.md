@@ -410,6 +410,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   hit flash (HitColor about HitLocation for HitEffectDuration) and its world-space AFX pattern (scaled by a per-primitive
   value, 0 at rest). Maps preloaded with the ship's (`ModShips`) and stations' (`ModStations`). Tests in
   `ChorusLayersTests`.
+- **Wreck burn and disintegration** (remake, 2026-11-11, Chorus's MF_WreckBurn (Burn_Amount, Burn_Temperature 1500,
+  Burn_Tiling 4) and the masters' Dissolve / DissolveWidth / DissolveBoost 2): `HullWreck.hlsl` (GoF2/Hull's
+  `_WreckFx` x burn, y cut away, z pattern cells a unit, w edge width; `_WreckBurnColor`): two octaves of value noise in
+  the piece's object space; the burn glows above smoothstep(0.75 - 0.35 a, 0.95); the cut clips under y in ForwardLit and,
+  through `HullDepthOnlyFragment` / `HullDepthNormalsFragment` (the world position rebuilt from the pixel), the depth
+  passes; its edge glows at 2x. `WreckBreakup.Paint` sets them per piece with a property block (pieces whose materials
+  are all GoF2/Hull; BurnAt: cold by halfway, DissolveAt: from 0.6 of the life), shadows off once cutting (the shadow pass
+  doesn't clip); others still shrink. Tests: WreckBreakupTests (the passes compiled with ShaderUtil.CompilePass).
 - **Death effects** (remake, 2026-11-11, after Chorus's death effect configs and their Cascade explosions): ships.json
   `"deathFx"` (`CustomShipData.deathFx`, a JSON file: `CustomFxFile` / `CustomFx` / `CustomFxEmitter` in Database.cs).
   `World.ModDeathFx`: the files read once per mod revision (by ship); `SpawnMain` in place of `Explosion.Spawn` at the

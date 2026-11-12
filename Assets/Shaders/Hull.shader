@@ -115,6 +115,10 @@ Shader "GoF2/Hull"
         [HideInInspector] _WaveMin("Glow wave min", Vector) = (0, 0, 0, 0)
         [HideInInspector] _WaveMax("Glow wave max", Vector) = (0, 0, 0, 0)
         [HideInInspector] _WavePattern("Glow wave pattern", 2D) = "black" {}
+        // GoF2: a wreck piece's burn and disintegration (HullWreck.hlsl; World.WreckBreakup): x burn, y cut away, z cells a
+        // unit, w the edge's width; the glow's colour
+        [HideInInspector] _WreckFx("Wreck burn / dissolve", Vector) = (0, 0, 1, 0.1)
+        [HideInInspector] _WreckBurnColor("Wreck burn colour", Vector) = (0, 0, 0, 0)
         [HideInInspector] _WaveMask("Glow wave mask", 2D) = "black" {}
         // GoF2: a mod specular material's GoF3 terms (HullForwardPass.hlsl GoF3ShipShader; ModMaterials): x environment, y rim,
         // z GoF3's specular multiplier, w 1 = that multiplier is in the map (on the whole specular) / 0 = on the highlight
@@ -415,7 +419,7 @@ Shader "GoF2/Hull"
             // -------------------------------------
             // Shader Stages
             #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
+            #pragma fragment HullDepthOnlyFragment   // GoF2: URP's, a wreck's cut-away part left out (HullWreck.hlsl)
 
             // -------------------------------------
             // Material Keywords
@@ -436,6 +440,12 @@ Shader "GoF2/Hull"
             // Includes
             #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+            #include "HullWreck.hlsl"   // GoF2
+            half HullDepthOnlyFragment(Varyings input) : SV_TARGET
+            {
+                HullWreckClip(HullWreckPixelToWorld(input.positionCS));
+                return DepthOnlyFragment(input);
+            }
             ENDHLSL
         }
 
@@ -459,7 +469,7 @@ Shader "GoF2/Hull"
             // -------------------------------------
             // Shader Stages
             #pragma vertex DepthNormalsVertex
-            #pragma fragment DepthNormalsFragment
+            #pragma fragment HullDepthNormalsFragment   // GoF2: URP's, a wreck's cut-away part left out (HullWreck.hlsl)
 
             // -------------------------------------
             // Material Keywords
@@ -490,6 +500,20 @@ Shader "GoF2/Hull"
             // Includes
             #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitDepthNormalsPass.hlsl"
+            #include "HullWreck.hlsl"   // GoF2
+            void HullDepthNormalsFragment(Varyings input, out half4 outNormalWS : SV_Target0
+            #ifdef _WRITE_RENDERING_LAYERS
+                , out uint outRenderingLayers : SV_Target1
+            #endif
+            )
+            {
+                HullWreckClip(HullWreckPixelToWorld(input.positionCS));
+                DepthNormalsFragment(input, outNormalWS
+            #ifdef _WRITE_RENDERING_LAYERS
+                    , outRenderingLayers
+            #endif
+                );
+            }
             ENDHLSL
         }
 

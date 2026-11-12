@@ -47,5 +47,65 @@ namespace GoF2Remake.Tests
             }
             finally { if (root != null) Object.DestroyImmediate(root); }
         }
+
+        [Test]
+        public void TheHullsPassesCompileWithTheWreckCut()
+        {
+            // HullWreck.hlsl in the forward pass and around URP's depth fragments, compiled now (a render would)
+            var a = Resources.Load<GoF2Remake.Modding.ModAssets>(GoF2Remake.Modding.ModAssets.ResourcePath);
+            var m = new Material(a.litOpaque);
+            try
+            {
+                m.SetVector("_WreckFx", new Vector4(1f, 0.5f, 4f, 0.08f));
+                foreach (var name in new[] { "ForwardLit", "DepthOnly", "DepthNormals" })
+                {
+                    int pass = m.FindPass(name);
+                    Assert.GreaterOrEqual(pass, 0, name);
+                    UnityEditor.ShaderUtil.CompilePass(m, pass, true);
+                }
+                var errors = System.Linq.Enumerable.Where(UnityEditor.ShaderUtil.GetShaderMessages(m.shader),
+                    x => x.severity == UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error);
+                CollectionAssert.IsEmpty(System.Linq.Enumerable.Select(errors, x => $"{x.file}:{x.line} {x.message}"));
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
+        public void HullPiecesBurnThenDisintegrate()
+        {
+            Assert.AreEqual(1f, GoF2Remake.World.WreckBreakup.BurnAt(0f, 1f));
+            Assert.AreEqual(0.5f, GoF2Remake.World.WreckBreakup.BurnAt(0.25f, 1f), 1e-5f, "cooling");
+            Assert.AreEqual(0f, GoF2Remake.World.WreckBreakup.BurnAt(0.5f, 1f), "cold by halfway");
+            Assert.AreEqual(0f, GoF2Remake.World.WreckBreakup.DissolveAt(0.5f));
+            Assert.AreEqual(0.5f, GoF2Remake.World.WreckBreakup.DissolveAt(0.8f), 1e-5f);
+            Assert.AreEqual(1f, GoF2Remake.World.WreckBreakup.DissolveAt(1f));
+            var c = JsonUtility.FromJson<CustomShipData>("{ \"id\": \"x\", \"wreck\": { \"model\": \"w.glb\" } }");
+            Assert.AreEqual(1f, c.wreck.burn);
+            Assert.IsTrue(c.wreck.dissolve);
+
+            var shader = Shader.Find("GoF2/Hull");
+            Assert.IsNotNull(shader);
+            var root = new GameObject("wreck");
+            var mat = new Material(shader);
+            try
+            {
+                var hull = GameObject.CreatePrimitive(PrimitiveType.Cube); hull.transform.SetParent(root.transform);
+                hull.GetComponent<Renderer>().sharedMaterial = mat;
+                var plain = GameObject.CreatePrimitive(PrimitiveType.Cube); plain.transform.SetParent(root.transform); plain.transform.localPosition = new Vector3(0f, 0f, 3f);
+                var w = GoF2Remake.World.WreckBreakup.Break(root, new CustomWreck { seconds = 10f, spin = 0f }, Vector3.zero);
+                int h = -1, o = -1;
+                for (int i = 0; i < 2; i++) if (w.FxOf(i) != Vector4.zero) h = i; else o = i;
+                Assert.GreaterOrEqual(h, 0, "the hull-shader piece takes the burn");
+                Assert.AreEqual(1f, w.FxOf(h).x, "burning at once");
+                Assert.AreEqual(4f, w.FxOf(h).z, 1e-4f, "4 cells across the 1-unit cube");
+                w.Step(8f);
+                Assert.AreEqual(0f, w.FxOf(h).x);
+                Assert.AreEqual(0.5f, w.FxOf(h).y, 1e-4f, "half cut away at 0.8 of its life");
+                Assert.AreEqual(Vector3.one, hull.transform.localScale, "it disintegrates instead of shrinking");
+                Assert.Less(plain.transform.localScale.x, 1f, "the other shrinks away");
+                Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, hull.GetComponent<Renderer>().shadowCastingMode);
+            }
+            finally { if (root != null) Object.DestroyImmediate(root); Object.DestroyImmediate(mat); }
+        }
     }
 }

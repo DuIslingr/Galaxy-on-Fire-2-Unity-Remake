@@ -93,6 +93,10 @@ float4 _ChorusDirt3;
 float4 _WaveParams;
 float4 _WaveMin;
 float4 _WaveMax;
+// GoF2: a wreck piece's burn and disintegration (HullWreck.hlsl; World.WreckBreakup's property block): x the burn amount,
+// y the share cut away, z the pattern's cells a unit, w the cut edge's width; _WreckBurnColor rgb the glow (HDR)
+float4 _WreckFx;
+float4 _WreckBurnColor;
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 

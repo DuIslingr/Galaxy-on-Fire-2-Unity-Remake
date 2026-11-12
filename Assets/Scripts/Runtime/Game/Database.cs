@@ -344,6 +344,12 @@ namespace GoF2Remake.Data
     {
         public string model;
         public float seconds = 6f, speed = 1f, spin = 1f;
+        /// <summary>Remake (2026-11-11, Chorus's MF_WreckBurn / Dissolve): the pieces' glowing burn at first (0 none, 1
+        /// Chorus's Burn_Amount), cooling over the first half; 'burnColor' its HDR colour (none: Chorus's 1500 K); 'dissolve'
+        /// false: the pieces shrink away instead of disintegrating.</summary>
+        public float burn = 1f;
+        public float[] burnColor;
+        public bool dissolve = true;
     }
 
     /// <summary>Remake mods: EVERSPACE 2's per-ship switches of its engine effects (a ship blueprint's SpawnEngineGlow /

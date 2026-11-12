@@ -21,6 +21,8 @@
 #ifndef GOF2_HULL_FORWARD_PASS_INCLUDED
 #define GOF2_HULL_FORWARD_PASS_INCLUDED
 
+#include "HullWreck.hlsl"   // a wreck piece's burn and disintegration
+
 half _GoF2HullReflection;
 half3 _GoF2HullRimColor;
 // Modified: the original lights in gamma space (StarSystem::initLight: LIGHT0 diffuse 2.0, fixed-function), so a face
@@ -576,6 +578,11 @@ void HullPassFragment(
     else if (_ChorusParams.x > 2.5) ChorusShell(input, surfaceData);      // GoF2: Chorus's shell (Guilt)
     else if (_ChorusParams.x > 0.0) ChorusLayers(input, surfaceData);   // GoF2: Chorus's trim sheets and platings
     if (_WaveParams.x > 0.0) surfaceData.emission += GlowWave(input.uv);   // GoF2: a glow along a pattern (Chorus's M_Phoenix)
+    if (_WreckFx.x > 0.0 || _WreckFx.y > 0.0)   // GoF2: a wreck piece's burn and disintegration (HullWreck.hlsl)
+    {
+        HullWreckClip(input.positionWS);
+        surfaceData.emission += HullWreckEmission(input.positionWS);
+    }
 
     LODFadeCrossFade(input.positionCS);
 
