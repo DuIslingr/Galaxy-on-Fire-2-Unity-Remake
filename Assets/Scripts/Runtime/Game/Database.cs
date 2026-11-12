@@ -379,6 +379,13 @@ namespace GoF2Remake.Data
         public float burn = 1f;
         public float[] burnColor;
         public bool dissolve = true;
+        /// <summary>Remake (2026-11-11, MF_WreckBurn's compiled base pass): Chorus's own burn: 'burnMap' (PNG, R the noise,
+        /// over UV0 x 'burnTiling', + 'burnOffset'), sharpened by 'burnFalloff', glowing as a blackbody at 'burnTemperature'
+        /// (K) x the burn; 'burnVertexRed' the vertex colour's red keeps parts from burning; 'burnUv1' the map over UV1 (the
+        /// model's second UV set). None: the value-noise burn.</summary>
+        public string burnMap;
+        public float burnTiling = 1f, burnOffset, burnFalloff = 3f, burnTemperature = 1500f;
+        public bool burnVertexRed, burnUv1;
     }
 
     /// <summary>Remake mods: EVERSPACE 2's per-ship switches of its engine effects (a ship blueprint's SpawnEngineGlow /

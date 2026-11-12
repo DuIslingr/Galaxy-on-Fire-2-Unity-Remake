@@ -423,7 +423,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `ShipBurn` for the first half, shrunk about their middles over the last quarter, gone at the end. Hooked at the final
   explosion: `NpcShipDamage.UpdateDying` (not fixed objects, turrets or ships with the game's wreck; the dying fighter's
   tumble velocity, a freighter's none; the model hidden) and `PlayerHealth.UpdateDeath` (at 3 s). Local only (proxies
-  explode plainly). Tests `WreckBreakupTests`.
+  explode plainly). Tests `WreckBreakupTests`. Chorus's own burn (2026-11-11, MF_WreckBurn's compiled base pass, M_WreckBurn
+  / MI_MountWreck_Burn01): `"burnMap"` (its Burn_Noise, T_DamageSurface01_D, R) with `burnTiling` / `burnOffset` /
+  `burnFalloff` / `burnTemperature` / `burnVertexRed` / `burnUv1`, loaded with the wreck (`ModCrates.WreckBurnMap`), set on
+  each hull piece's block (`_WreckBurnMap`, `_WreckBurn`, the temperature in `_WreckBurnColor.a`): b = saturate((saturate(R
+  + offset) x saturate(1 - vertex red) - (0.975 - the burn amount)) x falloff), so the burn shrinks onto the map's highs as
+  it cools; its glow Chorus's Planckian-locus blackbody at b x T x (b T / 2500)^4, scaled so a full burn's brightest
+  channel is `burnColor`'s; the burnt part rough. The cut keeps the value noise (no UVs in the depth passes); the burn's
+  map is the wreck's first material's (the trims' over UV1, Burn_Noise_UseUV1; M_WreckBurn's over UV0).
 - **Glow waves** (remake, 2026-11-11, Chorus's M_Phoenix glow lines, from its compiled base pass): a material's `"wave"`
   block (`GlowWaveSpec` in Database.cs, `ModMaterials.GlowWave`, GoF2/Hull's `GlowWave` in HullForwardPass.hlsl, on when
   `_WaveParams.x` > 0: x multiplier, y tiling, z speed, w the mask's channel; `_WaveMin` / `_WaveMax`; `_WavePattern`,

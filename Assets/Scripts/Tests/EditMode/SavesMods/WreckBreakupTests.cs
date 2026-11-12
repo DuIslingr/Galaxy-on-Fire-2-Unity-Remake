@@ -57,6 +57,7 @@ namespace GoF2Remake.Tests
             try
             {
                 m.SetVector("_WreckFx", new Vector4(1f, 0.5f, 4f, 0.08f));
+                m.SetVector("_WreckBurn", new Vector4(1f, 0f, 3f, 3f));   // (and Chorus's mapped burn)
                 foreach (var name in new[] { "ForwardLit", "DepthOnly", "DepthNormals" })
                 {
                     int pass = m.FindPass(name);
@@ -106,6 +107,43 @@ namespace GoF2Remake.Tests
                 Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, hull.GetComponent<Renderer>().shadowCastingMode);
             }
             finally { if (root != null) Object.DestroyImmediate(root); Object.DestroyImmediate(mat); }
+        }
+
+        [Test]
+        public void ABurnMapGivesThePiecesChorussBurn()
+        {
+            var c = JsonUtility.FromJson<CustomShipData>("{ \"id\": \"x\", \"wreck\": { \"model\": \"w.glb\", \"burnMap\": \"maps/burn.png\", " +
+                "\"burnTiling\": 2, \"burnVertexRed\": true, \"burnUv1\": true } }");
+            Assert.AreEqual("maps/burn.png", c.wreck.burnMap);
+            Assert.AreEqual(3f, c.wreck.burnFalloff, "Chorus's Burn_Falloff by default");
+            Assert.AreEqual(1500f, c.wreck.burnTemperature);
+
+            var root = new GameObject("wreck");
+            var mat = new Material(Shader.Find("GoF2/Hull"));
+            var map = new Texture2D(4, 4);
+            try
+            {
+                var hull = GameObject.CreatePrimitive(PrimitiveType.Cube); hull.transform.SetParent(root.transform);
+                hull.GetComponent<Renderer>().sharedMaterial = mat;
+                var w = GoF2Remake.World.WreckBreakup.Break(root, c.wreck, Vector3.zero, map);
+                Assert.AreEqual(new Vector4(2f, 0f, 3f, 3f), w.BurnOf(0), "w: by vertex red (1) + over UV1 (2)");
+                var block = new MaterialPropertyBlock();
+                hull.GetComponent<Renderer>().GetPropertyBlock(block);
+                Assert.AreSame(map, block.GetTexture("_WreckBurnMap"));
+                Assert.AreEqual(1500f, block.GetVector("_WreckBurnColor").w, "the temperature");
+            }
+            finally { Object.DestroyImmediate(root); Object.DestroyImmediate(mat); Object.DestroyImmediate(map); }
+
+            var plainRoot = new GameObject("wreck");
+            var plainMat = new Material(Shader.Find("GoF2/Hull"));
+            try
+            {
+                var hull = GameObject.CreatePrimitive(PrimitiveType.Cube); hull.transform.SetParent(plainRoot.transform);
+                hull.GetComponent<Renderer>().sharedMaterial = plainMat;
+                var w = GoF2Remake.World.WreckBreakup.Break(plainRoot, new CustomWreck { seconds = 4f }, Vector3.zero);
+                Assert.AreEqual(0f, w.BurnOf(0).z, "no map: the value-noise burn");
+            }
+            finally { Object.DestroyImmediate(plainRoot); Object.DestroyImmediate(plainMat); }
         }
     }
 }

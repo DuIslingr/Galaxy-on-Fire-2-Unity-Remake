@@ -26,6 +26,7 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<string, List<CustomShipMaterial>> materials = new Dictionary<string, List<CustomShipMaterial>>();   // an orbit container model's own
         static readonly Dictionary<int, string> shipKeys = new Dictionary<int, string>();
         static readonly Dictionary<int, string> wreckKeys = new Dictionary<int, string>();   // a ship's "wreck" model
+        static readonly Dictionary<int, Texture2D> burnMaps = new Dictionary<int, Texture2D>();   // its "burnMap" (loaded with it)
         static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();   // a key's "crateSize" (game units)
         static readonly Dictionary<int, float> raceExtents = new Dictionary<int, float>();
         static readonly List<GLTFast.GltfImport> imports = new List<GLTFast.GltfImport>();
@@ -37,6 +38,7 @@ namespace GoF2Remake.Modding
         static void ResetStatics()
         {
             templates.Clear(); extents.Clear(); shipKeys.Clear(); wreckKeys.Clear(); sizes.Clear(); raceExtents.Clear(); imports.Clear();
+            burnMaps.Clear();
             holder = null; agent = null; loadingRevision = loadedRevision = keysRevision = -1;
         }
 
@@ -103,6 +105,9 @@ namespace GoF2Remake.Modding
             go.SetActive(true);
             return go;
         }
+
+        /// <summary>Ship 'ship''s wreck "burnMap" (Chorus's burn noise, repeating, as data), loaded with its wreck; null with none.</summary>
+        public static Texture2D WreckBurnMap(int ship) => loadedRevision == ModManager.Revision && burnMaps.TryGetValue(ship, out var t) ? t : null;
 
         /// <summary>The largest side of a hierarchy's mesh bounds (Unity, as it stands).</summary>
         public static float ExtentOf(GameObject root) => root != null ? LargestExtent(root) : 0f;
@@ -176,7 +181,7 @@ namespace GoF2Remake.Modding
         static async Task LoadAll(int rev)
         {
             foreach (var t in templates.Values) if (t != null) Object.Destroy(t);
-            templates.Clear(); extents.Clear(); raceExtents.Clear(); materials.Clear();
+            templates.Clear(); extents.Clear(); raceExtents.Clear(); materials.Clear(); burnMaps.Clear();
             foreach (var i in imports) i.Dispose();
             imports.Clear();
             var files = new Dictionary<string, ModInfo>();
@@ -191,6 +196,11 @@ namespace GoF2Remake.Modding
                         string key = mod.Id + "|" + ship.wreck.model;
                         files[key] = mod;
                         if (ship.materials != null && ship.materials.Count > 0 && !materials.ContainsKey(key)) materials[key] = ship.materials;
+                        if (!string.IsNullOrEmpty(ship.wreck.burnMap))
+                        {
+                            var burn = ModMaterials.Texture(mod, ship.wreck.burnMap, true);
+                            if (burn != null) { burn.wrapMode = TextureWrapMode.Repeat; burnMaps[ship.index] = burn; }
+                        }
                     }
                 }
                 foreach (var (mod, path, mats) in ModWorld.ContainerModels())   // (the orbits' containers, with their materials)

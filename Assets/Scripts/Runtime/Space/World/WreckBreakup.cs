@@ -9,7 +9,8 @@
 // collision, nothing a multiplayer copy sees (each game breaks its own copy). Remake (2026-11-11, Chorus's wreck
 // materials, MF_WreckBurn and the masters' Dissolve): on the hull shader the pieces glow where they burn ("burn", cooling
 // over the first half) and disintegrate over the last 40 % with a glowing edge instead of shrinking (HullWreck.hlsl,
-// _WreckFx per piece); shadows off once they do.
+// _WreckFx per piece); shadows off once they do. With a "burnMap" (2026-11-11, MF_WreckBurn) the burn is Chorus's own from
+// that noise (_WreckBurnMap / _WreckBurn, the temperature in _WreckBurnColor.a; HullWreck.hlsl HullWreckBurn).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -34,7 +35,11 @@ namespace GoF2Remake.World
         /// <summary>Chorus's 1500 K burn (Burn_Temperature) as the remake's HDR glow.</summary>
         public static readonly Color DefaultBurnColor = new Color(3f, 0.9f, 0.2f);
         public const float BurnTiling = 4f, DissolveFrom = 0.6f, EdgeWidth = 0.08f;
-        static readonly int WreckFxId = Shader.PropertyToID("_WreckFx"), WreckBurnColorId = Shader.PropertyToID("_WreckBurnColor");
+        static readonly int WreckFxId = Shader.PropertyToID("_WreckFx"), WreckBurnColorId = Shader.PropertyToID("_WreckBurnColor"),
+            WreckBurnId = Shader.PropertyToID("_WreckBurn"), WreckBurnMapId = Shader.PropertyToID("_WreckBurnMap");
+        Texture2D burnMap;
+        Vector4 burnParams;
+        float burnTemperature = 1500f;
         MaterialPropertyBlock block;
         float burnAmount = 1f;
         bool dissolve = true;
@@ -52,13 +57,15 @@ namespace GoF2Remake.World
             var go = Modding.ModCrates.InstantiateWreck(ship, hull);
             if (go == null) return null;
             go.name = "Wreck";
-            return Break(go, spec, velocity);
+            return Break(go, spec, velocity, Modding.ModCrates.WreckBurnMap(ship));
         }
 
-        /// <summary>Breaks 'go' (a wreck model placed where the ship was) into its meshes' pieces.</summary>
-        public static WreckBreakup Break(GameObject go, CustomWreck spec, Vector3 velocity)
+        /// <summary>Breaks 'go' (a wreck model placed where the ship was) into its meshes' pieces; 'burnMap' the spec's
+        /// "burnMap" loaded (none: the value-noise burn).</summary>
+        public static WreckBreakup Break(GameObject go, CustomWreck spec, Vector3 velocity, Texture2D burnMap = null)
         {
             var w = go.AddComponent<WreckBreakup>();
+            w.burnMap = burnMap;
             w.Setup(spec, velocity);
             return w;
         }
@@ -73,6 +80,12 @@ namespace GoF2Remake.World
             burnAmount = Mathf.Clamp01(spec.burn);
             dissolve = spec.dissolve;
             if (spec.burnColor != null && spec.burnColor.Length >= 3) burnColor = new Color(spec.burnColor[0], spec.burnColor[1], spec.burnColor[2]);
+            if (burnMap != null)
+            {
+                burnParams = new Vector4(Mathf.Max(1e-4f, spec.burnTiling), spec.burnOffset, Mathf.Max(1e-3f, spec.burnFalloff),
+                                         (spec.burnVertexRed ? 1f : 0f) + (spec.burnUv1 ? 2f : 0f));
+                burnTemperature = Mathf.Max(1f, spec.burnTemperature);
+            }
             var renderers = GetComponentsInChildren<Renderer>(true);
             if (renderers.Length == 0) return;
             var all = renderers[0].bounds;
@@ -127,10 +140,25 @@ namespace GoF2Remake.World
                 if (!p.hull || p.r == null) continue;
                 p.r.GetPropertyBlock(block);
                 block.SetVector(WreckFxId, new Vector4(b, d, p.cells, EdgeWidth));
-                block.SetColor(WreckBurnColorId, burnColor);
+                var c = burnColor; c.a = burnTemperature;
+                block.SetColor(WreckBurnColorId, c);
+                if (burnMap != null)
+                {
+                    block.SetTexture(WreckBurnMapId, burnMap);
+                    block.SetVector(WreckBurnId, burnParams);
+                }
                 p.r.SetPropertyBlock(block);
                 if (d > 0f) p.r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;   // (the shadow pass cuts nothing)
             }
+        }
+
+        /// <summary>A piece's _WreckBurn now (tests): the burn map's tiling, offset, falloff (0: no map), by vertex red.</summary>
+        public Vector4 BurnOf(int piece)
+        {
+            if (piece < 0 || piece >= pieces.Count || pieces[piece].r == null || !pieces[piece].hull) return Vector4.zero;
+            block ??= new MaterialPropertyBlock();
+            pieces[piece].r.GetPropertyBlock(block);
+            return block.GetVector(WreckBurnId);
         }
 
         /// <summary>A piece's _WreckFx now (tests); zero when it isn't on the hull shader.</summary>

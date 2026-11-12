@@ -626,7 +626,13 @@ void HullPassFragment(
     if (_WreckFx.x > 0.0 || _WreckFx.y > 0.0)   // GoF2: a wreck piece's burn and disintegration (HullWreck.hlsl)
     {
         HullWreckClip(input.positionWS);
-        surfaceData.emission += HullWreckEmission(input.positionWS);
+        if (_WreckBurn.z > 0.0)   // (Chorus's own burn, from its map)
+        {
+            half b = HullWreckBurn(input.uv, input.chorusUV.xy, input.color.r);
+            surfaceData.emission += HullWreckBurnGlow(b) + HullWreckEmission(input.positionWS, false);
+            surfaceData.smoothness *= 1.0h - b;
+        }
+        else surfaceData.emission += HullWreckEmission(input.positionWS);
     }
 
     LODFadeCrossFade(input.positionCS);

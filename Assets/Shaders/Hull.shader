@@ -119,6 +119,8 @@ Shader "GoF2/Hull"
         // unit, w the edge's width; the glow's colour
         [HideInInspector] _WreckFx("Wreck burn / dissolve", Vector) = (0, 0, 1, 0.1)
         [HideInInspector] _WreckBurnColor("Wreck burn colour", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _WreckBurn("Wreck burn map: tiling, offset, falloff, by vertex red", Vector) = (1, 0, 0, 0)
+        [HideInInspector] _WreckBurnMap("Wreck burn noise", 2D) = "black" {}
         // GoF2: the hit flash (HullForwardPass.hlsl HitFlash; World.HullHitFlash): age, radius (m), duration, pattern mode
         [HideInInspector] _HitFx("Hit flash", Vector) = (1, 1, 0.04, 0)
         [HideInInspector] _HitPos("Hit position", Vector) = (0, 0, 0, 0)

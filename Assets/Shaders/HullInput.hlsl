@@ -95,9 +95,13 @@ float4 _WaveParams;
 float4 _WaveMin;
 float4 _WaveMax;
 // GoF2: a wreck piece's burn and disintegration (HullWreck.hlsl; World.WreckBreakup's property block): x the burn amount,
-// y the share cut away, z the pattern's cells a unit, w the cut edge's width; _WreckBurnColor rgb the glow (HDR)
+// y the share cut away, z the pattern's cells a unit, w the cut edge's width; _WreckBurnColor rgb the glow (HDR), a its
+// temperature (K, with the burn map); _WreckBurn (with _WreckBurnMap: Chorus's MF_WreckBurn) x Burn_NoiseTiling, y
+// Burn_Noise_Offset, z Burn_Falloff (0: no map, the value noise), w + 1 the vertex colour's red keeps it from burning, + 2
+// the map over UV1 (Burn_Noise_UseUV1: the trim masters')
 float4 _WreckFx;
 float4 _WreckBurnColor;
+float4 _WreckBurn;
 // GoF2: the hull's hit flash (Chorus's M_Phoenix; HullForwardPass.hlsl HitFlash; World.HullHitFlash's property block): x the
 // flash's age 0..1 (1 = none), y its radius (m), z its duration (s), w 1 its pattern in _WavePattern.a / 2 none / 0 off;
 // _HitPos xyz the hit (world); _HitColor rgb (HDR)
@@ -214,6 +218,7 @@ TEXTURE2D(_WavePattern);
 TEXTURE2D(_WaveMask);
 TEXTURE2D(_ChorusPalette);
 TEXTURE2D(_ChorusDirtRough);
+TEXTURE2D(_WreckBurnMap);   // GoF2: a wreck piece's burn noise (HullWreck.hlsl HullWreckBurn)
 UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_BaseMap);
 
 // GoF2: Chorus's M_Guilt_Shell (_ChorusParams.x 3; ModMaterials.ChorusShell): its noise flowing along its flow map, as its
