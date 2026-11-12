@@ -442,6 +442,10 @@ namespace GoF2Remake.World
                 asm?.SetPlayerVariant(playerEngines);
                 model = modelGo.transform;
                 if (spec.scale != 1f) model.localScale *= spec.scale;
+                // remake mods: a ship arriving in flight materializes ("warpIn"; not those there as the orbit loads)
+                if (spec.fixedObject == null && spec.turretAssembly == null && !spec.stationary && Time.timeSinceLevelLoad > 3f
+                    && CustomShips.Get(spec.ship)?.warpIn is CustomWarpIn warp && warp.seconds > 0f)
+                    HullWarpIn.Begin(gameObject, warp);
                 if (playerEngines)
                 {
                     var glow = asm.playerVariantParts[0];

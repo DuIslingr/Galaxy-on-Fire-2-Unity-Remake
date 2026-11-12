@@ -236,7 +236,7 @@ namespace GoF2Remake.Modding
             "integrated", // a built-in Khador Drive / cloak (ApplyIntegrated)
             "camera", "cockpit", "smoke", "explosionScale",   // how the ship is seen (ModShipView)
             "subsystems", "shieldMaterial", "shieldedDamage", "shieldBlocks", "hullDamage", "engineStyle", "es2Engine", "hullFactor", "hullRegen", "retreat",   // a capital ship's subsystems (World.CapitalSubsystems)
-            "crate", "crateSize", "wreck", "deathFx", "deathThroes",   // its loot container's and wreck's models (ModCrates, World.WreckBreakup)
+            "crate", "crateSize", "wreck", "deathFx", "deathThroes", "warpIn",   // its loot container's and wreck's models (ModCrates, World.WreckBreakup)
             "wingmanDevice",   // a hired wingman's device in it (ModWingmen, Flight.WingmanDevice)
             "animations",      // the model's clips by what the ship does: idle, Chorus flight's drift (ModShipAnimator)
         };

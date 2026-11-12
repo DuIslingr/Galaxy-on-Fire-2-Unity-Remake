@@ -415,6 +415,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `World.HullHitFlash` (PlayerHealth.OnHit on armour / hull hits) puts `_HitPos` on the hull's box toward the shooter
   (Target.lastHitVector) and ages `_HitFx.x` over the duration; rescans its renderers when the hierarchy changes. Maps preloaded with the ship's (`ModShips`) and stations' (`ModStations`). Tests in
   `ChorusLayersTests`.
+- **Warp-in** (remake, 2026-11-11, Chorus's Omen tissue: M_JTU_Faceless's Driver, Edge Thickness 0.02, Edge Glow Color
+  50 red): ships.json `"warpIn"` (`CustomWarpIn`); `NpcShip.Setup` starts `World.HullWarpIn` on a flying spawn (not a fixed
+  object, turret or stationary ship) after the level's first 3 s. It runs HullWreck.hlsl's cut backward (`_WreckFx` y =
+  1 - progress, w the edge; `_WreckBurnColor` half the colour, the shader doubling the edge) on renderers whose materials
+  are all GoF2/Hull, rescanning while the hierarchy grows (async mod models), shadows off until whole; then cleared and the
+  component removed. Chorus's WarpStretchFactor (the vertices stretched along the warp) is left out. Tests
+  `HullWarpInTests`.
 - **Wreck burn and disintegration** (remake, 2026-11-11, Chorus's MF_WreckBurn (Burn_Amount, Burn_Temperature 1500,
   Burn_Tiling 4) and the masters' Dissolve / DissolveWidth / DissolveBoost 2): `HullWreck.hlsl` (GoF2/Hull's
   `_WreckFx` x burn, y cut away, z pattern cells a unit, w edge width; `_WreckBurnColor`): two octaves of value noise in

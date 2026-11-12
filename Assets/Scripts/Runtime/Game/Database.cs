@@ -281,6 +281,8 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods (2026-11-11, Chorus's warships): a capital ship's reactor going critical when its hull runs out
         /// (CustomDeathThroes, NpcShipDamage); null = it burns and explodes as the game's do.</summary>
         public CustomDeathThroes deathThroes;
+        /// <summary>Remake mods: its NPCs materialize where they arrive in flight (World.HullWarpIn); null = they just appear.</summary>
+        public CustomWarpIn warpIn;
         /// <summary>Remake mods (after Galaxy on Fire 3's wingmen): the device a hired wingman flying this hull uses: "repair",
         /// "ammo" or "charged" (Flight.WingmanDevice); none = none, like the game's wingmen.</summary>
         public string wingmanDevice;
@@ -291,6 +293,15 @@ namespace GoF2Remake.Data
     /// hull ('blasts' of them, the ship's "dying" death effect where it has one), then the explosion hurts everything within
     /// 'radius' game units: 'damage' x a ship's maximum hull (shields first) at its middle, falling off to nothing at the
     /// edge; the player's camera shakes within twice that.</summary>
+    /// <summary>Remake mods (2026-11-11, Chorus's Omen tissue warping in): an NPC ship of this type arriving in flight
+    /// materializes over 'seconds', its hull cut away by noise that shrinks to nothing, the cut's 'edge' (a share of the noise)
+    /// glowing in 'color' (HDR; World.HullWarpIn, the hull shader's wreck cut run backward).</summary>
+    [System.Serializable] public class CustomWarpIn
+    {
+        public float seconds = 2f, edge = 0.02f;
+        public float[] color;
+    }
+
     [System.Serializable] public class CustomDeathThroes
     {
         public float seconds = 10f, radius = 16000f, damage = 1f;
