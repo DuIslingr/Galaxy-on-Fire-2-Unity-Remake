@@ -540,6 +540,18 @@ battle spawns in 156 ms with its hulls.
   volume: a dark red vignette, saturation drained) follows `NpcRoles.Proximity`. Never traffic (`ModTraffic.Scan`): npcships.json
   or an event graph spawns it. Not done: the mission's MTAction_ManageGuiltNPC (parking or stopping it: an event graph
   despawns it), its combat area.
+- **Chorus's way of fighting** (remake 2026-11-11, for mods; ships.json `traffic.ai` "chorus"; `Flight.ChorusDogfight` plain +
+  `World.NpcShip` part NpcShipChorus): after BT_Fighter_CombatRoam (BTTask_AttackApproach FiringStartDistance 60000 /
+  ClosestDistance 5000 cm, TaskDuration 10, LinearSpeedMultiplier 2; BTTask_Flee with EQQuery_PassByPosition 4 s;
+  BTService_CheckForEnemyAttack -> a 2 s flee, BTDecorator_Cooldown 3; CompareHealthPercent < 0.5 -> BTTask_Flee_14 5 s,
+  cooldown 15; CheckForOutOfView 2 s + CheckInDistance 120000 -> BTTask_Teleport TeleportToDistance 40000, cooldown 15), cm x
+  0.72 game units. `SetupDogfight` makes it for "chorus"; `UpdateChorus` (after the targeting) steps it (the target's nose
+  within 10 deg of it inside the firing distance = aimed at; out of view = outside the main camera's viewport, players
+  only) and `ChorusJump`s (behind the target, facing it, `HullWarpIn`); Steer takes `ChorusFightGoal` (the target, a point
+  past it, a break or a retreat point by the mode's side), its speed factor and hold, no formation or break-off box. The
+  attack tokens (Gen1 / Gen11 / Gen14, the AI director's counts) are the remake's: the nearest MaxAttackers (3) on a player
+  fire. Not the EQS queries' own scoring (the attack and flee points are the remake's), nor the gunships' and scouts'
+  trees (they take the fighters'). Tests `ChorusDogfightTests`.
 - **A ship type's own drops** (remake 2026-11-04, for mods; ships.json `traffic.loot` [ { item, chance, min, max } ] and
   `lootDrops`, `CustomTraffic.loot` / `CustomLoot`, `NpcShip.AddOwnLoot` at Setup and Revive): after EVERSPACE 2's
   loot_npcs.csv (a blueprint, its drop count, then item / chance / amount range triples): each entry by its chance, at most

@@ -301,6 +301,8 @@ namespace GoF2Remake.World
         int es2Seed, es2Attackers;
         float es2CountMs;
         Es2Dogfight es2Fight;
+        ChorusDogfight chorusFight;   // remake mods: Chorus's way of fighting (NpcShipChorus)
+        Target chorusTarget;
         Vector3 es2Leg;
         float es2LegMs;
         /// <summary>Remake option (Settings.Es2NpcFlight, NpcShipEs2Flight): it flies on EVERSPACE 2's physics: its velocity (units
