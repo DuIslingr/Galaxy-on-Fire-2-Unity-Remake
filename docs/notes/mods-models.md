@@ -452,6 +452,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `"light"` (Chorus's lights-only emitters, ParticleModuleLight): `World.FxFlash`, one point light an emitter (not the
   particle Lights module: its light template would be a scene object), its range x size over life, colour / alpha over
   life, from its first burst; `ModDeathFx.Play` spawns it instead of a particle system.
+  `"trail"` (`CustomFxTrail`, Chorus's SpawnPerUnit emitters on another's particles, LocationEmitter): a child system made by
+  `Build(asTrail)` with `rateOverDistance` 1 / every, added as a Birth sub-emitter (InheritNothing); no image: the parent's
+  renderer `None`. `"noise"` (Chorus's VectorFieldLocal turbulence): Unity's noise module, strength x scale, frequency 1 / cell.
 - **Chorus rifts** (remake, 2026-11-11, for the Chorus rift look and Nimika's dormant rift): a material's `"rift"` block
   (`ChorusRiftSpec` in Database.cs, `ModMaterials.Rift`, GoF2/ChorusRift in Resources/GoF2Fx) after M_PortalRift_2's
   compiled base pass (MI_PortalRift_2_LocAST_Outside's parameters as the defaults; its uniform slots decoded from the

@@ -115,7 +115,7 @@ namespace GoF2Remake.World
         static float Max(float[] v, float d) => v != null && v.Length > 1 ? v[1] : Min(v, d);
 
         /// <summary>One emitter's particle system under 'root'; 'lasts' how long it takes to play out (s).</summary>
-        public static ParticleSystem Build(Modding.ModInfo mod, CustomFxEmitter e, Transform root, Vector3 velocity, float scale, out float lasts)
+        public static ParticleSystem Build(Modding.ModInfo mod, CustomFxEmitter e, Transform root, Vector3 velocity, float scale, out float lasts, bool asTrail = false)
         {
             lasts = 0f;
             var go = new GameObject("Emitter");
@@ -136,7 +136,7 @@ namespace GoF2Remake.World
                 }
             float duration = Mathf.Max(0.05f, Mathf.Max(e.duration, lastBurst + 0.02f));
             count += Mathf.CeilToInt(Mathf.Max(0f, e.rate) * duration);
-            if (count == 0) { Object.Destroy(go); return null; }
+            if (count == 0 && !asTrail) { Object.Destroy(go); return null; }
 
             var main = ps.main;
             main.duration = duration;
@@ -233,6 +233,42 @@ namespace GoF2Remake.World
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             r.receiveShadows = false;
             if (Alpha(e)) r.sortingFudge = 10f;   // (smoke and debris behind the fire added over them)
+            if (e.noise != null && e.noise.Length > 0 && e.noise[0] > 0f)
+            {
+                // Chorus's local vector field: a turbulence (its intensity as the noise's strength, its cell as the frequency)
+                var nz = ps.noise;
+                nz.enabled = true;
+                nz.strength = new ParticleSystem.MinMaxCurve(e.noise[0] * k);
+                nz.frequency = 1f / Mathf.Max(0.01f, (e.noise.Length > 1 ? e.noise[1] : 1000f) * k);
+                nz.scrollSpeed = 0.3f;
+                nz.damping = true;
+            }
+            if (e.trail != null && !string.IsNullOrEmpty(e.trail.image) && e.trail.every > 0f)   // (JsonUtility makes an empty one when absent)
+            {
+                // Chorus's SpawnPerUnit off another emitter's particles: a child system born with each particle, leaving puffs
+                // along its flight
+                var t = e.trail;
+                var te = new CustomFxEmitter
+                {
+                    image = t.image, blend = t.blend, sheet = t.sheet, frames = t.frames, randomFrame = t.randomFrame,
+                    randomRotation = t.randomRotation, life = t.life, size = t.size, sizeOverLife = t.sizeOverLife, color = t.color,
+                    colorOverLife = t.colorOverLife, alphaOverLife = t.alphaOverLife, rate = 0f, bursts = new float[] { 0f, 0f },
+                    duration = Max(e.life, 1f), inherit = 0f,
+                };
+                var child = Build(mod, te, go.transform, Vector3.zero, scale, out float childLasts, true);
+                if (child != null)
+                {
+                    var cem = child.emission;
+                    cem.rateOverDistance = 1f / Mathf.Max(0.01f, t.every * k);
+                    var cm = child.main;
+                    cm.maxParticles = 1000;
+                    var sub = ps.subEmitters;
+                    sub.enabled = true;
+                    sub.AddSubEmitter(child, ParticleSystemSubEmitterType.Birth, ParticleSystemSubEmitterProperties.InheritNothing);
+                    lasts = Mathf.Max(lasts, duration + Max(e.life, 1f) + childLasts);
+                }
+                if (string.IsNullOrEmpty(e.image)) r.renderMode = ParticleSystemRenderMode.None;   // (only the trails' source)
+            }
             return ps;
         }
 

@@ -81,6 +81,27 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ATrailLeavesPuffsAlongItsParticlesAndNoiseShakesThem()
+        {
+            var e = JsonUtility.FromJson<CustomFxEmitter>("{ \"bursts\": [0, 10], \"life\": [1, 1], \"speed\": [2880, 5760], " +
+                "\"noise\": [360, 36000], \"trail\": { \"image\": \"fx/fire.png\", \"every\": 72, \"life\": [0.5, 2], \"size\": [36, 216] } }");
+            var root = new GameObject("fx");
+            try
+            {
+                var ps = GoF2Remake.World.ModDeathFx.Build(null, e, root.transform, Vector3.zero, 1f, out float lasts);
+                Assert.AreEqual(ParticleSystemRenderMode.None, ps.GetComponent<ParticleSystemRenderer>().renderMode, "no image: only the trails' source");
+                Assert.AreEqual(1, ps.subEmitters.subEmittersCount);
+                var child = ps.subEmitters.GetSubEmitterSystem(0);
+                Assert.AreEqual(1f / (72f * 0.05f), child.emission.rateOverDistance.constant, 1e-4f, "a puff every 72 units of flight");
+                Assert.AreEqual(ParticleSystemSubEmitterType.Birth, ps.subEmitters.GetSubEmitterType(0));
+                Assert.IsTrue(ps.noise.enabled);
+                Assert.AreEqual(360f * 0.05f, ps.noise.strength.constant, 1e-4f);
+                Assert.GreaterOrEqual(lasts, 1f + 2f, "its life and the puffs' after it");
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
         public void AnAlphaEmitterIsDrawnOverWhatIsBehind()
         {
             var smoke = JsonUtility.FromJson<CustomFxEmitter>("{ \"image\": \"fx/smoke.png\", \"blend\": \"alpha\", \"bursts\": [0, 1], \"color\": [0.1, 0.1, 0.1] }");

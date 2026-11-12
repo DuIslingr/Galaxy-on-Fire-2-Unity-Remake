@@ -339,12 +339,29 @@ namespace GoF2Remake.Data
     {
         public string image, blend;
         public float light, lightIntensity = 1f;
+        /// <summary>Remake (2026-11-11, Chorus's SpawnPerUnit trails and VectorFieldLocal turbulence): 'trail' puffs left along each
+        /// particle's flight (a particle without an 'image' is only the trail's source); 'noise' [strength game units a second,
+        /// cell size game units] a turbulence on the particles.</summary>
+        public CustomFxTrail trail;
+        public float[] noise;
         public int[] sheet;
         public float[] frames;
         public bool randomFrame, forward, randomRotation;
         public float[] bursts;
         public float rate, duration = 1f, sphere, drag, inherit = 1f, stretch;
         public float[] life, size, speed, spin, color, colorOverLife, alphaOverLife, sizeOverLife;
+    }
+
+    /// <summary>A death effect emitter's trail: puffs of 'image' (a 'sheet' with 'frames', or 'randomFrame') every 'every' game
+    /// units along its particle's flight, each living 'life' [min, max] s, 'size' [min, max] game units, 'sizeOverLife',
+    /// 'color' (HDR), 'colorOverLife', 'alphaOverLife', added (or "blend": "alpha").</summary>
+    [System.Serializable] public class CustomFxTrail
+    {
+        public string image, blend;
+        public int[] sheet;
+        public float[] frames, life, size, sizeOverLife, color, colorOverLife, alphaOverLife;
+        public bool randomFrame, randomRotation;
+        public float every = 100f;
     }
 
     /// <summary>Remake mods (ships.json "wreck", 2026-11-11, after Chorus's ExplosionPhysics wrecks): 'model' a glTF / GLB in the
