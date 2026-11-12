@@ -76,7 +76,8 @@ float4 _Es2Grunge;
 // loader's V flip), B.a Emissive Channel Distance Boost; _ChorusKicker: rgb Kicker Color, a Kicker Exp (0 = no kicker);
 // _ChorusKicker2: x Kicker Fade Offset, y Kicker Fade Length (world units), z the near emission's factor; _ChorusDirt: rgb
 // Dirt Tint, a 1 = dirt on; _ChorusDirt2: x Dirt UV Scale, y Dirt Mask UV Scale, z Dirt from Material AO Intensity, w Dirt
-// Contrast; _ChorusDirt3: x 0 = weighted by the vertex colour's red (trim), 1 = its alpha too (plating).
+// Contrast; _ChorusDirt3: x 0 = weighted by the vertex colour's red (trim), 1 = its alpha too (plating); y 1 = by its alpha
+// instead of its red, z 1 = the dirt covers the trim emissive too (M_NPCShipTrimMaster's dirt, the Disruptor's).
 float4 _ChorusParams;
 float4 _ChorusAccent;
 float4 _ChorusAccent2;

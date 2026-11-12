@@ -301,6 +301,7 @@ void ChorusLayers(Varyings input, inout SurfaceData s)
         metal = saturate(lerp(metal, (half)_ChorusAccent2.x, accent));
         rough = saturate(rough + accent * (half)_ChorusAccent2.y);
     }
+    half dirtD = 0.0h;
     if (_ChorusDirt.a > 0.0)
     {
         half vc = input.color.r;
@@ -308,8 +309,10 @@ void ChorusLayers(Varyings input, inout SurfaceData s)
         half mask = SAMPLE_TEXTURE2D(_DetailMask, sampler_LinearRepeat, uv1 * _ChorusDirt2.y).r;
         half d = saturate(saturate((1.0h - ao) * (half)_ChorusDirt2.z + (vc - 0.5h) * 2.0h) * 2.0h + mask - 1.0h);
         half c = (half)_ChorusDirt2.w;
-        d = saturate(lerp(-c, 1.0h + c, d)) * vc * dr.y;
+        // (M_NPCShipTrimMaster's dirt, the Disruptor's: x the vertex alpha alone, _ChorusDirt3.y)
+        d = saturate(lerp(-c, 1.0h + c, d)) * (_ChorusDirt3.y > 0.5 ? input.color.a : vc) * dr.y;
         if (_ChorusDirt3.x > 0.5) d *= input.color.a;
+        dirtD = d;
         half3 dirt = _ChorusDirt.rgb * SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_LinearRepeat, uv1 * _ChorusDirt2.x).rgb;
         albedo = saturate(lerp(albedo, dirt, d));
         metal = saturate(metal * (1.0h - d * d));
@@ -328,6 +331,7 @@ void ChorusLayers(Varyings input, inout SurfaceData s)
         // (the masters' "UV shift" mask: Chorus lights only the faces whose palette UV is shifted below 0, past 1 here)
         half on = _ChorusEmitG.a > 0.5 ? (uv3.y > 1.0 ? 1.0h : 0.0h) : 1.0h;
         e *= on * (half)_ChorusEmitR.a;
+        if (_ChorusDirt3.z > 0.5) e *= 1.0h - dirtD;   // (M_NPCShipTrimMaster's: the dirt covers the emissive too)
     }
     gChorusEmissive = e;
     s.emission = e * (half)(_ChorusKicker2.z * _ChorusParams.w);

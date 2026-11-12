@@ -653,7 +653,7 @@ namespace GoF2Remake.Modding
             var dirt = Texture(mod, c.dirt, false);
             m.SetVector(ChorusDirtId, Rgba(c.dirtTint ?? new[] { 1f, 1f, 1f }, dirt != null ? 1f : 0f));
             m.SetVector(ChorusDirt2Id, new Vector4(c.dirtUvScale, c.dirtMaskUvScale, c.dirtAo, c.dirtContrast));
-            m.SetVector(ChorusDirt3Id, new Vector4(c.dirtAlpha ? 1f : 0f, 0f, 0f, 0f));
+            m.SetVector(ChorusDirt3Id, new Vector4(c.dirtAlpha ? 1f : 0f, c.dirtByAlpha ? 1f : 0f, c.dirtOverEmissive ? 1f : 0f, 0f));
             if (dirt != null)
             {
                 m.SetTexture("_DetailAlbedoMap", dirt);

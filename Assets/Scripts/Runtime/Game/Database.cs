@@ -584,7 +584,9 @@ namespace GoF2Remake.Data
     /// (its channels x 'emissiveR' / 'G' / 'B' x 'emissiveAmount'; 'emissiveUvShift' only on faces shifted out of the
     /// palette) over UV0; 'accentColor' (null = none) with 'accentMetal' / 'accentRoughness' / 'accentNormal'. Plating:
     /// 'tilingDiffuse' / 'tilingRmo' / 'tilingNormal' are Albedo / ORM / Normal over UV0 x 'tiling'. 'dirt' / 'dirtMask' /
-    /// 'dirtRoughness' (Dirt BaseColor x 'dirtTint', over UV1) by the vertex colour's red ('dirtAlpha': x its alpha too).
+    /// 'dirtRoughness' (Dirt BaseColor x 'dirtTint', over UV1) by the vertex colour's red ('dirtAlpha': x its alpha too;
+    /// 'dirtByAlpha': by its alpha instead of its red; 'dirtOverEmissive': the dirt covers the trim emissive too, the
+    /// M_NPCShipTrimMaster's dirt).
     /// 'kickerColor' / 'kickerExp' (0 = none): the far rim, faded in past 'kickerFadeOffset' over 'kickerFadeLength' (world
     /// units), with the emissive x 'distanceBoost' there; 'nearEmission' the emissive's factor up close (M_NPCShipTrimMaster's
     /// 2). Every emission x 'emissionScale' (Chorus's HDR to the remake's bloom).</summary>
@@ -689,7 +691,7 @@ namespace GoF2Remake.Data
         public float kickerExp, kickerFadeOffset, kickerFadeLength = 1f;
         public float[] dirtTint;
         public float dirtUvScale = 1f, dirtMaskUvScale = 1f, dirtAo = 1f, dirtContrast;
-        public bool dirtAlpha;
+        public bool dirtAlpha, dirtByAlpha, dirtOverEmissive;
         // kind "shell" (Chorus's M_Guilt_Shell, its compiled base, depth and vertex passes): no palette; 'mask' (T_Guilt_A: R the
         // body, G the arms), 'noise' (the grey that flows), 'flow' (RG its flow vectors), 'phase' (R the flow's offset) over UV0.
         // A noise flowing at flowSpeed along the flow x flowStrength over UV0 x tiling (the phase's at UV0 x randomness) dissolves

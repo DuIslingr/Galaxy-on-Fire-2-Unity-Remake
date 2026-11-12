@@ -340,6 +340,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   _EmissionMap Trim Emissive, _DetailAlbedoMap / _DetailMask the dirt; the dirt's roughness in _ChorusDirtRough. glTFast
   flips V, so the masters' emissive "UV shift" mask (UV3.v < 0) is UV3.y > 1 here. M_NPCShipTrimMaster's emissive is 2x up
   close; past Kicker Fade Offset (view depth) it fades to the kicker rim plus the emissive x Emissive Channel Distance Boost.
+  Its dirt permutation (2026-11-11, the Disruptor's MI_TER_Disruptor_Trim_Emissive decompiled): the same mask, x the
+  vertex alpha instead of its red, and the dirt covering the trim emissive (e x (1 - d)): `_ChorusDirt3` y / z
+  (`dirtByAlpha`, `dirtOverEmissive`). Its "Accent 1 Contrast" (saturate(x (1 + 2c) - c)) is 0 on every wear instance:
+  the fighters' accent formula stands for them.
   Kind "shell" (`_ChorusParams.x` 3, 2026-11-11, Chorus's Guilt; `ModMaterials.ChorusShell`, HullForwardPass.hlsl
   `ChorusShell`, HullInput.hlsl `ChorusShellFlow` / `ChorusShellPush`): M_Guilt_Shell after its compiled base, masked depth
   and vertex passes. Its flowing noise (two phases half a cycle apart, a triangle-wave blend) dissolves it in the forward
