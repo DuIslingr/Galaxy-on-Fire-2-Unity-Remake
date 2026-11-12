@@ -56,5 +56,20 @@ namespace GoF2Remake.Tests
             Assert.IsFalse(f.Step(3000f, At(90000f, hidden: true)), "not again for 15 s");
             Assert.IsFalse(new ChorusDogfight(() => 0.5f).Step(3000f, At(50000f, hidden: true)), "not within 1.2 km");
         }
+
+        [Test]
+        public void TrafficPrimariesKeepTheirDamageASecond()
+        {
+            // Chorus's BP_NPC_Weapon_Main_Scout: 35 every 0.2 s against the fighter's 70 every 0.25 s (0.625 of its damage a
+            // second), fired every 200 ms where the game's NPC gun fires every 400: half the shot, at twice the rate
+            var t = UnityEngine.JsonUtility.FromJson<GoF2Remake.Data.CustomTraffic>("{ \"primaries\": [ { \"item\": \"chorus:chorus_gatling_t1\", " +
+                "\"factor\": 0.625, \"reloadMs\": 200, \"minRank\": 2 } ] }");
+            Assert.AreEqual(1, t.primaries.Length);
+            Assert.AreEqual(200f, t.primaries[0].reloadMs);
+            Assert.IsFalse(t.primaries[0].Carried(1, 0f), "its rank bound, as a secondary's");
+            Assert.AreEqual(0.3125f, GoF2Remake.World.NpcShip.PrimaryShotFactor(t.primaries[0], 400f), 1e-5f);
+            Assert.AreEqual(0.625f, GoF2Remake.World.NpcShip.PrimaryShotFactor(new GoF2Remake.Data.CustomPrimary { factor = 0.625f }, 400f), 1e-5f,
+                "no interval of its own: the game's, the shot scaled as the factor");
+        }
     }
 }

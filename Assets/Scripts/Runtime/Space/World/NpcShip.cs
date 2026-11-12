@@ -572,12 +572,32 @@ namespace GoF2Remake.World
             if ((spec.race == Standing.Specter || spec.ship == 49) && spec.fixedObject == null && modelGo != null) cloak = new NpcCloak(model);
             // Level::assignGuns: a Most Wanted criminal fires its own weapon at x4.
             if (spec.gunItem >= 0 && gun != null) SetGun(spec.gunItem, spec.gunFactor);
+            else if (gun != null && spec.group != NpcGroup.Wingman) SetOwnPrimary(db, spec);
             // Remake (generic turrets): turret items on its turret mounts, its own or its type's (a mod's "npcTurrets").
             if (spec.turretAssembly == null && spec.fixedObject == null && modelGo != null)
                 mounted = NpcMountedTurrets.Build(this, db, spec.ship, spec.turretItems ?? db.NpcTurretsOf(spec.ship), model, fxRoot, GunHit);
             if (spec.secondaryItem >= 0 && gun != null) SetSecondaryGun(spec.secondaryItem, spec.secondaryFactor);
             else if (gun != null && spec.group != NpcGroup.Wingman && !spec.noDevices) SetOwnSecondary(db, spec);
         }
+
+        /// <summary>Remake mods (Chorus's NPC weapons): its hull's "traffic": { "primaries" }, the first one it carries: that
+        /// item's look, fired every reloadMs (0: the game's), its damage a second 'factor' x the game's NPC gun's.</summary>
+        void SetOwnPrimary(Database db, SpawnSpec spec)
+        {
+            var list = (db?.Ship(spec.ship) as CustomShipData)?.traffic?.primaries;
+            if (list == null) return;
+            foreach (var p in list)
+            {
+                if (p == null || !p.Carried(Session.Rank, Random.value)) continue;
+                if (Modding.ModContent.TryResolveItem(p.item, out int item) && db.Item(item) != null)
+                    SetGun(item, PrimaryShotFactor(p, NpcTables.GunReloadMs), p.reloadMs);
+                return;
+            }
+        }
+
+        /// <summary>A primary's damage a shot against the game's NPC shot: its factor a second, over its own interval.</summary>
+        public static float PrimaryShotFactor(CustomPrimary p, float gameReloadMs) =>
+            Mathf.Max(0f, p.factor) * (p.reloadMs > 0f ? p.reloadMs / Mathf.Max(1f, gameReloadMs) : 1f);
 
         /// <summary>Remake mods (GoF3's NPC loadouts): its hull's "traffic": { "secondaries" }, the first one it carries.</summary>
         void SetOwnSecondary(Database db, SpawnSpec spec)

@@ -439,6 +439,11 @@ battle spawns in 156 ms with its hulls.
   Remake mods (2026-11-05, GoF3's NPC loadouts SW_DL_*): ships.json "traffic": { "secondaries" } (`CustomSecondary`,
   JsonUtility): `NpcShip.SetOwnSecondary` gives a traffic NPC (not a wingman, nor a boss's clone) the first entry it
   carries (rank within minRank..maxRank, share % rolled at spawn) as its second gun at x factor, when its spec has none.
+  Remake mods (2026-11-11, Chorus's BP_NPC_Weapon_*): "traffic": { "primaries" } (`CustomPrimary` : `CustomSecondary` +
+  `reloadMs`): `NpcShip.SetOwnPrimary` (not a wingman; a Most Wanted criminal's `gunItem` wins) replaces the NPC gun with
+  the first entry it carries: the item's look, fired every reloadMs (0: `NpcTables.GunReloadMs`; `MakeGun`'s reload), its
+  shot `gunBase` x `PrimaryShotFactor` = factor x reloadMs / GunReloadMs, so `factor` is its damage a second against the
+  game's NPC gun at the same level. The Chorus importer writes each hull's blueprint gun against the Circle fighter's.
 - **Missile warning and evasion** (remake; the original has neither): any homing missile (Missile, ClusterMissile,
   Thermo kinds) locked on a boosting or cloaked player loses its lock for good and flies straight on (`Gun.Update`:
   `Bullet.lockLost`, `Target.ShakesMissiles` = `boosting` || `cloaked`, set by `ShipController` / `PlayerCloak` for the

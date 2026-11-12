@@ -492,6 +492,17 @@ namespace GoF2Remake.Data
         /// <summary>Remake (2026-11-05, GoF3's NPC loadouts): a second weapon its NPCs may carry, the first entry carried
         /// (CustomSecondary.Carried) at its spawn (World.NpcShip); null = none, as the game's NPCs.</summary>
         public CustomSecondary[] secondaries;
+        /// <summary>Remake (2026-11-11, Chorus's NPC weapons, BP_NPC_Weapon_*): the gun its NPCs fire instead of the game's NPC
+        /// gun, the first entry carried (World.NpcShip.SetOwnPrimary); null = the game's. A Most Wanted criminal's weapon wins.</summary>
+        public CustomPrimary[] primaries;
+    }
+
+    /// <summary>A ships.json "traffic.primaries" entry: as a secondary ('item' its look, carried by rank and share), its
+    /// 'factor' the damage a second against the game's NPC gun at the same level (1 = as much), fired every 'reloadMs'
+    /// (0 = the game's NPC interval: each shot then carries more or less to keep the factor).</summary>
+    [System.Serializable] public class CustomPrimary : CustomSecondary
+    {
+        public float reloadMs;
     }
 
     /// <summary>A ships.json "traffic.secondaries" entry: 'item' (a reference, "31" or "mod:id"), carried while the player's
