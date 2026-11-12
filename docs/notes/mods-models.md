@@ -393,6 +393,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   Chorus's screen offsets aren't the remake's: the scale is the remake's own); M_FTL_PortalGlow (T_Gradient_Vertical_04 at
   -UV, lerp(Color1 x g, the curve, LerpColorParm) x g, additive). `World.PortalRefraction` switches the opaque texture on
   for the main camera while a gate with one is in the orbit (`OrbitBuilder.SpawnJumpgate`, `Flight.OpaqueTexture`).
+  Kind `"core"` (2026-11-11, Guilt's core: MP_Guilt_Core_Radial_02 on M_Warpin_Omen_Portal, its compiled translucent base
+  pass): the card's UVs about its middle pinched by `pinch` (Threads Pinch Max: d x (1 - max(edge, 0))^pinch, edge
+  1 - 2|d|), in polar coordinates x (`tilingU`, `tilingV`), `noise` (the threads, R) read there panned by (`speedU`,
+  `panningV`) and by (-`speedU`, `panningV`) + 0.5, added; the core g = 1 - e^-(2.333 edge)^2, g^`corePower` x `coreMult`;
+  the colour `curve` at threads + core (x `fade`); the alpha saturate((threads + threads^`threadsPower` x `threadsMult` +
+  core) x g) - (1 - `masterAlpha`), faded within `depthFade` (game units) of the scene behind it (the camera depth
+  texture; none on mobile: no fade); alpha-blended (`_SrcBlend` / `_DstBlend`, the other kinds stay added). Its UV
+  distortion (off on Guilt) and CompAmount (Chorus's auto-exposure compensation) are left out. No refraction pass.
   Tests `ChorusPortalTests`.
 - **Wrecks that break apart** (remake, 2026-11-11, after Chorus's wrecks: SK_*_Wreck skeletal meshes, a bone a piece, flung
   apart by their ABP_Explosion_* blueprints' ExplosionPhysics node, a C++ node whose impulses aren't in the assets):

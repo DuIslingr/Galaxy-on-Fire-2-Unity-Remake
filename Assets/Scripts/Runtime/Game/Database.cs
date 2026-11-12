@@ -612,7 +612,12 @@ namespace GoF2Remake.Data
     /// GoF2/ChorusPortal. kind "portal": 'noise' (T_main) in polar coordinates x (1, tilingV), scrolling by panningV, ^
     /// structurePower x structureMult into the colour 'curve' (one row), 'height' (its bump offset by heightRatio and the
     /// refraction's mask), 'sphereNormal' / 'ringNormal' and 'ior' / 'pulseSpeed' / 'pulseB' / 'refraction' the scene
-    /// bent behind it, x 'fade'. kind "glow": 'gradient' at -UV, lerp(color x g, the curve at g, lerpColor) x g.</summary>
+    /// bent behind it, x 'fade'. kind "glow": 'gradient' at -UV, lerp(color x g, the curve at g, lerpColor) x g. kind "core"
+    /// (Guilt's, MP_Guilt_Core_Radial_02): 'noise' (the threads) in polar coordinates of the card's UVs pinched by 'pinch' x
+    /// (tilingU, tilingV), read panned by (speedU, panningV) and (-speedU, panningV), added; the core 1 - e^-(2.333 edge)^2
+    /// ^ corePower x coreMult; the colour the 'curve' at threads + core (x 'fade'); the alpha (threads + threads^threadsPower
+    /// x threadsMult + core) x the core's edge - (1 - masterAlpha), faded within 'depthFade' (game units) of what is behind
+    /// it; alpha-blended.</summary>
     [System.Serializable] public class ChorusPortalSpec
     {
         public string kind;   // "portal" or "glow"; empty = off
@@ -621,8 +626,11 @@ namespace GoF2Remake.Data
         public float ior = 1.5f, pulseSpeed = -0.4f, pulseB = 3f, refraction = 0.05f;
         public float[] color;
         public float lerpColor = 1f;
-        public bool On => kind == "portal" ? !string.IsNullOrEmpty(noise) : kind == "glow" && !string.IsNullOrEmpty(gradient);
+        public float tilingU = 1f, speedU = 0.05f, pinch = -1.6f, corePower = 8.845f, coreMult = 1.2f, threadsPower = 1.5f;
+        public float threadsMult = 5f, masterAlpha = 1f, depthFade;
+        public bool On => kind == "portal" || kind == "core" ? !string.IsNullOrEmpty(noise) : kind == "glow" && !string.IsNullOrEmpty(gradient);
         public bool Glow => kind == "glow";
+        public bool Core => kind == "core";
 
         /// <summary>Its maps: (path, linear, normal map).</summary>
         public System.Collections.Generic.IEnumerable<(string path, bool linear, bool normal)> Textures()

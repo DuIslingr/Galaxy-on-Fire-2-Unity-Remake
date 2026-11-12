@@ -697,7 +697,7 @@ namespace GoF2Remake.Modding
 
         static Shader portalShader;
 
-        /// <summary>A "portal" block (Chorus's FTL portal or its glow) on GoF2/ChorusPortal: its maps as data (linear), the curve
+        /// <summary>A "portal" block (Chorus's FTL portal, its glow or Guilt's core) on GoF2/ChorusPortal: its maps as data (linear), the curve
         /// row clamped; World.PortalRefraction gives it the scene behind (URP's opaque texture).</summary>
         static Material Portal(ModInfo mod, ChorusPortalSpec p, string name)
         {
@@ -717,7 +717,12 @@ namespace GoF2Remake.Modding
             Map("_SphereNormal", p.sphereNormal, TextureWrapMode.Clamp);
             Map("_RingNormal", p.ringNormal, TextureWrapMode.Clamp);
             Map("_Gradient", p.gradient, TextureWrapMode.Repeat);
-            m.SetFloat("_Kind", p.Glow ? 1f : 0f);
+            m.SetFloat("_Kind", p.Core ? 2f : p.Glow ? 1f : 0f);
+            m.SetFloat("_SrcBlend", (float)(p.Core ? UnityEngine.Rendering.BlendMode.SrcAlpha : UnityEngine.Rendering.BlendMode.One));
+            m.SetFloat("_DstBlend", (float)(p.Core ? UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha : UnityEngine.Rendering.BlendMode.One));
+            m.SetVector("_CoreUV", new Vector4(p.tilingU, p.tilingV, p.speedU, p.panningV));
+            m.SetVector("_CoreShape", new Vector4(p.pinch, p.corePower, p.coreMult, p.threadsPower));
+            m.SetVector("_CoreAlpha", new Vector4(p.threadsMult, p.masterAlpha, Mathf.Max(0f, p.depthFade) * 0.05f, p.fade));
             m.SetVector("_Polar", new Vector4(p.tilingV, p.panningV, p.structurePower, p.structureMult));
             m.SetVector("_Bump", new Vector4(p.heightRatio, p.fade, p.ior, p.refraction));
             m.SetVector("_Pulse", new Vector4(p.pulseSpeed, p.pulseB, 0f, 0f));
