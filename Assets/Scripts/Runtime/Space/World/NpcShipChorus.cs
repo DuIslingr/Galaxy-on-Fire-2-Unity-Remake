@@ -4,7 +4,8 @@
 // point on past it on a pass, a break to its side when the target aims at it, a run away below half hull; out of the
 // player's view beyond 1.2 km it jumps to 400 m from its target (materializing, HullWarpIn, as Chorus's warp). Of a crowd on
 // one player at most ChorusDogfight.MaxAttackers fire at once (Chorus's attack tokens). For fighters only, like the others.
-// "chorusScout" breaks also when the target's nose is near it, faster; "chorusGunship" holds 600 m off as a turret.
+// "chorusScout" breaks also when the target's nose is near it, faster; "chorusGunship" holds 600 m off as a turret;
+// "chorusDrone" / "chorusSwarm" keep at range, facing and firing, away when it comes too close.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -61,13 +62,20 @@ namespace GoF2Remake.World
             hold = !chorusFight.Fires(d) || tooMany;
             switch (chorusFight.Current)
             {
-                case ChorusDogfight.Mode.PassBy:   // on past it: its EQS point
-                    return ChorusFleePoint(ChorusDogfight.PassMinAngle);
+                case ChorusDogfight.Mode.PassBy:   // on past it: its EQS point (a kiter's: away, 135 deg off the target)
+                    return ChorusFleePoint(chorusFight.Kiter ? ChorusDogfight.KiterFleeMinAngle : ChorusDogfight.PassMinAngle);
                 case ChorusDogfight.Mode.Evade:   // a hard break to the side
                     return me + (side * 2f + transform.forward).normalized * (ChorusDogfight.FireStartUnits * 0.5f * M);
                 case ChorusDogfight.Mode.Retreat:   // away: its EQS point past 60 deg from the target
                     return ChorusFleePoint(ChorusDogfight.RetreatMinAngle);
-                case ChorusDogfight.Mode.Hold:   // a gunship's turret mode: where it is, its nose on the target
+                case ChorusDogfight.Mode.Hold:   // a gunship's turret mode: where it is, its nose on the target; a kiter's attack
+                    if (chorusFight.Kiter)        // position: at its distance from the target on its own side
+                    {
+                        var fromT = me - t;
+                        var dir = fromT.sqrMagnitude > 1e-8f ? fromT.normalized : -transform.forward;
+                        var spot = t + dir * (chorusFight.KiterHoldUnits * M);
+                        return (spot - me).sqrMagnitude < (chorusFight.KiterHoldUnits * 0.1f * M) * (chorusFight.KiterHoldUnits * 0.1f * M) ? t : spot;
+                    }
                     return aimPos;
                 default:
                     return aimPos;

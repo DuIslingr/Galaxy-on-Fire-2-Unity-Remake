@@ -19,6 +19,14 @@
 //              60000, LinearSpeedMultiplier 2), then holds there facing it and firing (BTT_TurretMode_Gunship,
 //              BTTask_LookAtTarget, BTTask_AIAttackTargetWithWeapon) until it is past 800 m (BTDecorator_CompareDistance
 //              80000): no break, run away or jump (its tree has none; the line-of-sight repositioning is left out)
+// Two kiters (2026-11-11, "ai": "chorusDrone" / "chorusSwarm"): in to their attack distance (BTTask_FlyToTarget
+// TargetReachedDistance), holding an attack position there facing the target and firing (BTTask_Flee "AttackPosition" at
+// DistanceOfTargetPoint, BTTask_LookAtWithoutMercuna, BTTask_AIAttackTargetWithWeapon), away when it comes too close
+// (BTDecorator_CompareDistance, BTTask_Flee MinAngleToTarget 135 x2):
+//   Drone      BT_CombatRoam_OmenDrone: in at x2 to 200 m, its positions at 400 m (x0.75), away within 100 m; the
+//              fighters' jump (out of view beyond 1.2 km)
+//   Swarm      BT_BatSwarm_CombatRoam: in at x1.5 to 400 m, positions at 400 m, away within 150 m; below half its hull
+//              the "Very Challenging Flee" (x2), every 25 s at most (BTDecorator_Cooldown 25); no jump
 // Its distances are Chorus's centimetres x 0.72 game units (the Chorus ships' scale). The attack tokens (Gen1 / Gen11 / Gen14:
 // how many may attack at once, the AI director's) are the remake's: at most MaxAttackers of a crowd on one player fire.
 // Plain C#; 'random' gives 0..1.
@@ -28,7 +36,7 @@ namespace GoF2Remake.Flight
     public class ChorusDogfight
     {
         public enum Mode { Approach, PassBy, Evade, Retreat, Hold }
-        public enum Kind { Fighter, Scout, Gunship }
+        public enum Kind { Fighter, Scout, Gunship, Drone, Swarm }
 
         public const float UnitsPerCm = 0.72f;
         public const float FireStartUnits = 60000f * UnitsPerCm, ClosestUnits = 5000f * UnitsPerCm;
@@ -40,6 +48,14 @@ namespace GoF2Remake.Flight
         public const float AimConeDegrees = 10f, ScoutAimConeDegrees = 25f, ScoutAimUnits = 50000f * UnitsPerCm;
         public const float ScoutEvadeSpeed = 1.5f, ScoutEvadeCooldownMs = 4000f;
         public const float GunshipHoldUnits = 60000f * UnitsPerCm, GunshipReengageUnits = 80000f * UnitsPerCm, HoldSpeed = 0.1f;
+        public const float KiterFleeMs = 3000f, KiterFleeMinAngle = 135f, KiterFleeSpeed = 2f, SwarmRetreatCooldownMs = 25000f;
+
+        /// <summary>A kiter's numbers: where its approach ends, the distance of its attack position, too close (game units), its
+        /// approach and hold speeds.</summary>
+        public float KiterStopUnits => (Type == Kind.Drone ? 20000f : 40000f) * UnitsPerCm;
+        public float KiterHoldUnits => 40000f * UnitsPerCm;
+        public float KiterCloseUnits => (Type == Kind.Drone ? 10000f : 15000f) * UnitsPerCm;
+        public bool Kiter => Type == Kind.Drone || Type == Kind.Swarm;
 
         public Kind Type { get; }
         /// <summary>How many times it has entered a mode (a new pass or run away asks for a new EQS point).</summary>
@@ -87,11 +103,15 @@ namespace GoF2Remake.Flight
             if (string.Equals(ai, "chorus", System.StringComparison.OrdinalIgnoreCase)) return Kind.Fighter;
             if (string.Equals(ai, "chorusScout", System.StringComparison.OrdinalIgnoreCase)) return Kind.Scout;
             if (string.Equals(ai, "chorusGunship", System.StringComparison.OrdinalIgnoreCase)) return Kind.Gunship;
+            if (string.Equals(ai, "chorusDrone", System.StringComparison.OrdinalIgnoreCase)) return Kind.Drone;
+            if (string.Equals(ai, "chorusSwarm", System.StringComparison.OrdinalIgnoreCase)) return Kind.Swarm;
             return null;
         }
 
         /// <summary>Its speed now: x2 on an approach, a scout's break x1.5, all but still while a gunship holds.</summary>
-        public float SpeedFactor => Current == Mode.Hold ? HoldSpeed
+        public float SpeedFactor => Kiter ? (Current == Mode.Approach ? (Type == Kind.Drone ? 2f : 1.5f)
+                                             : Current == Mode.Hold ? (Type == Kind.Drone ? 0.75f : 1f) : KiterFleeSpeed)
+            : Current == Mode.Hold ? HoldSpeed
             : Current == Mode.Approach && waitMs <= 0f ? ApproachSpeed
             : Current == Mode.Evade && Type == Kind.Scout ? ScoutEvadeSpeed : 1f;
 
@@ -100,7 +120,8 @@ namespace GoF2Remake.Flight
         public float AimRange => Type == Kind.Scout ? ScoutAimUnits : FireStartUnits;
 
         /// <summary>It may fire now: on an approach within its firing distance; a gunship while it holds.</summary>
-        public bool Fires(float distance) => Type == Kind.Gunship ? Current == Mode.Hold && distance <= GunshipReengageUnits
+        public bool Fires(float distance) => Kiter ? Current == Mode.Hold && distance <= FireStartUnits
+            : Type == Kind.Gunship ? Current == Mode.Hold && distance <= GunshipReengageUnits
             : Current == Mode.Approach && waitMs <= 0f && distance <= FireStartUnits;
 
         /// <summary>A new target: a fresh approach.</summary>
@@ -126,12 +147,33 @@ namespace GoF2Remake.Flight
                 else if (Current != Mode.Hold && Current != Mode.Approach) Enter(Mode.Approach);
                 return false;
             }
-            hiddenMs = v.outOfView && v.distance > TeleportBeyondUnits ? hiddenMs + dtMs : 0f;
+            hiddenMs = v.outOfView && v.distance > TeleportBeyondUnits && Type != Kind.Swarm ? hiddenMs + dtMs : 0f;
             if (hiddenMs >= OutOfViewMs && teleportCdMs <= 0f)
             {
                 teleportCdMs = TeleportCooldownMs; hiddenMs = 0f;
                 Enter(Mode.Approach); waitMs = 0f;
                 return true;
+            }
+            if (Kiter)   // (in, hold at range, away when too close; the swarm's run away below half its hull)
+            {
+                if (Type == Kind.Swarm && v.hullRatio < RetreatHull && retreatCdMs <= 0f && Current != Mode.Retreat)
+                {
+                    retreatCdMs = SwarmRetreatCooldownMs;
+                    Enter(Mode.Retreat);
+                    return false;
+                }
+                switch (Current)
+                {
+                    case Mode.Approach: if (v.distance <= KiterStopUnits) Enter(Mode.Hold); break;
+                    case Mode.Hold:
+                        if (v.distance < KiterCloseUnits) Enter(Mode.PassBy);
+                        else if (v.distance > KiterHoldUnits * 2f) Enter(Mode.Approach);
+                        break;
+                    case Mode.PassBy: if (modeMs >= KiterFleeMs) Enter(Mode.Approach); break;
+                    case Mode.Retreat: if (modeMs >= RetreatMs) Enter(Mode.Approach); break;
+                    default: Enter(Mode.Approach); break;
+                }
+                return false;
             }
             if (v.hullRatio < RetreatHull && retreatCdMs <= 0f && Current != Mode.Retreat)
             {

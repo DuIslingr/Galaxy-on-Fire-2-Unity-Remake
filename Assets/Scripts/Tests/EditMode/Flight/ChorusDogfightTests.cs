@@ -99,6 +99,34 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheOmenKeepAtRange()
+        {
+            Assert.AreEqual(ChorusDogfight.Kind.Drone, ChorusDogfight.KindOf("chorusDrone"));
+            Assert.AreEqual(ChorusDogfight.Kind.Swarm, ChorusDogfight.KindOf("chorusSwarm"));
+            var d = new ChorusDogfight(() => 0.5f, ChorusDogfight.Kind.Drone);
+            Assert.AreEqual(2f, d.SpeedFactor, "in at x2");
+            Assert.IsFalse(d.Fires(30000f), "not on its way in");
+            d.Step(100f, At(14000f));
+            Assert.AreEqual(ChorusDogfight.Mode.Hold, d.Current, "200 m off: its attack position");
+            Assert.IsTrue(d.Fires(14000f));
+            Assert.AreEqual(0.75f, d.SpeedFactor);
+            d.Step(100f, At(7000f));
+            Assert.AreEqual(ChorusDogfight.Mode.PassBy, d.Current, "within 100 m: away");
+            Assert.AreEqual(2f, d.SpeedFactor);
+            d.Step(3000f, At(30000f));
+            Assert.AreEqual(ChorusDogfight.Mode.Approach, d.Current, "in again after 3 s");
+            Assert.IsTrue(d.Step(2100f, At(90000f, hidden: true)), "the drone jumps as the fighters");
+
+            var s = new ChorusDogfight(() => 0.5f, ChorusDogfight.Kind.Swarm);
+            Assert.AreEqual(1.5f, s.SpeedFactor);
+            s.Step(100f, At(28000f));
+            Assert.AreEqual(ChorusDogfight.Mode.Hold, s.Current, "400 m off");
+            s.Step(100f, At(28000f, hull: 0.4f));
+            Assert.AreEqual(ChorusDogfight.Mode.Retreat, s.Current, "below half its hull");
+            Assert.IsFalse(s.Step(2100f, At(90000f, hidden: true)), "the swarm never jumps");
+        }
+
+        [Test]
         public void TheFleePointIsScoredAwayAndAhead()
         {
             // straight away from the target, along its heading: the best; back at the target or a U-turn: the worst
