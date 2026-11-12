@@ -492,6 +492,28 @@ namespace GoF2Remake.Modding
             m.SetVector("_HitColor", Rgb(h.color, new Color(750f, 0f, 0f)));
         }
 
+        /// <summary>A "lava" block (ChorusLavaSpec, GoF2/Hull's LavaFlow): its three packed maps as data, repeating; off
+        /// (_LavaE.w 0) without one.</summary>
+        static void LavaFlow(ModInfo mod, CustomShipMaterial e, Material m)
+        {
+            var l = e.lava;
+            if (l == null || !l.On || !m.HasProperty("_LavaE")) return;
+            Texture2D Map(string path)
+            {
+                var t = Texture(mod, path, true);
+                if (t != null) t.wrapMode = TextureWrapMode.Repeat;
+                return t;
+            }
+            var emit = Map(l.emit); var flow = Map(l.flow); var masks = Map(l.masks);
+            if (emit == null || flow == null || masks == null) return;
+            m.SetTexture("_LavaEmit", emit); m.SetTexture("_LavaFlowMaps", flow); m.SetTexture("_LavaMasks", masks);
+            Vector4 V(float[] f) => f != null && f.Length >= 4 ? new Vector4(f[0], f[1], f[2], f[3]) : Vector4.zero;
+            m.SetVector("_LavaA", V(l.a)); m.SetVector("_LavaB", V(l.b)); m.SetVector("_LavaC", V(l.c)); m.SetVector("_LavaD", V(l.d));
+            m.SetVector("_LavaE", new Vector4(l.magma2Exp, l.tempMin, l.tempMax, Mathf.Max(0f, l.glow)));
+            m.SetVector("_LavaF", new Vector4(l.mip, l.mip2, 0f, 0f));
+            Glowing(m);
+        }
+
         static bool GlowWave(ModInfo mod, CustomShipMaterial e, Material m)
         {
             var w = e.wave;
@@ -879,6 +901,7 @@ namespace GoF2Remake.Modding
             Es2Layers(mod, e, m);
             ChorusLayers(mod, e, m);
             HitFlash(e, m, GlowWave(mod, e, m));
+            LavaFlow(mod, e, m);
             var em = Texture(mod, e.emission, false);
             bool emColor = e.emissionColor != null && e.emissionColor.Length >= 3;
             if (em != null || emColor)

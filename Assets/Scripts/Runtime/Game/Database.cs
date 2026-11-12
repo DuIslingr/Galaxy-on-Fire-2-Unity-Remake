@@ -613,6 +613,8 @@ namespace GoF2Remake.Data
         public ChorusPortalSpec portal;
         /// <summary>Remake (2026-11-11): Chorus's rift vortex (GoF2/ChorusRift, ModMaterials.Rift).</summary>
         public ChorusRiftSpec rift;
+        /// <summary>Remake (2026-11-11): Chorus's flowing lava (M_BrokenPlanet_Core; GoF2/Hull LavaFlow, ModMaterials.LavaFlow).</summary>
+        public ChorusLavaSpec lava;
         /// <summary>Remake (2026-11-11): Chorus's shield shell (M_Shield; GoF2/ChorusShield, ModMaterials.Shield; a ship's
         /// "overcharge" model, Flight.ShieldShell).</summary>
         public ChorusShieldSpec shield;
@@ -745,6 +747,21 @@ namespace GoF2Remake.Data
     /// 'noiseScale', panned by 'pan' [u1, v1, u2, v2]), 'noise' (R, over UV1); lengths ('radius' [start, end], 'ring' [radius
     /// start, end, width start, end]) in the model's own units from its origin; 'cameraFade' [offset, length] and 'depthFade'
     /// in game units; 'exposure' scales it (Chorus's HDR to the remake's).</summary>
+    /// <summary>A material's "lava" block: Chorus's flowing lava (M_BrokenPlanet_Core's compiled base pass) added to the
+    /// glow of a GoF2/Hull material (HullForwardPass.hlsl LavaFlow, its formula there). Its three maps, read as data: 'emit'
+    /// (R the first flow emissive, G the second), 'flow' (RG the first flowmap, BA the second), 'masks' (R / G the time
+    /// offsets, B the part mask, A the core mask); 'a' [Magma Tiling, FlowSpeed, Flowmap Tiling, FlowIntensity], 'b'
+    /// [TimeOffset Tiling, its intensity, Flowmap UV Texture Offset u, v], 'c' [2nd Magma Tiling, FlowSpeed 2, Flowmap Tiling
+    /// 2, FlowIntensity 2], 'd' [TimeOffset 2 Tiling, 2nd core mask multiply, its exp, 2nd magma multiply], 'magma2Exp',
+    /// 'tempMin' / 'tempMax' (K), 'mip' / 'mip2' the flowmaps' mip levels, 'glow' the glow's scale.</summary>
+    [System.Serializable] public class ChorusLavaSpec
+    {
+        public string emit, flow, masks;
+        public float[] a, b, c, d;
+        public float magma2Exp = 1f, tempMin = 400f, tempMax = 3000f, mip, mip2, glow = 1f;
+        public bool On => !string.IsNullOrEmpty(emit) && !string.IsNullOrEmpty(flow) && !string.IsNullOrEmpty(masks);
+    }
+
     [System.Serializable] public class ChorusShieldSpec
     {
         public string mask, noise;

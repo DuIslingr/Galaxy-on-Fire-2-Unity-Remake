@@ -121,6 +121,17 @@ Shader "GoF2/Hull"
         [HideInInspector] _WreckBurnColor("Wreck burn colour", Vector) = (0, 0, 0, 0)
         [HideInInspector] _WreckBurn("Wreck burn map: tiling, offset, falloff, by vertex red", Vector) = (1, 0, 0, 0)
         [HideInInspector] _WreckBurnMap("Wreck burn noise", 2D) = "black" {}
+        // GoF2: Chorus's flowing lava (HullForwardPass.hlsl LavaFlow; ModMaterials.LavaFlow): its numbers (HullInput.hlsl), _LavaE.w
+        // the glow's scale (0 = off), its three packed maps
+        [HideInInspector] _LavaA("Lava A", Vector) = (6, 0.1, 1, 0.1)
+        [HideInInspector] _LavaB("Lava B", Vector) = (1, 1, 0, 0)
+        [HideInInspector] _LavaC("Lava C", Vector) = (30, 0.1, 1, 0.1)
+        [HideInInspector] _LavaD("Lava D", Vector) = (1, 1, 1, 1)
+        [HideInInspector] _LavaE("Lava E", Vector) = (1, 400, 3000, 0)
+        [HideInInspector] _LavaF("Lava F", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _LavaEmit("Lava emissives", 2D) = "black" {}
+        [HideInInspector] _LavaFlowMaps("Lava flowmaps", 2D) = "grey" {}
+        [HideInInspector] _LavaMasks("Lava masks", 2D) = "black" {}
         // GoF2: the hit flash (HullForwardPass.hlsl HitFlash; World.HullHitFlash): age, radius (m), duration, pattern mode
         [HideInInspector] _HitFx("Hit flash", Vector) = (1, 1, 0.04, 0)
         [HideInInspector] _HitPos("Hit position", Vector) = (0, 0, 0, 0)

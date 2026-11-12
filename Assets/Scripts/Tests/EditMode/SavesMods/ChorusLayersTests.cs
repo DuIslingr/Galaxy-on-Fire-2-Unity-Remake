@@ -266,6 +266,31 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ALavaBlockFlowsOnTheHull()
+        {
+            // Chorus's M_BrokenPlanet_Core: the hull material keeps its surface, the lava's maps and numbers set, its glow on
+            var mod = ModWithMaps();
+            var e = JsonUtility.FromJson<CustomShipMaterial>("{ \"material\": \"core\", \"diffuse\": \"maps/palette.png\", \"lava\": { " +
+                "\"emit\": \"maps/emissive.png\", \"flow\": \"maps/aao.png\", \"masks\": \"maps/palette.png\", \"a\": [6, 0.05, 1, 0.1], " +
+                "\"b\": [1, 1, 0, 0], \"c\": [30, 0.1, 2, 0.05], \"d\": [1, 1.5, 2, 1], \"tempMin\": 400, \"tempMax\": 3000, \"mip\": 2, \"glow\": 0.5 } }");
+            Assert.IsTrue(e.lava.On);
+            Assert.IsFalse(JsonUtility.FromJson<CustomShipMaterial>("{ \"material\": \"hull\" }").lava?.On ?? false, "off without its maps");
+            var m = ModMaterials.FromSpec(mod, e, "lava");
+            try
+            {
+                Assert.AreEqual(new Vector4(6f, 0.05f, 1f, 0.1f), m.GetVector("_LavaA"));
+                Assert.AreEqual(new Vector4(1f, 400f, 3000f, 0.5f), m.GetVector("_LavaE"));
+                Assert.AreEqual(2f, m.GetVector("_LavaF").x);
+                Assert.IsNotNull(m.GetTexture("_LavaFlowMaps"));
+                UnityEditor.ShaderUtil.CompilePass(m, m.FindPass("ForwardLit"), true);
+                var errors = System.Linq.Enumerable.Where(UnityEditor.ShaderUtil.GetShaderMessages(m.shader),
+                    x => x.severity == UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error);
+                CollectionAssert.IsEmpty(System.Linq.Enumerable.Select(errors, x => $"{x.file}:{x.line} {x.message}"));
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
         public void TheHullsShadowAndDepthPassesCompileWithTheShell()
         {
             // the shell pushed and dissolved in the shadow, depth and depth-normals passes too

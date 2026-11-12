@@ -382,6 +382,45 @@ half3 GlowWave(float2 uv)
     return lerp((half3)_WaveMin.rgb, (half3)_WaveMax.rgb, t) * (t * p.r * mask * (half)_WaveParams.x);
 }
 
+// GoF2: Chorus's flowing lava (M_BrokenPlanet_Core's compiled base pass: Nimika Prime's broken planet's core), added to the
+// emission. Over UV0, with r the part mask (_LavaMasks.b) and t the time: the first flow, Core - Flow Emissive Diffuse at
+// uv x Magma Tiling pushed along Core - Flowmap (at uv x Flowmap Tiling, its mip FlowMipLevel; rg x 2 - 1 x FlowIntensity
+// x r, x mirrored) by two phases half a cycle apart, t x FlowSpeed - TimeOffset (R at uv x its tiling, x its intensity),
+// the first's UVs wrapped and offset by Flowmap UV Texture Offset, blended by a triangle wave; the second the same with
+// its own maps (no part mask, no intensity on its offset, its first UVs + 0.5), x 2nd magma multiply ^ 2nd magma Exp;
+// mixed by the first's (x 2nd core mask multiply)^exp, x r; the temperature Temp Min + (Max - Min) x that x r; the glow
+// Chorus's blackbody (HullWreck.hlsl) x the core mask (_LavaMasks.a) x _LavaE.w. (The flowing normals are left baked.) The
+// flow's offsets are Unreal's (v down): on the remake's UVs (v up) their v turns over, as the texture offset's.
+float LavaTri(float f) { return f < 0.5 ? 2.0 * f : 2.0 - 2.0 * f; }
+
+half3 LavaFlow(float2 uv)
+{
+    float t = _Time.y;
+    half4 m = SAMPLE_TEXTURE2D(_LavaMasks, sampler_LinearRepeat, uv);
+    float r = m.b;
+    // the first flow
+    float2 uvM = uv * _LavaA.x;
+    float ph = t * _LavaA.y - SAMPLE_TEXTURE2D(_LavaMasks, sampler_LinearRepeat, uv * _LavaB.x).r * _LavaB.y;
+    float2 fv = (SAMPLE_TEXTURE2D_LOD(_LavaFlowMaps, sampler_LinearRepeat, uv * _LavaA.z, _LavaF.x).rg * 2.0 - 1.0) * _LavaA.w * r * float2(-1.0, -1.0);
+    float2 dx = ddx(uvM), dy = ddy(uvM);
+    float a1 = SAMPLE_TEXTURE2D_GRAD(_LavaEmit, sampler_LinearRepeat, frac(uvM + fv * frac(ph - 0.5)) + float2(_LavaB.z, -_LavaB.w), dx, dy).r;
+    float b1 = SAMPLE_TEXTURE2D_GRAD(_LavaEmit, sampler_LinearRepeat, uvM + fv * frac(ph), dx, dy).r;
+    float lava1 = lerp(a1, b1, LavaTri(frac(ph)));
+    float k = lava1 * _LavaD.y > 0.0 ? pow(lava1 * _LavaD.y, _LavaD.z) : 0.0;
+    // the second
+    float2 uv2 = uv * _LavaC.x;
+    float ph2 = t * _LavaC.y - SAMPLE_TEXTURE2D(_LavaMasks, sampler_LinearRepeat, uv * _LavaD.x).g;
+    float2 fv2 = (SAMPLE_TEXTURE2D_LOD(_LavaFlowMaps, sampler_LinearRepeat, uv * _LavaC.z, _LavaF.y).ba * 2.0 - 1.0) * _LavaC.w * float2(-1.0, -1.0);
+    float2 dx2 = ddx(uv2), dy2 = ddy(uv2);
+    float a2 = SAMPLE_TEXTURE2D_GRAD(_LavaEmit, sampler_LinearRepeat, frac(uv2 + fv2 * frac(ph2 - 0.5)) + 0.5, dx2, dy2).g;
+    float b2 = SAMPLE_TEXTURE2D_GRAD(_LavaEmit, sampler_LinearRepeat, uv2 + fv2 * frac(ph2), dx2, dy2).g;
+    float l2 = lerp(a2, b2, LavaTri(frac(ph2))) * _LavaD.w;
+    float lava2 = l2 > 0.0 ? pow(l2, _LavaE.x) : 0.0;
+    float lava = lerp(lava1, lava2, k) * r;
+    float T = _LavaE.y + (_LavaE.z - _LavaE.y) * lava * r;
+    return (half3)(max(HullWreckBlackbody(T), 0.0) * m.a * _LavaE.w);
+}
+
 // GoF2: Chorus's hit flash (M_Phoenix's compiled base pass, its MF_HitEffect): u = the flash's age 0..1; a ring
 // max(1 - |max(1 - d / (u R), 0) - 0.07| / 0.07, 0) growing from the hit to R, plus (1 - N.V)^7 x saturate(1 - d / R);
 // x (1 - u) x HitColor x HitEmissiveStrength, x min(((P(2 uv) + P(5 uv - 0.5 turned by 0.1 t, + 0.5)) / 2)^4, 1) with P
@@ -622,6 +661,7 @@ void HullPassFragment(
     else if (_ChorusParams.x > 2.5) ChorusShell(input, surfaceData);      // GoF2: Chorus's shell (Guilt)
     else if (_ChorusParams.x > 0.0) ChorusLayers(input, surfaceData);   // GoF2: Chorus's trim sheets and platings
     if (_WaveParams.x > 0.0) surfaceData.emission += GlowWave(input.uv);   // GoF2: a glow along a pattern (Chorus's M_Phoenix)
+    if (_LavaE.w > 0.0) surfaceData.emission += LavaFlow(input.uv);   // GoF2: Chorus's flowing lava (M_BrokenPlanet_Core)
     if (_HitFx.w > 0.0 && _HitFx.x < 1.0) surfaceData.emission += HitFlash(input.uv, input.positionWS, input.normalWS);   // GoF2: a hit (Chorus's M_Phoenix)
     if (_WreckFx.x > 0.0 || _WreckFx.y > 0.0)   // GoF2: a wreck piece's burn and disintegration (HullWreck.hlsl)
     {

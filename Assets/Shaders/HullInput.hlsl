@@ -108,6 +108,17 @@ float4 _WreckBurn;
 float4 _HitFx;
 float4 _HitPos;
 float4 _HitColor;
+// GoF2: Chorus's flowing lava (M_BrokenPlanet_Core; HullForwardPass.hlsl LavaFlow; ModMaterials.LavaFlow): _LavaA x Magma
+// Tiling, y FlowSpeed, z Flowmap Tiling, w FlowIntensity; _LavaB x TimeOffset Tiling, y its intensity, zw Flowmap UV Texture
+// Offset; _LavaC x 2nd Magma Tiling, y FlowSpeed 2, z Flowmap Tiling 2, w FlowIntensity 2; _LavaD x TimeOffset 2 Tiling,
+// y 2nd core mask multiply, z its exp, w 2nd magma multiply; _LavaE x 2nd magma exp, y Temp Min, z Temp Max, w the glow's
+// scale (0: off); _LavaF x FlowMipLevel, y FlowMipLevel 2
+float4 _LavaA;
+float4 _LavaB;
+float4 _LavaC;
+float4 _LavaD;
+float4 _LavaE;
+float4 _LavaF;
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -218,7 +229,10 @@ TEXTURE2D(_WavePattern);
 TEXTURE2D(_WaveMask);
 TEXTURE2D(_ChorusPalette);
 TEXTURE2D(_ChorusDirtRough);
-TEXTURE2D(_WreckBurnMap);   // GoF2: a wreck piece's burn noise (HullWreck.hlsl HullWreckBurn)
+TEXTURE2D(_WreckBurnMap);
+TEXTURE2D(_LavaEmit);       // GoF2: the lava's flow emissives (R the first, G the second)
+TEXTURE2D(_LavaFlowMaps);   // its flowmaps (RG the first, BA the second)
+TEXTURE2D(_LavaMasks);      // R / G the time offsets, B the part mask, A the core mask   // GoF2: a wreck piece's burn noise (HullWreck.hlsl HullWreckBurn)
 UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_BaseMap);
 
 // GoF2: Chorus's M_Guilt_Shell (_ChorusParams.x 3; ModMaterials.ChorusShell): its noise flowing along its flow map, as its

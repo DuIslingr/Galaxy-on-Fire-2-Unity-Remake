@@ -436,6 +436,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   it cools; its glow Chorus's Planckian-locus blackbody at b x T x (b T / 2500)^4, scaled so a full burn's brightest
   channel is `burnColor`'s; the burnt part rough. The cut keeps the value noise (no UVs in the depth passes); the burn's
   map is the wreck's first material's (the trims' over UV1, Burn_Noise_UseUV1; M_WreckBurn's over UV0).
+- **Chorus flowing lava** (remake, 2026-11-11, Nimika Prime's broken planet's core: M_BrokenPlanet_Core's compiled base
+  pass): a material's `"lava"` block (`ChorusLavaSpec`, `ModMaterials.LavaFlow`) adds GoF2/Hull's `LavaFlow` to the
+  emission of an ordinary hull material (its surface baked as before): two flowmap flows of the flow emissives (each two
+  phases half a cycle apart, a time-offset map, a triangle-wave blend), mixed by the first's ^ 2nd core mask curve, x the
+  part mask twice into a temperature, Chorus's blackbody there x the core mask (`HullWreckBlackbody`); `_LavaA`..`_LavaF`,
+  three packed maps (`_LavaEmit`, `_LavaFlowMaps`, `_LavaMasks`), on when `_LavaE.w` > 0. Unreal's flow offsets turned
+  to the remake's v-up UVs. The flowing normals stay baked. Tests in `ChorusLayersTests`.
 - **Chorus shield shell** (remake, 2026-11-11, the player capital ship's Shield Overcharge: BP_Effect_Auxiliary_Shield_
   PlayerCapitalShip's P_Buff_Auxiliary_Shield_PlayerCapitalShip, one mesh particle of SM_PlayerControlledLargeShip_01_Shield in
   MI_Shield_PlayerCapital_Auxiliary on M_Shield, EmitterDelay 0.5, Lifetime 4.8, colour (0.7, 10, 3.025) x alpha 25 and
