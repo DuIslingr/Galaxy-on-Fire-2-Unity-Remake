@@ -634,10 +634,41 @@ namespace GoF2Remake.Data
         public float randomness = 1f, flowSpeed = 1f, flowStrength = 1f, armsFade = 1f, coverage = 0.5f, erode = 1f, masterAlpha = 1f;
         public float push, pushNoise, baseColor, metal = 0.5f, roughness = 0.5f, emissiveExponent = 1f, emissiveIntensity, centerRadius = 1f;
         public float[] emissiveColor;
+        // kind "crystal" (Chorus's M_JTU_Blend, its compiled base pass: the Omen crystal, the Prophet's crown; HullForwardPass.hlsl
+        // ChorusCrystal): two surfaces A and B ('diffuseA' / 'normalA' / 'mroA' (R metal, G roughness) / 'maskA' (R), and B's),
+        // each mapped along the mesh's tangent frame at 'scaleA' / 'scaleB' (Chorus centimetres; the model's units its metres),
+        // blended by the vertex colour's red sharpened by a turbulence ('noiseScale', 'noiseContrast', 'noiseOffset') and the
+        // breath, against maskA as a height ('transitionSoftness'); A tinted to 'macroColor' by maskA at x 'macroTiling'
+        // ('macroAmount'; its roughness toward 'macroRoughness' by 'macroRoughnessAmount'); both overlaid with the inner
+        // 'variation' (G), looked up at the position / 'innerScale' pushed along the view by the 'heightmap' (R) x
+        // 'innerHeightRatio' and along the normal by 'innerRefraction'; the glow: variation x 'innerGlow' x the breath ('breath':
+        // a curve row, R the glow, G added to the blend x 'breathAmount', at frac(time / 'breathInterval' - the distance from
+        // the origin / 'pulsePeriod'); a breathInterval of 0 holds it at the row's start) x maskA x 'glowA', or maskB x
+        // 'glowPulseB' x 'glowB'; normals x
+        // 'normalIntensityA' / 'B', roughness + 'roughnessBiasA' / 'B'; x emissionScale.
+        public string diffuseA, normalA, mroA, maskA, diffuseB, normalB, mroB, maskB, heightmap, variation, breath;
+        public float scaleA = 25000f, scaleB = 30000f, normalIntensityA = 1f, normalIntensityB = 1f, roughnessBiasA, roughnessBiasB;
+        public float[] macroColor, innerGlow;
+        public float macroAmount = 1f, macroTiling = 0.05f, macroRoughness = 0.2f, macroRoughnessAmount = 0.5f;
+        public float glowA = 2f, glowPulseB = 1f, glowB = 5f, innerRefraction = 1f, innerHeightRatio = 0.37f, innerScale = 150000f;
+        public float noiseScale = 50000f, noiseContrast = 0.1f, noiseOffset, breathInterval = 8f, pulsePeriod = 4000000f, breathAmount = 1f;
+        public float transitionSoftness = 0.44f;
+        // kind "tissue" (Chorus's M_JTU_Faceless, its compiled base pass: the Omen's Faceless ships; GoF2/Hull's ChorusTissue): all
+        // glow on a black base, over UV0: 'thickness' (R its thickness, G toward smooth), 'outerVariation' / 'innerVariation'
+        // (R) through a parallax of (thickness - 0.5) x 'depth', 'dirt' (B) and the 'ice' mask (R, scrolling 0.1 a second) at x
+        // 'noiseTiling', 'normal', 'ao'; lerp('outerGlow' x (dirt + outer), 'innerGlow' x (ice x the inverse fresnel + inner),
+        // clamp((outer + inner) x saturate(1 / (thickness x 'strength')) + the breath, 0.5, 1)) (the breath as the crystal's:
+        // 'breath', 'breathInterval', 'pulsePeriod'); roughness lerp('roughnessIntensity', 0.05, thickness G); x emissionScale.
+        public string thickness, outerVariation, innerVariation, ice, normal, ao;
+        public float[] outerGlow;   // (and 'innerGlow', 'dirt', 'breath' as the other kinds')
+        public float noiseTiling = 1f, depth = 0.1f, strength = 1f, roughnessIntensity = 1f;
 
-        public bool On => !string.IsNullOrEmpty(kind) && (Shell ? !string.IsNullOrEmpty(mask) : !string.IsNullOrEmpty(palette));
+        public bool On => !string.IsNullOrEmpty(kind) && (Shell ? !string.IsNullOrEmpty(mask) : Crystal ? !string.IsNullOrEmpty(diffuseA)
+            : Tissue ? !string.IsNullOrEmpty(thickness) : !string.IsNullOrEmpty(palette));
         public bool Plating => kind == "plating";
         public bool Shell => kind == "shell";
+        public bool Crystal => kind == "crystal";
+        public bool Tissue => kind == "tissue";
 
         /// <summary>The PNGs it reads, and how (linear, normal map): ModMaterials.ChorusLayers, the preloads.</summary>
         public System.Collections.Generic.IEnumerable<(string path, bool linear, bool normal)> Textures()
@@ -646,7 +677,11 @@ namespace GoF2Remake.Data
             foreach (var t in new[] { (palette, true, false), (tilingDiffuse, false, false), (tilingRmo, true, false), (tilingNormal, true, true),
                                       (trimAo, true, false), (trimNormal, true, true), (trimEmissive, false, false), (dirt, false, false),
                                       (dirtMask, true, false), (dirtRoughness, true, false), (mask, true, false), (noise, true, false),
-                                      (flow, true, false), (phase, true, false) })
+                                      (flow, true, false), (phase, true, false), (diffuseA, false, false), (normalA, true, true),
+                                      (mroA, true, false), (maskA, true, false), (diffuseB, false, false), (normalB, true, true), (mroB, true, false),
+                                      (maskB, true, false), (heightmap, true, false), (variation, true, false), (breath, true, false),
+                                      (thickness, true, false), (outerVariation, true, false), (innerVariation, true, false), (ice, true, false),
+                                      (normal, true, true), (ao, true, false) })
                 if (!string.IsNullOrEmpty(t.Item1)) yield return t;
         }
     }
@@ -741,6 +776,7 @@ namespace GoF2Remake.Data
         [System.NonSerialized] public DamageTaken damageTaken;
         [System.NonSerialized] public List<NpcDeviceSpec> devices;
         [System.NonSerialized] public List<int> turrets;   // its turret items (null = its ship type's, Database.NpcTurrets)
+        [System.NonSerialized] public string skin;         // remake mods: a kit skin its ship wears ("skin", ModTraffic.Assembly)
         [System.NonSerialized] public int[] systems, escorts;
         [System.NonSerialized] public int routeMin = 2, routeMax = 4, secondary = -1;
         [System.NonSerialized] public Modding.ModInfo mod;

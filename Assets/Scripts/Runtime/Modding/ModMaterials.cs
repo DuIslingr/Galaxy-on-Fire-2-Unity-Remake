@@ -506,6 +506,92 @@ namespace GoF2Remake.Modding
 
         static Vector4 Rgba(float[] c, float a) => c != null && c.Length >= 3 ? new Vector4(c[0], c[1], c[2], a) : new Vector4(0f, 0f, 0f, a);
 
+        /// <summary>The "tissue" kind (Chorus's M_JTU_Faceless; GoF2/Hull's ChorusTissue): its normal in URP's bump slot, the AO in
+        /// the occlusion slot, the thickness in the metallic slot, the outer variation in the detail colour slot, the inner
+        /// variation and the ice in the wear slots, the dirt in the palette slot, the breath row in the dirt roughness slot; its
+        /// numbers in the _Chorus* vectors, _ChorusParams.x 5.</summary>
+        static void ChorusTissue(ModInfo mod, ChorusLayersSpec c, Material m)
+        {
+            Texture2D Map(string path, Color none)
+            {
+                var t = Texture(mod, path, true);
+                if (t == null) return Solid(none, true);
+                t.wrapMode = TextureWrapMode.Repeat;
+                return t;
+            }
+            var black = Solid(Color.black, false);
+            m.SetTexture("_BaseMap", black); m.SetTexture("_MainTex", black);
+            m.SetColor("_BaseColor", Color.white);
+            var nrm = Texture(mod, c.normal, true, normal: true);
+            m.SetTexture("_BumpMap", nrm);
+            m.EnableKeyword("_NORMALMAP");   // (the tangent frame: the parallax)
+            m.SetTexture("_OcclusionMap", Map(c.ao, Color.white));
+            m.SetTexture("_MetallicGlossMap", Map(c.thickness, new Color(0.5f, 0f, 0f, 1f)));
+            m.SetTexture("_DetailAlbedoMap", Map(c.outerVariation, Color.black));
+            m.SetTexture("_Es2WearMap", Map(c.innerVariation, Color.black));
+            m.SetTexture("_Es2WearNoiseMap", Map(c.ice, Color.black));
+            m.SetTexture("_ChorusPalette", Map(c.dirt, Color.black));
+            var breath = Texture(mod, c.breath, true);
+            if (breath != null) breath.wrapMode = TextureWrapMode.Clamp;
+            m.SetTexture("_ChorusDirtRough", breath != null ? breath : Solid(Color.black, true));
+            m.SetTexture("_EmissionMap", null);
+            m.SetColor("_EmissionColor", Color.black);   // (the layer makes the emission itself)
+            m.SetVector(ChorusParamsId, new Vector4(5f, 1f, 1f, Mathf.Max(0f, c.emissionScale)));
+            m.SetVector(ChorusAccentId, Vector4.zero);
+            m.SetVector(ChorusEmitRId, Rgba(c.outerGlow ?? new[] { 0.17f, 0f, 0f }, 0f));
+            m.SetVector(ChorusEmitGId, Rgba(c.innerGlow ?? new[] { 3f, 0f, 0.08f }, 0f));
+            m.SetVector(ChorusEmitBId, new Vector4(Mathf.Max(1e-3f, c.noiseTiling), c.depth, Mathf.Max(0f, c.strength), Mathf.Clamp01(c.roughnessIntensity)));
+            m.SetVector(ChorusKickerId, new Vector4(Mathf.Max(0f, c.breathInterval), Mathf.Max(1f, c.pulsePeriod), 0f, 0f));
+            m.SetVector(ChorusKicker2Id, new Vector4(0f, 1f, 1f, 0f));
+            m.SetVector(ChorusDirtId, Vector4.zero);
+            m.SetVector(ChorusDirt2Id, Vector4.one);
+            m.SetVector(ChorusDirt3Id, Vector4.zero);
+        }
+
+        /// <summary>The "crystal" kind (Chorus's M_JTU_Blend; GoF2/Hull's ChorusCrystal): its maps in the slots the HLSL reads
+        /// them from (A's in URP's base / bump / metallic, B's in the detail and occlusion slots, the masks in the emission and
+        /// palette slots, the veins and variation in the wear slots, the breath row in the dirt roughness slot), its numbers in
+        /// the _Chorus* vectors, _ChorusParams.x 4.</summary>
+        static void ChorusCrystal(ModInfo mod, ChorusLayersSpec c, Material m)
+        {
+            Texture2D Map(string path, bool linear, Color none, bool normal = false)
+            {
+                var t = Texture(mod, path, linear, normal: normal);
+                if (t == null) return normal ? null : Solid(none, linear);
+                t.wrapMode = TextureWrapMode.Repeat;
+                return t;
+            }
+            var a = Map(c.diffuseA, false, Color.grey);
+            m.SetTexture("_BaseMap", a); m.SetTexture("_MainTex", a);
+            m.SetTextureScale("_BaseMap", Vector2.one); m.SetTextureScale("_MainTex", Vector2.one);
+            m.SetColor("_BaseColor", Color.white);
+            m.SetTexture("_BumpMap", Map(c.normalA, true, Color.grey, true));
+            m.EnableKeyword("_NORMALMAP");   // (the tangent frame the surfaces are mapped along)
+            m.SetTexture("_MetallicGlossMap", Map(c.mroA, true, new Color(0f, 0.5f, 1f, 1f)));
+            m.SetTexture("_EmissionMap", Map(c.maskA, true, Color.black));
+            m.SetColor("_EmissionColor", Color.black);   // (the layer makes the emission itself)
+            m.SetTexture("_DetailAlbedoMap", Map(c.diffuseB, false, Color.grey));
+            m.SetTexture("_DetailNormalMap", Map(c.normalB, true, Color.grey, true));
+            m.SetTexture("_OcclusionMap", Map(c.mroB, true, new Color(0f, 0.5f, 1f, 1f)));
+            m.SetTexture("_ChorusPalette", Map(c.maskB, true, Color.black));
+            m.SetTexture("_Es2WearMap", Map(c.heightmap, true, Color.grey));
+            m.SetTexture("_Es2WearNoiseMap", Map(c.variation, true, Color.grey));
+            var breath = Texture(mod, c.breath, true);
+            if (breath != null) breath.wrapMode = TextureWrapMode.Clamp;
+            m.SetTexture("_ChorusDirtRough", breath != null ? breath : Solid(new Color(1f, 0f, 0f, 1f)));
+            m.SetVector(ChorusParamsId, new Vector4(4f, Mathf.Max(1f, c.scaleA), Mathf.Max(1f, c.scaleB), Mathf.Max(0f, c.emissionScale)));
+            m.SetVector(ChorusAccentId, Rgba(c.macroColor ?? new[] { 0f, 0f, 0f }, c.macroColor != null ? Mathf.Clamp01(c.macroAmount) : 0f));
+            m.SetVector(ChorusAccent2Id, new Vector4(c.macroTiling, Mathf.Clamp01(c.macroRoughness), Mathf.Clamp01(c.macroRoughnessAmount), 0.5f));
+            m.SetVector(ChorusEmitRId, Rgba(c.innerGlow ?? new[] { 1f, 0.05f, 0.05f }, Mathf.Max(0f, c.glowA)));
+            m.SetVector(ChorusEmitGId, new Vector4(Mathf.Max(0f, c.glowPulseB), Mathf.Max(0f, c.glowB), c.innerRefraction, c.innerHeightRatio));
+            m.SetVector(ChorusEmitBId, new Vector4(Mathf.Max(1f, c.innerScale), Mathf.Max(1f, c.noiseScale), Mathf.Max(0f, c.noiseContrast), c.noiseOffset));
+            m.SetVector(ChorusKickerId, new Vector4(Mathf.Max(0f, c.breathInterval), Mathf.Max(1f, c.pulsePeriod), c.breathAmount, Mathf.Max(1e-4f, c.transitionSoftness)));
+            m.SetVector(ChorusKicker2Id, new Vector4(c.normalIntensityA, c.normalIntensityB, 1f, 0f));
+            m.SetVector(ChorusDirtId, new Vector4(c.roughnessBiasA, c.roughnessBiasB, 0f, 0f));
+            m.SetVector(ChorusDirt2Id, Vector4.one);
+            m.SetVector(ChorusDirt3Id, Vector4.zero);
+        }
+
         /// <summary>Chorus's trim sheets and platings (CustomShipMaterial "chorus", GoF2/Hull's ChorusLayers): its maps in URP's
         /// slots, which the layer reads in their place (_BaseMap the tiling diffuse / plating albedo, _MetallicGlossMap its RMO /
         /// ORM, _DetailNormalMap the tiling normal, _BumpMap the trim normal (the plating's normal), _OcclusionMap Trim AAO,
@@ -517,6 +603,8 @@ namespace GoF2Remake.Modding
             var c = e.chorus;
             if (c == null || !c.On) return;
             if (c.Shell) { ChorusShell(mod, c, m); return; }
+            if (c.Crystal) { ChorusCrystal(mod, c, m); return; }
+            if (c.Tissue) { ChorusTissue(mod, c, m); return; }
             var palette = Texture(mod, c.palette, true);
             if (palette == null) return;
             bool plating = c.Plating;

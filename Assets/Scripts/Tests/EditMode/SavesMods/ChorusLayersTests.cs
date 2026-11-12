@@ -137,6 +137,70 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ACrystalEntryTakesItsSurfacesAndGlow()
+        {
+            // Chorus's M_JTU_Blend (the Prophet's crown): A's maps in URP's slots, B's in the detail / occlusion slots, the numbers
+            // in the _Chorus* vectors, kind 4
+            var mod = ModWithMaps();
+            var c = new ChorusLayersSpec { kind = "crystal", diffuseA = "maps/palette.png", maskA = "maps/aao.png", diffuseB = "maps/emissive.png",
+                maskB = "maps/aao.png", heightmap = "maps/aao.png", variation = "maps/palette.png", breath = "maps/emissive.png",
+                scaleA = 25000f, scaleB = 30000f, innerGlow = new[] { 0.1651f, 0.0116f, 0.0168f }, glowA = 2f, glowB = 5f,
+                breathInterval = 8f, pulsePeriod = 4000000f, transitionSoftness = 0.44f, emissionScale = 0.5f };
+            Assert.IsTrue(c.On && c.Crystal);
+            var m = ModMaterials.FromSpec(mod, new CustomShipMaterial { chorus = c }, "crown");
+            try
+            {
+                Assert.AreEqual(new Vector4(4f, 25000f, 30000f, 0.5f), m.GetVector("_ChorusParams"));
+                Assert.IsNotNull(m.GetTexture("_DetailAlbedoMap"), "B's colour");
+                Assert.IsNotNull(m.GetTexture("_Es2WearMap"), "the veins");
+                Assert.AreEqual(TextureWrapMode.Clamp, m.GetTexture("_ChorusDirtRough").wrapMode, "the breath row");
+                Assert.AreEqual(8f, m.GetVector("_ChorusKicker").x);
+                Assert.Less(Vector4.Distance(new Vector4(0.1651f, 0.0116f, 0.0168f, 2f), m.GetVector("_ChorusEmitR")), 1e-5f);
+                Assert.AreEqual(0f, m.GetVector("_Es2Wear2").z, "the wear layer stays off");
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
+        public void ATissueEntryTakesItsMapsAndGlow()
+        {
+            var mod = ModWithMaps();
+            var c = new ChorusLayersSpec { kind = "tissue", thickness = "maps/aao.png", outerVariation = "maps/palette.png", innerVariation = "maps/emissive.png",
+                ice = "maps/aao.png", dirt = "maps/palette.png", breath = "maps/emissive.png", outerGlow = new[] { 0.17f, 0f, 0f },
+                innerGlow = new[] { 3f, 0f, 0.08f }, noiseTiling = 2f, depth = 0.1f, strength = 1.5f, roughnessIntensity = 0.6f, breathInterval = 4f };
+            Assert.IsTrue(c.On && c.Tissue);
+            var m = ModMaterials.FromSpec(mod, new CustomShipMaterial { chorus = c }, "tissue");
+            try
+            {
+                Assert.AreEqual(5f, m.GetVector("_ChorusParams").x);
+                Assert.AreEqual(new Vector4(2f, 0.1f, 1.5f, 0.6f), m.GetVector("_ChorusEmitB"));
+                Assert.AreEqual(new Vector4(3f, 0f, 0.08f, 0f), m.GetVector("_ChorusEmitG"));
+                Assert.IsNotNull(m.GetTexture("_Es2WearNoiseMap"), "the ice");
+                Assert.AreEqual(4f, m.GetVector("_ChorusKicker").x);
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
+        public void TheHullsForwardPassCompilesWithTheCrystal()
+        {
+            var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);
+            var m = new Material(a.litOpaque);
+            try
+            {
+                m.SetVector("_ChorusParams", new Vector4(4f, 25000f, 30000f, 1f));
+                m.EnableKeyword("_NORMALMAP");
+                UnityEditor.ShaderUtil.CompilePass(m, m.FindPass("ForwardLit"), true);
+                m.SetVector("_ChorusParams", new Vector4(5f, 1f, 1f, 1f));   // (and the tissue)
+                UnityEditor.ShaderUtil.CompilePass(m, m.FindPass("ForwardLit"), true);
+                var errors = System.Linq.Enumerable.Where(UnityEditor.ShaderUtil.GetShaderMessages(m.shader),
+                    x => x.severity == UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error);
+                CollectionAssert.IsEmpty(System.Linq.Enumerable.Select(errors, x => $"{x.file}:{x.line} {x.message}"));
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
         public void TheHullsForwardPassCompilesWithTheWave()
         {
             var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);

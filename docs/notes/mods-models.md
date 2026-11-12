@@ -347,6 +347,19 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (forward only: depth priming is off and the depth texture is copied from the forward depth; the shadow pass draws it
   whole and unpushed). Slots: _BaseMap the mask (the shadow pass reads its alpha), _OcclusionMap the noise, _DetailNormalMap
   the flow vectors (loaded as plain data), _DetailMask the phase.
+- **Chorus crystal and tissue** (remake, 2026-11-11, two more Chorus layer kinds from their compiled base passes; GoF2/Hull
+  `ChorusCrystal` (`_ChorusParams.x` 4) and `ChorusTissue` (5) in HullForwardPass.hlsl, `ModMaterials.ChorusCrystal` /
+  `ChorusTissue`; the far kicker skips both, its vectors carry their numbers). Both reuse the template's slots (no new
+  samplers; the slot map is in each function's header) and turn `_NORMALMAP` on for the tangent frame. Crystal
+  (M_JTU_Blend, MI_JTU_Blend / _LocTRN): surfaces A / B mapped by the object-space position (cm) on the tangent and
+  bitangent / their world scales; the blend from the vertex colour's red, a 3-octave value-noise turbulence (Unreal's
+  noise texture stands in) and the breath, height-blended against A's mask by VC Transition Softness; macro tint and
+  roughness; overlay with the inner variation (green) read through the vein heightmap's parallax and the normal's tilt;
+  the glow variation x Inner Glow x the breath (CA_BaseVFX row: R glow, G blend) x each surface's mask and intensities.
+  A Breath Interval of 0 (the Prophet's) holds the breath at the row's start. Tissue (M_JTU_Faceless, the non-core
+  permutation): the formula above `_faceless` in the importer, with the ice scrolling 0.1 a second, the parallax and
+  fresnel per pixel and the breath rippling from the origin; its warp-in dissolve edge left out. Tests in
+  `ChorusLayersTests`.
 - **Skinned mod ships** (2026-11-11, ships.json `skinned`; `CustomShipData.skinned`, `ModShipBuilder.KeepSkinned`): the
   model's SkinnedMeshRenderers are kept (updateWhenOffscreen, its arms swing past the bind pose's bounds) instead of
   `FlattenSkinned`, so `animations` play on the bones (Chorus's Guilt: a soft skin, 26 joints, its 42 s idle). Measuring,
