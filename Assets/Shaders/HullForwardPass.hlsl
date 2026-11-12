@@ -338,29 +338,31 @@ void ChorusLayers(Varyings input, inout SurfaceData s)
 }
 
 // Chorus's M_Guilt_Shell (_ChorusParams.x 3; Guilt's two shells), after its compiled base and masked depth passes: a dither
-// (screen noise) and the flowing noise (HullInput.hlsl ChorusShellFlow) dissolve it, ((mask.r + Arms Fade) x 0.5 + dither -
-// 0.5) x saturate(2 Coverage - (1 - noise) x (1 - mask.g)^Erode Exponent) - (1 - MasterAlpha) clipped below 1/3; its colour,
-// metal and roughness flat; its glow the mask flowing the same way, less Emissive Exponent, x Emissive Color x Intensity x
-// saturate(1 - the distance from the model's origin / Center Emissive Radius)^2. (The base pass's normal from the flowing
-// noise is left flat.)
+// and the flowing noise dissolve it (HullInput.hlsl ChorusShellClip, the shadow and depth passes too); its colour, metal and
+// roughness flat; its normal the noise map's red and green at the flowed UVs as a tangent normal (Unreal's green flipped),
+// blended as the noise; its glow the glow map (_EmissionMap) flowing the same way, less Emissive Exponent, x Emissive Color
+// x Intensity x saturate(1 - the distance from the model's origin / Center Emissive Radius)^2.
+half3 ChorusShellNormal(half2 rg)
+{
+    half2 xy = rg * 2.0h - 1.0h;
+    return half3(xy.x, -xy.y, sqrt(max(1.0h - dot(xy, xy), 0.0h)));
+}
+
 void ChorusShell(Varyings input, inout SurfaceData s)
 {
     float2 uv0 = input.uv, a, b; float k;
+    ChorusShellClip(uv0, input.positionCS.xy);
     ChorusShellFlow(uv0, a, b, k);
     float2 dx = ddx(uv0 * _ChorusParams.y), dy = ddy(uv0 * _ChorusParams.y);   // (the flowed UVs jump; their gradients don't)
-    half n = lerp(SAMPLE_TEXTURE2D_GRAD(_OcclusionMap, sampler_LinearRepeat, b, dx, dy).r, SAMPLE_TEXTURE2D_GRAD(_OcclusionMap, sampler_LinearRepeat, a, dx, dy).r, (half)k);
-    half4 mask = SAMPLE_TEXTURE2D(_BaseMap, sampler_LinearRepeat, uv0);
-    half erode = pow(max(1.0h - mask.g, 1e-4h), (half)_ChorusEmitR.z);
-    half dither = InterleavedGradientNoise(input.positionCS.xy, 0);
-    half vis = ((mask.r + (half)_ChorusEmitR.x) * 0.5h + dither - 0.5h) * saturate(2.0h * (half)_ChorusEmitR.y - (1.0h - n) * erode) - (1.0h - (half)_ChorusEmitR.w);
-    clip(vis - 0.3333h);
+    half3 na = ChorusShellNormal(SAMPLE_TEXTURE2D_GRAD(_OcclusionMap, sampler_LinearRepeat, a, dx, dy).rg);
+    half3 nb = ChorusShellNormal(SAMPLE_TEXTURE2D_GRAD(_OcclusionMap, sampler_LinearRepeat, b, dx, dy).rg);
     s.albedo = (half)_ChorusEmitG.z;
     s.metallic = (half)_ChorusEmitG.w;
     s.smoothness = 1.0h - (half)_ChorusEmitB.x;
     s.occlusion = 1.0h;
-    s.normalTS = half3(0.0h, 0.0h, 1.0h);
+    s.normalTS = normalize(lerp(nb, na, (half)k));
     s.alpha = 1.0h;
-    half3 at = lerp(SAMPLE_TEXTURE2D_GRAD(_BaseMap, sampler_LinearRepeat, b, dx, dy).rgb, SAMPLE_TEXTURE2D_GRAD(_BaseMap, sampler_LinearRepeat, a, dx, dy).rgb, (half)k);
+    half3 at = lerp(SAMPLE_TEXTURE2D_GRAD(_EmissionMap, sampler_LinearRepeat, b, dx, dy).rgb, SAMPLE_TEXTURE2D_GRAD(_EmissionMap, sampler_LinearRepeat, a, dx, dy).rgb, (half)k);
     float d = length(TransformWorldToObject(input.positionWS));
     half fall = saturate(1.0h - (half)(d / _ChorusAccent2.y)); fall *= fall;
     s.emission = max(at - (half)_ChorusAccent2.x, 0.0h) * _ChorusAccent.rgb * (half)(_ChorusAccent.a * _ChorusParams.w) * fall;

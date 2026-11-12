@@ -243,6 +243,25 @@ float ChorusShellNoiseLod(float2 uv0)
 // The vertex shader's push, model units: push + pushNoise x (1 - the noise)
 float ChorusShellPush(float2 uv0) { return _ChorusEmitG.x + _ChorusEmitG.y * (1.0 - ChorusShellNoiseLod(uv0)); }
 
+// Whether this material is Chorus's shell (only it pushes and dissolves: the crystal's and the tissue's vectors mean else)
+bool ChorusIsShell() { return _ChorusParams.x > 2.5 && _ChorusParams.x < 3.5; }
+
+// The shell's dissolve (M_Guilt_Shell's masked depth pass; every pass that draws it, the shadow and depth passes too): the
+// noise flowed, T_Guilt_A's red (the body) and green (the arms), a screen dither at 'pixel'; ((mask.r + Arms Fade) x 0.5 +
+// dither - 0.5) x saturate(2 Coverage - (1 - noise) x (1 - mask.g)^Erode Exponent) - (1 - MasterAlpha) clipped below 1/3.
+void ChorusShellClip(float2 uv0, float2 pixel)
+{
+    float2 a, b; float k;
+    ChorusShellFlow(uv0, a, b, k);
+    float2 dx = ddx(uv0 * _ChorusParams.y), dy = ddy(uv0 * _ChorusParams.y);   // (the flowed UVs jump; their gradients don't)
+    half n = lerp(SAMPLE_TEXTURE2D_GRAD(_OcclusionMap, sampler_LinearRepeat, b, dx, dy).r, SAMPLE_TEXTURE2D_GRAD(_OcclusionMap, sampler_LinearRepeat, a, dx, dy).r, (half)k);
+    half4 mask = SAMPLE_TEXTURE2D(_BaseMap, sampler_LinearRepeat, uv0);
+    half erode = pow(max(1.0h - mask.g, 1e-4h), (half)_ChorusEmitR.z);
+    half dither = InterleavedGradientNoise(pixel, 0);
+    half vis = ((mask.r + (half)_ChorusEmitR.x) * 0.5h + dither - 0.5h) * saturate(2.0h * (half)_ChorusEmitR.y - (1.0h - n) * erode) - (1.0h - (half)_ChorusEmitR.w);
+    clip(vis - 0.3333h);
+}
+
 // Simple getters for the material properties above. All raw material input (constant buffer
 // values, texture samples) is accessed through these; the feature helpers build on them.
 half4 GetBaseColor()            { return _BaseColor; }

@@ -347,11 +347,19 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   the fighters' accent formula stands for them.
   Kind "shell" (`_ChorusParams.x` 3, 2026-11-11, Chorus's Guilt; `ModMaterials.ChorusShell`, HullForwardPass.hlsl
   `ChorusShell`, HullInput.hlsl `ChorusShellFlow` / `ChorusShellPush`): M_Guilt_Shell after its compiled base, masked depth
-  and vertex passes. Its flowing noise (two phases half a cycle apart, a triangle-wave blend) dissolves it in the forward
-  pass (clip, with InterleavedGradientNoise for UE's screen dither) and pushes it out along its normals in LitPassVertex
-  (forward only: depth priming is off and the depth texture is copied from the forward depth; the shadow pass draws it
-  whole and unpushed). Slots: _BaseMap the mask (the shadow pass reads its alpha), _OcclusionMap the noise, _DetailNormalMap
-  the flow vectors (loaded as plain data), _DetailMask the phase.
+  and vertex passes. Its flowing noise (two phases half a cycle apart, a triangle-wave blend) dissolves it
+  (`ChorusShellClip`, with InterleavedGradientNoise for UE's screen dither) and pushes it out along its normals: in
+  LitPassVertex and, since 2026-11-11, in the ShadowCaster, DepthOnly and DepthNormals passes too (Hull.shader's
+  `HullShadowPassVertex` / `HullDepthOnlyVertex` (its own Attributes with the normal) / `HullDepthNormalsVertex` and their
+  fragments; those passes at target 3.0 for the vertex texture read; the material turns `_ALPHATEST_ON` on with a
+  `_Cutoff` of 0 so URP's passes carry the UVs, its own test never clipping). `ChorusIsShell()` (x 3 only) gates the push:
+  before, `x > 2.5` pushed the crystal and the tissue too, by their unrelated `_ChorusEmitG`. Its normal (the base pass's)
+  is the noise map's red and green at the two flowed UVs as a tangent normal, blended as the noise, Unreal's green
+  flipped (`_NORMALMAP` on). Slots: _BaseMap the mask (T_Guilt_A), _OcclusionMap the noise (and its normal),
+  _DetailNormalMap the flow vectors (loaded as plain data), _DetailMask the phase, _EmissionMap the glow map that flows
+  (`glow`; none: the mask). The Chorus importer's maps per the masked depth pass's five textures in the master's
+  referenced-texture order (2026-11-11; before, each was one slot off): phase FlowmapRandomness (Noise_01), flow
+  T_Guilt_Flow, noise asteroid_obsidian_rock_000_norm_spec_diff, glow its _ao, mask T_Guilt_A.
 - **Chorus crystal and tissue** (remake, 2026-11-11, two more Chorus layer kinds from their compiled base passes; GoF2/Hull
   `ChorusCrystal` (`_ChorusParams.x` 4) and `ChorusTissue` (5) in HullForwardPass.hlsl, `ModMaterials.ChorusCrystal` /
   `ChorusTissue`; the far kicker skips both, its vectors carry their numbers). Both reuse the template's slots (no new

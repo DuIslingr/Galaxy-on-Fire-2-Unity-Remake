@@ -685,7 +685,14 @@ namespace GoF2Remake.Modding
             m.SetTexture("_DetailNormalMap", flow != null ? flow : Solid(new Color(0.5f, 0.5f, 1f, 1f)));
             var phase = Texture(mod, c.phase, true);
             m.SetTexture("_DetailMask", phase != null ? phase : Solid(new Color(0.5f, 0.5f, 0.5f, 1f)));
-            m.SetTexture("_EmissionMap", null);
+            var glow = Texture(mod, c.glow, true);
+            m.SetTexture("_EmissionMap", glow != null ? glow : mask);   // (none: the mask, as before)
+            // its normal (the noise's red and green) needs the tangent frame; the alpha test carries the UVs to the shadow and
+            // depth passes for its dissolve (a cutoff of 0: URP's own test never clips)
+            m.EnableKeyword("_NORMALMAP");
+            m.EnableKeyword("_ALPHATEST_ON");
+            m.SetFloat("_AlphaClip", 1f);
+            m.SetFloat("_Cutoff", 0f);
             m.SetColor("_EmissionColor", Color.black);
             m.SetVector(ChorusParamsId, new Vector4(3f, Mathf.Max(1e-4f, c.tiling), Mathf.Max(1e-4f, c.randomness), Mathf.Max(0f, c.emissionScale)));
             m.SetVector(ChorusAccentId, Rgba(c.emissiveColor, Mathf.Max(0f, c.emissiveIntensity)));

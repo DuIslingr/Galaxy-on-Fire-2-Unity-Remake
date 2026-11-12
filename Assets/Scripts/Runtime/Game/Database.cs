@@ -726,6 +726,9 @@ namespace GoF2Remake.Data
         // flowing the same way - emissiveExponent) x emissiveColor x emissiveIntensity x saturate(1 - distance from the model's
         // origin / centerRadius)^2; base colour, metallic and roughness flat.
         public string mask, noise, flow, phase;
+        // Remake (2026-11-11): 'glow' the map that flows for the glow (M_Guilt_Shell's: the obsidian rock's AO; none: the
+        // mask); the noise map's red and green are also its normal (the base pass's, Unreal's green flipped).
+        public string glow;
         public float randomness = 1f, flowSpeed = 1f, flowStrength = 1f, armsFade = 1f, coverage = 0.5f, erode = 1f, masterAlpha = 1f;
         public float push, pushNoise, baseColor, metal = 0.5f, roughness = 0.5f, emissiveExponent = 1f, emissiveIntensity, centerRadius = 1f;
         public float[] emissiveColor;
@@ -777,7 +780,7 @@ namespace GoF2Remake.Data
             foreach (var t in new[] { (palette, true, false), (tilingDiffuse, false, false), (tilingRmo, true, false), (tilingNormal, true, true),
                                       (trimAo, true, false), (trimNormal, true, true), (trimEmissive, false, false), (dirt, false, false),
                                       (dirtMask, true, false), (dirtRoughness, true, false), (mask, true, false), (noise, true, false),
-                                      (flow, true, false), (phase, true, false), (diffuseA, false, false), (normalA, true, true),
+                                      (flow, true, false), (phase, true, false), (glow, true, false), (diffuseA, false, false), (normalA, true, true),
                                       (mroA, true, false), (maskA, true, false), (diffuseB, false, false), (normalB, true, true), (mroB, true, false),
                                       (maskB, true, false), (heightmap, true, false), (variation, true, false), (breath, true, false),
                                       (thickness, true, false), (outerVariation, true, false), (innerVariation, true, false), (ice, true, false),

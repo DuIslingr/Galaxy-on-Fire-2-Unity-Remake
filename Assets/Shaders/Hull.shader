@@ -277,12 +277,12 @@ Shader "GoF2/Hull"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.0   // GoF2: (2.0) the shell's push reads its noise in the vertex shader
 
             // -------------------------------------
             // Shader Stages
-            #pragma vertex ShadowPassVertex
-            #pragma fragment ShadowPassFragment
+            #pragma vertex HullShadowPassVertex   // GoF2: URP's, Chorus's shell pushed and dissolved (HullInput.hlsl)
+            #pragma fragment HullShadowPassFragment
 
             // -------------------------------------
             // Material Keywords
@@ -308,6 +308,18 @@ Shader "GoF2/Hull"
             // Includes
             #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            Varyings HullShadowPassVertex(Attributes input)
+            {
+                if (ChorusIsShell()) input.positionOS.xyz += input.normalOS * ChorusShellPush(input.texcoord);
+                return ShadowPassVertex(input);
+            }
+            half4 HullShadowPassFragment(Varyings input) : SV_TARGET
+            {
+            #if defined(_ALPHATEST_ON)
+                if (ChorusIsShell()) ChorusShellClip(input.uv, input.positionCS.xy);
+            #endif
+                return ShadowPassFragment(input);
+            }
             ENDHLSL
         }
 
@@ -418,12 +430,12 @@ Shader "GoF2/Hull"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.0   // GoF2: (2.0) the shell's push reads its noise in the vertex shader
 
             // -------------------------------------
             // Shader Stages
-            #pragma vertex DepthOnlyVertex
-            #pragma fragment HullDepthOnlyFragment   // GoF2: URP's, a wreck's cut-away part left out (HullWreck.hlsl)
+            #pragma vertex HullDepthOnlyVertex   // GoF2: URP's, Chorus's shell pushed
+            #pragma fragment HullDepthOnlyFragment   // GoF2: URP's, a wreck's cut-away part and the shell's dissolve left out (HullWreck.hlsl)
 
             // -------------------------------------
             // Material Keywords
@@ -445,9 +457,34 @@ Shader "GoF2/Hull"
             #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
             #include "HullWreck.hlsl"   // GoF2
+            struct HullDepthAttributes   // (URP's Attributes with the normal: the shell's push)
+            {
+                float4 position : POSITION;
+                float3 normalOS : NORMAL;
+                float4 tangentOS : TANGENT;
+                float2 texcoord : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+            Varyings HullDepthOnlyVertex(HullDepthAttributes i)
+            {
+                Attributes a = (Attributes)0;
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_TRANSFER_INSTANCE_ID(i, a);
+                a.position = i.position;
+                a.texcoord = i.texcoord;
+            #if defined(REQUIRES_TANGENT_SPACE_VIEW_DIR_INTERPOLATOR)
+                a.normalOS = i.normalOS;
+                a.tangentOS = i.tangentOS;
+            #endif
+                if (ChorusIsShell()) a.position.xyz += i.normalOS * ChorusShellPush(i.texcoord);
+                return DepthOnlyVertex(a);
+            }
             half HullDepthOnlyFragment(Varyings input) : SV_TARGET
             {
                 HullWreckClip(HullWreckPixelToWorld(input.positionCS));
+            #if defined(_ALPHATEST_ON)
+                if (ChorusIsShell()) ChorusShellClip(input.uv, input.positionCS.xy);
+            #endif
                 return DepthOnlyFragment(input);
             }
             ENDHLSL
@@ -468,12 +505,12 @@ Shader "GoF2/Hull"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.0   // GoF2: (2.0) the shell's push reads its noise in the vertex shader
 
             // -------------------------------------
             // Shader Stages
-            #pragma vertex DepthNormalsVertex
-            #pragma fragment HullDepthNormalsFragment   // GoF2: URP's, a wreck's cut-away part left out (HullWreck.hlsl)
+            #pragma vertex HullDepthNormalsVertex   // GoF2: URP's, Chorus's shell pushed
+            #pragma fragment HullDepthNormalsFragment   // GoF2: URP's, a wreck's cut-away part and the shell's dissolve left out (HullWreck.hlsl)
 
             // -------------------------------------
             // Material Keywords
@@ -505,6 +542,11 @@ Shader "GoF2/Hull"
             #include "HullInput.hlsl"   // GoF2: URP's LitInput with the livery values
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitDepthNormalsPass.hlsl"
             #include "HullWreck.hlsl"   // GoF2
+            Varyings HullDepthNormalsVertex(Attributes input)
+            {
+                if (ChorusIsShell()) input.positionOS.xyz += input.normal * ChorusShellPush(input.texcoord);
+                return DepthNormalsVertex(input);
+            }
             void HullDepthNormalsFragment(Varyings input, out half4 outNormalWS : SV_Target0
             #ifdef _WRITE_RENDERING_LAYERS
                 , out uint outRenderingLayers : SV_Target1
@@ -512,6 +554,9 @@ Shader "GoF2/Hull"
             )
             {
                 HullWreckClip(HullWreckPixelToWorld(input.positionCS));
+            #if defined(REQUIRES_UV_INTERPOLATOR)
+                if (ChorusIsShell()) ChorusShellClip(input.uv, input.positionCS.xy);
+            #endif
                 DepthNormalsFragment(input, outNormalWS
             #ifdef _WRITE_RENDERING_LAYERS
                     , outRenderingLayers

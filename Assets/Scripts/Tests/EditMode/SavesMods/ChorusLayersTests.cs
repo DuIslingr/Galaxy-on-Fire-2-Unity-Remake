@@ -248,6 +248,43 @@ namespace GoF2Remake.Tests
                 Assert.Less(Vector4.Distance(new Vector4(17.6f, 35.3f, 0f, 0.5f), m.GetVector("_ChorusEmitG")), 1e-4f);
                 Assert.Less(Vector4.Distance(new Vector4(20f, 1613f, 2.2f, 4f), m.GetVector("_ChorusAccent2")), 1e-3f);
                 Assert.AreEqual(0f, m.GetVector("_ChorusKicker").w);
+                Assert.AreSame(m.GetTexture("_BaseMap"), m.GetTexture("_EmissionMap"), "no glow map: the mask glows");
+                Assert.IsTrue(m.IsKeywordEnabled("_NORMALMAP"), "its normal from the noise");
+                Assert.IsTrue(m.IsKeywordEnabled("_ALPHATEST_ON"), "the UVs for the shadow's dissolve");
+                Assert.AreEqual(0f, m.GetFloat("_Cutoff"), "URP's own test never clips");
+            }
+            finally { Object.DestroyImmediate(m); }
+
+            c.glow = "maps/emissive.png";
+            var g = ModMaterials.FromSpec(mod, new CustomShipMaterial { chorus = c, doubleSided = true }, "guilt shell");
+            try
+            {
+                Assert.AreNotSame(g.GetTexture("_BaseMap"), g.GetTexture("_EmissionMap"), "its own glow map");
+                CollectionAssert.Contains(c.Textures(), ("maps/emissive.png", true, false));
+            }
+            finally { Object.DestroyImmediate(g); }
+        }
+
+        [Test]
+        public void TheHullsShadowAndDepthPassesCompileWithTheShell()
+        {
+            // the shell pushed and dissolved in the shadow, depth and depth-normals passes too
+            var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);
+            var m = new Material(a.litOpaque);
+            try
+            {
+                m.SetVector("_ChorusParams", new Vector4(3f, 8f, 3f, 1f));
+                m.EnableKeyword("_NORMALMAP");
+                m.EnableKeyword("_ALPHATEST_ON");
+                foreach (var pass in new[] { "ForwardLit", "ShadowCaster", "DepthOnly", "DepthNormals" })
+                {
+                    int i = m.FindPass(pass);
+                    Assert.GreaterOrEqual(i, 0, pass);
+                    UnityEditor.ShaderUtil.CompilePass(m, i, true);
+                }
+                var errors = System.Linq.Enumerable.Where(UnityEditor.ShaderUtil.GetShaderMessages(m.shader),
+                    x => x.severity == UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error);
+                CollectionAssert.IsEmpty(System.Linq.Enumerable.Select(errors, x => $"{x.file}:{x.line} {x.message}"));
             }
             finally { Object.DestroyImmediate(m); }
         }
