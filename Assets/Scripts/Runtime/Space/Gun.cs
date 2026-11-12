@@ -197,9 +197,12 @@ namespace GoF2Remake.Flight
         /// 173 heatShots (shots before it overheats: MaxHeat / HeatPerShot), 174 heatCoolMs (cooling from full, not firing:
         /// MaxHeat / HeatDissipationRate), 175 overheatMs (overheated: no shots for that long, then cool: OverheatCooldownDuration,
         /// bResetHeatAfterCooldown).</summary>
-        public const int BeamRadiusAttr = 172, HeatShotsAttr = 173, HeatCoolMsAttr = 174, OverheatMsAttr = 175;
+        public const int BeamRadiusAttr = 172, HeatShotsAttr = 173, HeatCoolMsAttr = 174, OverheatMsAttr = 175, BeamReachAttr = 176;
         /// <summary>Game units around a beam's line it hits (0 = only what it meets, the original's).</summary>
         public readonly float beamRadius;
+        /// <summary>A wide beam's length with nothing aimed, and how far past its target it sweeps (176 beamReach, game units;
+        /// default the beams' 30 000; Chorus's ProjectileRange).</summary>
+        public readonly float beamReach = BeamRangeUnits;
         public readonly int heatShots;
         public readonly float heatCoolMs, overheatMs;
         float heat, overheatLeftMs;
@@ -243,6 +246,7 @@ namespace GoF2Remake.Flight
             vulnerableMs = Mathf.Max(0, item.Attr(VulnerableMsAttr));
             echo = GunEcho.From(item);
             beamRadius = isBeam ? Mathf.Max(0, item.Attr(BeamRadiusAttr)) : 0f;
+            if (beamRadius > 0f) beamReach = Mathf.Max(1, item.Attr(BeamReachAttr, (int)BeamRangeUnits));
             heatShots = Mathf.Max(0, item.Attr(HeatShotsAttr));
             heatCoolMs = Mathf.Max(1, item.Attr(HeatCoolMsAttr, 10000));
             overheatMs = Mathf.Max(0, item.Attr(OverheatMsAttr, 5000));
@@ -375,10 +379,10 @@ namespace GoF2Remake.Flight
                 else
                 {
                     BeamDir = fwd;
-                    BeamLengthUnits = BeamRangeUnits;
+                    BeamLengthUnits = beamReach;   // (BeamRangeUnits but for a wide beam's own reach)
                     BeamTarget = null;
                     beamAim = null;
-                    bb.position = from + fwd * BeamRangeUnits * MetersPerUnit;
+                    bb.position = from + fwd * beamReach * MetersPerUnit;
                 }
                 bb.velocity = fwd * MetersPerUnit;   // a unit vector (1 u/ms): hits the target centre on the next pass
                 bb.up = up;
@@ -698,12 +702,11 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>Remake mods (beamRadius, Chorus's Death Ray): the beam's pass also hits every target within beamRadius (and
-        /// its own size) of its line from the muzzle 'from', out to its reach (its target or the beams' 30 000 units, the
-        /// further), but the one it met (lastStruck); asteroids and what BeamSweeps refuses stay out.</summary>
+        /// its own size) of its line from the muzzle 'from', out to its reach (its target or beamReach, the further), but the one it met (lastStruck); asteroids and what BeamSweeps refuses stay out.</summary>
         void WideBeamHit(int i, Vector3 from, IReadOnlyList<Target> targets)
         {
             var met = lastStruck;
-            var to = from + BeamDir * Mathf.Max(BeamLengthUnits, BeamRangeUnits) * MetersPerUnit;
+            var to = from + BeamDir * Mathf.Max(BeamLengthUnits, beamReach) * MetersPerUnit;
             float r = beamRadius * MetersPerUnit;
             for (int k = 0; k < targets.Count; k++)
             {

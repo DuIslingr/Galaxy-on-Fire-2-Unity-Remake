@@ -41,7 +41,7 @@ is generated from it by `Reference/tools/weapons/build_weapon_fx.py`; **GoF2 > B
   `Gun.AimedBeamHit`, #192: its sweep ends at the target's centre, and the Midorian freighter's lies between its four
   parts, so ~6 % of the angles did nothing, where the original's beam parked at the centre is in the cube); remake mods, 2026-11-11, Chorus's PCLS Death Ray:
   `beamRadius` (172, `Gun.WideBeamHit`: every target BeamSweeps allows within it and its own radius of the line, out to
-  max(its length, 30000 units), but the one met; `GunRig.BeamWidthScale` widens the mesh to it) and gun heat
+  max(its length, `beamReach` 176, default 30000 units, its length with nothing aimed), but the one met; `GunRig.BeamWidthScale` widens the mesh to it) and gun heat
   (`heatShots` / `heatCoolMs` / `overheatMs`, 173-175, `Gun.AddHeat` / `Cool`: MaxHeat / HeatPerShot, MaxHeat /
   HeatDissipationRate, OverheatCooldownDuration with bResetHeatAfterCooldown; "{0} overheated" via WeaponSystem.Message)), scatter guns
   (burst cube: a target's cube x1.5 / x2 / x3 by the shooter's distance; remake, `Gun.InScatterCube`, 2026-10-30: not a

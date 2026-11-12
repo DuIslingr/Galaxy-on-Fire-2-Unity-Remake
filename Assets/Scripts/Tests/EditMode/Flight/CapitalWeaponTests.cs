@@ -67,6 +67,17 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0, hits.GetValueOrDefault(far), "300 m off");
             Assert.AreEqual(0, hits.GetValueOrDefault(friend), "refused by BeamSweeps");
 
+            Assert.AreEqual(Gun.BeamRangeUnits, gun.beamReach, "the beams' reach by default");
+            var longer = new Gun(Item(9, 0, 9, 15, 11, 50, 12, 60, Gun.BeamRadiusAttr, 2000, Gun.BeamReachAttr, 60000), Vector3.zero, false);
+            var beyond = At(new Vector3(0f, 0f, 2500f), "2.5 km ahead");
+            int hitBeyond = 0;
+            longer.Hit += (_, t, __) => { if (t == beyond) hitBeyond++; };
+            longer.AutoAim = () => null;
+            longer.TryFire(Vector3.zero, Quaternion.identity, false);
+            Assert.AreEqual(60000f, longer.BeamLengthUnits, "drawn to its reach");
+            longer.Update(16f, new List<Target> { beyond }, null);
+            Assert.AreEqual(1, hitBeyond, "past the beams' 1.5 km, within its 3 km");
+
             var plain = new Gun(Item(9, 0, 9, 15, 11, 50, 12, 60), Vector3.zero, false);
             Assert.AreEqual(0f, plain.beamRadius, "the original beams hit only what they meet");
             Assert.IsTrue(Gun.WithinBeam(new Vector3(5f, 0f, 50f), Vector3.zero, Vector3.forward * 100f, 5f));
