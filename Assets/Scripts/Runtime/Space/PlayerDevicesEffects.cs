@@ -53,6 +53,8 @@ namespace GoF2Remake.Flight
         void DestroyEffects()
         {
             EndHunt();
+            EndStar(false);
+            starShare = 1f; ApplyModelShare();
             if (tethered != null) Tether(null, null);
             if (self != null) self.Damaged -= OnSelfDamaged;
             if (fxRoot != null) Destroy(fxRoot.gameObject);
@@ -292,7 +294,27 @@ namespace GoF2Remake.Flight
 
         // ---- Rite of the Hunt: Blink's timelines (Blink_Disappear, then the leap, Blink_Reappear) -------------------------
         Entry huntEntry; Target huntTarget; int huntPhase; float huntMs, huntRate = 1f;
-        Transform huntModel; Vector3 huntScale = Vector3.one;
+        // the ship's model shrunk away by the Hunt and the Star (each its share, the smaller shown), as it was once both are 1
+        Transform hiddenModel; Vector3 hiddenScale = Vector3.one; float huntShare = 1f, starShare = 1f;
+
+        void ApplyModelShare()
+        {
+            float share = Mathf.Min(huntShare, starShare);
+            if (share >= 1f)
+            {
+                if (hiddenModel != null) hiddenModel.localScale = hiddenScale;
+                hiddenModel = null;
+                return;
+            }
+            if (hiddenModel == null)
+            {
+                var ship = GetComponent<ShipController>();
+                hiddenModel = ship != null ? ship.visualModel : null;
+                if (hiddenModel == null) return;
+                hiddenScale = hiddenModel.localScale;
+            }
+            hiddenModel.localScale = hiddenScale * Mathf.Max(0.001f, share);
+        }
 
         /// <summary>The Hunt fired at 't': the ship vanishes (its model shrinking away over Blink_Disappear, faster for a short
         /// leap: BlinkPlayRateCurve), then leaps and comes back (UpdateHunt).</summary>
@@ -301,9 +323,6 @@ namespace GoF2Remake.Flight
             EndHunt();
             huntEntry = e; huntTarget = t; huntPhase = 1; huntMs = 0f;
             huntRate = Device.HuntPlayRate(Vector3.Distance(t.transform.position, transform.position) / Mathf.Max(1f, RiteRange(e)));
-            var ship = GetComponent<ShipController>();
-            huntModel = ship != null ? ship.visualModel : null;
-            if (huntModel != null) huntScale = huntModel.localScale;
             var look = LookOf(e);
             if (look != null)
             {
@@ -334,16 +353,13 @@ namespace GoF2Remake.Flight
             if (huntMs >= Device.HuntAppearMs) EndHunt();
         }
 
-        void ShowModel(float share)
-        {
-            if (huntModel != null) huntModel.localScale = huntScale * Mathf.Max(0.001f, share);
-        }
+        void ShowModel(float share) { huntShare = share; ApplyModelShare(); }
 
         /// <summary>The Hunt over (or stopped by a death, a cutscene, a jump): the model as it was.</summary>
         void EndHunt()
         {
-            if (huntPhase != 0 && huntModel != null) huntModel.localScale = huntScale;
-            huntPhase = 0; huntEntry = null; huntTarget = null; huntModel = null;
+            huntPhase = 0; huntEntry = null; huntTarget = null;
+            ShowModel(1f);
         }
 
         /// <summary>The leap (ABlinkActivePower): onto 't''s tail, facing its way, at the ship's own speed (RestorePlayerSpeed),
@@ -361,6 +377,90 @@ namespace GoF2Remake.Flight
             if (ship != null && ship.Model.FreeFlight) ship.Model.FreeVelocity = tt.forward * ship.Model.FreeVelocity.magnitude;
             if (chase != null && chase.isActiveAndEnabled) { chase.Snap(); chase.Glide(camPos, camRot, 1000f); }
             return true;
+        }
+
+        // ---- Rite of the Star: Drill's drive, its hidden ship and its burning sphere ----------------------------------------
+        Entry starEntry; float starTickMs, starTailMs, starShowMs; bool starWasInvulnerable;
+        GameObject starLoopFx;
+        AudioSource starLoopSound;
+        const float StarFadeMs = 150f;   // (the model shrinking away and back: Drill_Activate / Drill_Deactivate, not read)
+
+        void StartStar(Entry e)
+        {
+            starEntry = e;
+            starTickMs = 0f; starTailMs = 0f; starShowMs = 0f;
+            starWasInvulnerable = self.invulnerable;   // (the Supernova Challenge's end sets it too)
+            self.invulnerable = true;
+            var ship = GetComponent<ShipController>();
+            if (ship != null) { ship.DriveMs = Device.StarSpeedTops * TopSpeedMs(); ship.DriveTurnDegS = Device.StarTurnDegS; }
+            var look = LookOf(e);
+            if (look != null)
+            {
+                starLoopFx = look.Play(look.spec.loop, transform.position, transform.rotation, Vector3.zero, transform);
+                var clip = RiteLook.Pick(look.loop);
+                if (clip != null)
+                {
+                    starLoopSound ??= gameObject.AddComponent<AudioSource>();
+                    starLoopSound.playOnAwake = false; starLoopSound.spatialBlend = 0f; starLoopSound.loop = true;
+                    starLoopSound.clip = Modding.ModSounds.Get(clip);
+                    starLoopSound.volume = Settings.SfxVolume;
+                    starLoopSound.Play();
+                }
+            }
+        }
+
+        /// <summary>The Star's end (its time out, a second press, a death): the drive off, the ship back, its burn on for 0.3 s.</summary>
+        void EndStar(bool burnOn = true)
+        {
+            if (starEntry == null) return;
+            var ship = GetComponent<ShipController>();
+            if (ship != null) ship.DriveMs = 0f;
+            if (self != null) self.invulnerable = starWasInvulnerable;
+            if (starLoopFx != null) Destroy(starLoopFx);
+            starLoopFx = null;
+            if (starLoopSound != null) starLoopSound.Stop();
+            var look = LookOf(starEntry);
+            if (look != null && burnOn)
+            {
+                look.Play(look.spec.end, transform.position, transform.rotation, ShipVelocity());
+                Play(RiteLook.Pick(look.end));
+            }
+            starTailMs = burnOn ? Device.StarTailMs : 0f;
+            if (!burnOn) starEntry = null;
+        }
+
+        void UpdateStar(float dtMs)
+        {
+            if (starEntry == null) { if (starShare < 1f) { starShare = 1f; ApplyModelShare(); } return; }
+            bool running = starEntry.rules.Active;
+            // the ship shrinks away as it starts and comes back as it ends
+            starShowMs = running ? Mathf.Min(StarFadeMs, starShowMs + dtMs) : Mathf.Max(0f, starShowMs - dtMs);
+            starShare = 1f - starShowMs / StarFadeMs;
+            ApplyModelShare();
+            if (!running)
+            {
+                starTailMs -= dtMs;
+                if (starTailMs <= 0f && starShowMs <= 0f) { starEntry = null; return; }
+                if (starTailMs <= 0f) return;
+            }
+            starTickMs += dtMs;
+            if (starTickMs < Mathf.Max(50f, starEntry.growMs)) return;
+            starTickMs = 0f;
+            float top = TopSpeedMs();
+            float ahead = Device.StarAheadTops * top, radius = starEntry.range2 > 0 ? starEntry.range2 * M : Device.StarRadiusTops * top;
+            var look = LookOf(starEntry);
+            var all = Target.All;
+            for (int i = all.Count - 1; i >= 0; i--)
+            {
+                var t = all[i];
+                if (!Affects(t) || !Device.InStar(transform.position, transform.forward, t.transform.position, ahead, radius + t.radius)) continue;
+                weapons?.DeviceHit(t, starEntry.damage, starEntry.emp, transform.forward, starEntry.item.index);
+                if (look != null && t != null)
+                {
+                    look.Play(look.spec.hit, t.transform.position, t.transform.rotation, Vector3.zero, t.transform);
+                    Play(RiteLook.Pick(look.hit));
+                }
+            }
         }
 
         // ---- Rite of the Storm: Pulse Zap's strike, BP_Buff_Pulse's jam, its chain ------------------------------------------
@@ -578,6 +678,13 @@ namespace GoF2Remake.Flight
                     }
                     break;
                 }
+                case Device.Type.RiteStar:
+                {
+                    var look = LookOf(e);
+                    look?.Play(look.spec.start, pos, transform.rotation, Vector3.zero, transform);
+                    StartStar(e);
+                    break;
+                }
                 case Device.Type.RiteHunt:
                 case Device.Type.RiteStorm:
                 {
@@ -658,6 +765,9 @@ namespace GoF2Remake.Flight
         {
             switch (e.rules.type)
             {
+                case Device.Type.RiteStar:
+                    EndStar();
+                    break;
                 case Device.Type.StrikeCharge:
                     if (weapons != null) weapons.DamageBoost = 1f;
                     break;
@@ -715,6 +825,7 @@ namespace GoF2Remake.Flight
             float dt = dtMs / 1000f;
             UpdateHunt(dtMs);
             UpdateStorm(dtMs);
+            UpdateStar(dtMs);
             if (overchargeBubble != null && overchargeEntry != null)   // (the bubble grows in and fades out with the overcharge)
                 overchargeBubble.Update(overchargeEntry.rules.ActiveLeft * overchargeEntry.rules.durationMs, overchargeEntry.rules.durationMs);
             if (overchargeShell != null)   // (the shell plays its own life: Chorus's particle, 0.5 s in, 4.8 s)

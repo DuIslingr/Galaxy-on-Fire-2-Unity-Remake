@@ -460,6 +460,7 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 22 ShieldOvercharge | The shield full at once, and for `deviceDurationMs` every hit stops at it: nothing reaches the armour or the hull, and the shield doesn't drop; a shimmering bubble round the ship shows it (Chorus's capital ship's Shield Overcharge: 5 s, a 10 s cooldown) | duration, cooldown |
 | 23 Rite of the Hunt | A leap onto the tail of the hostile ship in the sights (your lock first, else the nearest within 10 degrees of the nose) within `deviceRadius`, `deviceRange2` behind it, facing the way it flies at your own speed; never at a capital ship or a ship that can't be harmed; refused with no ship to leap at or no room behind it (Chorus's Rite of the Hunt). The ship vanishes for a fifteenth of a second, lands, grows back over a third of a second, and the camera glides over to it in a second. A Rite: it pays 2 pips of Void energy unless `deviceVoidCost` says otherwise, and cools down 0.5 s | radius, range 2, void cost |
 | 24 Rite of the Storm | A bolt at the hostile ship in the sights (your lock first, else the nearest within 10 degrees of the nose) within `deviceRadius`: `damage` off its shield (a ship without one, as the game's, takes `deviceDamagePercent` of it), and for `deviceDurationMs` (default 4000) it holds its fire, flies at `deviceSlowPercent` of its speed (default 0) and can't turn; with `deviceChain` the bolt jumps every `deviceGrowMs` (default 250) to the nearest other ship within `deviceRange2` of the last. Its turrets and weak spots may be struck, not a capital ship's hull or a ship that can't be harmed (Chorus's Rite of the Storm). A Rite: 2 pips, 0.5 s cooldown | radius, damage, damage percent, duration, slow, chain, grow, range 2, void cost |
+| 25 Rite of the Star | For `deviceDurationMs` (default 3000; pressing it again after half a second ends it early) the ship becomes a star: it vanishes, can't be harmed, and flies straight on at three times its top speed whatever the throttle, turning at most 72 degrees a second; every `deviceGrowMs` (default 200), and for 0.3 s after, every hostile ship within `deviceRange2` of a point just ahead (default 0.7 s of the top speed round a point 0.18 s ahead) takes `damage` (`empDamage` too) (Chorus's Rite of the Star). A Rite: 3 pips, 0.5 s cooldown | duration, grow, range 2, damage, void cost |
 
 #### Rites
 
@@ -481,12 +482,15 @@ sounds (a list of files, one at random):
     "start":  { "emitters": [ ... ] },
     "vanish": { "emitters": [ ... ] },  "vanishSound": [ "audio/vanish.ogg" ],
     "appear": { "emitters": [ ... ] },  "appearSound": [ "audio/appear.ogg" ],
-    "hit":    { "emitters": [ ... ] },  "hitSound": [ "audio/hit_1.ogg", "audio/hit_2.ogg" ]
+    "hit":    { "emitters": [ ... ] },  "hitSound": [ "audio/hit_1.ogg", "audio/hit_2.ogg" ],
+    "loop":   { "emitters": [ ... ] },  "loopSound": [ "audio/loop.ogg" ],
+    "end":    { "emitters": [ ... ] },  "endSound": [ "audio/end.ogg" ]
 }
 ```
 
 `start` plays on the ship as it fires; `vanish` where the Hunt leaves and `appear` where it lands; `hit` on each ship the
-Storm strikes, following it. Any part may be left out.
+Storm or the Star strikes, following it; `loop` on the ship while the Star runs, its `loopSound` looping, and `end`
+(with `endSound`) where it ends. Any part may be left out.
 
 ```json
 {
@@ -775,7 +779,7 @@ original's hue is replaced by yours (the Nirai Impulse's orange bolt turns purpl
 | `shotLoops` | `true`: the shot sound loops while the trigger is held (like the auto-cannons); `false`: one per shot. Default: the base item's (or, with `shot` an item's number, that item's). |
 | `explosionSound` | Bombs, mines and blast weapons: the sound of the blast (a file, a list, or an item's number). |
 | `trail` | The smoke trail behind each shot: `false` for none, or `{ "color": [r, g, b], "width": 100, "length": 3000 }` (its colour at the start, fading to nothing; half its width in game units; how long each part lasts in ms). Rockets and missiles trail white smoke (100 / 3000), thermo guns a coloured flame; a weapon without a trail gets one. Your own ship's shots and other players' show it. |
-| `rite` | A Rite's looks (devices 23 and 24): a JSON file in the mod with its effects and sounds, see [Rites](#rites). |
+| `rite` | A Rite's looks (devices 23 to 25): a JSON file in the mod with its effects and sounds, see [Rites](#rites). |
 | `turret` | Turrets: the turret's own model, shown on the ship in flight, in the hangar and to other players. A glTF / GLB file, or `{ "model": "models/t.glb", "muzzle": 28, "shotStart": 32, "scale": 1.5, "offset": [0, 20, 0] }`. Its origin sits on the mount, 1 unit = 1 m as made. A node named `pivot` holding the base turns it left and right and, in it, a node whose name contains `_gun` tilts it up and down (the barrel along +Z); a model without them turns as one piece. `scale` resizes it; `offset` moves it off its mount (game units: x toward the pilot's left, y along the turret's up, z forward). Leave out `model` and give `scale` / `offset` to resize or move the base item's own turret; `"item": 48` instead of `model` takes that game turret's model (with its muzzle and shot start), and `model` may be one of the game's (`"gof2:turret_003_ship_mounted"`, see [The game's own models](#the-games-own-models)). `muzzle` is where the muzzle flash shows and `shotStart` where the shots start, along the gun node in game units (20 per metre) on the model as made; default: the base turret's. `"materials": [ ... ]` replaces the model's materials as a ship's [`materials`](#materials) entries do (by the model's material names; colour maps, glows, Chorus's layers). |
 
 Each of `projectile`, `muzzle` and `impact` is either `false` (none at all), an object without a `sprite` or `model` (the

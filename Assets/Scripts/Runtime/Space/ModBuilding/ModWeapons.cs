@@ -292,7 +292,7 @@ namespace GoF2Remake.Modding
             try { r = JsonUtility.FromJson<CustomRiteFx>(text); }
             catch (System.Exception e) { throw new ModJsonException($"{path}: {e.Message}"); }
             if (r == null) return null;
-            foreach (var list in new[] { r.vanishSound, r.appearSound, r.hitSound })
+            foreach (var list in new[] { r.vanishSound, r.appearSound, r.hitSound, r.loopSound, r.endSound })
                 if (list != null)
                     foreach (var f in list)
                         if (!string.IsNullOrEmpty(f) && !mod.Source.Exists(f)) throw new ModJsonException($"{path}: the sound {f} isn't in the mod");
@@ -528,9 +528,11 @@ namespace GoF2Remake.Modding
                 var riteVanish = LoadClips(d.mod, Files(d.rite?.vanishSound));
                 var riteAppear = LoadClips(d.mod, Files(d.rite?.appearSound));
                 var riteHit = LoadClips(d.mod, Files(d.rite?.hitSound));
+                var riteLoop = LoadClips(d.mod, Files(d.rite?.loopSound));
+                var riteEnd = LoadClips(d.mod, Files(d.rite?.endSound));
                 bool gameTurret = GameModels.Is(d.turretModel, out string turretGame);
                 var turret = d.turretModel != null && !gameTurret ? BuildTurret(rev, d) : Task.FromResult<GameObject>(null);
-                await Task.WhenAll(built[0], built[1], built[2], shots, booms, turret, riteVanish, riteAppear, riteHit);
+                await Task.WhenAll(built[0], built[1], built[2], shots, booms, turret, riteVanish, riteAppear, riteHit, riteLoop, riteEnd);
                 if (rev != ModManager.Revision) return;
                 var baseFx = BaseFx(d.item);
                 var fx = baseFx != null ? Object.Instantiate(baseFx) : ScriptableObject.CreateInstance<WeaponFx>();
@@ -561,7 +563,8 @@ namespace GoF2Remake.Modding
                 if (d.shotLoops.HasValue) fx.shotLoops = d.shotLoops.Value;
                 if (d.trail != null) fx.trail = d.trail;
                 if (d.rite != null)
-                    fx.rite = new RiteLook { mod = d.mod, spec = d.rite, vanish = riteVanish.Result, appear = riteAppear.Result, hit = riteHit.Result };
+                    fx.rite = new RiteLook { mod = d.mod, spec = d.rite, vanish = riteVanish.Result, appear = riteAppear.Result, hit = riteHit.Result,
+                                           loop = riteLoop.Result, end = riteEnd.Result };
                 var turretModel = turret.Result;
                 float muzzle = d.turretMuzzle, shotStart = d.turretShot;
                 // A game turret's model ("item"), else the base item's when resized / moved: a copy of its ship-mounted model

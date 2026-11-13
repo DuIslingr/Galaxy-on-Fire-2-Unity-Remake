@@ -3,7 +3,8 @@
 // 3 pips, one back every 1 / 0.22 s on a tonne of Void Crystals (none aboard: none grow), the bonus pips paid first and
 // running out, a cost above the total refused; Rite of the
 // Hunt's numbers (Flight.Device 23: Blink's range, landing and cost), where it lands, its timelines and the camera's glide;
-// the Rite of the Storm's numbers (Flight.Device 24: Pulse Zap's) and its jam (Target.Jammed).
+// the Rite of the Storm's numbers (Flight.Device 24: Pulse Zap's) and its jam (Target.Jammed); the Rite of the Star's
+// (Flight.Device 25: the Drill's), its reach and its drive's turn cap (ShipController.CapTurn).
 
 using GoF2Remake.Flight;
 using NUnit.Framework;
@@ -147,6 +148,30 @@ namespace GoF2Remake.Tests
                 Assert.IsTrue(t.Jammed, "holds its fire");
             }
             finally { Object.DestroyImmediate(go); }
+        }
+    
+        [Test]
+        public void TheStarsNumbersAreTheDrills()
+        {
+            Assert.AreEqual(Device.Type.RiteStar, (Device.Type)25);
+            Assert.AreEqual(3f, Device.StarSpeedTops, 1e-5f, "DrillForwardVelocity 42000 cm/s: 3x Chorus's top speed");
+            Assert.AreEqual(72f, Device.StarTurnDegS);
+            Assert.AreEqual(3, Device.StarCost);
+            Assert.AreEqual(500, Device.StarMinMs);
+            Assert.AreEqual(3000, Device.StarMaxMs);
+            Assert.AreEqual(200, Device.StarTickMs, "the blueprint's CheckForCollisionsInterval");
+            Assert.AreEqual(300, Device.StarTailMs);
+            Assert.AreEqual(100f, Device.StarRadiusTops * 140f, 1e-3f, "SphereTraceRadius 10000 cm");
+            Assert.AreEqual(25f, Device.StarAheadTops * 140f, 1e-3f, "2500 cm ahead");
+            Assert.IsTrue(Device.InStar(Vector3.zero, Vector3.forward, new Vector3(0f, 0f, 120f), 25f, 100f));
+            Assert.IsFalse(Device.InStar(Vector3.zero, Vector3.forward, new Vector3(0f, 0f, -80f), 25f, 100f), "behind: out of reach");
+            float p = 3f, y = 4f;
+            ShipController.CapTurn(ref p, ref y, 1f);
+            Assert.AreEqual(0.6f, p, 1e-5f);
+            Assert.AreEqual(0.8f, y, 1e-5f, "held to the cap, its direction kept");
+            p = 0.1f; y = 0.2f;
+            ShipController.CapTurn(ref p, ref y, 1f);
+            Assert.AreEqual(0.1f, p, "under it: untouched");
         }
     }
 }

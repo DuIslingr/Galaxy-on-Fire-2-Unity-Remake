@@ -101,9 +101,15 @@ namespace GoF2Remake.Flight
             /// 0.25 s) it jumps to the nearest other such ship within deviceRange2 of the last, deviceChain times (default 0;
             /// Chorus's upgrade A: 2 within 500 m). The device itself is instant.</summary>
             RiteStorm = 24,
+            /// <summary>Rite of the Star (Chorus's Drill, BP_ActivePower_Drill on ADrillActivePower): for deviceDurationMs
+            /// (default 3 s; a second press after 0.5 s ends it) the ship becomes a star: unseen and unharmed, it flies straight
+            /// on at StarSpeedTops of its top speed turning at most StarTurnDegS, and every deviceGrowMs (default 0.2 s, and
+            /// 0.3 s past its end) every hostile ship within deviceRange2 (default StarRadiusTops) of a point StarAheadTops
+            /// ahead takes 'damage'.</summary>
+            RiteStar = 25,
         }
 
-        public const int TypeCount = 24;
+        public const int TypeCount = 25;
         /// <summary>The Annihilator Virus's most ships (its description's 6).</summary>
         public const int VirusMaxTargets = 6;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
@@ -128,6 +134,17 @@ namespace GoF2Remake.Flight
         // Cooldown 0.5, Duration 0; BP_Buff_Pulse: Duration 4 s), its distances as seconds of the top speed like the Hunt's.
         public const float StormChainTops = 10000f / 14000f;
         public const int StormCost = 2, StormCooldownMs = 500, StormJamMs = 4000, StormChainMs = 250;
+        // Chorus's Drill (ADrillActivePower's constructor 0x140a4fd40: DrillForwardVelocity 42000 cm/s, MaxAngularVelocity 72
+        // deg/s, MinDurationTime 0.5, MaxDurationTime 3, CooldownTime 0.5; BP_ActivePower_Drill: EnergyCost 3,
+        // CheckForCollisionsInterval 0.2, PostDeactivationDrillCollisionDuration 0.3, CollisionDamage 750, its sphere trace
+        // 10000 cm round a point 2500 cm ahead), the distances as seconds of the top speed.
+        public const float StarSpeedTops = 42000f / 14000f, StarTurnDegS = 72f, StarAheadTops = 2500f / 14000f, StarRadiusTops = 10000f / 14000f;
+        public const int StarCost = 3, StarCooldownMs = 500, StarMinMs = 500, StarMaxMs = 3000, StarTickMs = 200, StarTailMs = 300;
+
+        /// <summary>Whether 'at' is within the star's reach: 'radius' round the point 'ahead' along 'forward' from 'pos'.</summary>
+        public static bool InStar(Vector3 pos, Vector3 forward, Vector3 at, float ahead, float radius) =>
+            (at - (pos + forward.normalized * ahead)).sqrMagnitude <= radius * radius;
+
         /// <summary>Blink's BlinkPlayRateCurve: its timelines 1.5x as fast for a short leap, 1x at its full 1000 m ('share'
         /// of the reach; an Auto cubic between flat ends).</summary>
         public static float HuntPlayRate(float share) => Mathf.Lerp(1.5f, 1f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(share)));

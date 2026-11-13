@@ -239,9 +239,29 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     `RiteLook`): a JSON file of `start` / `vanish` / `appear` / `hit` effects (`ModDeathFx.Play`'s emitters; `hit` parented
     to the struck ship) with `vanishSound` / `appearSound` / `hitSound` (loaded with the item's other sounds); the start's
     sound is the fx's "shot". The Chorus importer writes them from the blueprints' Cascade systems and FMOD events.
-  - Still to come: Drill, Telekinesis, Scan and the passives (ElementalShield: +2 energy).
+  - **Rite of the Star** (`Device.Type.RiteStar` 25, Chorus's Drill: ADrillActivePower's constructor 0x140a4fd40, found
+    through its GetPrivateStaticClassBody call's InternalConstructor (FUN_1408e1260 -> 0x140be1780 -> jne 0x140a4fd40),
+    its fields named by the Dumper-7 SDK: RotationSpeed 50, CheckForCollisionsInterval 0.33, PostDeactivation 0.4,
+    CollisionDamage 500, MinDurationTime 0.5, MaxDurationTime 3, CooldownTime 0.5, DrillForwardVelocity 42000 cm/s,
+    MaxAngularVelocity 72 deg/s, the Suspended slow motion 0.5 / 0.1 / 0.2; BP_ActivePower_Drill overrides EnergyCost 3,
+    the interval 0.2, the tail 0.3, the damage 750 and the sphere trace (10000 cm round 2500 cm ahead);
+    ApplyOrRestoreSpeedFromDrillValues sets the LinearSpeedX and MaxAngularSpeed modifiers to DrillForwardVelocity / the
+    top speed and the turn / the steering's). Here: deviceDurationMs (default 3000, the device's run), a second press
+    after `StarMinMs` ends it (`PlayerDevices.Use`; Min / MaxDurationTime read as that); `ShipController.DriveMs` /
+    `DriveTurnDegS` (both flight styles: the forward move replaced, the turn held to 72 deg/s by `CapTurn`; the speed it
+    had kept for after, as Chorus restores it) at `StarSpeedTops` 3 of the top speed; the model shrunk away over 0.15 s
+    and back (the Hunt's scaling, `ApplyModelShare` taking the smaller of the two; Drill_Activate's timeline not read);
+    `Target.invulnerable` while it runs (EnableOrDisablePlayerShip, its partial collisions; the previous value restored:
+    the Supernova Challenge sets it too); every deviceGrowMs (200) and `StarTailMs` 300 past its end each `Affects` ship
+    within deviceRange2 (default `StarRadiusTops`) plus its radius of the point `StarAheadTops` ahead takes 'damage' / its
+    EMP (`Device.InStar`), with the look's `hit`. Looks: `loop` on the ship (removed at the end) with `loopSound` looping,
+    `end` and `endSound` where it ends. Not ported: the StartDrillMovementSpeeCurve ramp, the slow motion when suspended
+    (OnDriftStarted / OnSuspended), the hit sounds' kill and lock variants, upgrade A's four side stars (RotationSpeed 100)
+    and B's 25 % heal a kill.
+  - Still to come: Telekinesis, Scan and the passives (ElementalShield: +2 energy).
   Tests `VoidEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers, landing and timelines, the
-  camera's glide, Pulse Zap's numbers, the jam), `ModWeaponsTests.ARitesLooksAreAFileOfEffectsAndSounds`.
+  camera's glide, Pulse Zap's numbers, the jam, the Drill's numbers, the star's reach, the turn cap),
+  `ModWeaponsTests.ARitesLooksAreAFileOfEffectsAndSounds`.
 - **Hull regeneration** (remake 2026-11-11, for mods): ships.json `"hullRegen"` (points a second; Chorus's PCLS
   PlayerHealthComponent HealthRegenRate 250 of its 5000) -> `PlayerHealth` (`Hitpoints.RegenerateHull`, fractions carried,
   nothing at 0 or full), beside a repair bot.

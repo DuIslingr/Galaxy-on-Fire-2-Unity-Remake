@@ -330,12 +330,13 @@ namespace GoF2Remake.Data
 
     /// <summary>Remake mods (items.json fx "rite", 2026-11-13, after Chorus's Rites' particle systems and FMOD events): a Rite's
     /// looks, a JSON file in the mod (Flight.RiteLook, PlayerDevices): 'start' at the ship as it fires (its sound the fx's
-    /// "shot"), 'vanish' where the Hunt leaves, 'appear' where it lands, 'hit' on each ship the Storm strikes (following it),
-    /// each with its sound (a file or several, one at random). Every part may be left out.</summary>
+    /// "shot"), 'vanish' where the Hunt leaves, 'appear' where it lands, 'hit' on each ship the Storm or the Star strikes
+    /// (following it), 'loop' on the ship while the Star runs (its sound looping), 'end' where the Star ends, each with its
+    /// sound (a file or several, one at random). Every part may be left out.</summary>
     [System.Serializable] public class CustomRiteFx
     {
-        public CustomFx start, vanish, appear, hit;
-        public string[] vanishSound, appearSound, hitSound;
+        public CustomFx start, vanish, appear, hit, loop, end;
+        public string[] vanishSound, appearSound, hitSound, loopSound, endSound;
     }
 
     /// <summary>A particle emitter (after a Cascade emitter's level 0): sizes and speeds in game units, times in seconds.

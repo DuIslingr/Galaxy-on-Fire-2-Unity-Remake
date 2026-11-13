@@ -98,23 +98,24 @@ namespace GoF2Remake.Flight
         {
             var type = Shop.DeviceType(it);
             bool consumable = Shop.IsConsumableDevice(it);
-            bool hunt = type == Device.Type.RiteHunt, storm = type == Device.Type.RiteStorm;
+            bool hunt = type == Device.Type.RiteHunt, storm = type == Device.Type.RiteStorm, star = type == Device.Type.RiteStar;
             var e = new Entry
             {
                 item = it,
                 name = GameNames.Item(it.index),
                 // (a consumable has no cooldown unless given one: its uses are the limit)
-                rules = new Device(it.index, type, storm ? 0 : it.Attr(Device.DurationAttr),
-                                   it.Attr(Device.CooldownAttr, consumable ? 0 : hunt ? Device.HuntCooldownMs : storm ? Device.StormCooldownMs : Device.DefaultCooldownMs),
+                rules = new Device(it.index, type, storm ? 0 : it.Attr(Device.DurationAttr, star ? Device.StarMaxMs : 0),
+                                   it.Attr(Device.CooldownAttr, consumable ? 0 : hunt ? Device.HuntCooldownMs : storm ? Device.StormCooldownMs
+                                                                  : star ? Device.StarCooldownMs : Device.DefaultCooldownMs),
                                    type == Device.Type.StrikeCharge ? it.Attr(Device.ChargeAttr) : 0),
                 consumable = consumable,
                 ammo = it.Attr(Device.AmmoAttr),
                 range2 = it.Attr(Device.Range2Attr),
-                voidCost = it.Attr(Device.VoidCostAttr, hunt ? Device.HuntCost : storm ? Device.StormCost : 0),
+                voidCost = it.Attr(Device.VoidCostAttr, hunt ? Device.HuntCost : storm ? Device.StormCost : star ? Device.StarCost : 0),
                 jamMs = storm ? it.Attr(Device.DurationAttr, Device.StormJamMs) : 0,
                 chain = it.Attr(Device.ChainAttr),
                 radius = it.Attr(Device.RadiusAttr),
-                growMs = it.Attr(Device.GrowAttr, storm ? Device.StormChainMs : 0),
+                growMs = it.Attr(Device.GrowAttr, storm ? Device.StormChainMs : star ? Device.StarTickMs : 0),
                 slowPercent = it.Attr(Device.SlowAttr, storm ? 0 : 25),
                 shieldCost = it.Attr(Device.ShieldCostAttr),
                 damagePercent = it.Attr(Device.DamagePercentAttr, 100),
@@ -167,6 +168,12 @@ namespace GoF2Remake.Flight
             if (slot < 0 || slot >= devices.Count || self == null || !self.Alive) return;
             if (Time.timeScale <= 0f || (Blocked != null && Blocked())) return;
             var e = devices[slot];
+            // Remake (Chorus's Drill: MinDurationTime 0.5): a second press on a running Star ends it, after its first 0.5 s
+            if (e.rules.type == Device.Type.RiteStar && e.rules.Active)
+            {
+                if (e.rules.Timer >= Device.StarMinMs && e.rules.Cancel()) End(e);
+                return;
+            }
             if (e.rules.State == Device.Phase.Ready && !e.rules.Charged)
             {
                 Message?.Invoke(string.Format(Localization.Extra("deviceNoCharge", "{0}: not charged yet ({1} %)"), e.name,
