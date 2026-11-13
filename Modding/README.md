@@ -349,6 +349,7 @@ energy cells.
 | `deviceDamagePercent` | 157 | Device: the overchargers' damage per target in percent of the shield spent; the strike charge's damage factor (175 = x1.75); the deflector's turned-back shots' damage; the shield disruptor's damage on a ship without a shield, in percent of its `damage` (default 100) |
 | `deviceCharge` | 158 | Device: the strike charge's charge, the damage the primary guns must deal before it can fire |
 | `deviceConeDeg` | 159 | Device: the overcharger beam's half-angle ahead (default 30) |
+| `deviceRiteCost` | 178 | Device: a Rite (Chorus's powers): the Rite energy pips each use pays besides its cooldown (see [Rites](#rites)) |
 
 Which stats an item uses depends on its category, so copy the stats its base item has (see `items.json` and
 `item_attributes.json` in `Assets/Resources/GoF2Data`). items.json's own stat names (`loadingTimeMs`, `range`,
@@ -456,6 +457,28 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 20 Recovery | Lifts the debuffs on your ship: a web's slow, a rift's corrosion (EVERSPACE 2's System Recovery Routine); refused with none on | |
 | 21 Virus | Infects the locked ship (within `deviceRadius`); every `deviceGrowMs` (default 1 s) it spreads to the nearest hostile ship within `deviceRadius` of an infected one, up to 6; after `deviceDurationMs` every infected ship takes `deviceDamagePercent` % of a pirate raider's hull (EVERSPACE 2's Annihilator Virus) | radius, grow, duration, damage percent |
 | 22 ShieldOvercharge | The shield full at once, and for `deviceDurationMs` every hit stops at it: nothing reaches the armour or the hull, and the shield doesn't drop; a shimmering bubble round the ship shows it (Chorus's capital ship's Shield Overcharge: 5 s, a 10 s cooldown) | duration, cooldown |
+| 23 Rite of the Hunt | A leap onto the tail of the hostile ship in the sights (your lock first, else the nearest within 10 degrees of the nose) within `deviceRadius`, `deviceRange2` behind it, facing the way it flies at your own speed; never at a capital ship or a ship that can't be harmed; refused with no ship to leap at or no room behind it (Chorus's Rite of the Hunt). A Rite: it pays 2 pips of Rite energy unless `deviceRiteCost` says otherwise, and cools down 0.5 s | radius, range 2, rite cost |
+
+#### Rites
+
+Chorus's Rites are devices that pay **Rite energy** as well: a device with `"deviceRiteCost"` above 0 (Rite of the Hunt
+has 2 by default). A ship with a Rite mounted has a pool of 3 pips, full at the start, growing one back every 4.5 s
+(Chorus's 0.22 a second); the HUD shows them as squares after the recharge icons, and a Rite's icon fills toward its
+cost. A Rite with too few pips isn't ready ("<item>: not enough Rite energy"). The Debug page's "no equipment cooldown"
+also makes the Rites free. A Rite's distances left at 0 follow the ship's top speed as Chorus's do (its 140 m/s): the
+Hunt reaches 7.1 s of it (1000 m in Chorus) and lands 1.3 s of it behind its target (180 m).
+
+```json
+{
+    "id": "rite_hunt",
+    "base": 91,
+    "name": "Rite of the Hunt",
+    "techLevel": 9,
+    "occurrence": 2,
+    "price": [250000, 262000],
+    "stats": { "cabinSize": 0, "device": 23, "deviceRiteCost": 2, "deviceCooldownMs": 500 }
+}
+```
 
 A **consumable** device (`"deviceConsumable": 1`, EVERSPACE 2's consumables) is used up one unit per use and has no
 cooldown unless given one: the hangar stacks bought units like a secondary's ammo (mounting moves the whole stack,

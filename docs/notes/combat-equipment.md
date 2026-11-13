@@ -186,6 +186,33 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   at the shield, `shieldHit` for the hit feedback, nothing taken off); its look the ship's own shell where ships.json has
   an `"overcharge"` (`ShieldShell`, Chorus's BP_Effect_Auxiliary_Shield_PlayerCapitalShip on M_Shield: mods-models.md
   "Chorus shield shell"), else the emergency system's `EmergencyBubble` while it runs.
+- **Rites** (remake 2026-11-13, the user's request "start the rites": Chorus's powers as devices that also pay Rite
+  energy; Rite of the Hunt first). Read from Chorus's BP_PowersMasterData, the BP_ActivePower_* defaults and the decompiled
+  UEnergyComponent (AddRegularEnergy / AddBonusEnergy / RemoveEnergy / CanPayEnergy) and ABlinkActivePower
+  (GetCurrentTarget, UpdateTargetTransform):
+  - **Rite energy** (`Flight.RiteEnergy`, one per ship in `PlayerDevices.Rite` once a device with `deviceRiteCost` (178)
+    is mounted): BP_Player_Ship_Base's EnergyComponent, MaxRegularEnergy 3, RegenRate 0.22 a second (4.5 s a pip),
+    RegenDelay 0; bonus pips past the maximum (AddBonusEnergy, Blink's upgrade A; each may time out) are paid first, the
+    oldest first, then the regular ones; a cost above the total refuses the Rite ("{0}: not enough Rite energy",
+    `deviceNoRiteEnergy`). Full at the start. `PlayerDevices.Ready` / `Charge` add the pool to a Rite's readiness (the
+    quick menu's half-transparency, "{0} ready", CooldownView's sweep toward the cost); CooldownView shows the pool as
+    pips after the slots (`.rite-energy`, Chorus's PlayerEnergyWidget segments). Cheats.NoEquipmentCooldown also
+    waives the cost (Chorus's InfiniteVoidEnergy debug pref).
+  - **Rite of the Hunt** (`Device.Type.RiteHunt` 23, Chorus's Blink: Range 100000 cm, BlinkLocationOffset -18000 cm,
+    EnergyCost 2, Cooldown 0.5): the target is the lock if huntable and within reach, else the nearest huntable ship within
+    `HuntAimDot` (10 deg) of the nose (TargetableRadius 0.1 is a screen share in UpdateActivePowerTargets, not decompiled:
+    read as that cone). Huntable = `Affects`, not a capital ship's part, not a weak spot (`forwardTo`), not invulnerable,
+    not the pursuer (ValidTargetsBlacklist: BP_NPC_Ship_Fortress and BP_NPC_Guilt). The landing is the offset back along
+    the target's forward, facing its way (UpdateTargetTransform takes the target's rotation), swept back from the target
+    with the teleporter's `BlinkDistance` (its own hull left out) and refused with no room ("no room behind the target");
+    the speed is kept along the new nose (RestorePlayerSpeed), the chase camera snapped behind. Distances left at 0 are
+    seconds of the ship's top speed as Chorus flight's (`HuntRangeTops` 7.14, `HuntBehindTops` 1.29 of 140 m/s);
+    `deviceRadius` / `deviceRange2` set them in game units. Not ported yet: the disappear / reappear timelines (0.067 s
+    out, 0.33 s back) and their camera blend, the BlinkPlayRateCurve, the P_Blink_* particles and the Blink FMOD events,
+    the HUD's target highlight, BlinkTargets (interactables), upgrade A (bonus energy after the leap), upgrade B (+50 %
+    damage for 5 s, BP_Player_Buff_Blink_UpgradeB), the supercharged version's 2200 m final blow.
+  - Still to come: Pulse Zap, Drill, Telekinesis, Scan and the passives (ElementalShield: +2 energy).
+  Tests `RiteEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers and landing).
 - **Hull regeneration** (remake 2026-11-11, for mods): ships.json `"hullRegen"` (points a second; Chorus's PCLS
   PlayerHealthComponent HealthRegenRate 250 of its 5000) -> `PlayerHealth` (`Hitpoints.RegenerateHull`, fractions carried,
   nothing at 0 or full), beside a repair bot.

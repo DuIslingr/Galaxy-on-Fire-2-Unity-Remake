@@ -13,6 +13,9 @@
 // item off the ship. The sensor cloud hides the ship from the enemies while it flies inside it (Target.cloaked, as the
 // cloak does: no fire, missiles shaken off); the repairs and the restock are instant; the charger ends the other
 // devices' cooldowns.
+// Remake (2026-11-13): Chorus's Rites (a device with deviceRiteCost > 0, Rite of the Hunt first) also pay that many pips of the
+// ship's Rite energy (Flight.RiteEnergy, made when one is mounted: 3 pips, one back every 4.5 s); a Rite is ready only with
+// the pips there ("{0}: not enough Rite energy"), and its HUD sweep is the pool's fill toward its cost.
 
 using System;
 using System.Collections.Generic;
@@ -35,12 +38,16 @@ namespace GoF2Remake.Flight
             /// <summary>Remake: a consumable (one use per unit, deviceConsumable) and the restock's rounds (deviceAmmo).</summary>
             public bool consumable;
             public int ammo, range2;
+            /// <summary>Remake: a Rite's Rite energy cost (deviceRiteCost; 0 = not a Rite).</summary>
+            public int riteCost;
             /// <summary>Available last frame: "{0} ready" when it turns true (the cooldown's end, the strike charge filled).</summary>
             public bool wasAvailable = true;
         }
 
         readonly List<Entry> devices = new List<Entry>();
         public IReadOnlyList<Entry> Devices => devices;
+        /// <summary>Remake: the Rite energy the Rites pay from, null without a Rite mounted.</summary>
+        public RiteEnergy Rite { get; private set; }
         /// <summary>A HUD message ("{0} ready", not enough shield, not charged).</summary>
         public event Action<string> Message;
         /// <summary>No device may be fired now (the launch camera, a jump, a cutscene, the guns blocked).</summary>
@@ -88,16 +95,19 @@ namespace GoF2Remake.Flight
         {
             var type = Shop.DeviceType(it);
             bool consumable = Shop.IsConsumableDevice(it);
+            bool hunt = type == Device.Type.RiteHunt;
             var e = new Entry
             {
                 item = it,
                 name = GameNames.Item(it.index),
                 // (a consumable has no cooldown unless given one: its uses are the limit)
-                rules = new Device(it.index, type, it.Attr(Device.DurationAttr), it.Attr(Device.CooldownAttr, consumable ? 0 : Device.DefaultCooldownMs),
+                rules = new Device(it.index, type, it.Attr(Device.DurationAttr),
+                                   it.Attr(Device.CooldownAttr, consumable ? 0 : hunt ? Device.HuntCooldownMs : Device.DefaultCooldownMs),
                                    type == Device.Type.StrikeCharge ? it.Attr(Device.ChargeAttr) : 0),
                 consumable = consumable,
                 ammo = it.Attr(Device.AmmoAttr),
                 range2 = it.Attr(Device.Range2Attr),
+                riteCost = it.Attr(Device.RiteCostAttr, hunt ? Device.HuntCost : 0),
                 radius = it.Attr(Device.RadiusAttr),
                 growMs = it.Attr(Device.GrowAttr),
                 slowPercent = it.Attr(Device.SlowAttr, 25),
@@ -108,7 +118,15 @@ namespace GoF2Remake.Flight
                 emp = it.Attr(10),
             };
             devices.Add(e);
+            if (e.riteCost > 0) Rite ??= new RiteEnergy();
         }
+
+        /// <summary>Whether 'e' can be fired now: its own rules, and a Rite's energy.</summary>
+        public bool Ready(Entry e) => e.rules.Available && (e.riteCost <= 0 || Rite == null || Cheats.NoEquipmentCooldown || Rite.CanPay(e.riteCost));
+
+        /// <summary>The HUD's sweep for 'e': its cooldown, a ready Rite's the pool's fill toward its cost.</summary>
+        public float Charge(Entry e) =>
+            e.rules.State == Device.Phase.Ready && e.riteCost > 0 && Rite != null ? Rite.ChargeToward(e.riteCost) : e.rules.RechargeRate;
 
         void Setup()
         {
@@ -145,8 +163,15 @@ namespace GoF2Remake.Flight
                 return;
             }
             if (!e.rules.Available) return;
+            bool payRite = e.riteCost > 0 && Rite != null && !Cheats.NoEquipmentCooldown;   // remake debug: Chorus's InfiniteVoidEnergy
+            if (payRite && !Rite.CanPay(e.riteCost))
+            {
+                Message?.Invoke(string.Format(Localization.Extra("deviceNoRiteEnergy", "{0}: not enough Rite energy"), e.name));
+                return;
+            }
             if (!CanFire(e)) return;
             if (!e.rules.TryFire()) return;
+            if (payRite) Rite.TryPay(e.riteCost);
             Fire(e);
             if (e.consumable) Spend(e);
         }
@@ -195,10 +220,11 @@ namespace GoF2Remake.Flight
                     End(e);
                     if (spent.Remove(e)) { devices.RemoveAt(i); continue; }   // the last use of a consumable, now over
                 }
-                bool available = e.rules.Available;
+                bool available = Ready(e);
                 if (available && !e.wasAvailable) Message?.Invoke(string.Format(Localization.Extra("deviceReady", "{0} ready"), e.name));
                 e.wasAvailable = available;
             }
+            Rite?.Step(dtMs / 1000f);
             UpdateEffects(dtMs);
         }
 

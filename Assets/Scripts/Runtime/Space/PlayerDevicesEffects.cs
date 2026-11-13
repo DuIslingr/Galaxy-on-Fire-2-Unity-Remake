@@ -109,6 +109,18 @@ namespace GoF2Remake.Flight
                     if (BlinkDistance(e.radius * M) > 0f) return true;
                     Message?.Invoke(string.Format(Localization.Extra("deviceNoRoom", "{0}: no room ahead"), e.name));
                     return false;
+                case Device.Type.RiteHunt:
+                {
+                    var t = HuntTarget(e);
+                    if (t == null)
+                    {
+                        Message?.Invoke(string.Format(Localization.Extra("deviceNoHuntTarget", "{0}: no ship to leap at"), e.name));
+                        return false;
+                    }
+                    if (HuntRoom(e, t) > 0f) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoRoomBehind", "{0}: no room behind the target"), e.name));
+                    return false;
+                }
                 case Device.Type.FusionHook:
                     if (HookTarget(e) != null) return true;
                     Message?.Invoke(string.Format(Localization.Extra("deviceNoHookTarget", "{0}: nothing in the sights"), e.name));
@@ -164,13 +176,15 @@ namespace GoF2Remake.Flight
 
         /// <summary>How far ahead the ship may blink of 'want' metres: short of the first hull, landmark volume or asteroid on the
         /// way by ES2's SafetyMargin and the probe (Device.Blink); 0 or less = no room.</summary>
-        float BlinkDistance(float want)
+        float BlinkDistance(float want) => BlinkDistance(transform.position, transform.forward, want, null);
+
+        /// <summary>The same from 'from' along 'dir', 'ignore''s own hull left out (the Hunt's way back from its target).</summary>
+        float BlinkDistance(Vector3 from, Vector3 dir, float want, Target ignore)
         {
-            var from = transform.position;
-            var dir = transform.forward;
             float probe = BlinkProbe();
             float hit = float.MaxValue;
-            if (HullCollision.Any && HullCollision.Sweep(from, from + dir * want, probe, b => b != null && b.obstacle != null && b.obstacle.Active && b.Collides, out float hullHit))
+            if (HullCollision.Any && HullCollision.Sweep(from, from + dir * want, probe,
+                    b => b != null && b.obstacle != null && b.obstacle.Active && b.Collides && (ignore == null || b.target != ignore), out float hullHit))
                 hit = Mathf.Min(hit, hullHit);
             // the landmarks' volumes (those without hulls): sampled along the way
             var all = Obstacle.All;
@@ -190,7 +204,7 @@ namespace GoF2Remake.Flight
             for (int i = 0; i < targets.Count; i++)
             {
                 var t = targets[i];
-                if (t == null || !t.isAsteroid || !t.Alive) continue;
+                if (t == null || !t.isAsteroid || !t.Alive || t == ignore) continue;
                 var c = t.transform.position - from;
                 float along = Vector3.Dot(c, dir);
                 if (along < 0f || along - t.radius > want) continue;
@@ -199,6 +213,68 @@ namespace GoF2Remake.Flight
                 hit = Mathf.Min(hit, along - t.radius);
             }
             return Device.Blink(want, hit, probe);
+        }
+
+        /// <summary>The ship's top speed in m/s: the Rites' distances are seconds of it (Chorus's at 140 m/s).</summary>
+        float TopSpeedMs()
+        {
+            var ship = GetComponent<ShipController>();
+            return ship != null ? ship.Model.TopSpeed * 1000f * ship.metersPerUnit : 100f;
+        }
+
+        /// <summary>Rite of the Hunt's reach (deviceRadius, else Chorus's 1000 m as seconds of the top speed).</summary>
+        float HuntRange(Entry e) => e.radius > 0 ? e.radius * M : Device.HuntRangeTops * TopSpeedMs();
+
+        /// <summary>How far behind its target the Hunt lands (deviceRange2, else Chorus's 180 m as seconds of the top speed).</summary>
+        float HuntBehind(Entry e) => e.range2 > 0 ? e.range2 * M : Device.HuntBehindTops * TopSpeedMs();
+
+        /// <summary>A ship the Hunt may leap at: one the devices act on, not a capital ship, a weak spot passing its hits on, an
+        /// unharmable one or the pursuer (Blink's ValidTargetsBlacklist: BP_NPC_Ship_Fortress and BP_NPC_Guilt).</summary>
+        bool Huntable(Target t)
+        {
+            if (!Affects(t) || t.forwardTo != null || t.invulnerable) return false;
+            if (t.GetComponentInParent<GoF2Remake.World.CapitalShip>() != null) return false;
+            var npc = t.GetComponent<GoF2Remake.World.NpcShip>();
+            return npc == null || npc.Role != NpcRoles.Role.Pursuer;
+        }
+
+        /// <summary>Rite of the Hunt's target: the lock if it may be leapt at within reach, else the nearest such ship in the
+        /// sights (Device.HuntAimDot of the nose).</summary>
+        Target HuntTarget(Entry e)
+        {
+            float r = HuntRange(e);
+            var pos = transform.position;
+            var lockT = weapons != null ? weapons.LockTarget : null;
+            if (Huntable(lockT) && (lockT.transform.position - pos).sqrMagnitude <= r * r) return lockT;
+            Target best = null;
+            float bestD = float.MaxValue;
+            foreach (var t in Target.All)
+            {
+                if (!Huntable(t)) continue;
+                var d = t.transform.position - pos;
+                float sq = d.sqrMagnitude;
+                if (sq > r * r || sq < 1e-4f || Vector3.Dot(transform.forward, d / Mathf.Sqrt(sq)) < Device.HuntAimDot) continue;
+                if (sq < bestD) { bestD = sq; best = t; }
+            }
+            return best;
+        }
+
+        /// <summary>How far behind 't' the Hunt can land: its distance, short of what is in the way back from the target.</summary>
+        float HuntRoom(Entry e, Target t) => BlinkDistance(t.transform.position, -t.transform.forward, HuntBehind(e), t);
+
+        /// <summary>The leap (ABlinkActivePower): onto 't''s tail, facing its way, at the ship's own speed (RestorePlayerSpeed),
+        /// the camera put behind at once.</summary>
+        void Hunt(Entry e, Target t)
+        {
+            float room = HuntRoom(e, t);
+            if (room <= 0f) return;
+            var tt = t.transform;
+            var ship = GetComponent<ShipController>();
+            var at = Device.HuntSpot(tt.position, tt.forward, room);
+            transform.SetPositionAndRotation(at, Quaternion.LookRotation(tt.forward, tt.up));
+            if (ship != null && ship.Model.FreeFlight) ship.Model.FreeVelocity = tt.forward * ship.Model.FreeVelocity.magnitude;
+            var chase = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;
+            if (chase != null && chase.isActiveAndEnabled) chase.Snap();
         }
 
         // the running devices' state: the corrosion's target and tick, the hook, the tether, the entangler's sum
@@ -359,6 +435,12 @@ namespace GoF2Remake.Flight
                             weapons?.DeviceHit(t, e.damage, e.emp, dir, e.item.index);
                         }
                     }
+                    break;
+                }
+                case Device.Type.RiteHunt:
+                {
+                    var t = HuntTarget(e);
+                    if (t != null) Hunt(e, t);
                     break;
                 }
                 case Device.Type.FusionHook:

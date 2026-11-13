@@ -89,9 +89,15 @@ namespace GoF2Remake.Flight
             /// <summary>Shield Overcharge: the shield full at once, and for deviceDurationMs every hit stops at it (nothing
             /// reaches the armour or hull, the shield doesn't drop; Hitpoints.shieldLocked).</summary>
             ShieldOvercharge = 22,
+            // Remake (2026-11-13): Chorus's Rites (its BP_ActivePower_* blueprints), paid from the ship's Rite energy
+            // (Flight.RiteEnergy) by deviceRiteCost pips besides their own short cooldown.
+            /// <summary>Rite of the Hunt (Chorus's Blink, BP_ActivePower_Blink): a leap onto the tail of the hostile ship in the
+            /// sights (the lock first) within deviceRadius (default HuntRangeTops of the top speed), deviceRange2 behind it
+            /// (default HuntBehindTops), facing its way at the ship's own speed; not at capital ships or the pursuer.</summary>
+            RiteHunt = 23,
         }
 
-        public const int TypeCount = 22;
+        public const int TypeCount = 23;
         /// <summary>The Annihilator Virus's most ships (its description's 6).</summary>
         public const int VirusMaxTargets = 6;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
@@ -102,6 +108,18 @@ namespace GoF2Remake.Flight
         public const int ConsumableAttr = 164, AmmoAttr = 165;
         /// <summary>Remake (2026-11-02): deviceRange2 = the spectral shift's sweep radius around its path (game units).</summary>
         public const int Range2Attr = 166;
+        /// <summary>Remake (2026-11-13): deviceRiteCost = the Rite energy pips a Rite pays (Flight.RiteEnergy; Chorus's EnergyCost).</summary>
+        public const int RiteCostAttr = 178;
+        // Chorus's Blink (BP_ActivePower_Blink's defaults: Range 100000 cm, BlinkLocationOffset -18000 cm, EnergyCost 2,
+        // Cooldown 0.5 s), its distances kept as seconds of its 140 m/s top speed (as Chorus flight's), so they scale with
+        // the ship's: 1000 m = 7.14 s, 180 m = 1.29 s. TargetableRadius 0.1 (UpdateActivePowerTargets' screen share, not
+        // decompiled) read as a 10 degree cone round the nose.
+        public const float HuntRangeTops = 100000f / 14000f, HuntBehindTops = 18000f / 14000f, HuntAimDot = 0.9848f;
+        public const int HuntCost = 2, HuntCooldownMs = 500;
+
+        /// <summary>Rite of the Hunt's landing: 'behind' metres back from the target at 'targetPos' facing 'targetForward'
+        /// (ABlinkActivePower::UpdateTargetTransform: the target's rotation, BlinkLocationOffset along its forward).</summary>
+        public static Vector3 HuntSpot(Vector3 targetPos, Vector3 targetForward, float behind) => targetPos - targetForward.normalized * behind;
         // EVERSPACE 2's fusion hook (BP_Device_FusionHook's defaults, cm -> m): the aim cone, the pull's delay, the end conditions
         // and the speeds; the owner's pull is (AccelerationForward cm/s^2)^1.5 / 15, 126 m/s^2 at the remake's 33 m/s^2.
         public const float HookAimDot = 0.95f, HookPullDelayMs = 300f, HookMinDistance = 200f, HookMaxAngleDot = 0.8f,

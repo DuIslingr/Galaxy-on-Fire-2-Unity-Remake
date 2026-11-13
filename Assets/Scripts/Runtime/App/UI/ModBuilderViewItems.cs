@@ -291,7 +291,7 @@ namespace GoF2Remake.UI
             {
                 // A seatless cabin (cabinSize 0) made an active device (Flight.Device, PlayerDevices).
                 Add(Flight.Device.TypeAttr, 0, 0, Flight.Device.TypeCount, T("mbStatNoteDevice",
-                    "An active device (with cabinSize 0): 1 EMP wave, 2 EMP shot, 3 shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector, 8 sensor cloud, 9 hull repair, 10 armour repair, 11 restock, 12 device charger, 13 corrosion, 14 teleport, 15 spectral shift, 16 fusion hook, 17 quantum tether, 18 entangler, 19 repair kit, 20 recovery, 21 virus, 22 shield overcharge."));
+                    "An active device (with cabinSize 0): 1 EMP wave, 2 EMP shot, 3 shield disruptor, 4 overcharger area, 5 overcharger beam, 6 strike charge, 7 deflector, 8 sensor cloud, 9 hull repair, 10 armour repair, 11 restock, 12 device charger, 13 corrosion, 14 teleport, 15 spectral shift, 16 fusion hook, 17 quantum tether, 18 entangler, 19 repair kit, 20 recovery, 21 virus, 22 shield overcharge, 23 Rite of the Hunt."));
                 Add(Flight.Device.CooldownAttr, Flight.Device.DefaultCooldownMs, 0, 600000);
                 Add(Flight.Device.DurationAttr, 8000, 0, 120000, T("mbStatNoteDeviceDuration", "How long it runs (the slow, the boost, the deflector); 0 = at once."));
                 Add(Flight.Device.RadiusAttr, 9120, 0, 200000, T("mbStatNoteDeviceRadius", "Its reach (20 = 1 m)."));
@@ -304,7 +304,8 @@ namespace GoF2Remake.UI
                 Add(Flight.Device.ConeAttr, 30, 1, 180);
                 Add(Flight.Device.ConsumableAttr, 0, 0, 1, T("mbStatNoteDeviceConsumable", "1: used up one unit per use, stacked like missiles, no cooldown unless given one."));
                 Add(Flight.Device.AmmoAttr, 0, 0, 1000, T("mbStatNoteDeviceAmmo", "The restock's rounds for the selected secondary."));
-                Add(Flight.Device.Range2Attr, 0, 0, 200000, T("mbStatNoteDeviceRange2", "The spectral shift's sweep radius around its path (20 = 1 m)."));
+                Add(Flight.Device.Range2Attr, 0, 0, 200000, T("mbStatNoteDeviceRange2", "The spectral shift's sweep radius around its path, the Rite of the Hunt's landing behind its target (20 = 1 m)."));
+                Add(Flight.Device.RiteCostAttr, 0, 0, 10, T("mbStatNoteDeviceRiteCost", "A Rite: the Rite energy pips a use pays (the ship has 3, one back every 4.5 s)."));
             }
             return list;
         }

@@ -653,6 +653,41 @@
     background-color: rgba(4, 10, 18, 0.72);
 }
 
+/* Remake: Chorus's Rite energy after the cooldown slots (CooldownView.ShowRite): a pip each, filled from the left as it
+   grows back; the bonus pips (past the maximum) cyan. */
+.rite-energy {
+    flex-direction: row;
+    align-self: center;
+    margin-left: var(--space-s);
+}
+
+.rite-pip {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-color: rgba(4, 10, 18, 0.55);
+    border-width: 1px;
+    border-color: var(--gof-amber);
+    overflow: hidden;
+}
+
+.rite-pip-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    background-color: var(--gof-amber);
+}
+
+.rite-pip--bonus {
+    border-color: rgb(110, 220, 255);
+}
+
+.rite-pip--bonus .rite-pip-fill {
+    background-color: rgb(110, 220, 255);
+}
+
 /* ---- keyboard / controller hints -------------------------------------------------------- */
 
 .hints {
