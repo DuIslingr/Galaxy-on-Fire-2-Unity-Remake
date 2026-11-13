@@ -1,7 +1,8 @@
 // RiteEnergyTests.cs
 // Feature: docs/notes/combat-equipment.md "Rites", Modding/README.md "Devices": Chorus's Rite energy (Flight.RiteEnergy):
 // 3 pips, one back every 1 / 0.22 s, the bonus pips paid first and running out, a cost above the total refused; Rite of the
-// Hunt's numbers (Flight.Device 23: Blink's range, landing and cost) and where it lands.
+// Hunt's numbers (Flight.Device 23: Blink's range, landing and cost), where it lands, its timelines and the camera's glide;
+// the Rite of the Storm's numbers (Flight.Device 24: Pulse Zap's) and its jam (Target.Jammed).
 
 using GoF2Remake.Flight;
 using NUnit.Framework;
@@ -82,6 +83,43 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(500, Device.HuntCooldownMs);
             var spot = Device.HuntSpot(new Vector3(10f, 0f, 0f), new Vector3(0f, 0f, 2f), 50f);
             Assert.Less(Vector3.Distance(new Vector3(10f, 0f, -50f), spot), 1e-4f, "on its tail, whatever the forward's length");
+        }
+
+        [Test]
+        public void TheHuntsTimelinesAndTheCamerasGlide()
+        {
+            Assert.AreEqual(1.5f, Device.HuntPlayRate(0f), 1e-5f, "BlinkPlayRateCurve: 1.5x for a leap of nothing");
+            Assert.AreEqual(1f, Device.HuntPlayRate(1f), 1e-5f, "1x at the full reach");
+            Assert.AreEqual(1f, Device.HuntPlayRate(3f), 1e-5f);
+            Assert.AreEqual(0f, Device.HuntVanish(0f));
+            Assert.AreEqual(1f, Device.HuntVanish(1f));
+            Assert.AreEqual(0.39f, Device.HuntVanish(0.733f), 0.03f, "Blink_Disappear's 0.41 at 73 %");
+            Assert.AreEqual(1f, Device.HuntAppear(0f), "gone as it lands");
+            Assert.AreEqual(0f, Device.HuntAppear(1f), "whole again after 0.33 s");
+            Assert.AreEqual(66.667f, Device.HuntVanishMs, 1e-3f);
+            Assert.AreEqual(0f, ChaseCamera.GlideAlpha(0f));
+            Assert.AreEqual(0.875f, ChaseCamera.GlideAlpha(0.5f), 1e-5f, "fast at first");
+            Assert.AreEqual(1f, ChaseCamera.GlideAlpha(1f));
+        }
+
+        [Test]
+        public void TheStormsNumbersArePulseZaps()
+        {
+            Assert.AreEqual(Device.Type.RiteStorm, (Device.Type)24);
+            Assert.AreEqual(100f, Device.StormChainTops * 140f, 1e-3f, "ChainRange 10000 cm");
+            Assert.AreEqual(2, Device.StormCost);
+            Assert.AreEqual(4000, Device.StormJamMs, "BP_Buff_Pulse's Duration 4");
+            Assert.AreEqual(250, Device.StormChainMs, "ChainInterval 0.25");
+            Assert.AreEqual(500, Device.StormCooldownMs);
+            var go = new GameObject("jammed");
+            try
+            {
+                var t = go.AddComponent<Target>();
+                Assert.IsFalse(t.Jammed);
+                t.jammedUntil = Time.time + 4f;
+                Assert.IsTrue(t.Jammed, "holds its fire");
+            }
+            finally { Object.DestroyImmediate(go); }
         }
     }
 }

@@ -95,9 +95,15 @@ namespace GoF2Remake.Flight
             /// sights (the lock first) within deviceRadius (default HuntRangeTops of the top speed), deviceRange2 behind it
             /// (default HuntBehindTops), facing its way at the ship's own speed; not at capital ships or the pursuer.</summary>
             RiteHunt = 23,
+            /// <summary>Rite of the Storm (Chorus's Pulse Zap, BP_ActivePower_Pulse_Zap + BP_Buff_Pulse): the hostile ship in the
+            /// sights (the lock first) within deviceRadius takes 'empDamage' on its shield and is jammed for deviceDurationMs
+            /// (default 4 s): no fire, slowed to deviceSlowPercent (default 0) and unable to turn; every deviceGrowMs (default
+            /// 0.25 s) it jumps to the nearest other such ship within deviceRange2 of the last, deviceChain times (default 0;
+            /// Chorus's upgrade A: 2 within 500 m). The device itself is instant.</summary>
+            RiteStorm = 24,
         }
 
-        public const int TypeCount = 23;
+        public const int TypeCount = 24;
         /// <summary>The Annihilator Virus's most ships (its description's 6).</summary>
         public const int VirusMaxTargets = 6;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
@@ -110,12 +116,26 @@ namespace GoF2Remake.Flight
         public const int Range2Attr = 166;
         /// <summary>Remake (2026-11-13): deviceRiteCost = the Rite energy pips a Rite pays (Flight.RiteEnergy; Chorus's EnergyCost).</summary>
         public const int RiteCostAttr = 178;
+        /// <summary>Remake (2026-11-13): deviceChain = the Rite of the Storm's jumps to more ships (Chorus's ChainLimit).</summary>
+        public const int ChainAttr = 179;
         // Chorus's Blink (BP_ActivePower_Blink's defaults: Range 100000 cm, BlinkLocationOffset -18000 cm, EnergyCost 2,
         // Cooldown 0.5 s), its distances kept as seconds of its 140 m/s top speed (as Chorus flight's), so they scale with
         // the ship's: 1000 m = 7.14 s, 180 m = 1.29 s. TargetableRadius 0.1 (UpdateActivePowerTargets' screen share, not
         // decompiled) read as a 10 degree cone round the nose.
         public const float HuntRangeTops = 100000f / 14000f, HuntBehindTops = 18000f / 14000f, HuntAimDot = 0.9848f;
         public const int HuntCost = 2, HuntCooldownMs = 500;
+        // Chorus's Pulse Zap (BP_ActivePower_Pulse_Zap: Range 100000 cm, ChainRange 10000 cm, ChainInterval 0.25 s, EnergyCost 2,
+        // Cooldown 0.5, Duration 0; BP_Buff_Pulse: Duration 4 s), its distances as seconds of the top speed like the Hunt's.
+        public const float StormChainTops = 10000f / 14000f;
+        public const int StormCost = 2, StormCooldownMs = 500, StormJamMs = 4000, StormChainMs = 250;
+        /// <summary>Blink's BlinkPlayRateCurve: its timelines 1.5x as fast for a short leap, 1x at its full 1000 m ('share'
+        /// of the reach; an Auto cubic between flat ends).</summary>
+        public static float HuntPlayRate(float share) => Mathf.Lerp(1.5f, 1f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(share)));
+        /// <summary>Blink_Disappear (0.067 s): the ship's Transition 0 -> 1, sharply at the end (its keys 0.05 at 31 %, 0.41 at
+        /// 73 %: about u^3); Blink_Reappear (0.33 s): 1 -> 0 between flat ends.</summary>
+        public const float HuntVanishMs = 66.667f, HuntAppearMs = 333.333f;
+        public static float HuntVanish(float u) { u = Mathf.Clamp01(u); return u * u * u; }
+        public static float HuntAppear(float u) => 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(u));
 
         /// <summary>Rite of the Hunt's landing: 'behind' metres back from the target at 'targetPos' facing 'targetForward'
         /// (ABlinkActivePower::UpdateTargetTransform: the target's rotation, BlinkLocationOffset along its forward).</summary>

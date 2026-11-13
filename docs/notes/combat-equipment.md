@@ -207,12 +207,35 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     with the teleporter's `BlinkDistance` (its own hull left out) and refused with no room ("no room behind the target");
     the speed is kept along the new nose (RestorePlayerSpeed), the chase camera snapped behind. Distances left at 0 are
     seconds of the ship's top speed as Chorus flight's (`HuntRangeTops` 7.14, `HuntBehindTops` 1.29 of 140 m/s);
-    `deviceRadius` / `deviceRange2` set them in game units. Not ported yet: the disappear / reappear timelines (0.067 s
-    out, 0.33 s back) and their camera blend, the BlinkPlayRateCurve, the P_Blink_* particles and the Blink FMOD events,
-    the HUD's target highlight, BlinkTargets (interactables), upgrade A (bonus energy after the leap), upgrade B (+50 %
-    damage for 5 s, BP_Player_Buff_Blink_UpgradeB), the supercharged version's 2200 m final blow.
-  - Still to come: Pulse Zap, Drill, Telekinesis, Scan and the passives (ElementalShield: +2 energy).
-  Tests `RiteEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers and landing).
+    `deviceRadius` / `deviceRange2` set them in game units. Its timelines (later the same day, the user's "both"): the
+    model shrinks away over Blink_Disappear (0.067 s, `Device.HuntVanish` ~ u^3 from its keys), the leap, the model grows
+    back over Blink_Reappear (0.33 s, `HuntAppear`), both at BlinkPlayRateCurve's rate (1.5x for a leap of nothing to 1x at
+    the full reach, `HuntPlayRate`); the chase camera glides from where it was over Timeline_1's 1 s on real time
+    (`ChaseCamera.Glide` after `Snap`, read as an ease-out 1 - (1 - t)^3: the curves' tangents in the dump don't agree
+    with their Auto mode). The ship's model is scaled (Chorus's Transition drives its material, not read); a death, a
+    cutscene or a jump puts it back (`PlayerDevices.Cancel` -> `EndHunt`); a target gone meanwhile: no leap. Not ported
+    yet: the HUD's target highlight, BlinkTargets (interactables), upgrade A (bonus energy after the leap), upgrade B
+    (+50 % damage for 5 s, BP_Player_Buff_Blink_UpgradeB), the supercharged version's 2200 m final blow.
+  - **Rite of the Storm** (`Device.Type.RiteStorm` 24, Chorus's Pulse Zap: BP_ActivePower_Pulse_Zap Range 100000 cm,
+    ShieldDamage 300, ChainRange 10000, ChainInterval 0.25, EnergyCost 2, Cooldown 0.5, Duration 0; BP_Buff_Pulse Duration 4
+    with JamTarget / JamWeakpoint / JamMissile): the target as the Hunt's (`RiteTarget`) but `Stormable` (turrets and weak
+    spots allowed, a capital ship's hull, the invulnerable and the pursuer not: its whitelist SpaceNPC / turrets / weak
+    points, its blacklist the Fortress, Guilt, the Disruptor and the bosses' weak points); `ShieldHit` (the shield
+    disruptor's rule, factored out) with 'damage', `empDamage` too; jammed for deviceDurationMs (`Entry.jamMs`; the device
+    itself instant): `Target.SlowBy` (deviceSlowPercent, default 0, no turning) and `Target.jammedUntil` (NpcShip.HoldFire:
+    no guns, missiles or turrets); a beam from the ship (`ShowBeam(t, from)`: a beam may start at another ship now); with
+    `deviceChain` (179; upgrade A's ChainLimit 2 at 50000 cm) the nearest other stormable ship within deviceRange2 (default
+    0.71 s of the top speed) of the last one every deviceGrowMs (default 250), beamed from it. Not ported: the occlusion
+    trace (OcclusionCollisionChannel), the 1000 collision damage of a jammed ship, missiles destroyed, upgrade B's shield
+    steal (0.25 for 0.5 s), the Faceless corruption clusters (no such objects in the remake); a jam on another game's NPC
+    only slows it (the slow goes over the network, the jam doesn't).
+  - **Looks** (items.json fx `"rite"`, `Data.CustomRiteFx` read by `ModWeapons.ParseRite` into `WeaponFx.rite`, a
+    `RiteLook`): a JSON file of `start` / `vanish` / `appear` / `hit` effects (`ModDeathFx.Play`'s emitters; `hit` parented
+    to the struck ship) with `vanishSound` / `appearSound` / `hitSound` (loaded with the item's other sounds); the start's
+    sound is the fx's "shot". The Chorus importer writes them from the blueprints' Cascade systems and FMOD events.
+  - Still to come: Drill, Telekinesis, Scan and the passives (ElementalShield: +2 energy).
+  Tests `RiteEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers, landing and timelines, the
+  camera's glide, Pulse Zap's numbers, the jam), `ModWeaponsTests.ARitesLooksAreAFileOfEffectsAndSounds`.
 - **Hull regeneration** (remake 2026-11-11, for mods): ships.json `"hullRegen"` (points a second; Chorus's PCLS
   PlayerHealthComponent HealthRegenRate 250 of its 5000) -> `PlayerHealth` (`Hitpoints.RegenerateHull`, fractions carried,
   nothing at 0 or full), beside a repair bot.

@@ -52,6 +52,7 @@ namespace GoF2Remake.Flight
 
         void DestroyEffects()
         {
+            EndHunt();
             if (tethered != null) Tether(null, null);
             if (self != null) self.Damaged -= OnSelfDamaged;
             if (fxRoot != null) Destroy(fxRoot.gameObject);
@@ -108,6 +109,10 @@ namespace GoF2Remake.Flight
                 case Device.Type.SpectralShift:
                     if (BlinkDistance(e.radius * M) > 0f) return true;
                     Message?.Invoke(string.Format(Localization.Extra("deviceNoRoom", "{0}: no room ahead"), e.name));
+                    return false;
+                case Device.Type.RiteStorm:
+                    if (StormTarget(e) != null) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoRiteTarget", "{0}: no ship in the sights"), e.name));
                     return false;
                 case Device.Type.RiteHunt:
                 {
@@ -222,35 +227,45 @@ namespace GoF2Remake.Flight
             return ship != null ? ship.Model.TopSpeed * 1000f * ship.metersPerUnit : 100f;
         }
 
-        /// <summary>Rite of the Hunt's reach (deviceRadius, else Chorus's 1000 m as seconds of the top speed).</summary>
-        float HuntRange(Entry e) => e.radius > 0 ? e.radius * M : Device.HuntRangeTops * TopSpeedMs();
+        /// <summary>A Rite's reach (deviceRadius, else Chorus's 1000 m as seconds of the top speed).</summary>
+        float RiteRange(Entry e) => e.radius > 0 ? e.radius * M : Device.HuntRangeTops * TopSpeedMs();
 
         /// <summary>How far behind its target the Hunt lands (deviceRange2, else Chorus's 180 m as seconds of the top speed).</summary>
         float HuntBehind(Entry e) => e.range2 > 0 ? e.range2 * M : Device.HuntBehindTops * TopSpeedMs();
 
-        /// <summary>A ship the Hunt may leap at: one the devices act on, not a capital ship, a weak spot passing its hits on, an
-        /// unharmable one or the pursuer (Blink's ValidTargetsBlacklist: BP_NPC_Ship_Fortress and BP_NPC_Guilt).</summary>
-        bool Huntable(Target t)
+        /// <summary>How far the Storm jumps (deviceRange2, else Chorus's 100 m as seconds of the top speed).</summary>
+        float StormReach(Entry e) => e.range2 > 0 ? e.range2 * M : Device.StormChainTops * TopSpeedMs();
+
+        static bool IsPursuer(Target t)
         {
-            if (!Affects(t) || t.forwardTo != null || t.invulnerable) return false;
-            if (t.GetComponentInParent<GoF2Remake.World.CapitalShip>() != null) return false;
             var npc = t.GetComponent<GoF2Remake.World.NpcShip>();
-            return npc == null || npc.Role != NpcRoles.Role.Pursuer;
+            return npc != null && npc.Role == NpcRoles.Role.Pursuer;
         }
 
-        /// <summary>Rite of the Hunt's target: the lock if it may be leapt at within reach, else the nearest such ship in the
-        /// sights (Device.HuntAimDot of the nose).</summary>
-        Target HuntTarget(Entry e)
+        /// <summary>A ship the Hunt may leap at: one the devices act on, not a capital ship, a weak spot passing its hits on, an
+        /// unharmable one or the pursuer (Blink's ValidTargetsBlacklist: BP_NPC_Ship_Fortress and BP_NPC_Guilt).</summary>
+        bool Huntable(Target t) =>
+            Affects(t) && t.forwardTo == null && !t.invulnerable && t.GetComponentInParent<GoF2Remake.World.CapitalShip>() == null && !IsPursuer(t);
+
+        /// <summary>A ship the Storm may strike: one the devices act on, its turrets and weak spots too, not a capital ship's hull,
+        /// an unharmable one or the pursuer (Pulse Zap's whitelist: SpaceNPC, turrets, weak points; its blacklist: the
+        /// Fortress, Guilt, the Disruptor, the bosses' weak points).</summary>
+        bool Stormable(Target t) =>
+            Affects(t) && !t.invulnerable && t.GetComponent<GoF2Remake.World.CapitalShip>() == null && !IsPursuer(t);
+
+        /// <summary>A Rite's target: the lock if 'ok' and within reach, else the nearest such ship in the sights
+        /// (Device.HuntAimDot of the nose).</summary>
+        Target RiteTarget(Entry e, System.Func<Target, bool> ok)
         {
-            float r = HuntRange(e);
+            float r = RiteRange(e);
             var pos = transform.position;
             var lockT = weapons != null ? weapons.LockTarget : null;
-            if (Huntable(lockT) && (lockT.transform.position - pos).sqrMagnitude <= r * r) return lockT;
+            if (ok(lockT) && (lockT.transform.position - pos).sqrMagnitude <= r * r) return lockT;
             Target best = null;
             float bestD = float.MaxValue;
             foreach (var t in Target.All)
             {
-                if (!Huntable(t)) continue;
+                if (!ok(t)) continue;
                 var d = t.transform.position - pos;
                 float sq = d.sqrMagnitude;
                 if (sq > r * r || sq < 1e-4f || Vector3.Dot(transform.forward, d / Mathf.Sqrt(sq)) < Device.HuntAimDot) continue;
@@ -259,22 +274,148 @@ namespace GoF2Remake.Flight
             return best;
         }
 
+        Target HuntTarget(Entry e) => RiteTarget(e, Huntable);
+        Target StormTarget(Entry e) => RiteTarget(e, Stormable);
+
         /// <summary>How far behind 't' the Hunt can land: its distance, short of what is in the way back from the target.</summary>
         float HuntRoom(Entry e, Target t) => BlinkDistance(t.transform.position, -t.transform.forward, HuntBehind(e), t);
 
+        /// <summary>The ship's velocity (Unity units a second, along its nose).</summary>
+        Vector3 ShipVelocity()
+        {
+            var ship = GetComponent<ShipController>();
+            return ship != null ? transform.forward * ship.SpeedMetersPerSecond : Vector3.zero;
+        }
+
+        /// <summary>The item's Rite looks (items.json fx "rite"), null = none.</summary>
+        RiteLook LookOf(Entry e) => WeaponFx.Load(e.item.index)?.rite;
+
+        // ---- Rite of the Hunt: Blink's timelines (Blink_Disappear, then the leap, Blink_Reappear) -------------------------
+        Entry huntEntry; Target huntTarget; int huntPhase; float huntMs, huntRate = 1f;
+        Transform huntModel; Vector3 huntScale = Vector3.one;
+
+        /// <summary>The Hunt fired at 't': the ship vanishes (its model shrinking away over Blink_Disappear, faster for a short
+        /// leap: BlinkPlayRateCurve), then leaps and comes back (UpdateHunt).</summary>
+        void StartHunt(Entry e, Target t)
+        {
+            EndHunt();
+            huntEntry = e; huntTarget = t; huntPhase = 1; huntMs = 0f;
+            huntRate = Device.HuntPlayRate(Vector3.Distance(t.transform.position, transform.position) / Mathf.Max(1f, RiteRange(e)));
+            var ship = GetComponent<ShipController>();
+            huntModel = ship != null ? ship.visualModel : null;
+            if (huntModel != null) huntScale = huntModel.localScale;
+            var look = LookOf(e);
+            if (look != null)
+            {
+                look.Play(look.spec.vanish, transform.position, transform.rotation, ShipVelocity());
+                Play(RiteLook.Pick(look.vanish));
+            }
+        }
+
+        void UpdateHunt(float dtMs)
+        {
+            if (huntPhase == 0) return;
+            huntMs += dtMs * huntRate;
+            if (huntPhase == 1)
+            {
+                ShowModel(1f - Device.HuntVanish(huntMs / Device.HuntVanishMs));
+                if (huntMs < Device.HuntVanishMs) return;
+                if (!Huntable(huntTarget) || !Hunt(huntEntry, huntTarget)) { EndHunt(); return; }   // gone meanwhile: it stays put
+                var look = LookOf(huntEntry);
+                if (look != null)
+                {
+                    look.Play(look.spec.appear, transform.position, transform.rotation, ShipVelocity());
+                    Play(RiteLook.Pick(look.appear));
+                }
+                huntPhase = 2;
+                huntMs = 0f;
+            }
+            ShowModel(1f - Device.HuntAppear(huntMs / Device.HuntAppearMs));
+            if (huntMs >= Device.HuntAppearMs) EndHunt();
+        }
+
+        void ShowModel(float share)
+        {
+            if (huntModel != null) huntModel.localScale = huntScale * Mathf.Max(0.001f, share);
+        }
+
+        /// <summary>The Hunt over (or stopped by a death, a cutscene, a jump): the model as it was.</summary>
+        void EndHunt()
+        {
+            if (huntPhase != 0 && huntModel != null) huntModel.localScale = huntScale;
+            huntPhase = 0; huntEntry = null; huntTarget = null; huntModel = null;
+        }
+
         /// <summary>The leap (ABlinkActivePower): onto 't''s tail, facing its way, at the ship's own speed (RestorePlayerSpeed),
-        /// the camera put behind at once.</summary>
-        void Hunt(Entry e, Target t)
+        /// the camera gliding over from where it was (ChaseCamera.Glide, the 1 s camera timeline). False = no room.</summary>
+        bool Hunt(Entry e, Target t)
         {
             float room = HuntRoom(e, t);
-            if (room <= 0f) return;
+            if (room <= 0f) return false;
             var tt = t.transform;
             var ship = GetComponent<ShipController>();
-            var at = Device.HuntSpot(tt.position, tt.forward, room);
-            transform.SetPositionAndRotation(at, Quaternion.LookRotation(tt.forward, tt.up));
-            if (ship != null && ship.Model.FreeFlight) ship.Model.FreeVelocity = tt.forward * ship.Model.FreeVelocity.magnitude;
             var chase = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;
-            if (chase != null && chase.isActiveAndEnabled) chase.Snap();
+            var camPos = chase != null ? chase.transform.position : Vector3.zero;
+            var camRot = chase != null ? chase.transform.rotation : Quaternion.identity;
+            transform.SetPositionAndRotation(Device.HuntSpot(tt.position, tt.forward, room), Quaternion.LookRotation(tt.forward, tt.up));
+            if (ship != null && ship.Model.FreeFlight) ship.Model.FreeVelocity = tt.forward * ship.Model.FreeVelocity.magnitude;
+            if (chase != null && chase.isActiveAndEnabled) { chase.Snap(); chase.Glide(camPos, camRot, 1000f); }
+            return true;
+        }
+
+        // ---- Rite of the Storm: Pulse Zap's strike, BP_Buff_Pulse's jam, its chain ------------------------------------------
+        Entry stormEntry; Target stormLast; Vector3 stormLastAt; int stormLeft; float stormMs;
+        readonly HashSet<Target> stormZapped = new HashSet<Target>();
+
+        void StartStorm(Entry e, Target t)
+        {
+            stormEntry = e;
+            stormZapped.Clear();
+            stormLeft = Mathf.Max(0, e.chain);
+            stormMs = 0f;
+            Zap(e, t, null);
+        }
+
+        /// <summary>One strike on 't' (from 'from', null: the ship): its shield hit, jammed for the jam's length (no fire,
+        /// slowed, no turning), the beam and its look.</summary>
+        void Zap(Entry e, Target t, Target from)
+        {
+            var origin = (object)from != null && from != null ? from.transform.position : transform.position;
+            var dir = (t.transform.position - origin).normalized;
+            ShieldHit(e, t, dir);
+            t.SlowBy?.Invoke(e.jamMs, Device.SlowFactor(e.slowPercent), true);
+            t.jammedUntil = Mathf.Max(t.jammedUntil, Time.time + e.jamMs / 1000f);
+            ShowBeam(t, from);
+            var look = LookOf(e);
+            if (look != null && t != null)
+            {
+                look.Play(look.spec.hit, t.transform.position, t.transform.rotation, Vector3.zero, t.transform);
+                Play(RiteLook.Pick(look.hit));
+            }
+            stormZapped.Add(t);
+            stormLast = t;
+            stormLastAt = t.transform.position;
+        }
+
+        /// <summary>The chain: every deviceGrowMs the nearest other ship the Storm may strike within its jump of the last one.</summary>
+        void UpdateStorm(float dtMs)
+        {
+            if (stormEntry == null || stormLeft <= 0) return;
+            stormMs += dtMs;
+            if (stormMs < Mathf.Max(50f, stormEntry.growMs)) return;
+            stormMs = 0f;
+            var at = stormLast != null ? stormLast.transform.position : stormLastAt;
+            float r = StormReach(stormEntry), best = r * r;
+            Target next = null;
+            foreach (var t in Target.All)
+            {
+                if (!Stormable(t) || stormZapped.Contains(t)) continue;
+                float d = (t.transform.position - at).sqrMagnitude;
+                if (d <= best) { best = d; next = t; }
+            }
+            if (next == null) { stormLeft = 0; return; }
+            stormLeft--;
+            Zap(stormEntry, next, stormLast);
         }
 
         // the running devices' state: the corrosion's target and tick, the hook, the tether, the entangler's sum
@@ -438,9 +579,14 @@ namespace GoF2Remake.Flight
                     break;
                 }
                 case Device.Type.RiteHunt:
+                case Device.Type.RiteStorm:
                 {
-                    var t = HuntTarget(e);
-                    if (t != null) Hunt(e, t);
+                    var t = e.rules.type == Device.Type.RiteHunt ? HuntTarget(e) : StormTarget(e);
+                    if (t == null) break;
+                    var look = LookOf(e);
+                    look?.Play(look.spec.start, pos, transform.rotation, Vector3.zero, transform);
+                    if (e.rules.type == Device.Type.RiteHunt) StartHunt(e, t);
+                    else StartStorm(e, t);
                     break;
                 }
                 case Device.Type.FusionHook:
@@ -567,6 +713,8 @@ namespace GoF2Remake.Flight
         void UpdateRunning(float dtMs)
         {
             float dt = dtMs / 1000f;
+            UpdateHunt(dtMs);
+            UpdateStorm(dtMs);
             if (overchargeBubble != null && overchargeEntry != null)   // (the bubble grows in and fades out with the overcharge)
                 overchargeBubble.Update(overchargeEntry.rules.ActiveLeft * overchargeEntry.rules.durationMs, overchargeEntry.rules.durationMs);
             if (overchargeShell != null)   // (the shell plays its own life: Chorus's particle, 0.5 s in, 4.8 s)
@@ -692,16 +840,16 @@ namespace GoF2Remake.Flight
             foreach (var s in deflected.Values) { s.gun.Update(dtMs, Target.All, null); s.rig.UpdateVisuals(dtMs, cam, transform.forward); }
             for (int i = beams.Count - 1; i >= 0; i--)
             {
-                var (beam, to, ms) = beams[i];
+                var (beam, from, to, ms) = beams[i];
                 ms -= dtMs;
-                if (ms <= 0f || to == null || beam == null)
+                if (ms <= 0f || to == null || beam == null || ((object)from != null && from == null))
                 {
                     if (beam != null) beam.gameObject.SetActive(false);
                     beams.RemoveAt(i);
                     continue;
                 }
-                beams[i] = (beam, to, ms);
-                PlaceBeam(beam, to);
+                beams[i] = (beam, from, to, ms);
+                PlaceBeam(beam, from, to);
             }
         }
 
@@ -737,24 +885,29 @@ namespace GoF2Remake.Flight
                         t.SlowBy(e.rules.durationMs, Device.SlowFactor(e.slowPercent), true);   // a big hull whose centre lies beyond the radius
                     break;
                 case Device.Type.ShieldDisruptor:
-                {
-                    var hp = t.hitpoints;
-                    if (hp != null && hp.maxShield > 0 && t.RemoteDamage == null)
-                    {
-                        hp.shield = Mathf.Max(0f, hp.shield - e.damage);   // GoF3: the shield only
-                        t.lastPlayerWeapon = e.item.index;
-                    }
-                    else
-                    {
-                        // No shield here (the NPCs) or another game's ship: another player's goes to their shield first.
-                        float dmg = t.netShield >= 0f ? e.damage : e.damage * e.damagePercent / 100f;
-                        weapons?.DeviceHit(t, dmg, e.emp, dir, e.item.index);
-                    }
+                    ShieldHit(e, t, dir);
                     break;
-                }
                 default:   // a deflected shot
                     weapons?.DeviceHit(t, s.damage != null ? s.damage[b] : 0f, s.emp != null ? (int)s.emp[b] : 0, dir, e.item.index);
                     break;
+            }
+        }
+
+        /// <summary>The shield disruptor's and the Rite of the Storm's hit: 'damage' off the shield (GoF3: the shield only); a
+        /// ship without one (the NPCs) takes deviceDamagePercent of it as damage, another player's goes to its shield first.</summary>
+        void ShieldHit(Entry e, Target t, Vector3 dir)
+        {
+            var hp = t.hitpoints;
+            if (hp != null && hp.maxShield > 0 && t.RemoteDamage == null)
+            {
+                hp.shield = Mathf.Max(0f, hp.shield - e.damage);
+                t.lastPlayerWeapon = e.item.index;
+                if (e.emp > 0) weapons?.DeviceHit(t, 0f, e.emp, dir, e.item.index);
+            }
+            else
+            {
+                float dmg = t.netShield >= 0f ? e.damage : e.damage * e.damagePercent / 100f;
+                weapons?.DeviceHit(t, dmg, e.emp, dir, e.item.index);
             }
         }
 
@@ -796,7 +949,7 @@ namespace GoF2Remake.Flight
 
         // ---- the overcharger beam's look (the transfusion beam, RepairBeam) -----------------------------------------
 
-        void ShowBeam(Target t)
+        void ShowBeam(Target t, Target from = null)
         {
             Transform beam = null;
             foreach (var b in beamPool) if (b != null && !b.gameObject.activeSelf) { beam = b; break; }
@@ -811,15 +964,17 @@ namespace GoF2Remake.Flight
                 beamPool.Add(beam);
             }
             beam.gameObject.SetActive(true);
-            PlaceBeam(beam, t);
-            beams.Add((beam, t, BeamShowMs));
+            PlaceBeam(beam, from, t);
+            beams.Add((beam, from, t, BeamShowMs));
         }
 
-        void PlaceBeam(Transform beam, Target t)
+        /// <summary>A beam from 'from' (null: the ship) to 't'.</summary>
+        void PlaceBeam(Transform beam, Target from, Target t)
         {
-            var d = t.transform.position - transform.position;
+            var start = (object)from != null ? from.transform.position : transform.position;
+            var d = t.transform.position - start;
             if (d.sqrMagnitude < 1e-6f) return;
-            beam.SetPositionAndRotation(transform.position, Quaternion.LookRotation(d, transform.up));
+            beam.SetPositionAndRotation(start, Quaternion.LookRotation(d, transform.up));
             beam.localScale = new Vector3(1f, 1f, d.magnitude / M);
         }
     }

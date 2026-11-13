@@ -40,6 +40,8 @@ namespace GoF2Remake.Flight
             public int ammo, range2;
             /// <summary>Remake: a Rite's Rite energy cost (deviceRiteCost; 0 = not a Rite).</summary>
             public int riteCost;
+            /// <summary>Remake: the Rite of the Storm's jam (its deviceDurationMs: the device itself is instant) and jumps.</summary>
+            public int jamMs, chain;
             /// <summary>Available last frame: "{0} ready" when it turns true (the cooldown's end, the strike charge filled).</summary>
             public bool wasAvailable = true;
         }
@@ -63,7 +65,7 @@ namespace GoF2Remake.Flight
         readonly Dictionary<Entry, Shot> shots = new Dictionary<Entry, Shot>();
         readonly Dictionary<int, Shot> deflected = new Dictionary<int, Shot>();   // by the shooter's gun item
         readonly List<Wave> waves = new List<Wave>();
-        readonly List<(Transform beam, Target to, float ms)> beams = new List<(Transform, Target, float)>();
+        readonly List<(Transform beam, Target from, Target to, float ms)> beams = new List<(Transform, Target, Target, float)>();
         readonly List<Transform> beamPool = new List<Transform>();
         Func<Gun, int, bool> deflect;
         Entry deflector;
@@ -95,22 +97,24 @@ namespace GoF2Remake.Flight
         {
             var type = Shop.DeviceType(it);
             bool consumable = Shop.IsConsumableDevice(it);
-            bool hunt = type == Device.Type.RiteHunt;
+            bool hunt = type == Device.Type.RiteHunt, storm = type == Device.Type.RiteStorm;
             var e = new Entry
             {
                 item = it,
                 name = GameNames.Item(it.index),
                 // (a consumable has no cooldown unless given one: its uses are the limit)
-                rules = new Device(it.index, type, it.Attr(Device.DurationAttr),
-                                   it.Attr(Device.CooldownAttr, consumable ? 0 : hunt ? Device.HuntCooldownMs : Device.DefaultCooldownMs),
+                rules = new Device(it.index, type, storm ? 0 : it.Attr(Device.DurationAttr),
+                                   it.Attr(Device.CooldownAttr, consumable ? 0 : hunt ? Device.HuntCooldownMs : storm ? Device.StormCooldownMs : Device.DefaultCooldownMs),
                                    type == Device.Type.StrikeCharge ? it.Attr(Device.ChargeAttr) : 0),
                 consumable = consumable,
                 ammo = it.Attr(Device.AmmoAttr),
                 range2 = it.Attr(Device.Range2Attr),
-                riteCost = it.Attr(Device.RiteCostAttr, hunt ? Device.HuntCost : 0),
+                riteCost = it.Attr(Device.RiteCostAttr, hunt ? Device.HuntCost : storm ? Device.StormCost : 0),
+                jamMs = storm ? it.Attr(Device.DurationAttr, Device.StormJamMs) : 0,
+                chain = it.Attr(Device.ChainAttr),
                 radius = it.Attr(Device.RadiusAttr),
-                growMs = it.Attr(Device.GrowAttr),
-                slowPercent = it.Attr(Device.SlowAttr, 25),
+                growMs = it.Attr(Device.GrowAttr, storm ? Device.StormChainMs : 0),
+                slowPercent = it.Attr(Device.SlowAttr, storm ? 0 : 25),
                 shieldCost = it.Attr(Device.ShieldCostAttr),
                 damagePercent = it.Attr(Device.DamagePercentAttr, 100),
                 coneDeg = it.Attr(Device.ConeAttr, 30),
@@ -201,6 +205,8 @@ namespace GoF2Remake.Flight
         public void Cancel()
         {
             foreach (var e in devices) if (e.rules.Cancel()) End(e);
+            EndHunt();   // (a leap under way: the model back, no leap)
+            stormLeft = 0;
         }
 
         void Update()

@@ -216,8 +216,8 @@ namespace GoF2Remake.World
         public readonly List<Gun> ExtraGuns = new List<Gun>();
         /// <summary>The ship's model (its pose is what a multiplayer proxy follows), else the ship itself.</summary>
         public Transform Model => model != null ? model : transform;
-        /// <summary>Remake: the warp holds every ship's fire (Traffic.HoldFire).</summary>
-        bool HoldFire => traffic != null && traffic.HoldFire;
+        /// <summary>Remake: the warp holds every ship's fire (Traffic.HoldFire); a Rite of the Storm's jam its own (Target.Jammed).</summary>
+        bool HoldFire => (traffic != null && traffic.HoldFire) || (Target != null && Target.Jammed);
         /// <summary>Resources path of the assembled prefab it was built from (Traffic), for multiplayer proxies.</summary>
         public string ModelPath { get; set; }
         /// <summary>A freelance mission's ship (FreelanceOrbit): multiplayer never takes it over from its player.</summary>
