@@ -5,7 +5,7 @@
 // Hunt's numbers (Flight.Device 23: Blink's range, landing and cost), where it lands, its timelines and the camera's glide;
 // the Rite of the Storm's numbers (Flight.Device 24: Pulse Zap's) and its jam (Target.Jammed); the Rite of the Star's
 // (Flight.Device 25: the Drill's), its reach and its drive's turn cap (ShipController.CapTurn); the Rite of Control's
-// (Flight.Device 26: Telekinesis's).
+// (Flight.Device 26: Telekinesis's); the Rite of the Senses' (Flight.Device 27: Scan's) and its sight (RiteSenses).
 
 using GoF2Remake.Flight;
 using NUnit.Framework;
@@ -179,13 +179,31 @@ namespace GoF2Remake.Tests
         public void ControlsNumbersAreTelekinesiss()
         {
             Assert.AreEqual(Device.Type.RiteControl, (Device.Type)26);
-            Assert.AreEqual(26, Device.TypeCount);
             Assert.AreEqual(700f, Device.ControlGrabTops * 140f, 1e-3f, "GrabRange 70000 cm");
             Assert.AreEqual(800f, Device.ControlTossTops * 140f, 1e-3f, "TossRange 80000 cm");
             Assert.AreEqual(4f, Device.ControlSpeedTops, 1e-5f, "TossSpeed 56000 cm/s: 4x Chorus's top speed");
             Assert.Less(Vector3.Distance(new Vector3(25f, 25f, 50f), Device.ControlHoldTops * 140f), 1e-3f, "OffsetLocations[0]: ahead, right, up");
             Assert.AreEqual(3, Device.ControlCost, "the blueprint's EnergyCost 3");
             Assert.AreEqual(1928.57f, Device.ControlFlightMs, 0.01f, "the toss's reach at its speed and half a second");
+        }
+
+        [Test]
+        public void TheSensesNumbersAreScans()
+        {
+            Assert.AreEqual(Device.Type.RiteSenses, (Device.Type)27);
+            Assert.AreEqual(27, Device.TypeCount);
+            Assert.AreEqual(6000f, Device.SensesTops * 140f, 1e-2f, "ShortRangeScanDistance 600000 cm");
+            Assert.AreEqual(3000, Device.SensesWaveMs, "ShortRangeScanDuration 3 s");
+            Assert.AreEqual(1, Device.SensesCost);
+            float was = RiteSenses.Until;
+            try
+            {
+                RiteSenses.Until = Time.time - 1f;
+                Assert.IsFalse(RiteSenses.Active);
+                RiteSenses.Until = Time.time + 20f;
+                Assert.IsTrue(RiteSenses.Active, "the ship sees as the Ultrascan does");
+            }
+            finally { RiteSenses.Until = was; }
         }
     }
 }

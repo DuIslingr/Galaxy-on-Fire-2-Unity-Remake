@@ -358,7 +358,7 @@ namespace GoF2Remake.Flight
                     Locked = Candidate;
                     if (assets != null && assets.targetLock != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.targetLock), Settings.SfxVolume);
                     Haptics.Play(Haptics.TargetLock);   // remake
-                    if (cargoScan) ReadCargo(Locked);
+                    if (cargoScan || RiteSenses.Active) ReadCargo(Locked);   // remake: the Rite of the Senses reads it too
                 }
             }
             else if (CrateCandidate != null || StealCandidate != null)

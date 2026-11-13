@@ -271,9 +271,19 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     slow cleared). The hold's end (deviceDurationMs, default 8 s: Chorus holds for good) lets it go too. Not ported: more
     than one ship at a time (the debuff's MaxNumberOfStacks 2, four offsets), turrets, mines and missiles grabbed, the
     connection's spline mesh (the device beam stands in), the toss sounds' variants.
-  - Still to come: Scan and the passives (ElementalShield: +2 energy).
+  - **Rite of the Senses** (`Device.Type.RiteSenses` 27, Chorus's Scan / SeventhSense: BP_ActivePower_Scan
+    ShortRangeScanDistance 600000 cm, ShortRangeScanDuration 3 s, Cooldown 0, the powers screen's cost 1): instant; a wave
+    (`Device.WaveRadius` over `SensesWaveMs`) out to deviceRadius (default `SensesTops`) uncovers every hostile NpcShip it
+    reaches that is `RadarHidden` by its cloak (`NpcShip.Uncloak`: the cloak broken whatever `Settings.EmpBreaksCloak`; a
+    script's radar-hidden ship is left so), with the look's `hit`; and for deviceDurationMs (default 20 s, the remake's:
+    Chorus's short scan shows its finds 3 s) `RiteSenses.Until` gives the ship the Hiroto Ultrascan's sight
+    (`Mining.Ultrascan`: the class-A asteroids' letters) and the cargo scanners' readout on a new lock (`CombatRadar`,
+    attr 31's `ReadCargo`) — what the remake hides that a scan can show. Not ported: the long range (held: 200 km, the
+    star map's marks; OnLongRangeCharged), the charge, the post-process pulse, P_Sphere_Expansion (a mesh sphere).
+  - Still to come: the passives (ElementalShield: +2 energy, HavocCore and SacredMark have no data) and the Rites'
+    upgrades.
   Tests `VoidEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers, landing and timelines, the
-  camera's glide, Pulse Zap's numbers, the jam, the Drill's numbers, the star's reach, the turn cap, Telekinesis's numbers),
+  camera's glide, Pulse Zap's numbers, the jam, the Drill's numbers, the star's reach, the turn cap, Telekinesis's numbers, Scan's numbers and the sight),
   `ModWeaponsTests.ARitesLooksAreAFileOfEffectsAndSounds`.
 - **Hull regeneration** (remake 2026-11-11, for mods): ships.json `"hullRegen"` (points a second; Chorus's PCLS
   PlayerHealthComponent HealthRegenRate 250 of its 5000) -> `PlayerHealth` (`Hitpoints.RegenerateHull`, fractions carried,

@@ -571,6 +571,39 @@ namespace GoF2Remake.Flight
             if (thrownMs >= Device.ControlFlightMs) { Unjam(thrown); thrown = null; }   // nothing hit: let go where it is
         }
 
+        // ---- Rite of the Senses: Scan's short range -------------------------------------------------------------------
+        Entry sensesEntry; float sensesMs;
+
+        void StartSenses(Entry e)
+        {
+            sensesEntry = e;
+            sensesMs = 0f;
+            RiteSenses.Until = Mathf.Max(RiteSenses.Until, Time.time + e.jamMs / 1000f);   // (its jamMs: how long the senses last)
+            Message?.Invoke(string.Format(Localization.Extra("riteSensesOn", "{0}: the class-A asteroids and the cargo of locked ships show"), e.name));
+        }
+
+        /// <summary>The wave: every cloaked hostile ship its front reaches is uncovered.</summary>
+        void UpdateSenses(float dtMs)
+        {
+            if (sensesEntry == null) return;
+            sensesMs += dtMs;
+            float reach = sensesEntry.radius > 0 ? sensesEntry.radius * M : Device.SensesTops * TopSpeedMs();
+            float r = Device.WaveRadius(sensesMs, Device.SensesWaveMs, reach / M) * M;
+            var all = Target.All;
+            for (int i = all.Count - 1; i >= 0; i--)
+            {
+                var t = all[i];
+                if (!Affects(t) || (t.transform.position - transform.position).sqrMagnitude > r * r) continue;
+                var npc = t.GetComponent<GoF2Remake.World.NpcShip>();
+                if (npc == null || !npc.RadarHidden) continue;
+                npc.Uncloak();
+                if (npc.RadarHidden) continue;   // (hidden by a script, not a cloak: left so)
+                var look = LookOf(sensesEntry);   // (Chorus's ping as the wave finds something)
+                if (look != null) { look.Play(look.spec.hit, t.transform.position, t.transform.rotation, Vector3.zero, t.transform); Play(RiteLook.Pick(look.hit)); }
+            }
+            if (sensesMs >= Device.SensesWaveMs) sensesEntry = null;
+        }
+
         // ---- Rite of the Storm: Pulse Zap's strike, BP_Buff_Pulse's jam, its chain ------------------------------------------
         Entry stormEntry; Target stormLast; Vector3 stormLastAt; int stormLeft; float stormMs;
         readonly HashSet<Target> stormZapped = new HashSet<Target>();
@@ -786,6 +819,13 @@ namespace GoF2Remake.Flight
                     }
                     break;
                 }
+                case Device.Type.RiteSenses:
+                {
+                    var look = LookOf(e);
+                    look?.Play(look.spec.start, pos, transform.rotation, Vector3.zero, transform);
+                    StartSenses(e);
+                    break;
+                }
                 case Device.Type.RiteControl:
                 {
                     var t = RiteTarget(e, Controllable);
@@ -948,6 +988,7 @@ namespace GoF2Remake.Flight
             UpdateStorm(dtMs);
             UpdateStar(dtMs);
             UpdateControl(dtMs);
+            UpdateSenses(dtMs);
             if (overchargeBubble != null && overchargeEntry != null)   // (the bubble grows in and fades out with the overcharge)
                 overchargeBubble.Update(overchargeEntry.rules.ActiveLeft * overchargeEntry.rules.durationMs, overchargeEntry.rules.durationMs);
             if (overchargeShell != null)   // (the shell plays its own life: Chorus's particle, 0.5 s in, 4.8 s)

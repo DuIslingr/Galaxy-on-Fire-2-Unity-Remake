@@ -41,7 +41,8 @@ namespace GoF2Remake.Flight
             public int ammo, range2;
             /// <summary>Remake: a Rite's Void energy cost (deviceVoidCost; 0 = not a Rite).</summary>
             public int voidCost;
-            /// <summary>Remake: the Rite of the Storm's jam (its deviceDurationMs: the device itself is instant) and jumps.</summary>
+            /// <summary>Remake: the Rite of the Storm's jam and the Senses' length (their deviceDurationMs: the devices themselves
+            /// are instant), the Storm's jumps.</summary>
             public int jamMs, chain;
             /// <summary>Available last frame: "{0} ready" when it turns true (the cooldown's end, the strike charge filled).</summary>
             public bool wasAvailable = true;
@@ -99,23 +100,24 @@ namespace GoF2Remake.Flight
             var type = Shop.DeviceType(it);
             bool consumable = Shop.IsConsumableDevice(it);
             bool hunt = type == Device.Type.RiteHunt, storm = type == Device.Type.RiteStorm, star = type == Device.Type.RiteStar,
-                 control = type == Device.Type.RiteControl;
+                 control = type == Device.Type.RiteControl, senses = type == Device.Type.RiteSenses;
             var e = new Entry
             {
                 item = it,
                 name = GameNames.Item(it.index),
                 // (a consumable has no cooldown unless given one: its uses are the limit)
-                rules = new Device(it.index, type, storm ? 0 : it.Attr(Device.DurationAttr, star ? Device.StarMaxMs : control ? Device.ControlHoldMs : 0),
+                rules = new Device(it.index, type, storm || senses ? 0 : it.Attr(Device.DurationAttr, star ? Device.StarMaxMs : control ? Device.ControlHoldMs : 0),
                                    it.Attr(Device.CooldownAttr, consumable ? 0 : hunt ? Device.HuntCooldownMs : storm ? Device.StormCooldownMs
                                                                   : star ? Device.StarCooldownMs : control ? Device.ControlCooldownMs
+                                                                  : senses ? Device.SensesCooldownMs
                                                                   : Device.DefaultCooldownMs),
                                    type == Device.Type.StrikeCharge ? it.Attr(Device.ChargeAttr) : 0),
                 consumable = consumable,
                 ammo = it.Attr(Device.AmmoAttr),
                 range2 = it.Attr(Device.Range2Attr),
                 voidCost = it.Attr(Device.VoidCostAttr, hunt ? Device.HuntCost : storm ? Device.StormCost : star ? Device.StarCost
-                                                        : control ? Device.ControlCost : 0),
-                jamMs = storm ? it.Attr(Device.DurationAttr, Device.StormJamMs) : 0,
+                                                        : control ? Device.ControlCost : senses ? Device.SensesCost : 0),
+                jamMs = storm ? it.Attr(Device.DurationAttr, Device.StormJamMs) : senses ? it.Attr(Device.DurationAttr, Device.SensesMs) : 0,
                 chain = it.Attr(Device.ChainAttr),
                 radius = it.Attr(Device.RadiusAttr),
                 growMs = it.Attr(Device.GrowAttr, storm ? Device.StormChainMs : star ? Device.StarTickMs : 0),

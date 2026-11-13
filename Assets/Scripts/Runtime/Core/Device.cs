@@ -113,9 +113,14 @@ namespace GoF2Remake.Flight
             /// ControlTossTops (else straight ahead) at ControlSpeedTops of the top speed: whatever it hits first, a ship takes
             /// 'damage' and it dies, a station, hull or asteroid kills it.</summary>
             RiteControl = 26,
+            /// <summary>Rite of the Senses (Chorus's Scan, BP_ActivePower_Scan's short range): a wave from the ship out to
+            /// deviceRadius (default SensesTops) over SensesWaveMs uncovers every cloaked hostile ship it reaches, and for
+            /// deviceDurationMs (default 20 s) the ship sees as the best scanners do (RiteSenses: class-A asteroids marked, a
+            /// locked ship's cargo read out).</summary>
+            RiteSenses = 27,
         }
 
-        public const int TypeCount = 26;
+        public const int TypeCount = 27;
         /// <summary>The Annihilator Virus's most ships (its description's 6).</summary>
         public const int VirusMaxTargets = 6;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
@@ -155,6 +160,11 @@ namespace GoF2Remake.Flight
         public static readonly Vector3 ControlHoldTops = new Vector3(2500f, 2500f, 5000f) / 14000f;   // (right, up, ahead)
         public const int ControlCost = 3, ControlCooldownMs = 500, ControlHoldMs = 8000;
         public static float ControlFlightMs => (ControlTossTops / ControlSpeedTops + 0.5f) * 1000f;
+
+        // Chorus's Scan (BP_ActivePower_Scan: ShortRangeScanDistance 600000 cm, ShortRangeScanDuration 3 s, Cooldown 0; the
+        // powers screen's cost 1), the reach as seconds of the top speed; how long the senses last is the remake's.
+        public const float SensesTops = 600000f / 14000f;
+        public const int SensesCost = 1, SensesCooldownMs = 500, SensesWaveMs = 3000, SensesMs = 20000;
 
         /// <summary>Whether 'at' is within the star's reach: 'radius' round the point 'ahead' along 'forward' from 'pos'.</summary>
         public static bool InStar(Vector3 pos, Vector3 forward, Vector3 at, float ahead, float radius) =>
