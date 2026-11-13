@@ -20,6 +20,8 @@ namespace GoF2Remake.Flight
         /// <summary>BP_Player_Ship_Base's EnergyComponent: MaxRegularEnergy 3, RegenRate 0.22 pips a second, RegenDelay 0.</summary>
         public const int ChorusMax = 3;
         public const float ChorusRegenPerS = 0.22f, ChorusRegenDelayS = 0f;
+        /// <summary>UEnergyComponent's BonusEnergyLifetime (its constructor, 0x140be1d60: 10 s; the blueprint leaves it).</summary>
+        public const float BonusLifetimeS = 10f;
         /// <summary>The fuel: Void Crystals (item 164), tonnes burnt a pip regrown.</summary>
         public const int VoidCrystalItem = 164, CrystalsPerPip = 1;
         /// <summary>Whether the next pip may grow (the crystals aboard); null = always.</summary>
@@ -73,8 +75,8 @@ namespace GoF2Remake.Flight
             if (Full) Progress = 0f;
         }
 
-        /// <summary>'n' bonus pips past the maximum for 'seconds' each (no limit by default; AddBonusEnergy).</summary>
-        public void AddBonus(int n, float seconds = float.PositiveInfinity)
+        /// <summary>'n' bonus pips past the maximum for 'seconds' each (Chorus's 10 s by default; AddBonusEnergy).</summary>
+        public void AddBonus(int n, float seconds = BonusLifetimeS)
         {
             for (int i = 0; i < n; i++) bonus.Add(seconds > 0f ? seconds : float.PositiveInfinity);
         }

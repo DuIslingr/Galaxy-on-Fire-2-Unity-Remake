@@ -5,7 +5,8 @@
 // Hunt's numbers (Flight.Device 23: Blink's range, landing and cost), where it lands, its timelines and the camera's glide;
 // the Rite of the Storm's numbers (Flight.Device 24: Pulse Zap's) and its jam (Target.Jammed); the Rite of the Star's
 // (Flight.Device 25: the Drill's), its reach and its drive's turn cap (ShipController.CapTurn); the Rite of Control's
-// (Flight.Device 26: Telekinesis's); the Rite of the Senses' (Flight.Device 27: Scan's) and its sight (RiteSenses).
+// (Flight.Device 26: Telekinesis's); the Rite of the Senses' (Flight.Device 27: Scan's) and its sight (RiteSenses); the
+// passive Rite (28) and the upgrades' numbers (the bonus pip's life, the fury, the Star's side spheres).
 
 using GoF2Remake.Flight;
 using NUnit.Framework;
@@ -191,7 +192,6 @@ namespace GoF2Remake.Tests
         public void TheSensesNumbersAreScans()
         {
             Assert.AreEqual(Device.Type.RiteSenses, (Device.Type)27);
-            Assert.AreEqual(27, Device.TypeCount);
             Assert.AreEqual(6000f, Device.SensesTops * 140f, 1e-2f, "ShortRangeScanDistance 600000 cm");
             Assert.AreEqual(3000, Device.SensesWaveMs, "ShortRangeScanDuration 3 s");
             Assert.AreEqual(1, Device.SensesCost);
@@ -204,6 +204,32 @@ namespace GoF2Remake.Tests
                 Assert.IsTrue(RiteSenses.Active, "the ship sees as the Ultrascan does");
             }
             finally { RiteSenses.Until = was; }
+        }
+
+        [Test]
+        public void ThePassiveAndTheUpgrades()
+        {
+            Assert.AreEqual(Device.Type.RitePassive, (Device.Type)28);
+            Assert.AreEqual(28, Device.TypeCount);
+            var r = new VoidEnergy(VoidEnergy.ChorusMax + 2);
+            Assert.AreEqual(5, r.Total, "the Elemental Shield's BonusEnergy 2: two pips more");
+            r.AddBonus(Device.HuntBonusPips);
+            Assert.AreEqual(6, r.Total, "Blink A's bonus pip");
+            r.Step(9.9f);
+            Assert.AreEqual(1, r.Bonus);
+            r.Step(0.2f);
+            Assert.AreEqual(0, r.Bonus, "BonusEnergyLifetime 10 s");
+            Assert.AreEqual(1.5f, Device.FuryFactor);
+            Assert.AreEqual(5000, Device.FuryMs);
+            Assert.AreEqual(500f, Device.StormChainTopsA * 140f, 1e-3f, "Pulse A's ChainRange 50000 cm");
+            Assert.AreEqual(0.25f, Device.StealShare);
+            var side = Device.StarSide(0, 0f) * 140f;
+            Assert.AreEqual(100f, side.z, 1e-3f, "Drill A's spheres 10000 cm ahead");
+            Assert.AreEqual(60f, side.x, 1e-3f);
+            Assert.AreEqual(60f, side.y, 1e-3f, "at (+6000, +6000) cm");
+            var later = Device.StarSide(0, 900f) * 140f;
+            Assert.AreEqual(-60f, later.x, 1e-3f, "turned 90 deg in 0.9 s at 100 deg/s");
+            Assert.AreEqual(60f, later.y, 1e-3f);
         }
     }
 }

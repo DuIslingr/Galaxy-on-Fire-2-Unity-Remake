@@ -351,6 +351,8 @@ energy cells.
 | `deviceConeDeg` | 159 | Device: the overcharger beam's half-angle ahead (default 30) |
 | `deviceVoidCost` | 178 | Device: a Rite (Chorus's powers): the Void energy pips each use pays besides its cooldown (see [Rites](#rites)) |
 | `deviceChain` | 179 | Device: the Rite of the Storm's jumps to more ships |
+| `deviceUpgrade` | 180 | Device: a Rite's upgrades, 1 the first, 2 the second, 3 both (see [Rites](#rites)) |
+| `deviceVoidPips`, `deviceElementalProof` | 181, 182 | A passive Rite (device 28): more Void energy pips; 1 = no harm from heat, frost or corrosion |
 
 Which stats an item uses depends on its category, so copy the stats its base item has (see `items.json` and
 `item_attributes.json` in `Assets/Resources/GoF2Data`). items.json's own stat names (`loadingTimeMs`, `range`,
@@ -463,6 +465,7 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 25 Rite of the Star | For `deviceDurationMs` (default 3000; pressing it again after half a second ends it early) the ship becomes a star: it vanishes, can't be harmed, and flies straight on at three times its top speed whatever the throttle, turning at most 72 degrees a second; every `deviceGrowMs` (default 200), and for 0.3 s after, every hostile ship within `deviceRange2` of a point just ahead (default 0.7 s of the top speed round a point 0.18 s ahead) takes `damage` (`empDamage` too) (Chorus's Rite of the Star). A Rite: 3 pips, 0.5 s cooldown | duration, grow, range 2, damage, void cost |
 | 26 Rite of Control | Seizes the hostile ship in the sights (your lock first, else the nearest within 10 degrees of the nose) within `deviceRadius` (default 5 s of the top speed: 700 m in Chorus) and holds it beside the nose, unable to fly, turn or fire, for up to `deviceDurationMs` (default 8000, then it is let go); pressing it again throws it at the ship in the sights within 5.7 s of the top speed of it (else straight ahead) at four times your top speed, homing: the first ship it meets takes `damage` and it dies, and a station, hull or asteroid kills it. Not capital ships, other games' ships or a ship that can't be harmed (Chorus's Rite of Control). A Rite: 3 pips, 0.5 s cooldown | radius, duration, damage, void cost |
 | 27 Rite of the Senses | A wave runs out from the ship to `deviceRadius` (default 43 s of the top speed: 6 km in Chorus) over 3 s, uncovering every cloaked hostile ship it reaches (whatever the EMP option); and for `deviceDurationMs` (default 20000) you see as the Hiroto Ultrascan does: the class-A asteroids marked, the cargo of every ship you lock read out (Chorus's Rite of the Senses). A Rite: 1 pip, 0.5 s cooldown | radius, duration, void cost |
+| 28 Passive Rite | Never fired: while mounted, `deviceVoidPips` more Void energy pips, and with `deviceElementalProof` 1 no harm from heat, frost or corrosion hazards (Chorus's Elemental Shield: 2 pips). Not in the quick menu or on the keys | void pips, elemental proof |
 
 #### Rites
 
@@ -474,6 +477,15 @@ with none), and a Rite's icon fills toward its cost. A Rite with too few pips is
 energy"). The Debug page's "no equipment cooldown" also makes the Rites free and the regrowth fuel-free. A Rite's distances left at 0 follow the ship's top speed as Chorus's do (its 140 m/s): the
 Hunt and the Storm reach 7.1 s of it (1000 m in Chorus), the Hunt lands 1.3 s of it behind its target (180 m) and the
 Storm's bolt jumps 0.7 s of it (100 m).
+
+`"deviceUpgrade"` gives a Rite Chorus's upgrades (1 the first, 2 the second, 3 both); a bonus pip is drawn cyan and lasts
+10 s:
+
+| Rite | 1 (first) | 2 (second) |
+| --- | --- | --- |
+| 23 Hunt | A bonus pip after each leap | Every weapon and Rite deals 50 % more damage for 5 s after each leap |
+| 24 Storm | The bolt jumps to 2 more ships within 500 m (`deviceChain` / `deviceRange2` when given) | A quarter of the damage it deals goes onto your own shield |
+| 25 Star | Four more burning spheres circle the ship ahead, turning 100 degrees a second | Every ship it destroys repairs a quarter of your hull |
 
 A Rite's looks come from its `"fx"`: `"shot"` sounds as it fires, and `"rite"` names a JSON file in the mod with its
 effects, each a list of particle emitters in the format of a ship's [`deathFx`](#shipsjson) (`emitters`), and their

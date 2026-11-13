@@ -244,7 +244,7 @@ namespace GoF2Remake.Flight
         float HuntBehind(Entry e) => e.range2 > 0 ? e.range2 * M : Device.HuntBehindTops * TopSpeedMs();
 
         /// <summary>How far the Storm jumps (deviceRange2, else Chorus's 100 m as seconds of the top speed).</summary>
-        float StormReach(Entry e) => e.range2 > 0 ? e.range2 * M : Device.StormChainTops * TopSpeedMs();
+        float StormReach(Entry e) => e.range2 > 0 ? e.range2 * M : (e.A ? Device.StormChainTopsA : Device.StormChainTops) * TopSpeedMs();
 
         static bool IsPursuer(Target t)
         {
@@ -348,6 +348,8 @@ namespace GoF2Remake.Flight
                 ShowModel(1f - Device.HuntVanish(huntMs / Device.HuntVanishMs));
                 if (huntMs < Device.HuntVanishMs) return;
                 if (!Huntable(huntTarget) || !Hunt(huntEntry, huntTarget)) { EndHunt(); return; }   // gone meanwhile: it stays put
+                if (huntEntry.A) VoidPool?.AddBonus(Device.HuntBonusPips);   // (Blink A: a bonus pip for 10 s)
+                if (huntEntry.B) StartFury();                                  // (Blink B: x1.5 for 5 s)
                 var look = LookOf(huntEntry);
                 if (look != null)
                 {
@@ -389,6 +391,7 @@ namespace GoF2Remake.Flight
 
         // ---- Rite of the Star: Drill's drive, its hidden ship and its burning sphere ----------------------------------------
         Entry starEntry; float starTickMs, starTailMs, starShowMs; bool starWasInvulnerable;
+        readonly List<Vector3> starCentres = new List<Vector3>();
         GameObject starLoopFx;
         AudioSource starLoopSound;
         const float StarFadeMs = 150f;   // (the model shrinking away and back: Drill_Activate / Drill_Deactivate, not read)
@@ -456,13 +459,23 @@ namespace GoF2Remake.Flight
             starTickMs = 0f;
             float top = TopSpeedMs();
             float ahead = Device.StarAheadTops * top, radius = starEntry.range2 > 0 ? starEntry.range2 * M : Device.StarRadiusTops * top;
+            // the spheres: the one ahead, and with upgrade A four more turning about the nose (Drill A's side stars)
+            starCentres.Clear();
+            starCentres.Add(transform.position + transform.forward * ahead);
+            if (starEntry.A)
+                for (int k = 0; k < 4; k++) starCentres.Add(transform.TransformPoint(Device.StarSide(k, starEntry.rules.Timer) * top));
             var look = LookOf(starEntry);
             var all = Target.All;
             for (int i = all.Count - 1; i >= 0; i--)
             {
                 var t = all[i];
-                if (!Affects(t) || !Device.InStar(transform.position, transform.forward, t.transform.position, ahead, radius + t.radius)) continue;
-                weapons?.DeviceHit(t, starEntry.damage, starEntry.emp, transform.forward, starEntry.item.index);
+                if (!Affects(t)) continue;
+                bool inside = false;
+                foreach (var c in starCentres)
+                    if ((t.transform.position - c).sqrMagnitude <= (radius + t.radius) * (radius + t.radius)) { inside = true; break; }
+                if (!inside) continue;
+                weapons?.DeviceHit(t, starEntry.damage * RiteFury, starEntry.emp, transform.forward, starEntry.item.index);
+                if (starEntry.B && !t.Alive) HealShare(Device.StarHealShare);   // (Drill B: a quarter of the hull a kill)
                 if (look != null && t != null)
                 {
                     look.Play(look.spec.hit, t.transform.position, t.transform.rotation, Vector3.zero, t.transform);
@@ -561,7 +574,7 @@ namespace GoF2Remake.Flight
             if (thrownDir.sqrMagnitude > 1e-6f) thrown.transform.rotation = Quaternion.LookRotation(thrownDir, thrown.transform.up);
             if (hitShip != null || geometry)
             {
-                if (hitShip != null) weapons?.DeviceHit(hitShip, thrownEntry.damage, thrownEntry.emp, thrownDir, thrownEntry.item.index);
+                if (hitShip != null) weapons?.DeviceHit(hitShip, thrownEntry.damage * RiteFury, thrownEntry.emp, thrownDir, thrownEntry.item.index);
                 var look = LookOf(thrownEntry);
                 if (look != null) { look.Play(look.spec.end, thrown.transform.position, thrown.transform.rotation, Vector3.zero); Play(RiteLook.Pick(look.end)); }
                 weapons?.DeviceHit(thrown, 1e7f, 0, thrownDir, thrownEntry.item.index, 0f);   // (its death: 500000 in Chorus)
@@ -623,7 +636,8 @@ namespace GoF2Remake.Flight
         {
             var origin = (object)from != null && from != null ? from.transform.position : transform.position;
             var dir = (t.transform.position - origin).normalized;
-            ShieldHit(e, t, dir);
+            float dealt = ShieldHit(e, t, dir, RiteFury);
+            if (e.B) GainShield(dealt * Device.StealShare);   // (Pulse B: a quarter of it onto the ship's own shield)
             t.SlowBy?.Invoke(e.jamMs, Device.SlowFactor(e.slowPercent), true);
             t.jammedUntil = Mathf.Max(t.jammedUntil, Time.time + e.jamMs / 1000f);
             ShowBeam(t, from);
@@ -984,6 +998,7 @@ namespace GoF2Remake.Flight
         void UpdateRunning(float dtMs)
         {
             float dt = dtMs / 1000f;
+            UpdateFury(dtMs);
             UpdateHunt(dtMs);
             UpdateStorm(dtMs);
             UpdateStar(dtMs);
@@ -1169,20 +1184,60 @@ namespace GoF2Remake.Flight
 
         /// <summary>The shield disruptor's and the Rite of the Storm's hit: 'damage' off the shield (GoF3: the shield only); a
         /// ship without one (the NPCs) takes deviceDamagePercent of it as damage, another player's goes to its shield first.</summary>
-        void ShieldHit(Entry e, Target t, Vector3 dir)
+        float ShieldHit(Entry e, Target t, Vector3 dir, float factor = 1f)
         {
             var hp = t.hitpoints;
+            float amount = e.damage * factor;
             if (hp != null && hp.maxShield > 0 && t.RemoteDamage == null)
             {
-                hp.shield = Mathf.Max(0f, hp.shield - e.damage);
+                float was = hp.shield;
+                hp.shield = Mathf.Max(0f, hp.shield - amount);
                 t.lastPlayerWeapon = e.item.index;
                 if (e.emp > 0) weapons?.DeviceHit(t, 0f, e.emp, dir, e.item.index);
+                return was - hp.shield;
             }
-            else
-            {
-                float dmg = t.netShield >= 0f ? e.damage : e.damage * e.damagePercent / 100f;
-                weapons?.DeviceHit(t, dmg, e.emp, dir, e.item.index);
-            }
+            float dmg = t.netShield >= 0f ? amount : amount * e.damagePercent / 100f;
+            weapons?.DeviceHit(t, dmg, e.emp, dir, e.item.index);
+            return dmg;
+        }
+
+        // ---- the Rites' upgrades: the Hunt's fury (B), the Storm's shield steal (B), the Star's heal (B) ----------------
+        float furyMs;
+
+        /// <summary>The Rites' damage factor: x1.5 while the Hunt's fury lasts (BP_Player_Buff_Blink_UpgradeB).</summary>
+        float RiteFury => furyMs > 0f ? Device.FuryFactor : 1f;
+
+        void StartFury()
+        {
+            furyMs = Device.FuryMs;
+            if (weapons != null) weapons.DamageBoost = Mathf.Max(weapons.DamageBoost, Device.FuryFactor);
+        }
+
+        void UpdateFury(float dtMs)
+        {
+            if (furyMs <= 0f) return;
+            furyMs -= dtMs;
+            if (furyMs > 0f || weapons == null) return;
+            // over: back to 1 unless the strike charge runs (it set its own)
+            foreach (var o in devices) if (o.rules.type == Device.Type.StrikeCharge && o.rules.Active) return;
+            weapons.DamageBoost = 1f;
+        }
+
+        /// <summary>Points onto the ship's own shield (the Storm's B: ShieldComponent.IncreaseShield), up to its maximum.</summary>
+        void GainShield(float points)
+        {
+            var hp = self.hitpoints;
+            if (hp == null || hp.maxShield <= 0 || points <= 0f) return;
+            hp.shield = Mathf.Min(hp.maxShield, hp.shield + points);
+        }
+
+        /// <summary>A share of the hull's maximum repaired (the Star's B: HealthComponent.AddHealth).</summary>
+        void HealShare(float share)
+        {
+            var hp = self.hitpoints;
+            if (hp == null || hp.hull <= 0) return;
+            hp.hull = Mathf.Min(hp.maxHull, hp.hull + Mathf.CeilToInt(hp.maxHull * share));   // (not Repair: the nanobots count theirs)
+            self.hp = hp.hull;
         }
 
         // ---- the Carom Deflector -------------------------------------------------------------------------------------

@@ -280,10 +280,27 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     (`Mining.Ultrascan`: the class-A asteroids' letters) and the cargo scanners' readout on a new lock (`CombatRadar`,
     attr 31's `ReadCargo`) — what the remake hides that a scan can show. Not ported: the long range (held: 200 km, the
     star map's marks; OnLongRangeCharged), the charge, the post-process pulse, P_Sphere_Expansion (a mesh sphere).
-  - Still to come: the passives (ElementalShield: +2 energy, HavocCore and SacredMark have no data) and the Rites'
-    upgrades.
+  - **Upgrades** (`deviceUpgrade` 180, bits `Device.UpgradeA` / `UpgradeB`; `Entry.A` / `B`), read from their blueprints'
+    graphs: the exporter's `CHORUS_SCRIPT=1` turns on CUE4Parse's ReadScriptData, so the JSON carries each function's
+    Kismet bytecode (the scratch kis.py lists its calls). Hunt A: `VoidEnergy.AddBonus(1)` after the leap (AddBonusEnergy(1);
+    a bonus pip lives BonusEnergyLifetime 10 s, UEnergyComponent's constructor 0x140be1d60, which also has RegenDelay 5 and
+    RegenRate 0.5 the blueprint overrides). Hunt B: `StartFury`, `WeaponSystem.DamageBoost` 1.5 and the Rites' damage x
+    `RiteFury` for 5 s (BP_Player_Buff_Blink_UpgradeB; back to 1 at its end unless the strike charge runs). Storm A:
+    `deviceChain` 2 and the jump `StormChainTopsA` (500 m) by default. Storm B: `ShieldHit` returns what it took (a ship
+    without a shield: what it dealt), a quarter onto the ship's own shield up to its maximum (`GainShield`; Chorus
+    IncreaseShield's overcharge past it not taken). Star A: four more spheres (`Device.StarSide`: (10000, +-6000, +-6000)
+    cm, RotationSpeed 100 deg/s about the nose), a ship hit once a tick whichever it is in. Star B: a ship the Star
+    destroys repairs 25 % of the maximum hull (`HealShare`, past `Repair`'s nanobot count). Not taken: Blink AB's
+    energy for a kill within 5 s (BP_Buff_GiveEnergyForKillAfterBlink: its EnergyAmount unset), the upgrades' own looks.
+  - **Passive** (`Device.Type.RitePassive` 28; Chorus's BP_PassivePower_ElementalShield: BonusEnergy 2,
+    VoidEnergyIncreaseEffect, "Prevents all elemental damage"): not one of `PlayerDevices.Devices` (no key, quick menu
+    entry or HUD slot); `deviceVoidPips` (181) adds to the pool's maximum (`VoidEnergy(ChorusMax + pips)`, made once all are
+    read), `deviceElementalProof` (182) sets `Hazards.ElementalProof` (HazardZones skips heat, frost and corrosion
+    volumes; radiation and plain damage fields still harm). HavocCore and SacredMark have no numbers: not made.
+  - Still to come: the long range scan, Blink AB's kill energy.
   Tests `VoidEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers, landing and timelines, the
-  camera's glide, Pulse Zap's numbers, the jam, the Drill's numbers, the star's reach, the turn cap, Telekinesis's numbers, Scan's numbers and the sight),
+  camera's glide, Pulse Zap's numbers, the jam, the Drill's numbers, the star's reach, the turn cap, Telekinesis's numbers, Scan's numbers and the sight, the passive's pips, the bonus pip's life, the
+  fury, the Star's side spheres),
   `ModWeaponsTests.ARitesLooksAreAFileOfEffectsAndSounds`.
 - **Hull regeneration** (remake 2026-11-11, for mods): ships.json `"hullRegen"` (points a second; Chorus's PCLS
   PlayerHealthComponent HealthRegenRate 250 of its 5000) -> `PlayerHealth` (`Hitpoints.RegenerateHull`, fractions carried,

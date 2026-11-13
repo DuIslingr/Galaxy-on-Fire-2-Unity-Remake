@@ -44,13 +44,20 @@ namespace GoF2Remake.Flight
             /// <summary>Remake: the Rite of the Storm's jam and the Senses' length (their deviceDurationMs: the devices themselves
             /// are instant), the Storm's jumps.</summary>
             public int jamMs, chain;
+            /// <summary>Remake: a Rite's upgrades (deviceUpgrade: Device.UpgradeA / UpgradeB bits).</summary>
+            public int upgrade;
+            public bool A => (upgrade & Device.UpgradeA) != 0;
+            public bool B => (upgrade & Device.UpgradeB) != 0;
             /// <summary>Available last frame: "{0} ready" when it turns true (the cooldown's end, the strike charge filled).</summary>
             public bool wasAvailable = true;
         }
 
         readonly List<Entry> devices = new List<Entry>();
+        // Remake: the passive Rites (Device.Type.RitePassive): mounted, never fired; their pips and immunity
+        int voidPips;
+        bool hasRite, elementalProof;
         public IReadOnlyList<Entry> Devices => devices;
-        /// <summary>Remake: the Void energy the Rites pay from, null without a Rite mounted.</summary>
+        /// <summary>Remake: the Void energy the Rites pay from, null without a Rite mounted (3 pips and the passives' more).</summary>
         public VoidEnergy VoidPool { get; private set; }
         /// <summary>A HUD message ("{0} ready", not enough shield, not charged).</summary>
         public event Action<string> Message;
@@ -91,6 +98,8 @@ namespace GoF2Remake.Flight
             c.self = self;
             c.weapons = weapons;
             foreach (var it in items) c.Add(it);
+            if (c.hasRite) c.VoidPool = new VoidEnergy(VoidEnergy.ChorusMax + c.voidPips);
+            Hazards.ElementalProof = c.elementalProof;
             c.Setup();
             return c;
         }
@@ -98,6 +107,12 @@ namespace GoF2Remake.Flight
         void Add(ItemData it)
         {
             var type = Shop.DeviceType(it);
+            if (type == Device.Type.RitePassive)
+            {
+                voidPips += Mathf.Max(0, it.Attr(Device.VoidPipsAttr));
+                elementalProof |= it.Attr(Device.ElementalAttr) > 0;
+                return;
+            }
             bool consumable = Shop.IsConsumableDevice(it);
             bool hunt = type == Device.Type.RiteHunt, storm = type == Device.Type.RiteStorm, star = type == Device.Type.RiteStar,
                  control = type == Device.Type.RiteControl, senses = type == Device.Type.RiteSenses;
@@ -118,7 +133,8 @@ namespace GoF2Remake.Flight
                 voidCost = it.Attr(Device.VoidCostAttr, hunt ? Device.HuntCost : storm ? Device.StormCost : star ? Device.StarCost
                                                         : control ? Device.ControlCost : senses ? Device.SensesCost : 0),
                 jamMs = storm ? it.Attr(Device.DurationAttr, Device.StormJamMs) : senses ? it.Attr(Device.DurationAttr, Device.SensesMs) : 0,
-                chain = it.Attr(Device.ChainAttr),
+                upgrade = it.Attr(Device.UpgradeAttr),
+                chain = it.Attr(Device.ChainAttr, storm && (it.Attr(Device.UpgradeAttr) & Device.UpgradeA) != 0 ? Device.StormChainA : 0),
                 radius = it.Attr(Device.RadiusAttr),
                 growMs = it.Attr(Device.GrowAttr, storm ? Device.StormChainMs : star ? Device.StarTickMs : 0),
                 slowPercent = it.Attr(Device.SlowAttr, storm ? 0 : 25),
@@ -129,7 +145,7 @@ namespace GoF2Remake.Flight
                 emp = it.Attr(10),
             };
             devices.Add(e);
-            if (e.voidCost > 0) VoidPool ??= new VoidEnergy();
+            if (e.voidCost > 0) hasRite = true;
         }
 
         /// <summary>Whether 'e' can be fired now: its own rules, and a Rite's energy.</summary>
@@ -158,6 +174,7 @@ namespace GoF2Remake.Flight
         void OnDestroy()
         {
             if (weapons != null) { weapons.PrimaryDamageDealt -= OnDamageDealt; weapons.DamageBoost = 1f; }
+            Hazards.ElementalProof = false;
             if (self != null && (object)self.Deflects == (object)deflect) self.Deflects = null;
             DestroyEffects();
         }

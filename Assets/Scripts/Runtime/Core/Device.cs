@@ -118,9 +118,13 @@ namespace GoF2Remake.Flight
             /// deviceDurationMs (default 20 s) the ship sees as the best scanners do (RiteSenses: class-A asteroids marked, a
             /// locked ship's cargo read out).</summary>
             RiteSenses = 27,
+            /// <summary>A passive Rite (Chorus's PassivePowers, BP_PassivePower_ElementalShield): never fired, it works while
+            /// mounted through its stats: deviceVoidPips more Void energy pips (the Elemental Shield's BonusEnergy 2),
+            /// deviceElementalProof 1 = no harm from heat, frost or corrosion ("Prevents all elemental damage").</summary>
+            RitePassive = 28,
         }
 
-        public const int TypeCount = 27;
+        public const int TypeCount = 28;
         /// <summary>The Annihilator Virus's most ships (its description's 6).</summary>
         public const int VirusMaxTargets = 6;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
@@ -135,6 +139,31 @@ namespace GoF2Remake.Flight
         public const int VoidCostAttr = 178;
         /// <summary>Remake (2026-11-13): deviceChain = the Rite of the Storm's jumps to more ships (Chorus's ChainLimit).</summary>
         public const int ChainAttr = 179;
+        /// <summary>Remake (2026-11-13): deviceUpgrade = a Rite's upgrades (Chorus's A / B, bits 1 / 2); deviceVoidPips = more Void
+        /// energy pips (a passive's); deviceElementalProof 1 = no harm from elemental hazards (a passive's).</summary>
+        public const int UpgradeAttr = 180, VoidPipsAttr = 181, ElementalAttr = 182;
+        public const int UpgradeA = 1, UpgradeB = 2;
+        // The upgrades (their blueprints' graphs, read with the exporter's CHORUS_SCRIPT bytecode):
+        //   Hunt A  BP_ActivePower_Blink_UpgradeA: EnergyComponent.AddBonusEnergy(1) after the leap (a bonus pip lives
+        //           UEnergyComponent's BonusEnergyLifetime, 10 s: its constructor 0x140be1d60)
+        //   Hunt B  BP_Player_Buff_Blink_UpgradeB: DamageMultiplier 1.5 for Duration 5 s, every weapon and Rite
+        //   Storm A BP_ActivePower_Pulse_UpgradeA: ChainLimit 2, ChainRange 50000 cm
+        //   Storm B BP_ActivePower_Pulse_UpgradeB: ShieldComponent.IncreaseShield(ShieldDamage x ShieldStealMultiplier 0.25)
+        //   Star A  BP_ActivePower_Drill_UpgradeA: four more spheres of 10000 cm at (10000, +-6000, +-6000) cm, turning
+        //           RotationSpeed 100 deg/s about the nose (bCanRotate)
+        //   Star B  BP_ActivePower_Drill_UpgradeB: HealthComponent.AddHealth(max x HealPercentage 25 / 100) a ship destroyed
+        public const int HuntBonusPips = 1, FuryMs = 5000, StormChainA = 2;
+        public const float FuryFactor = 1.5f, StormChainTopsA = 50000f / 14000f, StealShare = 0.25f, StarHealShare = 0.25f;
+        public const float StarSideAheadTops = 10000f / 14000f, StarSideOffTops = 6000f / 14000f, StarSideDegS = 100f;
+
+        /// <summary>The Star's upgrade-A sphere 'i' (0..3) at 'ms' into its run: its centre in the ship's frame (seconds of the
+        /// top speed: x right, y up, z ahead), the four turning about the nose.</summary>
+        public static Vector3 StarSide(int i, float ms)
+        {
+            float a = (45f + 90f * i + StarSideDegS * ms / 1000f) * Mathf.Deg2Rad;
+            float r = StarSideOffTops * Mathf.Sqrt(2f);   // (the corners of +-6000, +-6000)
+            return new Vector3(Mathf.Cos(a) * r, Mathf.Sin(a) * r, StarSideAheadTops);
+        }
         // Chorus's Blink (BP_ActivePower_Blink's defaults: Range 100000 cm, BlinkLocationOffset -18000 cm, EnergyCost 2,
         // Cooldown 0.5 s), its distances kept as seconds of its 140 m/s top speed (as Chorus flight's), so they scale with
         // the ship's: 1000 m = 7.14 s, 180 m = 1.29 s. TargetableRadius 0.1 (UpdateActivePowerTargets' screen share, not
