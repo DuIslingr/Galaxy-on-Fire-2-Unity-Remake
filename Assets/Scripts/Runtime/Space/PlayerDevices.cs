@@ -185,8 +185,12 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>The quick menu's entry / the key for device 'slot' (mount order).</summary>
-        public void Use(int slot)
+        public void Use(int slot) => Use(slot, false);
+
+        /// <summary>'longRange': the Rite of the Senses' long range (its key held).</summary>
+        public void Use(int slot, bool longRange)
         {
+            senseLong = longRange;
             if (slot < 0 || slot >= devices.Count || self == null || !self.Alive) return;
             if (Time.timeScale <= 0f || (Blocked != null && Blocked())) return;
             var e = devices[slot];
@@ -244,6 +248,10 @@ namespace GoF2Remake.Flight
 
         readonly List<Entry> spent = new List<Entry>();
         bool voidStarved;
+        // the Senses' key held (its slot, -1 = none) and for how long; the next fire's range
+        int senseKey = -1;
+        float senseHeldMs;
+        bool senseLong;
 
         /// <summary>A death, a cutscene or a jump: every running device stops and cools down.</summary>
         public void Cancel()
@@ -260,7 +268,21 @@ namespace GoF2Remake.Flight
             for (int i = 0; i < Keys.Length && i < devices.Count; i++)
             {
                 var key = Keys[i]();
-                if (key != null && key.WasPressedThisFrame()) Use(i);
+                if (key == null) continue;
+                if (devices[i].rules.type == Device.Type.RiteSenses)
+                {
+                    // Remake (Chorus's Scan): a tap scans close by; held SensesChargeMs, the long range
+                    if (key.WasPressedThisFrame()) { senseKey = i; senseHeldMs = 0f; }
+                    if (senseKey != i) continue;
+                    if (key.IsPressed())
+                    {
+                        senseHeldMs += Time.unscaledDeltaTime * 1000f;
+                        if (senseHeldMs >= Device.SensesChargeMs) { senseKey = -1; Use(i, true); }
+                    }
+                    else { senseKey = -1; Use(i); }
+                    continue;
+                }
+                if (key.WasPressedThisFrame()) Use(i);
             }
             for (int i = devices.Count - 1; i >= 0; i--)
             {

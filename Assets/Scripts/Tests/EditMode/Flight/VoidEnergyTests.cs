@@ -195,6 +195,9 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(6000f, Device.SensesTops * 140f, 1e-2f, "ShortRangeScanDistance 600000 cm");
             Assert.AreEqual(3000, Device.SensesWaveMs, "ShortRangeScanDuration 3 s");
             Assert.AreEqual(1, Device.SensesCost);
+            Assert.AreEqual(200000f, Device.SensesLongTops * 140f, 1e-1f, "LongRangeScanDistance 20000000 cm");
+            Assert.AreEqual(1000, Device.SensesChargeMs, "LongRangeChargeDuration 1 s");
+            Assert.AreEqual(3000, Device.SensesLongWaveMs, "LongRangeScanDuration 3 s");
             float was = RiteSenses.Until;
             try
             {

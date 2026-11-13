@@ -585,23 +585,35 @@ namespace GoF2Remake.Flight
         }
 
         // ---- Rite of the Senses: Scan's short range -------------------------------------------------------------------
-        Entry sensesEntry; float sensesMs;
+        Entry sensesEntry; float sensesMs, sensesReach, sensesWaveMs; int sensesFound;
 
-        void StartSenses(Entry e)
+        void StartSenses(Entry e, bool longRange)
         {
             sensesEntry = e;
             sensesMs = 0f;
+            sensesFound = 0;
+            float top = TopSpeedMs();
+            sensesReach = longRange ? Device.SensesLongTops * top : e.radius > 0 ? e.radius * M : Device.SensesTops * top;
+            sensesWaveMs = longRange ? Device.SensesLongWaveMs : Device.SensesWaveMs;
             RiteSenses.Until = Mathf.Max(RiteSenses.Until, Time.time + e.jamMs / 1000f);   // (its jamMs: how long the senses last)
             Message?.Invoke(string.Format(Localization.Extra("riteSensesOn", "{0}: the class-A asteroids and the cargo of locked ships show"), e.name));
         }
 
-        /// <summary>The wave: every cloaked hostile ship its front reaches is uncovered.</summary>
+        /// <summary>The wave: every cloaked hostile ship and cloaked container its front reaches is uncovered (a container's
+        /// marker and lock come on, as when the ship comes near it: LootContainer.Reveal).</summary>
         void UpdateSenses(float dtMs)
         {
             if (sensesEntry == null) return;
             sensesMs += dtMs;
-            float reach = sensesEntry.radius > 0 ? sensesEntry.radius * M : Device.SensesTops * TopSpeedMs();
-            float r = Device.WaveRadius(sensesMs, Device.SensesWaveMs, reach / M) * M;
+            float r = Device.WaveRadius(sensesMs, sensesWaveMs, sensesReach / M) * M;
+            var look0 = LookOf(sensesEntry);
+            foreach (var c in GoF2Remake.World.LootContainer.All)
+            {
+                if (c == null || !c.Cloaked || c.Revealed || c.Opened || (c.transform.position - transform.position).sqrMagnitude > r * r) continue;
+                c.Reveal();
+                sensesFound++;
+                if (look0 != null) { look0.Play(look0.spec.hit, c.transform.position, c.transform.rotation, Vector3.zero, c.transform); Play(RiteLook.Pick(look0.hit)); }
+            }
             var all = Target.All;
             for (int i = all.Count - 1; i >= 0; i--)
             {
@@ -614,7 +626,10 @@ namespace GoF2Remake.Flight
                 var look = LookOf(sensesEntry);   // (Chorus's ping as the wave finds something)
                 if (look != null) { look.Play(look.spec.hit, t.transform.position, t.transform.rotation, Vector3.zero, t.transform); Play(RiteLook.Pick(look.hit)); }
             }
-            if (sensesMs >= Device.SensesWaveMs) sensesEntry = null;
+            if (sensesMs < sensesWaveMs) return;
+            if (sensesFound > 0)
+                Message?.Invoke(string.Format(Localization.Extra("riteSensesFound", "{0}: {1} hidden container(s) found"), sensesEntry.name, sensesFound));
+            sensesEntry = null;
         }
 
         // ---- Rite of the Storm: Pulse Zap's strike, BP_Buff_Pulse's jam, its chain ------------------------------------------
@@ -837,7 +852,7 @@ namespace GoF2Remake.Flight
                 {
                     var look = LookOf(e);
                     look?.Play(look.spec.start, pos, transform.rotation, Vector3.zero, transform);
-                    StartSenses(e);
+                    StartSenses(e, senseLong);
                     break;
                 }
                 case Device.Type.RiteControl:

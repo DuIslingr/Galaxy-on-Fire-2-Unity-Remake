@@ -194,6 +194,10 @@ namespace GoF2Remake.Flight
         // powers screen's cost 1), the reach as seconds of the top speed; how long the senses last is the remake's.
         public const float SensesTops = 600000f / 14000f;
         public const int SensesCost = 1, SensesCooldownMs = 500, SensesWaveMs = 3000, SensesMs = 20000;
+        // Its long range (held: AScanActivePower's constructor 0x140c3df70 gives LongRangeChargeDuration 1 s and
+        // LongRangeScanDuration 3 s, EnergyCost 1; the blueprint's LongRangeScanDistance 20000000 cm: 200 km, the whole orbit)
+        public const float SensesLongTops = 20000000f / 14000f;
+        public const int SensesChargeMs = 1000, SensesLongWaveMs = 3000;
 
         /// <summary>Whether 'at' is within the star's reach: 'radius' round the point 'ahead' along 'forward' from 'pos'.</summary>
         public static bool InStar(Vector3 pos, Vector3 forward, Vector3 at, float ahead, float radius) =>

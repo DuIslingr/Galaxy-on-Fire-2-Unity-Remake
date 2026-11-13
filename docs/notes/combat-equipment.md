@@ -278,8 +278,16 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     script's radar-hidden ship is left so), with the look's `hit`; and for deviceDurationMs (default 20 s, the remake's:
     Chorus's short scan shows its finds 3 s) `RiteSenses.Until` gives the ship the Hiroto Ultrascan's sight
     (`Mining.Ultrascan`: the class-A asteroids' letters) and the cargo scanners' readout on a new lock (`CombatRadar`,
-    attr 31's `ReadCargo`) — what the remake hides that a scan can show. Not ported: the long range (held: 200 km, the
-    star map's marks; OnLongRangeCharged), the charge, the post-process pulse, P_Sphere_Expansion (a mesh sphere).
+    attr 31's `ReadCargo`) — what the remake hides that a scan can show. Its wave also reveals the orbits' cloaked
+    containers (`LootContainer.Reveal`, as `CloakedContainers` does within 144 m; "{0}: {1} hidden container(s) found",
+    `riteSensesFound`). The long range (the same day, the user's "continue": AScanActivePower's constructor 0x140c3df70
+    gives LongRangeChargeDuration 1, LongRangeScanDuration 3, ShortRangeChargeDuration 0.5, ShortRangeScanDuration 2,
+    ShortRangeScanDistance 180000, LongRangeScanDistance 1e8, EnergyCost 1; the blueprint's 0.001 / 3 / 600000 / 2e7):
+    the Senses' key (`GameControls.Device1-3`) held `SensesChargeMs` fires it with `Use(slot, true)`, a wave to
+    `SensesLongTops` (the whole orbit) over `SensesLongWaveMs`; let go sooner, the short scan; the quick menu and touch
+    always the short one. Chorus's long range marks its finds on the star map; here the finds are the orbit's own (the
+    containers' markers, the ships uncovered). Not ported: the charge's look and sound, the post-process pulse,
+    P_Sphere_Expansion (a mesh sphere).
   - **Upgrades** (`deviceUpgrade` 180, bits `Device.UpgradeA` / `UpgradeB`; `Entry.A` / `B`), read from their blueprints'
     graphs: the exporter's `CHORUS_SCRIPT=1` turns on CUE4Parse's ReadScriptData, so the JSON carries each function's
     Kismet bytecode (the scratch kis.py lists its calls). Hunt A: `VoidEnergy.AddBonus(1)` after the leap (AddBonusEnergy(1);
@@ -297,7 +305,8 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     entry or HUD slot); `deviceVoidPips` (181) adds to the pool's maximum (`VoidEnergy(ChorusMax + pips)`, made once all are
     read), `deviceElementalProof` (182) sets `Hazards.ElementalProof` (HazardZones skips heat, frost and corrosion
     volumes; radiation and plain damage fields still harm). HavocCore and SacredMark have no numbers: not made.
-  - Still to come: the long range scan, Blink AB's kill energy.
+  - Not taken: BP_Buff_GiveEnergyForKillAfterBlink (the base Blink's: a kill within 5 s refunds EnergyAmount, floor of
+    a mastery value: Chorus's mastery levels, which the remake hasn't).
   Tests `VoidEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers, landing and timelines, the
   camera's glide, Pulse Zap's numbers, the jam, the Drill's numbers, the star's reach, the turn cap, Telekinesis's numbers, Scan's numbers and the sight, the passive's pips, the bonus pip's life, the
   fury, the Star's side spheres),
