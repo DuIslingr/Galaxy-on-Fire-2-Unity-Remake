@@ -109,7 +109,8 @@ half3 GoF2RadialFog(half3 color, float d)
 //   light = lightColour x N.L + ambient
 //   specular = (Phong pow(R.V, exp2(9 gloss + 1)) x lightColour [x Specular_Multiplier] + ambient x fresnel) x spec
 //   out   = diffuse x light x (1 - specular.r) + specular [x Specular_Multiplier]
-//   env   = the environment (GoF3's generic cubes are grey, its blur picked by gloss) x spec x (light + fresnel), clamped,
+//   env   = the environment (the material's GoF3 cube, its four blurs picked by gloss, tinted by and plus the system's sky
+//           cube at that blur; else the place's brightness) x spec x (light + fresnel), clamped,
 //           x Environment_Amount: out = out x (1 - env) + env
 //   rim   = 0.1 x (1 - N.V) x lightColour x light;  glass: alpha raised by specular.r, env.r and the fresnel
 // and differ per kind in what _GoF3Params says (ModMaterials, from the mod's material): x the environment (ship bodies and
@@ -123,6 +124,20 @@ half3 GoF2RadialFog(half3 color, float d)
 // wide. The gloss comes as smoothness 1 - (2 / (n + 2))^0.25 (the importer's conversion, inverted here). One light, as
 // GoF3: the main light (in a GoF2 hangar the key light from above, _GoF2PbrLight, as the other mod materials get it); the
 // ambient URP's own; both and the environment dimmed by the occlusion (_GoF2PbrIndirectDim in a GoF2 hangar).
+// A 6:1 strip of cube faces (right, left, up, down, front, back, each as seen from inside): SpaceSkyCore.hlsl's StripUV,
+// which this file can't include (its own UnityPerMaterial), so the GoF3 cubes lie as the GoF3 Systems mod's skies do.
+float2 GoF3StripUV(float3 d, float texelHeight)
+{
+    float3 a = abs(d);
+    float face; float2 f;
+    if (a.x >= a.y && a.x >= a.z) { if (d.x > 0) { face = 0; f = float2(-d.z, d.y) / a.x; } else { face = 1; f = float2(d.z, d.y) / a.x; } }
+    else if (a.y >= a.z) { if (d.y > 0) { face = 2; f = float2(d.x, -d.z) / a.y; } else { face = 3; f = float2(d.x, d.z) / a.y; } }
+    else { if (d.z > 0) { face = 4; f = float2(d.x, d.y) / a.z; } else { face = 5; f = float2(-d.x, d.y) / a.z; } }
+    float inset = 0.5 * texelHeight;
+    float2 uv = clamp(f * 0.5 + 0.5, inset, 1.0 - inset);
+    return float2((face + uv.x) / 6.0, uv.y);
+}
+
 half4 GoF3ShipShader(InputData inputData, SurfaceData surfaceData)
 {
     half3 nrm = inputData.normalWS, v = inputData.viewDirectionWS;
@@ -163,11 +178,36 @@ half4 GoF3ShipShader(InputData inputData, SurfaceData surfaceData)
     half3 env = 0.0h;
     if (environment > 0.0h)
     {
-        // GoF3's generic cubes are grey: the place's environment as its brightness, at the gloss's blur
-        half3 envColor = GlossyEnvironmentReflection(reflect(-v, nrm), inputData.positionWS, 1.0h - gloss, surfaceData.occlusion,
-            inputData.normalizedScreenSpaceUV, UseEnvironmentReflections());
-        half envG = LinearToSRGB(dot(envColor, half3(0.2126h, 0.7152h, 0.0722h)).xxx).r;
-        env = saturate(envG * spec * (light + fresnel)) * environment;
+        half3 envC;
+        if (_GoF3Env.x > 0.5)
+        {
+            // The material's own GoF3 cube (_GoF3Env; the importer's hulls: GoF3's cubemap_generic_000): GoF3's ShipShader reads
+            // it as it is, a monochrome cube with four blurs in its channels, A the blurriest to R the sharpest, the gloss
+            // choosing between them (its "Interpolate between R->G->B->A by glossiness", the first step unclamped as GoF3's);
+            // the strip in the sky's layout (SpaceSkyCore.hlsl StripUV). In a GoF2 hangar dimmed with the indirect light.
+            half4 c = SAMPLE_TEXTURE2D_LOD(_GoF3EnvMap, sampler_LinearClamp, GoF3StripUV(reflect(-v, nrm), _GoF3Env.y), 0);
+            half envG = c.a;
+            envG = lerp(envG, c.b, gloss / 0.33h);
+            envG = lerp(envG, c.g, saturate((gloss - 0.33h) / 0.33h));
+            envG = lerp(envG, c.r, saturate((gloss - 0.66h) / 0.33h));
+            // Remake (2026-11-12, the user's choice): the place's own sky too. GoF3's cube shapes the reflection; the system's
+            // reflection cubemap (_GoF2ReflectionCube, SkyReflection: each system's sky, a hangar's own), at the gloss's blur,
+            // colours it, by its hue as much as the sky is bright there (dark sky: GoF3's own grey), and adds its light (a
+            // bright sun or nebula shows on the hull).
+            half3 sky = LinearToSRGB(SAMPLE_TEXTURECUBE_LOD(_GoF2ReflectionCube, sampler_GoF2ReflectionCube, reflect(-v, nrm),
+                (1.0h - gloss) * 6.0h).rgb) * _GoF2HullReflection;
+            half skyLum = dot(sky, half3(0.2126h, 0.7152h, 0.0722h));
+            half3 tint = lerp(half3(1.0h, 1.0h, 1.0h), min(sky / max(skyLum, 1e-3h), 2.0h), saturate(skyLum * 4.0h));
+            envC = (envG * tint + sky) * surfaceData.occlusion;
+        }
+        else
+        {
+            // Without one: the place's environment as its brightness, at the gloss's blur
+            half3 envColor = GlossyEnvironmentReflection(reflect(-v, nrm), inputData.positionWS, 1.0h - gloss, surfaceData.occlusion,
+                inputData.normalizedScreenSpaceUV, UseEnvironmentReflections());
+            envC = LinearToSRGB(dot(envColor, half3(0.2126h, 0.7152h, 0.0722h)).xxx);
+        }
+        env = saturate(envC * spec * (light + fresnel)) * environment;
         outG = outG * (1.0h - env) + env;
     }
     outG += rimAmount * 0.1h * (1.0h - ndv) * lightG * light;   // (RimLight_LightStrength 1, RimLight_FallOff 1)

@@ -572,6 +572,14 @@ namespace GoF2Remake.Data
         // Specular_Multiplier on the highlight (default 1) and 'multiplierInMap' when the map already carries it.
         public float environment = 1f, rim = 1f, highlightMultiplier = 1f;
         public bool multiplierInMap;
+        // With a specular map: GoF3's own environment cube for it to reflect, a 6:1 strip of its faces in the mod (GoF3's generic
+        // cube: four blurs in R G B A, the gloss choosing; ModMaterials.GoF3Environment); without one the place's surroundings.
+        public string environmentCube;
+        // With "additive" (a glow layer): GoF3's effect terms (ModGlbImages.Glow): 'angleFade' [min, max] (|N.E| faded in between),
+        // 'pulse' [frequency, min, max, threshold, step 0/1, smooth 0/1, vertexOffset 0/1], 'billboard' (TEXCOORD_1 / UV1 the
+        // corners' view-space offsets: sprites that face the camera).
+        public float[] angleFade, pulse;
+        public bool billboard;
         public bool doubleSided;   // both faces drawn (models with one-sided panels the camera can see from behind)
         public bool engine;        // its emission shows only while the engines run (dark on a ship parked in a hangar)
         // With "engine": its share of the glow at throttle 0 (0..1); 1 = steady like the game's own engine glow, lit

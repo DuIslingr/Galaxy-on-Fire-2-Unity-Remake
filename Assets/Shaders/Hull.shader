@@ -140,6 +140,10 @@ Shader "GoF2/Hull"
         // GoF2: a mod specular material's GoF3 terms (HullForwardPass.hlsl GoF3ShipShader; ModMaterials): x environment, y rim,
         // z GoF3's specular multiplier, w 1 = that multiplier is in the map (on the whole specular) / 0 = on the highlight
         [HideInInspector] _GoF3Params("GoF3 params", Vector) = (1, 1, 1, 0)
+        // GoF2: a GoF3 material's own environment cube (HullForwardPass.hlsl GoF3ShipShader; ModMaterials.GoF3Environment): x 1 =
+        // _GoF3EnvMap holds it (a 6:1 strip), y the strip's texel height. Declared so a material copy (a kit skin's) keeps them.
+        [HideInInspector] _GoF3Env("GoF3 environment cube", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _GoF3EnvMap("GoF3 environment strip", 2D) = "black" {}
 
         [HideInInspector] _MainTex("BaseMap", 2D) = "white" {}
         [HideInInspector] _Color("Base Color", Color) = (1, 1, 1, 1)

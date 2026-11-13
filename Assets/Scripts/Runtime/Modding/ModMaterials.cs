@@ -449,6 +449,24 @@ namespace GoF2Remake.Modding
 
         /// <summary>A ships.json material entry (CustomShipMaterial, see CustomShipBuilder in PR #34 for the original).</summary>
         static readonly int GoF3ParamsId = Shader.PropertyToID("_GoF3Params");
+        static readonly int GoF3EnvId = Shader.PropertyToID("_GoF3Env"), GoF3EnvMapId = Shader.PropertyToID("_GoF3EnvMap");
+
+        /// <summary>A GoF3 material's own environment cube (a JSON material's or a glTF material's "extras" "environmentCube"):
+        /// a 6:1 strip of its faces (right, left, up, down, front, back, as the mods' skies), GoF3's generic cube as GoF3 has
+        /// it, monochrome with four blurs in R G B A (R the sharpest), linear. GoF2/Hull's GoF3ShipShader reflects it, its blur
+        /// picked by the gloss, as GoF3's ShipShader does; without one the place's environment stands in. Anything but 6:1 is
+        /// left out with a warning.</summary>
+        internal static void GoF3Environment(Material m, Texture2D strip)
+        {
+            if (strip != null && Mathf.Abs(strip.width / (float)Mathf.Max(1, strip.height) - 6f) > 0.05f)
+            {
+                Debug.LogWarning($"Mods: {strip.name} is {strip.width} x {strip.height}: an environment cube is a 6:1 strip of its faces");
+                strip = null;
+            }
+            if (strip == null) { m.SetVector(GoF3EnvId, Vector4.zero); return; }
+            m.SetTexture(GoF3EnvMapId, strip);
+            m.SetVector(GoF3EnvId, new Vector4(1f, 1f / strip.height, 0f, 0f));
+        }
 
         /// <summary>A material with an emission map or colour draws it: _EMISSION on its copy, whatever the template holds. The
         /// templates' keyword is lost whenever the Editor re-saves them (a shader reimport did, 2026-11-02: every mod room and
@@ -891,6 +909,7 @@ namespace GoF2Remake.Modding
                 m.SetTexture("_SpecGlossMap", sg != null ? sg : Solid(Rgb(e.specularColor, new Color(0.2f, 0.2f, 0.2f)), false));
                 m.SetColor("_SpecColor", Color.white);
                 m.SetVector(GoF3ParamsId, ModGlbImages.GoF3Params(e.environment, e.rim, e.highlightMultiplier, e.multiplierInMap));
+                GoF3Environment(m, Texture(mod, e.environmentCube, true));
             }
             else
             {
@@ -999,6 +1018,57 @@ namespace GoF2Remake.Modding
             if (tex != null) { tex.wrapMode = TextureWrapMode.Repeat; m.SetTexture("_EmissionMap", tex); }
             if (e.scroll != null && e.scroll.Length >= 2) m.SetVector("_Scroll", new Vector4(e.scroll[0], e.scroll[1], 0f, 0f));
             m.SetFloat("_UseVertexColor", e.ignoreVertexColors ? 0f : 1f);
+            var g = new ModGlbImages.Glow { billboard = e.billboard };
+            if (e.angleFade != null && e.angleFade.Length >= 2) g.angleFade = new Vector2(e.angleFade[0], e.angleFade[1]);
+            if (e.pulse != null && e.pulse.Length >= 3)
+            {
+                g.pulseFrequency = e.pulse[0]; g.pulseMin = e.pulse[1]; g.pulseMax = e.pulse[2];
+                g.pulseThreshold = e.pulse.Length > 3 ? e.pulse[3] : 0f;
+                g.pulseStep = e.pulse.Length > 4 && e.pulse[4] > 0.5f; g.pulseSmooth = e.pulse.Length > 5 && e.pulse[5] > 0.5f;
+                g.pulseVertexOffset = e.pulse.Length > 6 && e.pulse[6] > 0.5f;
+            }
+            GlowTerms(m, g);
+            return m;
+        }
+
+        static readonly int FxAngleId = Shader.PropertyToID("_FxAngle"), FxPulseId = Shader.PropertyToID("_FxPulse"),
+            FxPulseModeId = Shader.PropertyToID("_FxPulseMode"), BillboardId = Shader.PropertyToID("_Billboard");
+
+        /// <summary>A glow layer's GoF3 effect terms on its GoF2/ModGlow material: the angle fade (_FxAngle: on, min, max,
+        /// absolute), the pulse (_FxPulse: frequency, threshold, min, max; _FxPulseMode: on, step, smooth, vertex offset) and
+        /// the billboard (_Billboard: its sprites face the camera, UV1 their corners' view-space offsets).</summary>
+        internal static void GlowTerms(Material m, ModGlbImages.Glow g)
+        {
+            m.SetVector(FxAngleId, g.angleFade is Vector2 af ? new Vector4(1f, af.x, Mathf.Max(af.y, af.x + 1e-4f), g.angleAbsolute ? 1f : 0f) : Vector4.zero);
+            m.SetVector(FxPulseId, new Vector4(g.pulseFrequency, g.pulseThreshold, g.pulseMin, g.pulseMax));
+            m.SetVector(FxPulseModeId, new Vector4(g.pulseFrequency != 0f ? 1f : 0f, g.pulseStep ? 1f : 0f, g.pulseSmooth ? 1f : 0f, g.pulseVertexOffset ? 1f : 0f));
+            m.SetFloat(BillboardId, g.billboard ? 1f : 0f);
+        }
+
+        /// <summary>A glTF material whose "extras" say "additive": true (ModGlbImages.Glow: the GoF3 importer's effect layers,
+        /// their colour baked into the texture) as a GoF2/ModGlow copy: its emissive texture (else its base colour texture) x
+        /// "intensity", its vertex colours, scroll, angle fade, pulse and billboard (GlowTerms).</summary>
+        public static Material GlowFromGltf(GLTFast.Schema.MaterialBase g, GLTFast.IGltfReadable gltf,
+            System.Func<int, ModGlbImages.Role, float, float, Texture2D> images, ModGlbImages.Glow glow)
+        {
+            var a = ModAssets.Get();
+            if (a == null || a.glow == null) { Debug.LogWarning("Mods: no glow template (GoF2 > Build > Mod Assets)"); return null; }
+            var m = Copy(a.glow, string.IsNullOrEmpty(g.name) ? "glTF glow" : g.name);
+            var info = g.EmissiveTexture != null && g.EmissiveTexture.index >= 0 ? g.EmissiveTexture : g.PbrMetallicRoughness?.BaseColorTexture;
+            if (info != null && info.index >= 0)
+            {
+                var t = images?.Invoke(info.index, ModGlbImages.Role.Color, 0f, 1f) ?? gltf.GetTexture(info.index);
+                if (t != null)
+                {
+                    m.SetTexture("_EmissionMap", t);
+                    if (gltf.IsTextureYFlipped(info.index)) { m.SetTextureScale("_EmissionMap", new Vector2(1f, -1f)); m.SetTextureOffset("_EmissionMap", new Vector2(0f, 1f)); }
+                }
+            }
+            var c = Color.white * Mathf.Max(0f, glow.intensity); c.a = 1f;
+            m.SetColor("_EmissionColor", c);
+            m.SetVector("_Scroll", new Vector4(glow.scroll.x, glow.scroll.y, 0f, 0f));
+            m.SetFloat("_UseVertexColor", glow.vertexColors ? 1f : 0f);
+            GlowTerms(m, glow);
             return m;
         }
 
@@ -1022,7 +1092,7 @@ namespace GoF2Remake.Modding
         /// when the mods' loader made it (ModGltf: compressed, metallic-roughness and normal maps already converted); else
         /// glTFast's own texture, converted here on the GPU.</summary>
         public static Material FromGltf(GLTFast.Schema.MaterialBase g, GLTFast.IGltfReadable gltf,
-            System.Func<int, ModGlbImages.Role, float, float, Texture2D> images = null, Vector4? gof3 = null)
+            System.Func<int, ModGlbImages.Role, float, float, Texture2D> images = null, Vector4? gof3 = null, Texture2D gof3Env = null)
         {
             var a = ModAssets.Get();
             if (a == null) return null;
@@ -1070,6 +1140,7 @@ namespace GoF2Remake.Modding
                 else { m.SetTexture("_SpecGlossMap", Solid(f.gamma, false)); m.SetColor("_SpecColor", Color.white); }
                 m.SetFloat("_Smoothness", sgx.glossinessFactor);
                 m.SetVector(GoF3ParamsId, gof3 ?? ModGlbImages.GoF3Params(1f, 1f, 1f, false));   // its "extras" (ModGlbImages)
+                GoF3Environment(m, gof3Env);
             }
             else if (mr != null && ours)
             {

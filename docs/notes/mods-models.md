@@ -53,8 +53,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   GoF3's copper): GoF2/Hull's `_GOF2_PBR` + `_SPECULAR_SETUP` variant skips URP's PBR (`HullForwardPass.hlsl`
   `GoF3ShipShader`), a port of GoF3's ShipShader fragment (the retro body's `shader_1873945865.ae4shader`, read with the
   importer's `ae4_shaders.text`): in gamma space, Phong `pow(R.V, exp2(9 gloss + 1))`, spec and gloss raised by a fresnel
-  `(1 - N.V)^2`, the diffuse cut only by the highlight, `Specular_Multiplier` 1.5 on the highlight alone, the environment's
-  brightness (GoF3's cubes are grey) x spec x (light + fresnel) blended over, a 0.1 rim; one light (the main, in a GoF2
+  `(1 - N.V)^2`, the diffuse cut only by the highlight, `Specular_Multiplier` 1.5 on the highlight alone, the environment
+  (the material's own GoF3 cube, its blurs by gloss, below; else the place's brightness) x spec x (light + fresnel) blended over, a 0.1 rim; one light (the main, in a GoF2
   hangar the key light from above, `_GoF2PbrLight`), URP's ambient, both and the environment dimmed by `_GoF2PbrIndirectDim`
   (the room cubemap's sheen). URP's PBR specular setup cut the diffuse to `albedo x (1 - max(spec))`, turned panels white at
   grazing angles and reflected the room at the map's strength; URP's Blinn-Phong (N.H) of GoF3's exponent is four times as
@@ -96,6 +96,24 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   ship names (no sprite). Code that sizes a ship by its renderers must skip trails (empty at the origin): the item window and
   `NetPlayer` use mesh renderers only. Another player's ship built before the session's mods were on (they join before
   NetState applies them) is built again on `ModShips.ModelsChanged`.
+  **GoF3's effect terms on the glow layers** (2026-11-12, the user's request after the missed GoF3 ships: GoF3's effect vertex
+  shaders, ae4_shaders): `GoF2/ModGlow` takes `_FxAngle` (on, min, max, absolute: |N.E| with E the eye's direction faded in
+  between, AngleBlend), `_FxPulse` / `_FxPulseMode` (frequency, threshold, min, max; on, step, smooth, vertex offset:
+  |sin((t [+ vertex red]) x f)|, [step], then smoothstep into min..max or clamped: Pulsate) and `_Billboard` (UV1 = the
+  corner's view-space offset x length(MV (1, 1, 1) / sqrt 3): GoF3's sprites, whose vertices sit at their centre with
+  a_pos2dOffset), all off by default (`ModMaterials.GlowTerms`, declared in the shader so a kit skin's copy keeps them). From a
+  JSON material's `angleFade` / `pulse` / `billboard`, or a glTF material whose `extras` say `"additive": true`
+  (`ModGlbImages.Glow`, `ModGltfMaterials` -> `ModMaterials.GlowFromGltf`: a ModGlow copy of its emissive texture x
+  `intensity`, no lit material). The GoF3 importer bakes each effect's colour into that texture (`tools/gof3_fx.py`) and
+  writes the rest. **A GoF3 material's own environment cube** (2026-11-12, the user's report: the Key Art Sutoe-Shii had no
+  shine): GoF3ShipShader reflects `_GoF3EnvMap` (a 6:1 strip, `_GoF3Env` x 1 on, y its texel height) where a material has
+  one (`environmentCube`, JSON or glTF extras; `ModMaterials.GoF3Environment`), reading its four blurs (RGBA, R the
+  sharpest) by gloss as GoF3's ShipShader does ("Generic cube maps are monochrome and contain four blurriness levels
+  separated into RGBA"; its ETC2 RGB cubes give A = 1, a flat full reflection for low gloss), else the place's environment.
+  The place's sky too (2026-11-12, the user's choice over GoF3's cube alone, which ignored where the ship is): the system's
+  reflection cubemap (`_GoF2ReflectionCube`, SkyReflection) at the gloss's blur tints that reflection by its hue, as much as
+  the sky is bright there (a dark sky leaves GoF3's grey), and adds its light, so a sun or nebula shows on the hull.
+  `ModHullLightingTests`.
 - **How a ship is seen** (`ModShipView`, 2026-10-24; GoF3's ship files): ships.json `"camera"` { distance, height,
   lookHeight, lookAhead } game units (`ShipData.chaseCamera`; `ModShipView.CameraOffsets` in `SpaceLevel`'s camera
   set-up and `PlayerHull.FitCamera`'s ordinary path, the original's 1338 / 600 / 600 / -650 for a field left out),

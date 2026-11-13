@@ -119,6 +119,10 @@ float4 _LavaC;
 float4 _LavaD;
 float4 _LavaE;
 float4 _LavaF;
+// GoF2: a GoF3 material's own environment cube (ModMaterials, a mod material's "environmentCube"; HullForwardPass.hlsl
+// GoF3ShipShader): x 1 = _GoF3EnvMap holds it (a 6:1 strip of GoF3's generic cube: monochrome, four blurs in R G B A, R the
+// sharpest), else the place's environment stands in; y the strip's texel height (1 / its height).
+float4 _GoF3Env;
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -232,6 +236,7 @@ TEXTURE2D(_ChorusDirtRough);
 TEXTURE2D(_WreckBurnMap);
 TEXTURE2D(_LavaEmit);       // GoF2: the lava's flow emissives (R the first, G the second)
 TEXTURE2D(_LavaFlowMaps);   // its flowmaps (RG the first, BA the second)
+TEXTURE2D(_GoF3EnvMap);     // GoF3's environment cube as a 6:1 strip (_GoF3Env; sampler_LinearClamp)
 TEXTURE2D(_LavaMasks);      // R / G the time offsets, B the part mask, A the core mask   // GoF2: a wreck piece's burn noise (HullWreck.hlsl HullWreckBurn)
 UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_BaseMap);
 
