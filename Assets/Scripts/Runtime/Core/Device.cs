@@ -89,8 +89,8 @@ namespace GoF2Remake.Flight
             /// <summary>Shield Overcharge: the shield full at once, and for deviceDurationMs every hit stops at it (nothing
             /// reaches the armour or hull, the shield doesn't drop; Hitpoints.shieldLocked).</summary>
             ShieldOvercharge = 22,
-            // Remake (2026-11-13): Chorus's Rites (its BP_ActivePower_* blueprints), paid from the ship's Rite energy
-            // (Flight.RiteEnergy) by deviceRiteCost pips besides their own short cooldown.
+            // Remake (2026-11-13): Chorus's Rites (its BP_ActivePower_* blueprints), paid from the ship's Void energy
+            // (Flight.VoidEnergy) by deviceVoidCost pips besides their own short cooldown.
             /// <summary>Rite of the Hunt (Chorus's Blink, BP_ActivePower_Blink): a leap onto the tail of the hostile ship in the
             /// sights (the lock first) within deviceRadius (default HuntRangeTops of the top speed), deviceRange2 behind it
             /// (default HuntBehindTops), facing its way at the ship's own speed; not at capital ships or the pursuer.</summary>
@@ -114,8 +114,8 @@ namespace GoF2Remake.Flight
         public const int ConsumableAttr = 164, AmmoAttr = 165;
         /// <summary>Remake (2026-11-02): deviceRange2 = the spectral shift's sweep radius around its path (game units).</summary>
         public const int Range2Attr = 166;
-        /// <summary>Remake (2026-11-13): deviceRiteCost = the Rite energy pips a Rite pays (Flight.RiteEnergy; Chorus's EnergyCost).</summary>
-        public const int RiteCostAttr = 178;
+        /// <summary>Remake (2026-11-13): deviceVoidCost = the Void energy pips a Rite pays (Flight.VoidEnergy; Chorus's EnergyCost).</summary>
+        public const int VoidCostAttr = 178;
         /// <summary>Remake (2026-11-13): deviceChain = the Rite of the Storm's jumps to more ships (Chorus's ChainLimit).</summary>
         public const int ChainAttr = 179;
         // Chorus's Blink (BP_ActivePower_Blink's defaults: Range 100000 cm, BlinkLocationOffset -18000 cm, EnergyCost 2,

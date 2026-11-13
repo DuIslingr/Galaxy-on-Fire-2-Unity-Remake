@@ -349,7 +349,7 @@ energy cells.
 | `deviceDamagePercent` | 157 | Device: the overchargers' damage per target in percent of the shield spent; the strike charge's damage factor (175 = x1.75); the deflector's turned-back shots' damage; the shield disruptor's damage on a ship without a shield, in percent of its `damage` (default 100) |
 | `deviceCharge` | 158 | Device: the strike charge's charge, the damage the primary guns must deal before it can fire |
 | `deviceConeDeg` | 159 | Device: the overcharger beam's half-angle ahead (default 30) |
-| `deviceRiteCost` | 178 | Device: a Rite (Chorus's powers): the Rite energy pips each use pays besides its cooldown (see [Rites](#rites)) |
+| `deviceVoidCost` | 178 | Device: a Rite (Chorus's powers): the Void energy pips each use pays besides its cooldown (see [Rites](#rites)) |
 | `deviceChain` | 179 | Device: the Rite of the Storm's jumps to more ships |
 
 Which stats an item uses depends on its category, so copy the stats its base item has (see `items.json` and
@@ -458,16 +458,17 @@ type. The seven types are Galaxy on Fire 3's (the GoF3 Ships mod has them all):
 | 20 Recovery | Lifts the debuffs on your ship: a web's slow, a rift's corrosion (EVERSPACE 2's System Recovery Routine); refused with none on | |
 | 21 Virus | Infects the locked ship (within `deviceRadius`); every `deviceGrowMs` (default 1 s) it spreads to the nearest hostile ship within `deviceRadius` of an infected one, up to 6; after `deviceDurationMs` every infected ship takes `deviceDamagePercent` % of a pirate raider's hull (EVERSPACE 2's Annihilator Virus) | radius, grow, duration, damage percent |
 | 22 ShieldOvercharge | The shield full at once, and for `deviceDurationMs` every hit stops at it: nothing reaches the armour or the hull, and the shield doesn't drop; a shimmering bubble round the ship shows it (Chorus's capital ship's Shield Overcharge: 5 s, a 10 s cooldown) | duration, cooldown |
-| 23 Rite of the Hunt | A leap onto the tail of the hostile ship in the sights (your lock first, else the nearest within 10 degrees of the nose) within `deviceRadius`, `deviceRange2` behind it, facing the way it flies at your own speed; never at a capital ship or a ship that can't be harmed; refused with no ship to leap at or no room behind it (Chorus's Rite of the Hunt). The ship vanishes for a fifteenth of a second, lands, grows back over a third of a second, and the camera glides over to it in a second. A Rite: it pays 2 pips of Rite energy unless `deviceRiteCost` says otherwise, and cools down 0.5 s | radius, range 2, rite cost |
-| 24 Rite of the Storm | A bolt at the hostile ship in the sights (your lock first, else the nearest within 10 degrees of the nose) within `deviceRadius`: `damage` off its shield (a ship without one, as the game's, takes `deviceDamagePercent` of it), and for `deviceDurationMs` (default 4000) it holds its fire, flies at `deviceSlowPercent` of its speed (default 0) and can't turn; with `deviceChain` the bolt jumps every `deviceGrowMs` (default 250) to the nearest other ship within `deviceRange2` of the last. Its turrets and weak spots may be struck, not a capital ship's hull or a ship that can't be harmed (Chorus's Rite of the Storm). A Rite: 2 pips, 0.5 s cooldown | radius, damage, damage percent, duration, slow, chain, grow, range 2, rite cost |
+| 23 Rite of the Hunt | A leap onto the tail of the hostile ship in the sights (your lock first, else the nearest within 10 degrees of the nose) within `deviceRadius`, `deviceRange2` behind it, facing the way it flies at your own speed; never at a capital ship or a ship that can't be harmed; refused with no ship to leap at or no room behind it (Chorus's Rite of the Hunt). The ship vanishes for a fifteenth of a second, lands, grows back over a third of a second, and the camera glides over to it in a second. A Rite: it pays 2 pips of Void energy unless `deviceVoidCost` says otherwise, and cools down 0.5 s | radius, range 2, void cost |
+| 24 Rite of the Storm | A bolt at the hostile ship in the sights (your lock first, else the nearest within 10 degrees of the nose) within `deviceRadius`: `damage` off its shield (a ship without one, as the game's, takes `deviceDamagePercent` of it), and for `deviceDurationMs` (default 4000) it holds its fire, flies at `deviceSlowPercent` of its speed (default 0) and can't turn; with `deviceChain` the bolt jumps every `deviceGrowMs` (default 250) to the nearest other ship within `deviceRange2` of the last. Its turrets and weak spots may be struck, not a capital ship's hull or a ship that can't be harmed (Chorus's Rite of the Storm). A Rite: 2 pips, 0.5 s cooldown | radius, damage, damage percent, duration, slow, chain, grow, range 2, void cost |
 
 #### Rites
 
-Chorus's Rites are devices that pay **Rite energy** as well: a device with `"deviceRiteCost"` above 0 (Rite of the Hunt
+Chorus's Rites are devices that pay **Void energy** as well: a device with `"deviceVoidCost"` above 0 (Rite of the Hunt
 has 2 by default). A ship with a Rite mounted has a pool of 3 pips, full at the start, growing one back every 4.5 s
-(Chorus's 0.22 a second); the HUD shows them as squares after the recharge icons, and a Rite's icon fills toward its
-cost. A Rite with too few pips isn't ready ("<item>: not enough Rite energy"). The Debug page's "no equipment cooldown"
-also makes the Rites free. A Rite's distances left at 0 follow the ship's top speed as Chorus's do (its 140 m/s): the
+(Chorus's 0.22 a second) on Void Crystals from the hold: each pip grown back burns 1 t, and with none aboard none grow
+("No Void Crystals aboard"). The HUD shows the pips as squares after the recharge icons, with the crystals aboard (red
+with none), and a Rite's icon fills toward its cost. A Rite with too few pips isn't ready ("<item>: not enough Void
+energy"). The Debug page's "no equipment cooldown" also makes the Rites free and the regrowth fuel-free. A Rite's distances left at 0 follow the ship's top speed as Chorus's do (its 140 m/s): the
 Hunt and the Storm reach 7.1 s of it (1000 m in Chorus), the Hunt lands 1.3 s of it behind its target (180 m) and the
 Storm's bolt jumps 0.7 s of it (100 m).
 
@@ -495,7 +496,7 @@ Storm strikes, following it. Any part may be left out.
     "techLevel": 9,
     "occurrence": 2,
     "price": [250000, 262000],
-    "stats": { "cabinSize": 0, "device": 23, "deviceRiteCost": 2, "deviceCooldownMs": 500 }
+    "stats": { "cabinSize": 0, "device": 23, "deviceVoidCost": 2, "deviceCooldownMs": 500 }
 }
 ```
 

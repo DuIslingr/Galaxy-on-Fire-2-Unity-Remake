@@ -1,6 +1,7 @@
-// RiteEnergyTests.cs
-// Feature: docs/notes/combat-equipment.md "Rites", Modding/README.md "Devices": Chorus's Rite energy (Flight.RiteEnergy):
-// 3 pips, one back every 1 / 0.22 s, the bonus pips paid first and running out, a cost above the total refused; Rite of the
+// VoidEnergyTests.cs
+// Feature: docs/notes/combat-equipment.md "Rites", Modding/README.md "Devices": Chorus's Void energy (Flight.VoidEnergy):
+// 3 pips, one back every 1 / 0.22 s on a tonne of Void Crystals (none aboard: none grow), the bonus pips paid first and
+// running out, a cost above the total refused; Rite of the
 // Hunt's numbers (Flight.Device 23: Blink's range, landing and cost), where it lands, its timelines and the camera's glide;
 // the Rite of the Storm's numbers (Flight.Device 24: Pulse Zap's) and its jam (Target.Jammed).
 
@@ -10,12 +11,12 @@ using UnityEngine;
 
 namespace GoF2Remake.Tests
 {
-    public class RiteEnergyTests
+    public class VoidEnergyTests
     {
         [Test]
         public void ThePoolStartsFullAndGrowsBackAPipEvery4Point5Seconds()
         {
-            var r = new RiteEnergy();
+            var r = new VoidEnergy();
             Assert.AreEqual(3, r.Total);
             Assert.IsTrue(r.Full);
             Assert.IsTrue(r.TryPay(2));
@@ -31,9 +32,35 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ThePipsGrowBackOnVoidCrystals()
+        {
+            int crystals = 2;
+            var r = new VoidEnergy { HasFuel = () => crystals >= VoidEnergy.CrystalsPerPip, Burn = () => crystals -= VoidEnergy.CrystalsPerPip };
+            Assert.AreEqual(164, VoidEnergy.VoidCrystalItem);
+            r.TryPay(3);
+            r.Step(4.6f);
+            Assert.AreEqual(1, r.Regular);
+            Assert.AreEqual(1, crystals, "a tonne a pip");
+            r.Step(4.6f);
+            Assert.AreEqual(2, r.Regular);
+            Assert.AreEqual(0, crystals);
+            Assert.IsTrue(r.Starved, "the last one went");
+            r.Step(30f);
+            Assert.AreEqual(2, r.Regular, "none aboard: none grow");
+            Assert.AreEqual(0f, r.Progress);
+            crystals = 5;
+            r.Step(4.6f);
+            Assert.AreEqual(3, r.Regular, "more aboard: it grows again");
+            Assert.IsFalse(r.Starved);
+            Assert.AreEqual(4, crystals);
+            r.Step(10f);
+            Assert.AreEqual(4, crystals, "nothing burnt while full");
+        }
+
+        [Test]
         public void ACostAboveTheTotalIsRefusedAndNothingPaid()
         {
-            var r = new RiteEnergy();
+            var r = new VoidEnergy();
             Assert.IsTrue(r.TryPay(2));
             Assert.IsFalse(r.CanPay(2));
             Assert.IsFalse(r.TryPay(2));
@@ -47,7 +74,7 @@ namespace GoF2Remake.Tests
         [Test]
         public void BonusPipsArePaidFirstAndRunOut()
         {
-            var r = new RiteEnergy();
+            var r = new VoidEnergy();
             r.AddBonus(2, 5f);
             Assert.AreEqual(5, r.Total, "past the maximum (Blink's upgrade A)");
             Assert.IsTrue(r.TryPay(3));
@@ -63,7 +90,7 @@ namespace GoF2Remake.Tests
         [Test]
         public void ARegenDelayHoldsTheGrowthAfterAPayment()
         {
-            var r = new RiteEnergy(3, 0.5f, 1f);
+            var r = new VoidEnergy(3, 0.5f, 1f);
             r.TryPay(1);
             r.Step(0.8f);
             Assert.AreEqual(0f, r.Progress);

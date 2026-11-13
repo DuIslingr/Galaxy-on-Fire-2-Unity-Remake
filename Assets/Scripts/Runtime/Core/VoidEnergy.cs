@@ -1,5 +1,5 @@
-// RiteEnergy.cs
-// Remake (2026-11-13, Chorus's Rites): the Rite energy pool a ship's Rites (Flight.Device with riteCost > 0, PlayerDevices) pay
+// VoidEnergy.cs
+// Remake (2026-11-13, Chorus's Rites; "Void energy" after Chorus's InfiniteVoidEnergy, the user's name): the Void energy pool a ship's Rites (Flight.Device with voidCost > 0, PlayerDevices) pay
 // from, after Chorus's UEnergyComponent (decompiled: AddRegularEnergy, AddBonusEnergy, RemoveEnergy, CanPayEnergy) with
 // BP_Player_Ship_Base's numbers (MaxRegularEnergy 3, RegenRate 0.22, RegenDelay 0):
 //   regular pips  0..MaxRegular, the next one growing at RegenPerS pips a second while short of the maximum (4.5 s a pip)
@@ -7,17 +7,27 @@
 //   paying        the bonus pips first, the oldest first (RemoveEnergy's memmove from the front), then the regular ones; a
 //                 cost above the total is refused (the Rite doesn't fire)
 // Chorus's debug "InfiniteVoidEnergy" is the remake's Cheats.NoEquipmentCooldown (PlayerDevices). The pool starts full.
+// Remake (the user's choice, 2026-11-13): the regrowth burns Void Crystals (item 164) from the hold, CrystalsPerPip a pip
+// finished (Burn); with none aboard (HasFuel false) the next pip doesn't grow at all and the pool stays where it is.
 
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
-    public sealed class RiteEnergy
+    public sealed class VoidEnergy
     {
         /// <summary>BP_Player_Ship_Base's EnergyComponent: MaxRegularEnergy 3, RegenRate 0.22 pips a second, RegenDelay 0.</summary>
         public const int ChorusMax = 3;
         public const float ChorusRegenPerS = 0.22f, ChorusRegenDelayS = 0f;
+        /// <summary>The fuel: Void Crystals (item 164), tonnes burnt a pip regrown.</summary>
+        public const int VoidCrystalItem = 164, CrystalsPerPip = 1;
+        /// <summary>Whether the next pip may grow (the crystals aboard); null = always.</summary>
+        public System.Func<bool> HasFuel;
+        /// <summary>A regrown pip's fuel burnt.</summary>
+        public System.Action Burn;
+        /// <summary>The growth is held for want of fuel (the HUD's word, PlayerDevices).</summary>
+        public bool Starved { get; private set; }
 
         public readonly int maxRegular;
         public readonly float regenPerS, regenDelayS;
@@ -29,7 +39,7 @@ namespace GoF2Remake.Flight
         // the bonus pips' seconds left, the oldest first; float.PositiveInfinity = no limit
         readonly List<float> bonus = new List<float>();
 
-        public RiteEnergy(int maxRegular = ChorusMax, float regenPerS = ChorusRegenPerS, float regenDelayS = ChorusRegenDelayS)
+        public VoidEnergy(int maxRegular = ChorusMax, float regenPerS = ChorusRegenPerS, float regenDelayS = ChorusRegenDelayS)
         {
             this.maxRegular = Mathf.Max(0, maxRegular);
             this.regenPerS = Mathf.Max(0f, regenPerS);
@@ -78,7 +88,9 @@ namespace GoF2Remake.Flight
                 bonus[i] -= dt;
                 if (bonus[i] <= 0f) bonus.RemoveAt(i);
             }
+            Starved = false;
             if (Full) { Progress = 0f; return; }
+            if (HasFuel != null && !HasFuel()) { Starved = true; return; }
             if (DelayLeft > 0f)
             {
                 DelayLeft -= dt;
@@ -87,7 +99,13 @@ namespace GoF2Remake.Flight
                 DelayLeft = 0f;
             }
             Progress += regenPerS * dt;
-            while (Progress >= 1f && !Full) { Regular++; Progress -= 1f; }
+            while (Progress >= 1f && !Full)
+            {
+                Regular++;
+                Progress -= 1f;
+                Burn?.Invoke();
+                if (HasFuel != null && !HasFuel() && !Full) { Progress = 0f; Starved = true; break; }   // (the last crystal went)
+            }
             if (Full) Progress = 0f;
         }
 

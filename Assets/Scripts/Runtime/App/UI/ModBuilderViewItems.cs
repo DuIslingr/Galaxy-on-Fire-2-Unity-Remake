@@ -306,7 +306,7 @@ namespace GoF2Remake.UI
                 Add(Flight.Device.AmmoAttr, 0, 0, 1000, T("mbStatNoteDeviceAmmo", "The restock's rounds for the selected secondary."));
                 Add(Flight.Device.Range2Attr, 0, 0, 200000, T("mbStatNoteDeviceRange2", "The spectral shift's sweep radius around its path, the Rite of the Hunt's landing behind its target, the Rite of the Storm's jump (20 = 1 m)."));
                 Add(Flight.Device.ChainAttr, 0, 0, 20, T("mbStatNoteDeviceChain", "The Rite of the Storm's jumps to more ships."));
-                Add(Flight.Device.RiteCostAttr, 0, 0, 10, T("mbStatNoteDeviceRiteCost", "A Rite: the Rite energy pips a use pays (the ship has 3, one back every 4.5 s)."));
+                Add(Flight.Device.VoidCostAttr, 0, 0, 10, T("mbStatNoteDeviceVoidCost", "A Rite: the Void energy pips a use pays (the ship has 3, one back every 4.5 s)."));
             }
             return list;
         }

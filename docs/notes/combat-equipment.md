@@ -190,14 +190,20 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   energy; Rite of the Hunt first). Read from Chorus's BP_PowersMasterData, the BP_ActivePower_* defaults and the decompiled
   UEnergyComponent (AddRegularEnergy / AddBonusEnergy / RemoveEnergy / CanPayEnergy) and ABlinkActivePower
   (GetCurrentTarget, UpdateTargetTransform):
-  - **Rite energy** (`Flight.RiteEnergy`, one per ship in `PlayerDevices.Rite` once a device with `deviceRiteCost` (178)
+  - **Void energy** (`Flight.VoidEnergy`, one per ship in `PlayerDevices.VoidPool` once a device with `deviceVoidCost` (178)
     is mounted): BP_Player_Ship_Base's EnergyComponent, MaxRegularEnergy 3, RegenRate 0.22 a second (4.5 s a pip),
     RegenDelay 0; bonus pips past the maximum (AddBonusEnergy, Blink's upgrade A; each may time out) are paid first, the
-    oldest first, then the regular ones; a cost above the total refuses the Rite ("{0}: not enough Rite energy",
-    `deviceNoRiteEnergy`). Full at the start. `PlayerDevices.Ready` / `Charge` add the pool to a Rite's readiness (the
+    oldest first, then the regular ones; a cost above the total refuses the Rite ("{0}: not enough Void energy",
+    `deviceNoVoidEnergy`). Full at the start. `PlayerDevices.Ready` / `Charge` add the pool to a Rite's readiness (the
     quick menu's half-transparency, "{0} ready", CooldownView's sweep toward the cost); CooldownView shows the pool as
-    pips after the slots (`.rite-energy`, Chorus's PlayerEnergyWidget segments). Cheats.NoEquipmentCooldown also
-    waives the cost (Chorus's InfiniteVoidEnergy debug pref).
+    pips after the slots (`.void-energy`, Chorus's PlayerEnergyWidget segments). Cheats.NoEquipmentCooldown also
+    waives the cost (Chorus's InfiniteVoidEnergy debug pref). Renamed from "Rite energy" the same day (the user's
+    request; Chorus's own debug name), its cost stat `deviceVoidCost`. **Fuel** (the user's choice of three, over Void
+    Crystals as the pool itself or as an instant refill): the regrowth burns Void Crystals (item 164, the Khador blueprint's
+    ore) from the hold, `VoidEnergy.CrystalsPerPip` (1 t) a pip finished (`Burn`); with none aboard (`HasFuel`) the next pip
+    doesn't grow and its progress is dropped (`Starved`: "No Void Crystals aboard: the Void energy can't grow back",
+    `voidNoCrystals`, once each time); CooldownView shows the crystals aboard after the pips (`.void-fuel`, red starved).
+    The debug's free equipment needs no crystals.
   - **Rite of the Hunt** (`Device.Type.RiteHunt` 23, Chorus's Blink: Range 100000 cm, BlinkLocationOffset -18000 cm,
     EnergyCost 2, Cooldown 0.5): the target is the lock if huntable and within reach, else the nearest huntable ship within
     `HuntAimDot` (10 deg) of the nose (TargetableRadius 0.1 is a screen share in UpdateActivePowerTargets, not decompiled:
@@ -234,7 +240,7 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     to the struck ship) with `vanishSound` / `appearSound` / `hitSound` (loaded with the item's other sounds); the start's
     sound is the fx's "shot". The Chorus importer writes them from the blueprints' Cascade systems and FMOD events.
   - Still to come: Drill, Telekinesis, Scan and the passives (ElementalShield: +2 energy).
-  Tests `RiteEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers, landing and timelines, the
+  Tests `VoidEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers, landing and timelines, the
   camera's glide, Pulse Zap's numbers, the jam), `ModWeaponsTests.ARitesLooksAreAFileOfEffectsAndSounds`.
 - **Hull regeneration** (remake 2026-11-11, for mods): ships.json `"hullRegen"` (points a second; Chorus's PCLS
   PlayerHealthComponent HealthRegenRate 250 of its 5000) -> `PlayerHealth` (`Hitpoints.RegenerateHull`, fractions carried,
