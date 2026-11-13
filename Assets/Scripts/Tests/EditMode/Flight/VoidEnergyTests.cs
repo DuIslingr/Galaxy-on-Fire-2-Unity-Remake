@@ -4,7 +4,8 @@
 // running out, a cost above the total refused; Rite of the
 // Hunt's numbers (Flight.Device 23: Blink's range, landing and cost), where it lands, its timelines and the camera's glide;
 // the Rite of the Storm's numbers (Flight.Device 24: Pulse Zap's) and its jam (Target.Jammed); the Rite of the Star's
-// (Flight.Device 25: the Drill's), its reach and its drive's turn cap (ShipController.CapTurn).
+// (Flight.Device 25: the Drill's), its reach and its drive's turn cap (ShipController.CapTurn); the Rite of Control's
+// (Flight.Device 26: Telekinesis's).
 
 using GoF2Remake.Flight;
 using NUnit.Framework;
@@ -172,6 +173,19 @@ namespace GoF2Remake.Tests
             p = 0.1f; y = 0.2f;
             ShipController.CapTurn(ref p, ref y, 1f);
             Assert.AreEqual(0.1f, p, "under it: untouched");
+        }
+
+        [Test]
+        public void ControlsNumbersAreTelekinesiss()
+        {
+            Assert.AreEqual(Device.Type.RiteControl, (Device.Type)26);
+            Assert.AreEqual(26, Device.TypeCount);
+            Assert.AreEqual(700f, Device.ControlGrabTops * 140f, 1e-3f, "GrabRange 70000 cm");
+            Assert.AreEqual(800f, Device.ControlTossTops * 140f, 1e-3f, "TossRange 80000 cm");
+            Assert.AreEqual(4f, Device.ControlSpeedTops, 1e-5f, "TossSpeed 56000 cm/s: 4x Chorus's top speed");
+            Assert.Less(Vector3.Distance(new Vector3(25f, 25f, 50f), Device.ControlHoldTops * 140f), 1e-3f, "OffsetLocations[0]: ahead, right, up");
+            Assert.AreEqual(3, Device.ControlCost, "the blueprint's EnergyCost 3");
+            Assert.AreEqual(1928.57f, Device.ControlFlightMs, 0.01f, "the toss's reach at its speed and half a second");
         }
     }
 }

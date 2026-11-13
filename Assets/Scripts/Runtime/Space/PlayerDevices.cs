@@ -98,20 +98,23 @@ namespace GoF2Remake.Flight
         {
             var type = Shop.DeviceType(it);
             bool consumable = Shop.IsConsumableDevice(it);
-            bool hunt = type == Device.Type.RiteHunt, storm = type == Device.Type.RiteStorm, star = type == Device.Type.RiteStar;
+            bool hunt = type == Device.Type.RiteHunt, storm = type == Device.Type.RiteStorm, star = type == Device.Type.RiteStar,
+                 control = type == Device.Type.RiteControl;
             var e = new Entry
             {
                 item = it,
                 name = GameNames.Item(it.index),
                 // (a consumable has no cooldown unless given one: its uses are the limit)
-                rules = new Device(it.index, type, storm ? 0 : it.Attr(Device.DurationAttr, star ? Device.StarMaxMs : 0),
+                rules = new Device(it.index, type, storm ? 0 : it.Attr(Device.DurationAttr, star ? Device.StarMaxMs : control ? Device.ControlHoldMs : 0),
                                    it.Attr(Device.CooldownAttr, consumable ? 0 : hunt ? Device.HuntCooldownMs : storm ? Device.StormCooldownMs
-                                                                  : star ? Device.StarCooldownMs : Device.DefaultCooldownMs),
+                                                                  : star ? Device.StarCooldownMs : control ? Device.ControlCooldownMs
+                                                                  : Device.DefaultCooldownMs),
                                    type == Device.Type.StrikeCharge ? it.Attr(Device.ChargeAttr) : 0),
                 consumable = consumable,
                 ammo = it.Attr(Device.AmmoAttr),
                 range2 = it.Attr(Device.Range2Attr),
-                voidCost = it.Attr(Device.VoidCostAttr, hunt ? Device.HuntCost : storm ? Device.StormCost : star ? Device.StarCost : 0),
+                voidCost = it.Attr(Device.VoidCostAttr, hunt ? Device.HuntCost : storm ? Device.StormCost : star ? Device.StarCost
+                                                        : control ? Device.ControlCost : 0),
                 jamMs = storm ? it.Attr(Device.DurationAttr, Device.StormJamMs) : 0,
                 chain = it.Attr(Device.ChainAttr),
                 radius = it.Attr(Device.RadiusAttr),
@@ -172,6 +175,13 @@ namespace GoF2Remake.Flight
             if (e.rules.type == Device.Type.RiteStar && e.rules.Active)
             {
                 if (e.rules.Timer >= Device.StarMinMs && e.rules.Cancel()) End(e);
+                return;
+            }
+            // Remake (Chorus's Telekinesis): a second press on a held ship throws it
+            if (e.rules.type == Device.Type.RiteControl && e.rules.Active)
+            {
+                Toss(e);
+                if (e.rules.Cancel()) End(e);
                 return;
             }
             if (e.rules.State == Device.Phase.Ready && !e.rules.Charged)

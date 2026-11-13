@@ -107,9 +107,15 @@ namespace GoF2Remake.Flight
             /// 0.3 s past its end) every hostile ship within deviceRange2 (default StarRadiusTops) of a point StarAheadTops
             /// ahead takes 'damage'.</summary>
             RiteStar = 25,
+            /// <summary>Rite of Control (Chorus's Telekinesis, BP_ActivePower_Telekinesis + BP_Telekinesis_Debuff): the hostile
+            /// ship in the sights (the lock first) within deviceRadius (default ControlGrabTops) is held beside the nose, jammed,
+            /// for up to deviceDurationMs (default 8 s, then let go); a second press throws it at the ship in the sights within
+            /// ControlTossTops (else straight ahead) at ControlSpeedTops of the top speed: whatever it hits first, a ship takes
+            /// 'damage' and it dies, a station, hull or asteroid kills it.</summary>
+            RiteControl = 26,
         }
 
-        public const int TypeCount = 25;
+        public const int TypeCount = 26;
         /// <summary>The Annihilator Virus's most ships (its description's 6).</summary>
         public const int VirusMaxTargets = 6;
         /// <summary>The remake attributes (Modding.ItemStats).</summary>
@@ -140,6 +146,15 @@ namespace GoF2Remake.Flight
         // 10000 cm round a point 2500 cm ahead), the distances as seconds of the top speed.
         public const float StarSpeedTops = 42000f / 14000f, StarTurnDegS = 72f, StarAheadTops = 2500f / 14000f, StarRadiusTops = 10000f / 14000f;
         public const int StarCost = 3, StarCooldownMs = 500, StarMinMs = 500, StarMaxMs = 3000, StarTickMs = 200, StarTailMs = 300;
+
+        // Chorus's Telekinesis (BP_ActivePower_Telekinesis: GrabRange 70000 cm, TossRange 80000, TossSpeed 56000 cm/s,
+        // EnergyCost 3, OffsetLocations (5000, +-2500, +-2500) cm: the first; BP_Telekinesis_Debuff: CollisionDamageOtherTargets
+        // 500, from geometry or another target 500000: its death), the distances as seconds of the top speed. Its Duration
+        // 1e6 (held until thrown) is the remake's 8 s; the flight lasts the toss's reach at its speed and half a second.
+        public const float ControlGrabTops = 70000f / 14000f, ControlTossTops = 80000f / 14000f, ControlSpeedTops = 56000f / 14000f;
+        public static readonly Vector3 ControlHoldTops = new Vector3(2500f, 2500f, 5000f) / 14000f;   // (right, up, ahead)
+        public const int ControlCost = 3, ControlCooldownMs = 500, ControlHoldMs = 8000;
+        public static float ControlFlightMs => (ControlTossTops / ControlSpeedTops + 0.5f) * 1000f;
 
         /// <summary>Whether 'at' is within the star's reach: 'radius' round the point 'ahead' along 'forward' from 'pos'.</summary>
         public static bool InStar(Vector3 pos, Vector3 forward, Vector3 at, float ahead, float radius) =>

@@ -55,6 +55,9 @@ namespace GoF2Remake.Flight
             EndHunt();
             EndStar(false);
             starShare = 1f; ApplyModelShare();
+            if (held != null) Unjam(held);
+            if (thrown != null) Unjam(thrown);
+            held = thrown = null;
             if (tethered != null) Tether(null, null);
             if (self != null) self.Damaged -= OnSelfDamaged;
             if (fxRoot != null) Destroy(fxRoot.gameObject);
@@ -111,6 +114,10 @@ namespace GoF2Remake.Flight
                 case Device.Type.SpectralShift:
                     if (BlinkDistance(e.radius * M) > 0f) return true;
                     Message?.Invoke(string.Format(Localization.Extra("deviceNoRoom", "{0}: no room ahead"), e.name));
+                    return false;
+                case Device.Type.RiteControl:
+                    if (RiteTarget(e, Controllable) != null) return true;
+                    Message?.Invoke(string.Format(Localization.Extra("deviceNoRiteTarget", "{0}: no ship in the sights"), e.name));
                     return false;
                 case Device.Type.RiteStorm:
                     if (StormTarget(e) != null) return true;
@@ -230,7 +237,8 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>A Rite's reach (deviceRadius, else Chorus's 1000 m as seconds of the top speed).</summary>
-        float RiteRange(Entry e) => e.radius > 0 ? e.radius * M : Device.HuntRangeTops * TopSpeedMs();
+        float RiteRange(Entry e) => e.radius > 0 ? e.radius * M
+            : (e.rules.type == Device.Type.RiteControl ? Device.ControlGrabTops : Device.HuntRangeTops) * TopSpeedMs();
 
         /// <summary>How far behind its target the Hunt lands (deviceRange2, else Chorus's 180 m as seconds of the top speed).</summary>
         float HuntBehind(Entry e) => e.range2 > 0 ? e.range2 * M : Device.HuntBehindTops * TopSpeedMs();
@@ -463,6 +471,106 @@ namespace GoF2Remake.Flight
             }
         }
 
+        // ---- Rite of Control: Telekinesis's hold and toss ----------------------------------------------------------------
+        Entry controlEntry; Target held; float heldBeamMs;
+        Target thrown, tossAt; Entry thrownEntry; Vector3 thrownDir; float thrownMs, thrownSpeed;
+
+        /// <summary>A ship the Rite of Control may take: as the Hunt's (no capital ship, weak spot, unharmable one or the pursuer;
+        /// Telekinesis's blacklist has the Fortress, the bat swarms and the Phantom), and one this game moves.</summary>
+        bool Controllable(Target t) => Huntable(t) && t.isShip && t.RemoteDamage == null;
+
+        /// <summary>Where the held ship is kept: Telekinesis's first OffsetLocation, beside the nose (seconds of the top speed).</summary>
+        Vector3 HoldPoint() => transform.TransformPoint(Device.ControlHoldTops * TopSpeedMs());
+
+        void Grab(Entry e, Target t)
+        {
+            controlEntry = e;
+            held = t;
+            heldBeamMs = 0f;
+            Jam(t, e.rules.durationMs + 100f);
+            var look = LookOf(e);
+            if (look != null) { look.Play(look.spec.hit, t.transform.position, t.transform.rotation, Vector3.zero, t.transform); Play(RiteLook.Pick(look.hit)); }
+        }
+
+        /// <summary>BP_Telekinesis_Debuff's JamBrains: no fire, no flight of its own, no turning.</summary>
+        static void Jam(Target t, float ms)
+        {
+            t.SlowBy?.Invoke(ms, 0f, true);
+            t.jammedUntil = Mathf.Max(t.jammedUntil, Time.time + ms / 1000f);
+        }
+
+        static void Unjam(Target t)
+        {
+            if (t == null) return;
+            t.jammedUntil = Time.time;
+            t.ClearSlow?.Invoke();
+        }
+
+        /// <summary>The second press: the held ship thrown at the ship in the sights within the toss's reach (the lock first),
+        /// else straight ahead (ActivateToss, CollectTossToTarget).</summary>
+        void Toss(Entry e)
+        {
+            if (held == null || !Controllable(held)) { held = null; return; }
+            float reach = Device.ControlTossTops * TopSpeedMs();
+            var from = held;
+            tossAt = RiteTarget(e, t => Affects(t) && t != from && (t.transform.position - from.transform.position).sqrMagnitude <= reach * reach);
+            thrown = held; held = null;
+            thrownEntry = e;
+            thrownDir = tossAt != null ? (tossAt.transform.position - thrown.transform.position).normalized : transform.forward;
+            thrownSpeed = Device.ControlSpeedTops * TopSpeedMs();
+            thrownMs = 0f;
+            Jam(thrown, Device.ControlFlightMs + 100f);
+            var look = LookOf(e);
+            if (look != null) { look.Play(look.spec.vanish, thrown.transform.position, thrown.transform.rotation, Vector3.zero, thrown.transform); Play(RiteLook.Pick(look.vanish)); }
+        }
+
+        /// <summary>The held ship pulled to its place beside the nose; the thrown one flying at its target, dying on what it hits.</summary>
+        void UpdateControl(float dtMs)
+        {
+            float dt = dtMs / 1000f;
+            if (held != null)
+            {
+                if (!Controllable(held)) { held = null; if (controlEntry != null && controlEntry.rules.Cancel()) End(controlEntry); }
+                else
+                {
+                    var p = held.transform.position;
+                    held.transform.position = Vector3.Lerp(p, HoldPoint(), 1f - Mathf.Exp(-6f * dt));
+                    heldBeamMs -= dtMs;
+                    if (heldBeamMs <= 0f) { ShowBeam(held); heldBeamMs = BeamShowMs * 0.75f; }
+                }
+            }
+            if (thrown == null) return;
+            if (thrown == null || !thrown.Alive) { thrown = null; return; }
+            thrownMs += dtMs;
+            if (tossAt != null && tossAt.Alive) thrownDir = (tossAt.transform.position - thrown.transform.position).normalized;   // (homing)
+            var from = thrown.transform.position;
+            float step = thrownSpeed * dt;
+            var to = from + thrownDir * step;
+            // a ship in the way: it takes the Rite's damage and the thrown one dies (CollisionDamageOtherTargets / FromOtherTarget)
+            Target hitShip = null;
+            foreach (var t in Target.All)
+            {
+                if (t == thrown || !Affects(t)) continue;
+                var c = t.transform.position - from;
+                float along = Mathf.Clamp(Vector3.Dot(c, thrownDir), 0f, step);
+                float r = t.radius + thrown.radius;
+                if ((c - thrownDir * along).sqrMagnitude <= r * r) { hitShip = t; break; }
+            }
+            bool geometry = hitShip == null && BlinkDistance(from, thrownDir, step, thrown) < step;   // (a hull, a landmark, an asteroid)
+            thrown.transform.position = to;
+            if (thrownDir.sqrMagnitude > 1e-6f) thrown.transform.rotation = Quaternion.LookRotation(thrownDir, thrown.transform.up);
+            if (hitShip != null || geometry)
+            {
+                if (hitShip != null) weapons?.DeviceHit(hitShip, thrownEntry.damage, thrownEntry.emp, thrownDir, thrownEntry.item.index);
+                var look = LookOf(thrownEntry);
+                if (look != null) { look.Play(look.spec.end, thrown.transform.position, thrown.transform.rotation, Vector3.zero); Play(RiteLook.Pick(look.end)); }
+                weapons?.DeviceHit(thrown, 1e7f, 0, thrownDir, thrownEntry.item.index, 0f);   // (its death: 500000 in Chorus)
+                thrown = null;
+                return;
+            }
+            if (thrownMs >= Device.ControlFlightMs) { Unjam(thrown); thrown = null; }   // nothing hit: let go where it is
+        }
+
         // ---- Rite of the Storm: Pulse Zap's strike, BP_Buff_Pulse's jam, its chain ------------------------------------------
         Entry stormEntry; Target stormLast; Vector3 stormLastAt; int stormLeft; float stormMs;
         readonly HashSet<Target> stormZapped = new HashSet<Target>();
@@ -678,6 +786,15 @@ namespace GoF2Remake.Flight
                     }
                     break;
                 }
+                case Device.Type.RiteControl:
+                {
+                    var t = RiteTarget(e, Controllable);
+                    if (t == null) { if (e.rules.Cancel()) End(e); break; }
+                    var look = LookOf(e);
+                    look?.Play(look.spec.start, pos, transform.rotation, Vector3.zero, transform);
+                    Grab(e, t);
+                    break;
+                }
                 case Device.Type.RiteStar:
                 {
                     var look = LookOf(e);
@@ -768,6 +885,10 @@ namespace GoF2Remake.Flight
                 case Device.Type.RiteStar:
                     EndStar();
                     break;
+                case Device.Type.RiteControl:
+                    if (held != null) { Unjam(held); held = null; }   // its hold over unthrown: let go where it is
+                    controlEntry = null;
+                    break;
                 case Device.Type.StrikeCharge:
                     if (weapons != null) weapons.DamageBoost = 1f;
                     break;
@@ -826,6 +947,7 @@ namespace GoF2Remake.Flight
             UpdateHunt(dtMs);
             UpdateStorm(dtMs);
             UpdateStar(dtMs);
+            UpdateControl(dtMs);
             if (overchargeBubble != null && overchargeEntry != null)   // (the bubble grows in and fades out with the overcharge)
                 overchargeBubble.Update(overchargeEntry.rules.ActiveLeft * overchargeEntry.rules.durationMs, overchargeEntry.rules.durationMs);
             if (overchargeShell != null)   // (the shell plays its own life: Chorus's particle, 0.5 s in, 4.8 s)

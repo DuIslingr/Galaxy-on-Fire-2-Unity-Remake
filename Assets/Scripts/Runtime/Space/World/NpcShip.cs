@@ -474,6 +474,7 @@ namespace GoF2Remake.World
             Target.hitpoints.SetEmp(spec.empPoints > 0 ? spec.empPoints : NpcTables.Emp(kind), NpcTables.EmpRecoveryMs(kind));   // also with a hull override
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
             Target.SlowBy = (ms, factor, noTurn) => { if (Target.Alive && !Target.phased) slow.Apply(ms, factor, noTurn); };
+            Target.ClearSlow = () => slow.Clear();
             // remake mods: a Most Wanted criminal's weak and strong spots against the player's weapons ("damageTaken")
             // and its devices (NpcDevices)
             if (spec.wantedIndex >= 0 && spec.wantedIndex < database.Wanted.Count)

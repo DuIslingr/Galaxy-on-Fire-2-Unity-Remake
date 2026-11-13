@@ -258,9 +258,22 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     `end` and `endSound` where it ends. Not ported: the StartDrillMovementSpeeCurve ramp, the slow motion when suspended
     (OnDriftStarted / OnSuspended), the hit sounds' kill and lock variants, upgrade A's four side stars (RotationSpeed 100)
     and B's 25 % heal a kill.
-  - Still to come: Telekinesis, Scan and the passives (ElementalShield: +2 energy).
+  - **Rite of Control** (`Device.Type.RiteControl` 26, Chorus's Telekinesis: BP_ActivePower_Telekinesis GrabRange 70000,
+    TossRange 80000, TossSpeed 56000 cm/s, EnergyCost 3 (the powers screen says 4), OffsetLocations (5000, +-2500, +-2500);
+    BP_Telekinesis_Debuff CollisionDamageOtherTargets 500, from geometry / another target 500000, Duration 1e6; the native
+    GrabTargets / CollectTossToTarget take the targeting component's current targets): `Controllable` (the Hunt's
+    `Huntable`, a ship, not another game's: `RemoteDamage` null); held at OffsetLocations[0] (`ControlHoldTops`, eased
+    there each frame), jammed (`Target.jammedUntil` and a 0 slow without turning), beamed; a second press (`Use`) throws it
+    (`Toss`) at `RiteTarget` within `ControlTossTops` of it, else ahead, at `ControlSpeedTops`, homing; each frame the
+    first `Affects` ship along its step takes 'damage' and the thrown one dies (`DeviceHit` 1e7 past the shield, the
+    player's kill), a hull / landmark / asteroid on its way (`BlinkDistance` with it left out) kills it; nothing met in
+    `ControlFlightMs` (the toss's reach at its speed + 0.5 s): let go (`Unjam`: the jam ended, `Target.ClearSlow`, NpcShip's
+    slow cleared). The hold's end (deviceDurationMs, default 8 s: Chorus holds for good) lets it go too. Not ported: more
+    than one ship at a time (the debuff's MaxNumberOfStacks 2, four offsets), turrets, mines and missiles grabbed, the
+    connection's spline mesh (the device beam stands in), the toss sounds' variants.
+  - Still to come: Scan and the passives (ElementalShield: +2 energy).
   Tests `VoidEnergyTests` (the regrowth, refusals, bonus pips, the delay, Blink's numbers, landing and timelines, the
-  camera's glide, Pulse Zap's numbers, the jam, the Drill's numbers, the star's reach, the turn cap),
+  camera's glide, Pulse Zap's numbers, the jam, the Drill's numbers, the star's reach, the turn cap, Telekinesis's numbers),
   `ModWeaponsTests.ARitesLooksAreAFileOfEffectsAndSounds`.
 - **Hull regeneration** (remake 2026-11-11, for mods): ships.json `"hullRegen"` (points a second; Chorus's PCLS
   PlayerHealthComponent HealthRegenRate 250 of its 5000) -> `PlayerHealth` (`Hitpoints.RegenerateHull`, fractions carried,
