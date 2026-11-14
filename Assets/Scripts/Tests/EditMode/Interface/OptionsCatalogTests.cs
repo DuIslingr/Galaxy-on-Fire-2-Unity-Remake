@@ -406,6 +406,7 @@ namespace GoF2Remake.Tests
                 Assert.AreEqual(FrameRate.Fps60, Settings.FrameRate, "not the 120 Hz screens' 120");
                 Assert.AreEqual(0.8f, Settings.RenderScale, 1e-4f);
                 Assert.AreEqual(Settings.UpscalerMetalFxSpatial, Settings.Upscaler, "Apple's own upscaler, not FSR 1");
+                Assert.AreEqual(Settings.PostAaFxaa, Settings.PostAntialiasing, "FXAA's one pass for SMAA's three");
                 Assert.IsFalse(Settings.FireSmoke);
                 Settings.ApplyPreset(Settings.PresetLow);
                 Assert.AreEqual(Settings.UpscalerMetalFxSpatial, Settings.Upscaler, "Low too");

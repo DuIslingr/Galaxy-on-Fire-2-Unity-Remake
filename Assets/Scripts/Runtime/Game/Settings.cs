@@ -241,7 +241,11 @@ namespace GoF2Remake.Data
         public static float PresetValue(int preset, string key)
         {
             float v = Presets[Mathf.Clamp(preset, 0, Presets.Length - 1)][Array.IndexOf(PresetKeys, key)];
-            return key == "upscaler" && Mathf.Approximately(v, UpscalerFsr) && AppleUpscaler ? UpscalerMetalFxSpatial : v;
+            if (key == "upscaler" && Mathf.Approximately(v, UpscalerFsr) && AppleUpscaler) return UpscalerMetalFxSpatial;
+            // iOS's Medium (its default): FXAA, one pass, for SMAA's three; MetalFX takes the edges on again as it upscales,
+            // and the phones' screens are 430 - 460 ppi (2026-11-14, the user's "what can we do to improve performance for ios")
+            if (key == "postAa" && preset == PresetMedium && IosDefaults) return PostAaFxaa;
+            return v;
         }
 
         /// <summary>The presets take MetalFX in FSR 1's place: iOS (IosDefaults, its tests' override too) and macOS players.</summary>
