@@ -62,8 +62,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   screen size and safe area while running, which every screen already follows (`lastScreen` / `lastSafeArea` /
   `UiLayout.Revision` re-layout, `SafeArea` on GeometryChanged). Changes: a mobile screen under `UiLayout.PhoneMaxInches`
   (8.1", was 7.5") stays a phone, so the inner screen's 7.6" doesn't switch the UI to the desktop's size on unfolding
-  (tablets, the iPad mini's 8.3" up, stay desktop); iOS defaults to 60 fps and the Medium preset (options.md "Graphics
-  preset"). Not done: a thermal-state response (ProcessInfo.thermalState needs a native plugin), anything Duo-specific by
+  (tablets, the iPad mini's 8.3" up, stay desktop); iOS defaults to 60 fps and the Medium preset, its upscaler MetalFX
+  Spatial (options.md "Graphics preset"). Not done: a thermal-state response (ProcessInfo.thermalState needs a native plugin), anything Duo-specific by
   model (its identifier isn't known). Not run on the device or a simulator of it.
 - **Android Vulkan pre-transform** (Player settings > Android > "Apply display rotation during rendering",
   `PlayerSettings.vulkanEnablePreTransform`): on, with `PreTransformGuard` (Space, installed by `Bootstrap`): while it is in

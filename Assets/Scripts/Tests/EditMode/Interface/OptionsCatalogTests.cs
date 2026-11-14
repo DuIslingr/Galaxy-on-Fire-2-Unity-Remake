@@ -405,7 +405,12 @@ namespace GoF2Remake.Tests
                 Assert.AreEqual(Settings.PresetMedium, OptionsCatalog.CurrentPreset(), "every preset option at Medium");
                 Assert.AreEqual(FrameRate.Fps60, Settings.FrameRate, "not the 120 Hz screens' 120");
                 Assert.AreEqual(0.8f, Settings.RenderScale, 1e-4f);
+                Assert.AreEqual(Settings.UpscalerMetalFxSpatial, Settings.Upscaler, "Apple's own upscaler, not FSR 1");
                 Assert.IsFalse(Settings.FireSmoke);
+                Settings.ApplyPreset(Settings.PresetLow);
+                Assert.AreEqual(Settings.UpscalerMetalFxSpatial, Settings.Upscaler, "Low too");
+                Assert.AreEqual(Settings.PresetLow, OptionsCatalog.CurrentPreset(), "and the row still reads Low");
+                Settings.ResetToDefaults();
                 Settings.FrameRate = FrameRate.Fps120;
                 Assert.AreEqual(FrameRate.Fps120, Settings.FrameRate, "a player's choice stays theirs");
                 Settings.OverrideIosDefaults(false);
