@@ -100,8 +100,11 @@ namespace GoF2Remake.Tests
         public void ARitesLooksAreAFileOfEffectsAndSounds()
         {
             const string rite = "{ \"vanish\": { \"emitters\": [ { \"image\": \"fx/spark.png\", \"bursts\": [0, 20], \"life\": [0.2, 0.4] } ] }, " +
-                                "\"appearSound\": [\"audio/appear.ogg\"] }";
+                                "\"appearSound\": [\"audio/appear.ogg\"], \"fury\": { \"emitters\": [ { \"rate\": 5 } ] }, " +
+                                "\"healSound\": [\"audio/appear.ogg\"] }";
             var d = DefOf("{ 'rite': 'fx/rite.json' }", ("fx/rite.json", rite), ("audio/appear.ogg", "ogg"));
+            Assert.AreEqual(1, d.rite.fury.emitters.Length, "an upgrade's part");
+            CollectionAssert.AreEqual(new[] { "audio/appear.ogg" }, d.rite.healSound);
             Assert.IsNotNull(d, AllMessages(Installed(Mod)));
             Assert.AreEqual(1, d.rite.vanish.emitters.Length);
             Assert.AreEqual(20f, d.rite.vanish.emitters[0].bursts[1]);

@@ -62,7 +62,7 @@ namespace GoF2Remake.Flight
     {
         public Modding.ModInfo mod;
         public Data.CustomRiteFx spec;
-        public AudioClip[] vanish, appear, hit, loop, end;
+        public AudioClip[] vanish, appear, hit, loop, end, fury, absorb, heal;
 
         /// <summary>One of its effects at 'at' (under 'follow' when given: it moves with it); null when it has none.</summary>
         public GameObject Play(Data.CustomFx part, Vector3 at, Quaternion rotation, Vector3 velocity, Transform follow = null, float scale = 1f)

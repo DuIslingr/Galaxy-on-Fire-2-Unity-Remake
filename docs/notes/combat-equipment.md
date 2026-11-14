@@ -298,7 +298,11 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
     without a shield: what it dealt), a quarter onto the ship's own shield up to its maximum (`GainShield`; Chorus
     IncreaseShield's overcharge past it not taken). Star A: four more spheres (`Device.StarSide`: (10000, +-6000, +-6000)
     cm, RotationSpeed 100 deg/s about the nose), a ship hit once a tick whichever it is in. Star B: a ship the Star
-    destroys repairs 25 % of the maximum hull (`HealShare`, past `Repair`'s nanobot count). Not taken: Blink AB's
+    destroys repairs 25 % of the maximum hull (`HealShare`, past `Repair`'s nanobot count). Their looks: the rite file's
+    `fury` (on the ship while it lasts, `furySound` looping; `StartFury` / `EndFuryLook`), `absorb` and `heal` (one-offs
+    on the ship, `PlayOnShip`); the Chorus importer writes each upgraded item its own file (its UPGRADE_LOOKS: the
+    upgrade blueprints' particles and Start / Appear / Muzzle / Duration / Re-Appear events; Pulse B's
+    P_Pulse_UpgrB_ShieldAbsorb is a mesh particle, so only its Shield_Stolen sound). Not taken: Blink AB's
     energy for a kill within 5 s (BP_Buff_GiveEnergyForKillAfterBlink: its EnergyAmount unset), the upgrades' own looks.
   - **Passive** (`Device.Type.RitePassive` 28; Chorus's BP_PassivePower_ElementalShield: BonusEnergy 2,
     VoidEnergyIncreaseEffect, "Prevents all elemental damage"): not one of `PlayerDevices.Devices` (no key, quick menu

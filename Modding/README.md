@@ -504,7 +504,8 @@ sounds (a list of files, one at random):
 
 `start` plays on the ship as it fires; `vanish` where the Hunt leaves and `appear` where it lands; `hit` on each ship the
 Storm or the Star strikes, following it; `loop` on the ship while the Star runs, its `loopSound` looping, and `end`
-(with `endSound`) where it ends. The Rite of Control plays `start` as it seizes a ship, `hit` on that ship, `vanish` on it
+(with `endSound`) where it ends. With upgrades: `fury` on the ship while the Hunt's second upgrade lasts (`furySound`
+looping), `absorb` as the Storm's second fills your shield, `heal` as the Star's second repairs your hull. The Rite of Control plays `start` as it seizes a ship, `hit` on that ship, `vanish` on it
 as it is thrown and `end` where it hits; the Senses `start` as the wave goes out and `hit` on each cloaked ship it
 uncovers. Any part may be left out.
 

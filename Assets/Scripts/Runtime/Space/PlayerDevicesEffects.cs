@@ -53,6 +53,7 @@ namespace GoF2Remake.Flight
         void DestroyEffects()
         {
             EndHunt();
+            EndFuryLook();
             EndStar(false);
             starShare = 1f; ApplyModelShare();
             if (held != null) Unjam(held);
@@ -349,7 +350,7 @@ namespace GoF2Remake.Flight
                 if (huntMs < Device.HuntVanishMs) return;
                 if (!Huntable(huntTarget) || !Hunt(huntEntry, huntTarget)) { EndHunt(); return; }   // gone meanwhile: it stays put
                 if (huntEntry.A) VoidPool?.AddBonus(Device.HuntBonusPips);   // (Blink A: a bonus pip for 10 s)
-                if (huntEntry.B) StartFury();                                  // (Blink B: x1.5 for 5 s)
+                if (huntEntry.B) StartFury(huntEntry);                         // (Blink B: x1.5 for 5 s)
                 var look = LookOf(huntEntry);
                 if (look != null)
                 {
@@ -475,7 +476,11 @@ namespace GoF2Remake.Flight
                     if ((t.transform.position - c).sqrMagnitude <= (radius + t.radius) * (radius + t.radius)) { inside = true; break; }
                 if (!inside) continue;
                 weapons?.DeviceHit(t, starEntry.damage * RiteFury, starEntry.emp, transform.forward, starEntry.item.index);
-                if (starEntry.B && !t.Alive) HealShare(Device.StarHealShare);   // (Drill B: a quarter of the hull a kill)
+                if (starEntry.B && !t.Alive)   // (Drill B: a quarter of the hull a kill)
+                {
+                    HealShare(Device.StarHealShare);
+                    PlayOnShip(starEntry, l => l.spec.heal, l => l.heal);
+                }
                 if (look != null && t != null)
                 {
                     look.Play(look.spec.hit, t.transform.position, t.transform.rotation, Vector3.zero, t.transform);
@@ -652,7 +657,11 @@ namespace GoF2Remake.Flight
             var origin = (object)from != null && from != null ? from.transform.position : transform.position;
             var dir = (t.transform.position - origin).normalized;
             float dealt = ShieldHit(e, t, dir, RiteFury);
-            if (e.B) GainShield(dealt * Device.StealShare);   // (Pulse B: a quarter of it onto the ship's own shield)
+            if (e.B && dealt > 0f)   // (Pulse B: a quarter of it onto the ship's own shield)
+            {
+                GainShield(dealt * Device.StealShare);
+                PlayOnShip(e, l => l.spec.absorb, l => l.absorb);
+            }
             t.SlowBy?.Invoke(e.jamMs, Device.SlowFactor(e.slowPercent), true);
             t.jammedUntil = Mathf.Max(t.jammedUntil, Time.time + e.jamMs / 1000f);
             ShowBeam(t, from);
@@ -1218,21 +1227,53 @@ namespace GoF2Remake.Flight
 
         // ---- the Rites' upgrades: the Hunt's fury (B), the Storm's shield steal (B), the Star's heal (B) ----------------
         float furyMs;
+        GameObject furyFx;
+        AudioSource furySound;
 
         /// <summary>The Rites' damage factor: x1.5 while the Hunt's fury lasts (BP_Player_Buff_Blink_UpgradeB).</summary>
         float RiteFury => furyMs > 0f ? Device.FuryFactor : 1f;
 
-        void StartFury()
+        void StartFury(Entry e)
         {
             furyMs = Device.FuryMs;
             if (weapons != null) weapons.DamageBoost = Mathf.Max(weapons.DamageBoost, Device.FuryFactor);
+            // its look on the ship while it lasts (Blink B's buff: P_Muzzle_Blink_upgrade_B, its Damage_Buff loop)
+            var look = LookOf(e);
+            if (look == null) return;
+            if (furyFx != null) Destroy(furyFx);
+            furyFx = look.Play(look.spec.fury, transform.position, transform.rotation, Vector3.zero, transform);
+            var clip = RiteLook.Pick(look.fury);
+            if (clip == null) return;
+            furySound ??= gameObject.AddComponent<AudioSource>();
+            furySound.playOnAwake = false; furySound.spatialBlend = 0f; furySound.loop = true;
+            furySound.clip = Modding.ModSounds.Get(clip);
+            furySound.volume = Settings.SfxVolume;
+            furySound.Play();
+        }
+
+        void EndFuryLook()
+        {
+            if (furyFx != null) Destroy(furyFx);
+            furyFx = null;
+            if (furySound != null) furySound.Stop();
+        }
+
+        /// <summary>One of a Rite's one-off upgrade looks on the ship ('absorb', 'heal') with its sound.</summary>
+        void PlayOnShip(Entry e, System.Func<RiteLook, Data.CustomFx> part, System.Func<RiteLook, AudioClip[]> sound)
+        {
+            var look = LookOf(e);
+            if (look == null) return;
+            look.Play(part(look), transform.position, transform.rotation, Vector3.zero, transform);
+            Play(RiteLook.Pick(sound(look)));
         }
 
         void UpdateFury(float dtMs)
         {
             if (furyMs <= 0f) return;
             furyMs -= dtMs;
-            if (furyMs > 0f || weapons == null) return;
+            if (furyMs > 0f) return;
+            EndFuryLook();
+            if (weapons == null) return;
             // over: back to 1 unless the strike charge runs (it set its own)
             foreach (var o in devices) if (o.rules.type == Device.Type.StrikeCharge && o.rules.Active) return;
             weapons.DamageBoost = 1f;
