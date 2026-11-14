@@ -70,10 +70,11 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>Frame rate limit, applied by Bootstrap. V-Sync (display refresh rate) by default; 60 on Android (the user's
-        /// choice, 2026-10-22: a 120 Hz phone rendering at 120 heats up and throttles).</summary>
+        /// choice, 2026-10-22: a 120 Hz phone rendering at 120 heats up and throttles) and on iOS (2026-11-14, the user's
+        /// "optimize the game for the iPhone Duo": its two ProMotion screens are 120 Hz).</summary>
         public static FrameRate FrameRate
         {
-            get => (FrameRate)Mathf.Clamp(Mathf.RoundToInt(Get("frameRate", (float)(AndroidDefaults ? FrameRate.Fps60 : FrameRate.VSync))), 0, (int)FrameRate.VSync);
+            get => (FrameRate)Mathf.Clamp(Mathf.RoundToInt(Get("frameRate", (float)(AndroidDefaults || IosDefaults ? FrameRate.Fps60 : FrameRate.VSync))), 0, (int)FrameRate.VSync);
             set => Set("frameRate", (float)value);
         }
 
@@ -251,8 +252,16 @@ namespace GoF2Remake.Data
         static bool? androidDefaultsOverride;
         public static void OverrideAndroidDefaults(bool? android) { androidDefaultsOverride = android; cache.Clear(); }
 
-        /// <summary>A preset option's default: the Low preset's value on Android, else 'other'.</summary>
-        static float Default(string key, float other) => AndroidDefaults ? PresetValue(PresetLow, key) : other;
+        /// <summary>The iOS defaults: the Medium preset and 60 fps (2026-11-14, the user's "optimize the game for the iPhone
+        /// Duo": High's 100 % render scale at 120 Hz on its 1878 x 2670 inner screen is five megapixels 120 times a second,
+        /// heat and throttling; Apple's chips carry Medium's 80 % with FSR 1 easily, so not Android's Low). Tests set the override.</summary>
+        public static bool IosDefaults => iosDefaultsOverride ?? Application.platform == RuntimePlatform.IPhonePlayer;
+        static bool? iosDefaultsOverride;
+        public static void OverrideIosDefaults(bool? ios) { iosDefaultsOverride = ios; cache.Clear(); }
+
+        /// <summary>A preset option's default: the Low preset's value on Android, Medium's on iOS, else 'other'.</summary>
+        static float Default(string key, float other) =>
+            AndroidDefaults ? PresetValue(PresetLow, key) : IosDefaults ? PresetValue(PresetMedium, key) : other;
 
         /// <summary>The chase camera's vertical field of view in degrees (at 16:9; the original's is OriginalFov).</summary>
         public static float FieldOfView { get => Get("fov", OriginalFov); set => Set("fov", Mathf.Clamp(value, 55f, 95f)); }
