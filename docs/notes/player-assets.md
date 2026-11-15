@@ -119,6 +119,45 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
   - iOS' `v_galaxymap_planets` has no alpha (Android's ring quadrant is translucent): a real difference between the
   copies, so that texture is in the iOS gap pack.
 
+## The packs (`Reference/tools/player_assets/packs.py` -> `Reference/player_assets/packs.json`, 2026-11-15)
+
+From the converter's own output for each edition (`Reference/tools/player_assets/convert`), against the project's files:
+exact / lower (the same picture at a lower resolution, or the same size encoded worse, 30 dB+) / differs / missing. Per
+edition an asset is required (missing or differs) or optional (lower: the edition's version works, the project's is an
+upgrade). First run (Android 2.0.16 XAPK, iOS 1.1.19 ipa):
+
+| | Android | iOS |
+| --- | --- | --- |
+| exact | 4,165 | 5,993 |
+| lower | 369 | 399 |
+| differs | 87 | 261 |
+| missing | 2,047 | 15 |
+
+- **Common pack:** required 58 (the remake's remodelled meshes, edited textures, `sn_sun_012`, `hangar_terran_alpha_diffuse`
+  and the like: in no copy as the project has them); **optional 388** (KiritoJPK's 2026-10-07 textures: upscales and
+  cleaner encodes of pictures both copies have, an "HD textures" pack; perhaps the macOS Full HD release's own, to check
+  when its files come).
+- **Android's gap:** 2,076, nearly all the five German voice banks (2,043 samples). **iOS' gap:** 218: Android's versions
+  of hangar meshes iOS 1.1.19 has in other versions (143 main-game sidecars differ: vertex counts, keyframes), the
+  interface images it lacks, 17 more optional upgrades.
+- **Text:** a string overlay per language of the remake's corrections and translations (see LangFile); iOS' own wording
+  where it differs (English 120 strings, Portuguese 440, French 33).
+
+## Data tables (`Resources/GoF2Data`, traced 2026-11-15 by re-running the generators on both copies)
+
+- **42 rebuild from the player's .bin / .lang** byte-identical (`parse_bins.py`: agents, wanted, names, ticker, collisions,
+  docks, weapons_hd / sd, the `sn_*` / `v_*` tables; `parse.py` + `export.py`: ships, systems, stations, items (plus 3 text
+  fixes: an overlay)); `item_attributes`, `economy_default`, `weapons_hd_default` from those.
+  - The economies differ per copy: iOS' `items.bin` / `ships.bin` / `weapons_hd.bin` are the Default Economy's (byte-
+    identical to `Reference/binaries/default_economy`), Android's the main one; so each edition's gap carries the other
+    economy's numbers. The 21 `.bin` iOS lacks aren't read at run time.
+- **No original bytes, recovered facts:** `resources.json` (the resource table, from emulating Android's
+  `BuildResourceList` + disassembly IDs + the remake's additions), `assemblies.json` (the remake's composition rules),
+  `story.json` and `voice_table` (IDs and FMOD event names from the .so); weapon_fx (a hand table). Not rebuildable from
+  an iOS copy (its executable is encrypted). **Open: ship them with the game (facts) or in the separate pack.**
+- **The remake's own:** step_summaries, hangar_heights, nozzle_shapes, void_station_extra, generated_lods (derived from
+  the meshes: rebuildable on the player's machine with the run-time simplifier). `_bin_decode_report`: unused, drop.
+
 ## Plan
 
 1. Inventory and this note (done 2026-11-15).
