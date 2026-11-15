@@ -95,6 +95,14 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
   update; the 9 others and 12 resized are the remake's edits: the Vossk hangar and stations, the suns); iOS 1.1.19's 435
   PVRTC textures byte-identical to texture2ddecoder. The words' Morton order puts y in the even bits (x there decoded each
   image mirrored about its diagonal). Type 0x24 (iOS' unused cloak map) isn't read.
+- **AemMesh** (`Scripts/Runtime/Core/Content/AemMesh.cs`, 2026-11-15): parts, geometry, keyframes and the
+  `.gof2mesh.json` sidecar (convert_remodel.py's format, what PartAnimation reads). Android's 1,127 and iOS' 1,215 meshes
+  read with geometry identical to aem.py's (one iOS file ends inside its last part, as the game's own may: dropped as
+  aem.py drops it; `v_ship_040_deep_science` carries 12 NaN UVs in both copies). The sidecars equal the project's for
+  1,093 of 1,126; the other 33 are the remake's remodels (the contributed Midorian hangar room 2026-10-07, the Vossk /
+  Nivelian hangars, the remade Vossk bar 2026-10-25, a few Supernova / Valkyrie add meshes): common-pack material.
+  Still to do: the Unity mesh itself, in the space the FBX import gives (aem2fbx's axes, Blender's validate, Unity's
+  x flip and ModelOrientationPostprocessor's 180 deg).
   - iOS' `v_galaxymap_planets` has no alpha (Android's ring quadrant is translucent): a real difference between the
   copies, so that texture is in the iOS gap pack.
 
