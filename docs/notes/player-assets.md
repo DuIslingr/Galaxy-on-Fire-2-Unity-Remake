@@ -226,7 +226,9 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   identical and 45 within 4 / 255 (the edge bleed's float averaging), the 297 icons and the frame within 2 / 255.
   `OriginalTextures.Image(<Resources path>)` (Resources first, else the cache, set up as UI images) replaces the
   `Resources.Load<Texture2D>("GoF2Hud/..." / "GoF2Icons/...")` calls. Not made: the remake's own `option_*` icons and
-  `ship_ring_open_*` markers (2026-10-17 / 21: common pack), `HullIconBuilder`'s rendered hull icons (rendered models).
+  `ship_ring_open_*` markers (2026-10-17 / 21: common pack), `HullIconBuilder`'s rendered hull icons (rendered models). The race emblems (`GoF2Races`, KiritoJPK 2026-10-13, added
+  by hand) aren't crops of any atlas (searched both copies' 11 atlases for each, within 2 / 255: none): resized or edited,
+  so common-pack material.
 
 ## Plan
 
