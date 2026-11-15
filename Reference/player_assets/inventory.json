@@ -1,13 +1,13 @@
 {
  "summary": {
   "original": {
-   "files": 8901
+   "files": 8884
   },
   "derived": {
-   "files": 2288
+   "files": 2255
   },
   "own": {
-   "files": 1420
+   "files": 1471
   }
  },
  "folders": {
@@ -22,15 +22,15 @@
    "kind": "derived",
    "what": "layered skies: patches, masks, cloud masks from the skies",
    "source": "sky/sky_layers.py, nebula_clouds.py",
-   "files": 25,
-   "bytes_here": 45563
+   "files": 22,
+   "bytes_here": 2899
   },
   "Assets/Resources/GoF2Planets3D/": {
    "kind": "derived",
    "what": "3D planets rebuilt from the planet images",
    "source": "World.RebuiltPlanets' builder",
-   "files": 163,
-   "bytes_here": 8314426
+   "files": 133,
+   "bytes_here": 17503
   },
   "Assets/Resources/GoF2Reflections/": {
    "kind": "derived",
@@ -99,22 +99,22 @@
    "kind": "original",
    "what": "sky cubemaps and sun / nebula images",
    "source": "AEI",
-   "files": 31,
-   "bytes_here": 86392
+   "files": 22,
+   "bytes_here": 2909
   },
   "Assets/Resources/GoF2Backdrop/": {
    "kind": "original",
    "what": "planet, sun and backdrop images",
    "source": "AEI",
-   "files": 77,
-   "bytes_here": 82223
+   "files": 76,
+   "bytes_here": 80881
   },
   "Assets/Resources/GoF2Station/": {
    "kind": "original",
    "what": "station scene images",
    "source": "AEI",
-   "files": 68,
-   "bytes_here": 26303
+   "files": 65,
+   "bytes_here": 8385
   },
   "Assets/Resources/GoF2Icons/": {
    "kind": "original",
@@ -148,8 +148,8 @@
    "kind": "original",
    "what": "the original interface style's images",
    "source": "regions of the interface AEI atlases",
-   "files": 54,
-   "bytes_here": 124123
+   "files": 50,
+   "bytes_here": 6438
   },
   "Assets/UI/AppIcon/": {
    "kind": "original",
@@ -265,6 +265,18 @@
   }
  },
  "hard_references": {
+  "Assets/Resources/GoF2Backdrop/SkyLayerAssets.asset": [
+   "Assets/Prefabs/main/skyboxes/skybox_asteroid_belt_alpha.prefab",
+   "Assets/Prefabs/supernova/skyboxes/sn_skybox_015_flares_1_anim.prefab",
+   "Assets/Prefabs/supernova/skyboxes/sn_skybox_015_flares_2_anim.prefab",
+   "Assets/Prefabs/supernova/skyboxes/sn_skybox_planet_ring_alpha.prefab",
+   "Assets/Prefabs/supernova/skyboxes/sn_skybox_storms_anim_add.prefab",
+   "Assets/Resources/GoF2Backdrop/sky_asteroid_belt.mat",
+   "Assets/Resources/GoF2Backdrop/sky_planet_ring.mat",
+   "Assets/Resources/GoF2Backdrop/sky_storms.mat",
+   "Assets/Resources/GoF2Backdrop/sky_supernova_flares.mat",
+   "Assets/Resources/GoF2Backdrop/sky_supernova_flares_nasty.mat"
+  ],
   "Assets/Resources/GoF2Combat/CombatAssets.asset": [
    "Assets/Audio/DLC2_MUSIC/GOF2_DeepScience_Space.ogg",
    "Assets/Audio/DLC2_SFX/Crimso_Drain.ogg",
@@ -815,6 +827,76 @@
    "Assets/Materials/mat_27290_sun_010.mat",
    "Assets/Materials/sn_galaxymap_sun_012.mat",
    "Assets/Prefabs/main/fx/khador_jump.prefab"
+  ],
+  "Assets/Resources/GoF2Station/HangarShipShadow.mat": [
+   "Assets/Resources/GoF2Station/ShipShadows/_oval.png"
+  ],
+  "Assets/Resources/GoF2Station/ShipShadows.asset": [
+   "Assets/Resources/GoF2Station/ShipShadows/_oval.png",
+   "Assets/Resources/GoF2Station/ShipShadows/battleship_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/cargo_001_midorian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/cargo_002_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/cargo_003_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/cargo_004_vossk.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_000_midorian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_001_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_002_pirates.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_003_midorian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_004_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_005_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_006_midorian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_007_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_008_void.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_009_vossk.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_010_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_011_pirates.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_012_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_016_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_017_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_018_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_019_midorian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_020_midorian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_021_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_022_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_023_pirates.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_024_pirates.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_025_pirates.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_026_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_027_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_028_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_029_pirates.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_030_midorian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_031_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_032_pirates.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_033_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_034_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_035_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_036_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_042_retro.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_043_retro.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_061_elite_nivelian_prototype.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_062_prototype.png",
+   "Assets/Resources/GoF2Station/ShipShadows/ship_063_vossk_prototype.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_044_elite_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_045_most_wanted.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_046_most_wanted.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_047_most_wanted.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_048_most_wanted.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_049_boss_nivelian.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_051_dropship_terran.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_052_retro.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_054_vossk.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_055_modified.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_056_modified.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_057_modified.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_058_modified.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_059_modified.png",
+   "Assets/Resources/GoF2Station/ShipShadows/sn_ship_060_modified.png",
+   "Assets/Resources/GoF2Station/ShipShadows/v_ship_037_deep_science.png",
+   "Assets/Resources/GoF2Station/ShipShadows/v_ship_038_deep_science.png",
+   "Assets/Resources/GoF2Station/ShipShadows/v_ship_039_vossk.png",
+   "Assets/Resources/GoF2Station/ShipShadows/v_ship_040_deep_science.png",
+   "Assets/Resources/GoF2Station/ShipShadows/v_ship_041_vossk.png"
   ],
   "Assets/Resources/GoF2Story/StoryAssets.asset": [
    "Assets/Audio/CUTSCENES/Alert_03.ogg",
@@ -5230,11 +5312,7 @@
    "Assets/Localization/text_pl.json",
    "Assets/Localization/text_pt.json",
    "Assets/Localization/text_ru.json",
-   "Assets/Localization/text_zh.json",
-   "Assets/Resources/GoF2Sky/SpaceSky.mat"
-  ],
-  "Assets/Scenes/Space.unity": [
-   "Assets/Resources/GoF2Sky/SpaceSky.mat"
+   "Assets/Localization/text_zh.json"
   ],
   "Assets/Scenes/Station.unity": [
    "Assets/Audio/DLC2_MUSIC/DeepScience_Station_02.ogg",
@@ -5304,8 +5382,7 @@
    "Assets/Prefabs/main/bars/bar_visitor_shadow.prefab",
    "Assets/Prefabs/main/bars/bar_visitor_terran_f.prefab",
    "Assets/Prefabs/main/bars/bar_visitor_terran_m.prefab",
-   "Assets/Prefabs/main/bars/bar_visitor_vossk.prefab",
-   "Assets/Resources/GoF2Sky/SpaceSky.mat"
+   "Assets/Prefabs/main/bars/bar_visitor_vossk.prefab"
   ],
   "Assets/Settings/Build Profiles/Android GLES3.asset": [
    "Assets/UI/AppIcon/icon.png",

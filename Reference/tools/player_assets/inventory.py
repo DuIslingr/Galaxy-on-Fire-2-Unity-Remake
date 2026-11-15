@@ -61,7 +61,23 @@ RULES = [
 ASSET_TEXT = (".unity", ".prefab", ".asset", ".mat", ".controller", ".anim", ".uxml", ".uss", ".playable", ".mask", ".overrideController")
 
 
+# Inside the original / derived folders: the remake's own work, which ships whatever folder it sits in.
+OWN_EXT = (".cs", ".shader", ".hlsl", ".cginc", ".uss", ".uxml", ".tss", ".shadergraph", ".compute")
+OWN_FILES = {
+    # computed layout data (numbers only): ships like the fact tables (the user, 2026-11-15)
+    "Assets/Resources/GoF2SkyLayers/layered_skies.json", "Assets/Resources/GoF2SkyLayers/nebula_clouds.json",
+    # the template materials and ScriptableObjects scenes and code point at (their texture slots filled at run time)
+    "Assets/Resources/GoF2Sky/SpaceSky.mat", "Assets/Resources/GoF2Backdrop/SkyLayerAssets.asset",
+}
+
+
 def classify(path):
+    if path.endswith(OWN_EXT) or path in OWN_FILES:
+        return OWN, "", "", ""
+    if path.startswith("Assets/Resources/GoF2Planets3D/") and path.endswith(".json"):
+        return OWN, "", "", ""   # (the rebuilt planets' layout numbers)
+    if path.startswith("Assets/Resources/GoF2Station/") and path.endswith((".mat", ".asset")):
+        return OWN, "", "", ""   # (the station scene's own material and assets)
     for prefix, kind, what, source in RULES:
         if path.startswith(prefix): return kind, prefix, what, source
     return OWN, "", "", ""
