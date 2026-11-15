@@ -40,6 +40,17 @@ RULES = [
     ("Assets/UI/MainMenu/card_", ORIGINAL, "main menu campaign cards (key art)", "the app's images (replace with the remake's own)"),
     ("Assets/Localization/text_", ORIGINAL, "the game's text", ".lang files"),
     ("Assets/Localization/GoF2_strings", ORIGINAL, "the game's text (table)", ".lang files"),
+    # the fact tables ship (the user, 2026-11-15): IDs, paths, rules and event names the remake recovered, no original bytes
+    ("Assets/Resources/GoF2Data/resources.json", OWN, "the resource table's IDs and paths (recovered facts)", ""),
+    ("Assets/Resources/GoF2Data/assemblies.json", OWN, "how objects are assembled (the remake's rules)", ""),
+    ("Assets/Resources/GoF2Data/story.json", OWN, "the story's step / voice IDs and event names (recovered facts)", ""),
+    ("Assets/Resources/GoF2Data/voice_table.json", OWN, "voice IDs to FMOD event names (recovered facts)", ""),
+    ("Assets/Resources/GoF2Data/weapon_fx.json", OWN, "weapon effect names (recovered facts)", ""),
+    ("Assets/Resources/GoF2Data/step_summaries.json", OWN, "the remake's own step summaries", ""),
+    ("Assets/Resources/GoF2Data/hangar_heights.json", OWN, "the remake's measurements", ""),
+    ("Assets/Resources/GoF2Data/nozzle_shapes.json", OWN, "the remake's measurements", ""),
+    ("Assets/Resources/GoF2Data/void_station_extra.json", OWN, "the remake's collision volumes", ""),
+    ("Assets/Resources/GoF2Data/generated_lods.bytes", DERIVED, "simplified LODs of the original meshes", "rebuilt at run time (LodMeshes.Simplify)"),
     ("Assets/Resources/GoF2Data/", ORIGINAL, "game data tables (items, ships, systems, stations...)", ".bin files + the resource table (per file: see notes)"),
     ("Assets/Shaders_Original_GLSL/", ORIGINAL, "the original's shader source (reference only)", "data/shader (not converted: the remake's shaders replace them)"),
     # ---- the remake's own

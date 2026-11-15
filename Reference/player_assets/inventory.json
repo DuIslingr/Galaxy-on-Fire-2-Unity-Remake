@@ -1,13 +1,13 @@
 {
  "summary": {
   "original": {
-   "files": 8911
+   "files": 8901
   },
   "derived": {
-   "files": 2287
+   "files": 2288
   },
   "own": {
-   "files": 1406
+   "files": 1420
   }
  },
  "folders": {
@@ -172,12 +172,82 @@
    "files": 1,
    "bytes_here": 3925854
   },
+  "Assets/Resources/GoF2Data/resources.json": {
+   "kind": "own",
+   "what": "the resource table's IDs and paths (recovered facts)",
+   "source": "",
+   "files": 1,
+   "bytes_here": 451687
+  },
+  "Assets/Resources/GoF2Data/assemblies.json": {
+   "kind": "own",
+   "what": "how objects are assembled (the remake's rules)",
+   "source": "",
+   "files": 1,
+   "bytes_here": 509291
+  },
+  "Assets/Resources/GoF2Data/story.json": {
+   "kind": "own",
+   "what": "the story's step / voice IDs and event names (recovered facts)",
+   "source": "",
+   "files": 1,
+   "bytes_here": 194290
+  },
+  "Assets/Resources/GoF2Data/voice_table.json": {
+   "kind": "own",
+   "what": "voice IDs to FMOD event names (recovered facts)",
+   "source": "",
+   "files": 1,
+   "bytes_here": 69357
+  },
+  "Assets/Resources/GoF2Data/weapon_fx.json": {
+   "kind": "own",
+   "what": "weapon effect names (recovered facts)",
+   "source": "",
+   "files": 1,
+   "bytes_here": 15422
+  },
+  "Assets/Resources/GoF2Data/step_summaries.json": {
+   "kind": "own",
+   "what": "the remake's own step summaries",
+   "source": "",
+   "files": 1,
+   "bytes_here": 16489
+  },
+  "Assets/Resources/GoF2Data/hangar_heights.json": {
+   "kind": "own",
+   "what": "the remake's measurements",
+   "source": "",
+   "files": 1,
+   "bytes_here": 1375892
+  },
+  "Assets/Resources/GoF2Data/nozzle_shapes.json": {
+   "kind": "own",
+   "what": "the remake's measurements",
+   "source": "",
+   "files": 1,
+   "bytes_here": 64438
+  },
+  "Assets/Resources/GoF2Data/void_station_extra.json": {
+   "kind": "own",
+   "what": "the remake's collision volumes",
+   "source": "",
+   "files": 1,
+   "bytes_here": 9494
+  },
+  "Assets/Resources/GoF2Data/generated_lods.bytes": {
+   "kind": "derived",
+   "what": "simplified LODs of the original meshes",
+   "source": "rebuilt at run time (LodMeshes.Simplify)",
+   "files": 1,
+   "bytes_here": 132
+  },
   "Assets/Resources/GoF2Data/": {
    "kind": "original",
    "what": "game data tables (items, ships, systems, stations...)",
    "source": ".bin files + the resource table (per file: see notes)",
-   "files": 53,
-   "bytes_here": 3925789
+   "files": 43,
+   "bytes_here": 1219297
   },
   "Assets/Shaders_Original_GLSL/": {
    "kind": "original",

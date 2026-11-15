@@ -154,7 +154,8 @@ upgrade). First run (Android 2.0.16 XAPK, iOS 1.1.19 ipa):
 - **No original bytes, recovered facts:** `resources.json` (the resource table, from emulating Android's
   `BuildResourceList` + disassembly IDs + the remake's additions), `assemblies.json` (the remake's composition rules),
   `story.json` and `voice_table` (IDs and FMOD event names from the .so); weapon_fx (a hand table). Not rebuildable from
-  an iOS copy (its executable is encrypted). **Open: ship them with the game (facts) or in the separate pack.**
+  an iOS copy (its executable is encrypted). **They ship with the game** (the user, 2026-11-15: facts, no art, text or
+  code of the original's, and every edition needs them).
 - **The remake's own:** step_summaries, hangar_heights, nozzle_shapes, void_station_extra, generated_lods (derived from
   the meshes: rebuildable on the player's machine with the run-time simplifier). `_bin_decode_report`: unused, drop.
 
