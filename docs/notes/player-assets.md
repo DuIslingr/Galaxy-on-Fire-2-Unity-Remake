@@ -14,6 +14,21 @@ first, proposed upstream once complete); the current `Resources` path keeps work
   player's machine after the conversion (3D planets, sky layers, reflections, the assembled prefabs); the Real-ESRGAN sky
   upscales are an **optional desktop step** ("enhance"), without it the original skies (Settings.SkyStyle Enhanced /
   Combined then use the original images).
+- **What the player's copy can't provide is set aside, distributed separately, not on GitHub** (the user, 2026-11-15):
+  every file whose converted form the converter doesn't reproduce exactly (KiritoJPK's "Higher quality textures and
+  metallic maps", 2026-10-07; the remake's resized or edited images; derived assets that can't be made on the player's
+  machine, such as the Real-ESRGAN upscales) goes into a **supplement pack**: a download of its own, installed beside the
+  converted cache, layered over it. The list comes from the importers' exact comparisons against the project's files,
+  not from rules.
+  - **Per source:** what one edition has and another lacks goes into that edition's own gap pack (the user,
+  2026-11-15): a player with the iOS or macOS copy gets the Android-only assets that way, and the reverse. So the packs
+  are a common one (nothing provides it) plus one per edition (what that edition lacks). Found so far (file names,
+  2026-11-15): iOS lacks 21 Supernova `.bin` (docking points, ship weapon mounts), `ar.lang`, the Vossk 063 textures
+  (named `..._prototype` on iOS: an alias to map, not necessarily a gap), two hangar bot animations and the iPad 1440
+  interface images; Android lacks the German voice banks and `zs` / `zt.lang`, and ~90 meshes / 27 textures iOS keeps at
+  other paths (asteroid fields, explosions: to map before calling them gaps).
+  - The mapping is per project asset: its source entry in each edition (aliases included) and whether that edition's
+  conversion reproduces it; `Reference/tools/player_assets` gets that table, and the packs are made from it.
 - Not decided here: `Reference/binaries` (the Android APK, `libgof2hdaa.so`, `libfmodevent.so`, default economy .bin) and
   `Reference/decompiled` are in the repository too; whether they stay is upstream's call. They aren't part of a build.
 
