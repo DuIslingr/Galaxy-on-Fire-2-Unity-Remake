@@ -97,7 +97,8 @@ logic (plain C#); `MiningView` draws the lock ring, ore plate, HUD messages and 
   layer time the same (`Mining`). The ES2 importer gives its crystals 200 (ES2's 10 s against 5 s). Test
   `MiningGameTests.AnOresMiningTimeStretchesTheLayersForTheSameOre`.
 - **Ore into cores at the Mido Mining Plant** (`MiningPlant`, 2026-11-01; players' report: the remake never had it): docked
-  at the Coromesk plant (103) with an empty campaign mission (steps 107, 128-130 and from 162 on), not in the alien orbit
+  at the Coromesk plant (103) with an empty campaign mission (steps 107, 128-130 and from 162 on; remake since
+  2026-11-10, players' report: with any campaign mission not at Coromesk), not in the alien orbit
   (`PlayerEgo::isDockedToMiningPlant` 0xadcb8), the docking asks 290 ("#" = 30, Extreme 100) with every ore in the hold
   (286 without; `MGame::OnUpdate` 0x1ac778, `Traffic.Ask` from `SpaceLevel`'s `Docking.Docked`). Yes
   (`MGame::OnTouchEnd` 0x1a98d8): ores 154-164 -> core = ore + 11 (Void crystals -> Void essence), Novanium 217 -> 218,
@@ -136,9 +137,11 @@ logic (plain C#); `MiningView` draws the lock ring, ore plate, HUD messages and 
   and core the shops stock (occurrence > 0), so they follow the economy (the Default Economy's Void crystals, 400$, are
   Valuable; Collectible Figures, 5,005$, Exceptional) and hold 12-32 goods a tier; never junk under 25$ (towels, basic
   food), never mod items. Contraband-sounding goods are in (drugs, explosives, radioactive goods, organs): the game has
-  no rule against cargo. The four plasmas (201-204) only once the story is past 142 (its plasma kit tutorial counts any
-  plasma aboard), Red Plasma volatile in the hold (`VolatileCargo`); never the K'mirkk Toad Mutagen, the other volatile
-  good (a story item, 117-122, worth 512,500$ in the Android tables). Odds a ton: junk 64 %, Scrap 21, Salvage 11,
+  no rule against cargo. Green, blue and purple plasma (201-203) only once the story is past 142 (its plasma kit tutorial counts
+  any plasma aboard); never Red Plasma (204, taken out 2026-11-11: volatile in the hold, `VolatileCargo`) nor the K'mirkk
+  Toad Mutagen, the other volatile good (a story item, 117-122, worth 512,500$ in the Android tables). Without Red
+  Plasma the fee after 142 is 98$ (Android, was 99) / 102$ (Default), 92.7 / 92.6 % back; the hold numbers below
+  don't move (re-simulated). Odds a ton: junk 64 %, Scrap 21, Salvage 11,
   Valuable 4 of the rest; a rare find 0.3 % (gear 12 : rare goods 6 : exceptional 4). Bad-luck caps (not shown to the
   player): at most 6 empty tons in a row, a rare find at the latest in the 500th ton since the last. With them 38 % of
   tons find something, 1 in ~260 t is rare, 1 in ~1,400 t exceptional (`LongRun`, the steady state the fee is worked

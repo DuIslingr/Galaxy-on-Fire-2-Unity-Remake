@@ -312,6 +312,10 @@ namespace GoF2Remake.World
                 root.transform.SetPositionAndRotation(
                     OrbitLayout.ToUnity(UndockPoint),
                     OrbitLayout.RotationToUnity(new Vector3(0f, (Random.value < 0.5f ? 1 : -1) * OrbitLayout.UndockYaw / 65536f * 2f * Mathf.PI, 0f)));
+            // Modified: at Luur the station is turned -45 deg (OrbitBuilder.SpawnStation), and the undock point with it, about the
+            // station (a player's request): out of its hangar, in front of it as at any other station. Arrivals stay as they were.
+            if (!Session.ArrivedByTravel && launchFromMobile < 0 && OrbitBuilder.StationTurn(Layout) is Quaternion turn)
+                root.transform.SetPositionAndRotation(turn * root.transform.position, turn * root.transform.rotation);
             // Multiplayer: players launching together sit side by side, 80 m apart by client id (one of 8 slots, -240..+320 m
             // across the undock point: by the raw id a player who had reconnected a few dozen times came out kilometres to the
             // side of the entrance, the ids only grow); an arena's spawn ring.
@@ -568,7 +572,10 @@ namespace GoF2Remake.World
         public void WarpPlayer(Vector3 position, Quaternion rotation)
         {
             Player.transform.SetPositionAndRotation(position, rotation);
-            chase.Snap();
+            // Modified: not while a level script's cutscene camera holds the view (scriptCamera): Snap put the camera behind the
+            // moved player mid-shot (157: the camera following the Valkyrie jumped to Keith's ship as Harval's chase began, a
+            // player's report). CutsceneCamera.Release snaps it back when the cutscene ends.
+            if (!chase.scriptCamera) chase.Snap();
         }
         /// <summary>Level::initStreamOutPosition: this level began with an arrival by travel (planet jump, gate, wormhole).</summary>
         public bool StreamOutArrival => launchTravel;

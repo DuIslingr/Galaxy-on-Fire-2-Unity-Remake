@@ -164,6 +164,9 @@ namespace GoF2Remake.Flight
             if (r == null || lowLods.Contains(r)) return false;
             string n = m.name.ToLowerInvariant();
             if (n.Contains("_add") || n.Contains("_lights") || LowerLodName(n) || n.Contains("glow")) return false;
+            // Modified: an animated alpha layer is an effect, not hull (sn_burning_station_fire_anim_alpha: the burning Luur
+            // station's smoke stopped ships and shots in mid-air, a player's report).
+            if (n.Contains("_anim") && n.Contains("_alpha")) return false;
             var mat = r.sharedMaterial;
             if (mat != null && mat.shader != null && (mat.shader.name.IndexOf("Additive", StringComparison.OrdinalIgnoreCase) >= 0
                 || mat.shader.name.StartsWith("GoF2/Mod", StringComparison.Ordinal))) return false;   // a mod model's glow, hologram, shimmer, flame
@@ -271,6 +274,28 @@ namespace GoF2Remake.Flight
                 point = hits[i].distance > 0f ? hits[i].point : from;
             }
             return target != null;
+        }
+
+        /// <summary>Modified: the first shown hull with no target along 'from' -> 'to' (the orbit's station and jumpgate,
+        /// SpaceLevel.AddObstacles): where a shot stops on it (Gun.TestHits; the original's shots pass them).</summary>
+        public static bool CastScenery(Vector3 from, Vector3 to, float radius, out Vector3 point)
+        {
+            point = to;
+            var d = to - from;
+            float len = d.magnitude;
+            if (len < 1e-5f) return false;
+            Sync();
+            int n = Physics.SphereCastNonAlloc(from, radius, d / len, hits, len, HullMask, QueryTriggerInteraction.Ignore);
+            float best = float.MaxValue;
+            for (int i = 0; i < n; i++)
+            {
+                if (hits[i].distance >= best) continue;
+                var b = BodyOf(hits[i].collider);
+                if (b == null || b.target != null || !b.Collides || !Shown(hits[i].collider)) continue;
+                best = hits[i].distance;
+                point = hits[i].distance > 0f ? hits[i].point : from;
+            }
+            return best < float.MaxValue;
         }
 
         /// <summary>A sphere of 'radius' swept from 'from' to 'to': the distance to the first shown hull 'valid' accepts that

@@ -388,6 +388,10 @@ docs/                     multiplayer guides and the per-area technical notes
 - **プルリクエスト歓迎です。** リポジトリをフォークし、ブランチで変更を加え、エディットモードテストを実行して、`main` に対して
   プルリクエストを開いてください。ある分野に取り組む前に、[docs/notes/](../notes) のその分野のファイルを読んでください。規約は
   [CLAUDE.md](../../CLAUDE.md) にあります。
+- **モデル、テクスチャ、サウンドを変更する場合**も、いつも通り commit と push するだけです。プロジェクトの LFS サーバーは
+  アカウントやログインなしでアップロードを受け付けます。
+  Web 版の Claude Code を使う場合は、環境の許可ドメイン（Network access → Limited）に `toppienas.diskstation.me` を追加してください。
+  追加しないとサンドボックスから LFS サーバーに接続できません。
 - **気に入ったら？** GitHub で ⭐ をお願いします。ほかの人がプロジェクトを見つけやすくなります。
 
 ---

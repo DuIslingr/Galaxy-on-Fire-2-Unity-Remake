@@ -386,6 +386,10 @@ docs/                     multiplayer guides and the per-area technical notes
 - **Pull requests are welcome.** Fork the repository, make your change on a branch, run the edit-mode tests, and open a
   pull request against `main`. Before working on an area, read its file in [docs/notes/](docs/notes); the conventions are
   in [CLAUDE.md](CLAUDE.md).
+- **Changing models, textures or sounds?** Just commit and push as usual: the project's LFS server accepts uploads
+  without an account or login.
+  Using Claude Code on the web? Add `toppienas.diskstation.me` to the environment's allowed domains (Network access → Limited),
+  otherwise its sandbox can't reach the LFS server.
 - **Like the project?** Give it a ⭐ on GitHub, it helps others find it.
 
 ---
