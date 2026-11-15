@@ -119,6 +119,13 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
   - iOS' `v_galaxymap_planets` has no alpha (Android's ring quadrant is translucent): a real difference between the
   copies, so that texture is in the iOS gap pack.
 
+- **GameTables** (`Scripts/Runtime/Core/Content/GameTables.cs`, 2026-11-15): the data tables from the copy's .bin files and
+  English .lang (ports of parse_bins.py, parse.py + export.py with items.json's statList / `"blueprint": []`, and
+  build_item_attributes.py), values written in the scripts' key order (JsonObj, TableJson). Android: 40 tables, 39 equal
+  to the project's by value, items.json differing only by the remake's text fix (so the string overlay goes on the
+  English table before the tables are built); iOS: 19 tables, 15 equal, the other 4 (items, item_attributes, ships,
+  weapons_hd) its Default Economy's numbers, as traced.
+
 ## The packs (`Reference/tools/player_assets/packs.py` -> `Reference/player_assets/packs.json`, 2026-11-15)
 
 From the converter's own output for each edition (`Reference/tools/player_assets/convert`), against the project's files:
