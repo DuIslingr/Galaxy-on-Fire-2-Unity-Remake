@@ -32,7 +32,8 @@ def spectral(rng, beta, stretch=1.0):
     f[0, 0] = 1.0
     amp = f ** (-beta / 2)
     amp[0, 0] = 0.0
-    amp[f > 0.1] = 0.0   # (no detail finer than 10 px: the mask is magnified a lot, and grain read as dust, not gas)
+    amp[f > 0.08] = 0.0   # (no detail finer than 12 px: the mask is magnified a lot; finer grain read as dust beside
+                          # EVERSPACE 2's smooth masks, coarser (20 px) as blobby contours through its crushing curve)
     phase = rng.uniform(0, 2 * np.pi, amp.shape)
     n = np.fft.irfft2(amp * np.exp(1j * phase), s=(SIZE, SIZE))
     n = (n - n.mean()) / n.std()
@@ -49,16 +50,26 @@ def masks():
     billow = norm(np.abs(spectral(rng, 2.6)) ** 0.7 + 0.6 * spectral(rng, 3.0))
     billow = billow ** 1.6
     ridge = 1.0 - np.abs(spectral(rng, 3.4))
-    ridge = norm(ridge) ** 3.0 * norm(spectral(rng, 3.6) + 0.8)
+    ridge = norm(ridge) ** 1.6 * norm(spectral(rng, 3.6) + 0.8)   # (^3 made lines that crumbled through ES2's crushing curve)
     wisp = norm(spectral(rng, 3.2, stretch=3.0) + 0.4 * spectral(rng, 3.4))
     wisp = wisp ** 2.0
-    img = np.stack([norm(billow), norm(ridge), norm(wisp)], -1)
-    # each channel's mean brought to EVERSPACE 2's local nebula masks' (T_Skybox_Nebula_001 / 002 / 005: 0.43 - 0.57): its
-    # material crushes the mask (Bias 0.05, ^2), so a darker mask shows only its few brightest specks
+    # smoothed (wrapping: still tileable): the billows' |noise| creases were the clouds' crumbly grain beside ES2's smooth masks
+    from scipy import ndimage as nd
+    img = np.stack([norm(nd.gaussian_filter(ch, 2.5, mode='wrap')) for ch in (billow, ridge, wisp)], -1)
+    # each channel's values mapped onto EVERSPACE 2's local nebula masks' distribution (their 5 % quantiles, numbers only:
+    # T_Skybox_Nebula_001's r, 002's r, 005's b, as the ES2 importer packs them): its material crushes the mask (Bias 0.05,
+    # ^2), so only the top of it shows: ES2's have broad high plateaus, a wider distribution showed as crumbly specks
     for c in range(3):
-        m = img[..., c].mean()
-        img[..., c] = img[..., c] ** (np.log(0.5) / np.log(max(m, 1e-3)))
+        ranks = img[..., c].ravel().argsort().argsort() / (img[..., c].size - 1)
+        img[..., c] = np.interp(ranks, np.linspace(0, 1, 21), ES2_QUANTILES[c]).reshape(img.shape[:2])
     return np.round(img * 255).astype(np.uint8)
+
+
+ES2_QUANTILES = [
+    [0.239, 0.314, 0.353, 0.373, 0.396, 0.42, 0.435, 0.451, 0.467, 0.486, 0.514, 0.533, 0.557, 0.584, 0.616, 0.647, 0.678, 0.71, 0.741, 0.816, 1.0],
+    [0.271, 0.357, 0.396, 0.427, 0.451, 0.471, 0.486, 0.506, 0.522, 0.541, 0.561, 0.58, 0.604, 0.631, 0.647, 0.667, 0.69, 0.718, 0.753, 0.796, 1.0],
+    [0.0, 0.129, 0.208, 0.259, 0.298, 0.322, 0.345, 0.365, 0.388, 0.408, 0.42, 0.443, 0.463, 0.486, 0.506, 0.533, 0.565, 0.6, 0.647, 0.722, 1.0],
+]
 
 
 def palette(name, k=3):

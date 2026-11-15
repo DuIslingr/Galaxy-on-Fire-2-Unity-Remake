@@ -22,7 +22,9 @@ namespace GoF2Remake.World
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class GoF2SkyLayers
     {
-        [System.Serializable] public sealed class Region { public float[] dir; public float radius; public float[] color; public float brightness; }
+        /// <summary>A bright region: its direction (the baked cube's frame), size (degrees), average colour, brightness, and its two
+        /// main hues (heavier first).</summary>
+        [System.Serializable] public sealed class Region { public float[] dir; public float radius; public float[] color; public float brightness; public float[] colorA, colorB; }
         [System.Serializable] public sealed class Patch { public string image; public float[] dir; public float span; public float heading, elevation; }
         [System.Serializable] public sealed class Sky
         {

@@ -92,10 +92,17 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   colour, float) is set so its mean over its disc is its target, the region's own brightness (near clouds half the sky's),
   counting its pieces' overlap and their seen share at a random turn after the edge-on fade (0.268): ES2's exposure, per
   cloud. Colours: the regions' / the sky's main colours saturated 1.6x (GoF2's are pale averages, ES2's nebula colours
-  vivid). A piece fades within its own size of the camera (km-wide pieces filled the view as discs). ES2's fog inside a
+  vivid; 1.3x: 1.6 drifted mixed regions' hue). Colours (second pass): each region's two main hues (`sky_layers.py`
+  `two_hues`: k-means by chromaticity, weighted by light; `colorA` / `colorB`): a distant cloud the heavier, its thin edges
+  the other (per vertex, uv3; the average of 007's brown and teal region was a beige that saturated to yellow); a near cloud
+  one of the regions' hues, its edges the sky's main colour (the material's `_SysColor`, ES2's system colour). Pieces dim
+  from half the cloud's radius out (smoothstep), so a cloud fades out instead of ending at an edge. A piece fades within its
+  own size of the camera (km-wide pieces filled the view as discs). ES2's fog inside a
   nebula: where the first near cloud's middle lies within its radius and the system has no fog of its own, the scene's fog
   in its colour, linear, fully hazed at 3 x its radius / (1 - d / r)^0.5 (6-40 km). The remake's own masks
-  (`Reference/tools/sky/nebula_clouds.py`: tileable spectral noise, each channel's mean
+  (`Reference/tools/sky/nebula_clouds.py`: tileable spectral noise, no detail under 12 px, smoothed, each channel's values
+  mapped onto ES2's masks' distribution (their 5 % quantiles, numbers only: ES2's crushing curve shows only a mask's top,
+  where ES2's have broad plateaus; a wider distribution showed as crumbly specks), before that each channel's mean
   brought to ES2's masks' ~0.5, which its crushing opacity needs) and `nebula_clouds.json` (each sky's coverage, brightness
   and three main colours); a mod's `textures/cloud_masks.png` replaces them (`ModTextures.SkyLayer`: the ES2 mod gives ES2's
   T_Skybox_Nebula_001 / 002 / 005). Compared in Unity renders, nebulae 005 / 007 / 008 / 016: with ES2's masks they read as

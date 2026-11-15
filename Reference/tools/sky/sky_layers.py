@@ -111,6 +111,29 @@ def equirect(n_w=512):
     return d, np.cos(LAT)
 
 
+def two_hues(px, w):
+    """A region's two main colours (k-means of its pixels by chromaticity, weighted by light), the heavier first, each
+    normalised to its brightest channel: the average of a brown and teal region is a beige that saturates to yellow."""
+    if len(px) < 8 or w.sum() <= 0:
+        return [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
+    chroma = px / np.maximum(px.sum(-1, keepdims=True), 1e-6)
+    rng = np.random.default_rng(3)
+    p = w / w.sum()
+    centres = chroma[rng.choice(len(chroma), 2, replace=False, p=p)]
+    for _ in range(30):
+        lab = np.argmin(((chroma[:, None, :] - centres[None]) ** 2).sum(-1), 1)
+        for j in range(2):
+            m = lab == j
+            if m.any(): centres[j] = (chroma[m] * w[m, None]).sum(0) / w[m].sum()
+    weights = [w[lab == j].sum() for j in range(2)]
+    cols = []
+    for j in np.argsort(weights)[::-1]:
+        m = lab == j
+        c = (px[m] * w[m, None]).sum(0) / max(w[m].sum(), 1e-9) if m.any() else centres[j]
+        cols.append([round(float(v), 4) for v in c / max(c.max(), 1e-6)])
+    return cols
+
+
 def layout(index):
     faces = es.to_linear(es.load_strip(f'nebula_{index:03d}'))   # the original bake (its colours, its own specks are tiny)
     d, area = equirect()
@@ -141,8 +164,10 @@ def layout(index):
         # its size: where it falls to half the peak, on average round it
         r = float(np.sqrt((wt * ang ** 2).sum() / max(wt.sum(), 1e-9)))
         col = (rgb * (wt * (ang < r * 1.5))[..., None]).sum((0, 1)) / max((wt * (ang < r * 1.5)).sum(), 1e-9)
+        hues = two_hues(rgb[ang < r * 1.5], (wt * (ang < r * 1.5))[ang < r * 1.5])
         regions.append({'dir': [round(float(v), 5) for v in c], 'radius': round(math.degrees(r), 2),
-                        'color': [round(float(v), 4) for v in col / max(col.max(), 1e-6)], 'brightness': round(float(peak), 5)})
+                        'color': [round(float(v), 4) for v in col / max(col.max(), 1e-6)], 'brightness': round(float(peak), 5),
+                        'colorA': hues[0], 'colorB': hues[1]})   # (flat: Unity's JsonUtility reads no nested lists)
         work *= 1.0 - np.exp(-(ang / max(r * 1.2, 0.05)) ** 2)
     return {'coverage': round(coverage, 4), 'main': [round(float(v), 4) for v in main / max(main.max(), 1e-6)],
             'brightness': round(float(np.percentile(lum[lum > 0.01], 90)) if (lum > 0.01).any() else 0.0, 5),

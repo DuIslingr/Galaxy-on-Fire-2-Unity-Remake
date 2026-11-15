@@ -12,7 +12,8 @@
 // own size of the camera (a piece km wide filled the view as a disc); a piece past the level's
 // far plane (15 km) drawn at 95 % of it in its own direction (the distant clouds keep their size on the sky); premultiplied
 // (light added, some of what is behind covered), the pieces unsorted.
-// Vertex data: uv the sprite's corner, uv1 its random values, normal its facing, colour its tint (a: its mask channel / 2).
+// Vertex data: uv the sprite's corner, uv1 its random values, uv2.x its size, uv3 its thin edges' colour (a: 1, set), normal
+// its facing, colour its tint times its light (a: its mask channel / 2).
 Shader "GoF2/NebulaCloud"
 {
     Properties
@@ -55,11 +56,11 @@ Shader "GoF2/NebulaCloud"
                 float4 _SunDir, _SunColor, _SysColor;
             CBUFFER_END
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float4 rnd : TEXCOORD1; float2 size : TEXCOORD2; float4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float4 rnd : TEXCOORD1; float2 size : TEXCOORD2; float4 edge : TEXCOORD3; float4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
             {
                 float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float4 rnd : TEXCOORD1; float3 normalWS : TEXCOORD2;
-                float4 view : TEXCOORD3; float size : TEXCOORD4; float4 color : COLOR; UNITY_VERTEX_OUTPUT_STEREO
+                float4 view : TEXCOORD3; float size : TEXCOORD4; float4 edge : TEXCOORD5; float4 color : COLOR; UNITY_VERTEX_OUTPUT_STEREO
             };
 
             Varyings vert(Attributes i)
@@ -79,6 +80,7 @@ Shader "GoF2/NebulaCloud"
                 o.view = float4(v / max(dist, 1e-3), dist);
                 o.color = i.color;
                 o.size = i.size.x;
+                o.edge = i.edge;
                 return o;
             }
 
@@ -106,7 +108,9 @@ Shader "GoF2/NebulaCloud"
                 float tone = Contrast(Bias(1.0 - radial * m, _ColorBias), _ColorContrast);
                 // (the vertex colour carries the cloud's light, set per cloud: World.NebulaClouds; the system colour scaled to it)
                 float light = max(max(i.color.r, i.color.g), max(i.color.b, 1e-6));
-                float3 col = lerp(i.color.rgb, _SysColor.rgb * light, tone);
+                // the thin edges' colour: the cloud's own second hue (World.NebulaClouds), else the sky's main colour
+                float3 edgeHue = i.edge.a > 0.5 ? i.edge.rgb : _SysColor.rgb;
+                float3 col = lerp(i.color.rgb, edgeHue * light, tone);
                 // its opacity: the mask through Bias, ^Exponent, Contrast, x Density, faded round its edge
                 // (the radial falloff squared: linear, a piece's round edge showed once its light saturated)
                 float dens = Contrast(pow(max(Bias(m, _Bias), 0.0), _Exponent), _Contrast) * radial * radial * _Density;
