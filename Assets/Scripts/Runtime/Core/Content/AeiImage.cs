@@ -107,6 +107,9 @@ namespace GoF2Remake.Data
 
     /// <summary>ETC1 (Ericsson Texture Compression 1, OES_compressed_ETC1_RGB8_texture): 4x4 blocks of 8 bytes, big-endian,
     /// row-major; individual or differential base colours per 2x4 / 4x2 half, an 8-row intensity table.</summary>
+#if UNITY_5_3_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]   // (only constant tables: nothing to reset)
+#endif
     public static class Etc1
     {
         static readonly int[,] Table =
@@ -168,6 +171,9 @@ namespace GoF2Remake.Data
     /// <summary>PVRTC 4 bpp / 2 bpp (PowerVR, iOS): 64-bit words (modulation, then colours A and B) of 4x4 / 8x4 pixels in
     /// Morton order, each pixel blended between two bilinearly upscaled low-resolution images; after the PowerVR SDK's
     /// reference decompressor (PVRTDecompress).</summary>
+#if UNITY_5_3_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]   // (only constant tables: nothing to reset)
+#endif
     public static class Pvrtc
     {
         struct Word { public uint mod, col; }

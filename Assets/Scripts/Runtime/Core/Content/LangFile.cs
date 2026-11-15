@@ -10,6 +10,9 @@ using System.Text;
 
 namespace GoF2Remake.Data
 {
+#if UNITY_5_3_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]   // (only constant tables: nothing to reset)
+#endif
     public static class LangFile
     {
         /// <summary>The original's file name (without .lang) -> the remake's language code (text_<code>.json).</summary>

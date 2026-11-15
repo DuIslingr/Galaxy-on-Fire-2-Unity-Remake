@@ -1,0 +1,239 @@
+// OriginalConverter.cs
+// Feature: docs/notes/player-assets.md "Plan" 3-4: the player's own copy of Galaxy on Fire 2 (the iOS .ipa, the Android
+// OBB or XAPK; several layered, later ones over earlier ones) converted into the game's own content cache, in the project's
+// own layout so the content layer finds each file where the project keeps it:
+//   Textures/<rel>.png          (AeiImage; <rel> as Reference/tools/asset_conversion/run_tex.py names them)
+//   Models/<rel>.gof2mesh.json  (AemMesh's sidecar) + Models/<rel>.aem (the mesh file itself, built into a Unity mesh at run
+//                               time: the converter keeps the original, a few hundred bytes to a few MB each)
+//   Audio/<bank>/<name>.mp3|.wav (FsbBank; <bank> without FMOD_GOF2_)
+//   Localization/text_<lang>.json (LangFile)
+//   _manifest.tsv               (each file: its source package and entry, and the format it was read from)
+// Plain C#, no Unity types: the game runs it on a worker thread, the tools run it from the command line.
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Text;
+
+namespace GoF2Remake.Data
+{
+    public sealed class OriginalConverter
+    {
+        /// <summary>One converted file: its cache path, the package and entry it came from, the source format.</summary>
+        public struct Item { public string Path, Package, Entry, Format; }
+
+        public readonly List<Item> Items = new List<Item>();
+        public readonly List<string> Problems = new List<string>();
+        readonly string root;
+        readonly Dictionary<string, int> index = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Called with (done, total, entry) as entries are converted (any thread).</summary>
+        public Action<int, int, string> Progress;
+
+        public OriginalConverter(string cacheRoot) { root = cacheRoot; }
+
+        /// <summary>Converts every package in order (a later one's file replaces an earlier one's), then writes the
+        /// manifest. A package may be a zip (.ipa, .obb, .xapk: an XAPK's OBB is read from inside it) or a folder.</summary>
+        public void Run(IEnumerable<string> packages)
+        {
+            foreach (var p in packages) Package(p);
+            var m = new StringBuilder("path\tpackage\tentry\tformat\n");
+            foreach (var it in Items) m.Append(it.Path).Append('\t').Append(it.Package).Append('\t').Append(it.Entry).Append('\t').Append(it.Format).Append('\n');
+            Directory.CreateDirectory(root);
+            File.WriteAllText(Path.Combine(root, "_manifest.tsv"), m.ToString());
+        }
+
+        void Package(string path)
+        {
+            if (Directory.Exists(path))
+            {
+                foreach (var f in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
+                {
+                    string rel = f.Substring(path.Length).TrimStart('/', '\\').Replace('\\', '/');
+                    if (rel.EndsWith(".obb", StringComparison.OrdinalIgnoreCase) || rel.EndsWith(".xapk", StringComparison.OrdinalIgnoreCase))
+                        Package(f);
+                    else Entry(Path.GetFileName(path), rel, () => File.ReadAllBytes(f));
+                }
+                return;
+            }
+            using (var zip = ZipFile.OpenRead(path)) Zip(Path.GetFileName(path), zip);
+        }
+
+        void Zip(string package, ZipArchive zip)
+        {
+            int done = 0, total = zip.Entries.Count;
+            foreach (var e in zip.Entries)
+            {
+                done++;
+                if (e.FullName.EndsWith(".obb", StringComparison.OrdinalIgnoreCase))
+                {
+                    // an XAPK: its OBB inside (stored, so this reads it through)
+                    using (var s = e.Open()) using (var ms = new MemoryStream())
+                    {
+                        s.CopyTo(ms); ms.Position = 0;
+                        using (var inner = new ZipArchive(ms, ZipArchiveMode.Read)) Zip(package + "/" + Path.GetFileName(e.FullName), inner);
+                    }
+                    continue;
+                }
+                Progress?.Invoke(done, total, e.FullName);
+                Entry(package, e.FullName, () => { using (var s = e.Open()) using (var ms = new MemoryStream()) { s.CopyTo(ms); return ms.ToArray(); } });
+            }
+        }
+
+        /// <summary>An entry's path below the game's data folder ("data/textures/x.aei", "data/assets/main/3d/..."), null
+        /// when it isn't one of the game's: Android ".../assets/data/...", iOS ".app/data/...", the .lang files beside it.</summary>
+        public static string DataPath(string entry)
+        {
+            string e = entry.Replace('\\', '/');
+            int i = e.IndexOf("/assets/data/", StringComparison.Ordinal);
+            if (i >= 0) return e.Substring(i + "/assets/".Length);
+            i = e.IndexOf(".app/", StringComparison.Ordinal);
+            if (i >= 0) return e.Substring(i + ".app/".Length);
+            return e.StartsWith("data/") ? e : Path.GetFileName(e);
+        }
+
+        /// <summary>A texture's or mesh's path in the project ("main/ships/ship_026_terran_diffuse"), from its data path.</summary>
+        public static string ProjectRel(string dataPath)
+        {
+            string r = dataPath.StartsWith("data/") ? dataPath.Substring(5) : dataPath;
+            if (r.StartsWith("assets/")) r = r.Substring(7);
+            r = r.Replace("3d/textures/low/etc/", "").Replace("3d/textures/low/pvrtc/", "").Replace("3d/textures/", "").Replace("3d/meshes/", "");
+            int dot = r.LastIndexOf('.');
+            return dot > 0 ? r.Substring(0, dot) : r;
+        }
+
+        void Entry(string package, string entry, Func<byte[]> read)
+        {
+            string ext = Path.GetExtension(entry).ToLowerInvariant();
+            if (ext != ".aei" && ext != ".aem" && ext != ".fsb" && ext != ".lang") return;
+            string data = DataPath(entry);
+            try
+            {
+                switch (ext)
+                {
+                    case ".aei":
+                    {
+                        var img = AeiImage.Read(read());
+                        Write("Textures/" + ProjectRel(data) + ".png", PngWriter.Encode(img.Rgba, img.Width, img.Height), package, entry, img.Format);
+                        break;
+                    }
+                    case ".aem":
+                    {
+                        var bytes = read();
+                        var mesh = AemMesh.Read(bytes);
+                        string rel = ProjectRel(data), name = Path.GetFileName(rel);
+                        Write("Models/" + rel + ".aem", bytes, package, entry, "AEM v" + mesh.Version);
+                        Write("Models/" + rel + ".gof2mesh.json", Encoding.UTF8.GetBytes(mesh.Sidecar(name, data.StartsWith("data/") ? data.Substring(5) : data)), package, entry, "sidecar");
+                        break;
+                    }
+                    case ".fsb":
+                    {
+                        var bank = FsbBank.Read(read());
+                        string b = Path.GetFileNameWithoutExtension(entry);
+                        b = b.StartsWith("FMOD_GOF2_") ? b.Substring(10) : b;
+                        if (bank.Extension == null) { Problems.Add($"{entry}: FSB5 codec {bank.Codec} isn't read"); break; }
+                        foreach (var s in bank.Samples)
+                            Write($"Audio/{b}/{s.Name}{bank.Extension}", bank.Extract(s), package, entry, "FSB5 codec " + bank.Codec);
+                        break;
+                    }
+                    case ".lang":
+                    {
+                        string stem = Path.GetFileNameWithoutExtension(entry);
+                        if (!LangFile.Codes.TryGetValue(stem, out var code)) { Problems.Add($"{entry}: unknown language"); break; }
+                        Write($"Localization/text_{code}.json", Encoding.UTF8.GetBytes(LangFile.ToJson(LangFile.Read(read()))), package, entry, ".lang");
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is FormatException || ex is NotSupportedException || ex is InvalidDataException)
+            {
+                Problems.Add($"{entry}: {ex.Message}");
+            }
+        }
+
+        void Write(string rel, byte[] bytes, string package, string entry, string format)
+        {
+            string full = Path.Combine(root, rel);
+            Directory.CreateDirectory(Path.GetDirectoryName(full));
+            File.WriteAllBytes(full, bytes);
+            var it = new Item { Path = rel, Package = package, Entry = entry, Format = format };
+            if (index.TryGetValue(rel, out int at)) Items[at] = it;   // a later package's replaces it
+            else { index[rel] = Items.Count; Items.Add(it); }
+        }
+    }
+
+    /// <summary>RGBA8 (rows top first) as a PNG: one IDAT, no filtering, zlib around DeflateStream.</summary>
+#if UNITY_5_3_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]   // (only constant tables: nothing to reset)
+#endif
+    public static class PngWriter
+    {
+        public static byte[] Encode(byte[] rgba, int width, int height, bool dropOpaqueAlpha = true)
+        {
+            bool alpha = true;
+            if (dropOpaqueAlpha)
+            {
+                alpha = false;
+                for (int i = 3; i < rgba.Length; i += 4) if (rgba[i] != 255) { alpha = true; break; }
+            }
+            int bpp = alpha ? 4 : 3, stride = width * bpp + 1;
+            var raw = new byte[stride * height];
+            for (int y = 0; y < height; y++)
+            {
+                int o = y * stride; raw[o++] = 0;
+                int s = y * width * 4;
+                if (alpha) { Buffer.BlockCopy(rgba, s, raw, o, width * 4); continue; }
+                for (int x = 0; x < width; x++, s += 4) { raw[o++] = rgba[s]; raw[o++] = rgba[s + 1]; raw[o++] = rgba[s + 2]; }
+            }
+            var ms = new MemoryStream();
+            ms.Write(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }, 0, 8);
+            var ihdr = new byte[13];
+            Be(ihdr, 0, width); Be(ihdr, 4, height); ihdr[8] = 8; ihdr[9] = (byte)(alpha ? 6 : 2);
+            Chunk(ms, "IHDR", ihdr);
+            var z = new MemoryStream();
+            z.WriteByte(0x78); z.WriteByte(0x01);
+            using (var d = new DeflateStream(z, CompressionLevel.Fastest, true)) d.Write(raw, 0, raw.Length);
+            var ad = new byte[4]; Be(ad, 0, (int)Adler32(raw)); z.Write(ad, 0, 4);
+            Chunk(ms, "IDAT", z.ToArray());
+            Chunk(ms, "IEND", new byte[0]);
+            return ms.ToArray();
+        }
+
+        static void Chunk(Stream s, string type, byte[] data)
+        {
+            var len = new byte[4]; Be(len, 0, data.Length); s.Write(len, 0, 4);
+            var t = Encoding.ASCII.GetBytes(type); s.Write(t, 0, 4); s.Write(data, 0, data.Length);
+            uint c = Crc(Crc(0xFFFFFFFF, t), data) ^ 0xFFFFFFFF;
+            var cb = new byte[4]; Be(cb, 0, (int)c); s.Write(cb, 0, 4);
+        }
+
+        static void Be(byte[] b, int o, int v) { b[o] = (byte)(v >> 24); b[o + 1] = (byte)(v >> 16); b[o + 2] = (byte)(v >> 8); b[o + 3] = (byte)v; }
+
+        static readonly uint[] Table = MakeTable();
+        static uint[] MakeTable()
+        {
+            var t = new uint[256];
+            for (uint n = 0; n < 256; n++) { uint k = n; for (int i = 0; i < 8; i++) k = (k & 1) != 0 ? 0xEDB88320 ^ (k >> 1) : k >> 1; t[n] = k; }
+            return t;
+        }
+
+        static uint Crc(uint c, byte[] d)
+        {
+            foreach (var b in d) c = Table[(c ^ b) & 0xFF] ^ (c >> 8);
+            return c;
+        }
+
+        static uint Adler32(byte[] d)
+        {
+            uint a = 1, b = 0;
+            for (int i = 0; i < d.Length; )
+            {
+                int n = Math.Min(5552, d.Length - i);
+                for (int k = 0; k < n; k++, i++) { a += d[i]; b += a; }
+                a %= 65521; b %= 65521;
+            }
+            return b << 16 | a;
+        }
+    }
+}

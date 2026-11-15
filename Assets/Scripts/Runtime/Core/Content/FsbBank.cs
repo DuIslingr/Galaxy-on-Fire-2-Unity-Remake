@@ -17,6 +17,9 @@ using System.Text;
 
 namespace GoF2Remake.Data
 {
+#if UNITY_5_3_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]   // (only constant tables: nothing to reset)
+#endif
     public sealed class FsbBank
     {
         public const int CodecPcm16 = 2, CodecImaAdpcm = 7, CodecMpeg = 11;
