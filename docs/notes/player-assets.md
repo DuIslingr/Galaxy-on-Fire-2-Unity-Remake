@@ -166,9 +166,26 @@ upgrade). First run (Android 2.0.16 XAPK, iOS 1.1.19 ipa):
 - **The remake's own:** step_summaries, hangar_heights, nozzle_shapes, void_station_extra, generated_lods (derived from
   the meshes: rebuildable on the player's machine with the run-time simplifier). `_bin_decode_report`: unused, drop.
 
+## The content layer: what has to run in the game (mapped 2026-11-15)
+
+The originals reach the game two ways: loaded as they are (textures, clips, text, data), and through **editor builders**
+that make Resources folders from them. Each builder becomes a run-time step over the converted cache:
+
+| Builder (editor-tools.md) | Makes | Run-time replacement |
+| --- | --- | --- |
+| Materials And Prefabs (`PrefabBuilder`) | `Materials/`, `Prefabs/` (a material per game material, a prefab per mesh, from resources.json) | meshes from the cache's .aem in the FBX import's space, materials by shading kind |
+| Assembled Prefabs (`AssemblyBuilder`) | `Resources/Assembled/` (319) from assemblies.json | templates built on first use, as ModShips.Template does for mods |
+| HUD Images, Item Icons, Hull Icons, Text Icons | `GoF2Hud`, `GoF2Icons`, `GoF2Races`, `Sprite Assets/gof2_text_icons` | cut from the interface atlases (AEI regions) after the conversion |
+| Space Skies, Sky Layers, the skyboxes | `GoF2Sky`, `GoF2Backdrop` sky materials, `Skyboxes/` | cubemaps from the cubemap strips |
+| Combat / Star Map / Event Audio, the story's | `CombatAssets`, `StarMapAssets`, `EventAudio`, `StoryAssets` (4,307 clips)... | clips by bank and name from the cache |
+| Hangar Shadows, reflections, 3D planets, generated LODs | `GoF2Station/ShipShadows`, `GoF2Reflections`, `GoF2Planets3D`, `generated_lods` | made after the conversion (cheap) |
+
+Testing it needs a Unity project without the originals: this branch's worktree with the original and derived folders
+left out (sparse checkout) is exactly a shipped build's content, a fast import, and the cache supplies the rest.
+
 ## Plan
 
-1. Inventory and this note (done 2026-11-15).
+1. Inventory and this note (done 2026-11-15); the importers, the converter, the packs (done 2026-11-15).
 2. **Content layer:** one API serving the game's own content (textures, meshes, materials, clips, text, data) from the
    converted cache in `GamePaths.Data`, with the `Resources` path behind it until the cache path is complete; the
    assembled objects built at run time from `assemblies.json` the way mod ships are (`ModShips.Template`); the sound
