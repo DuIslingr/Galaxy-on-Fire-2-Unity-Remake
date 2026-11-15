@@ -187,8 +187,8 @@ namespace GoF2Remake.UI
             int at = input.parent.IndexOf(input);
             if (sound)
             {
-                if (soundIcon == null) soundIcon = Resources.Load<Texture2D>("GoF2Hud/option_sound");
-                if (mutedIcon == null) mutedIcon = Resources.Load<Texture2D>("GoF2Hud/option_sound_muted");
+                if (soundIcon == null) soundIcon = GoF2Remake.Data.OriginalTextures.Image("GoF2Hud/option_sound");
+                if (mutedIcon == null) mutedIcon = GoF2Remake.Data.OriginalTextures.Image("GoF2Hud/option_sound_muted");
                 muteIcon = new VisualElement { pickingMode = PickingMode.Position };
                 muteIcon.AddToClassList("option-slider-mute");
                 // Its own press: not the row's (a drag) or the slider's.

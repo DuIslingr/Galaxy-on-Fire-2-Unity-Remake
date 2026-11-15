@@ -8,6 +8,7 @@
 //   Audio/<bank>/<name>.mp3|.wav (FsbBank; <bank> without FMOD_GOF2_)
 //   Localization/text_<lang>.json (LangFile; the packs' string overlay applied)
 //   Resources/GoF2Data/<table>.json (GameTables, from the copy's .bin files and its English text, the overlay applied)
+//   Resources/GoF2Hud/*.png, Resources/GoF2Icons/item_NNN.png / ship_NNN.png (DerivedImages, cut from the interface atlases)
 //   _manifest.tsv               (each file: its source package and entry, and the format it was read from)
 // Plain C#, no Unity types: the game runs it on a worker thread, the tools run it from the command line.
 
@@ -59,6 +60,7 @@ namespace GoF2Remake.Data
         /// <summary>The text tables and the data tables, once every package is read (a later package's files win).</summary>
         void Finish()
         {
+            Images();
             foreach (var kv in langs)
             {
                 var strings = new List<string>(kv.Value.strings);
@@ -86,6 +88,19 @@ namespace GoF2Remake.Data
         }
 
         List<string> english;
+
+        // the interface atlases DerivedImages cuts from (by project rel: "textures/gof2_interface_iphone4"), kept decoded
+        static readonly HashSet<string> atlasNames = new HashSet<string>(System.Linq.Enumerable.Select(DerivedImages.AtlasNames(), n => "textures/" + n));
+        readonly Dictionary<string, DerivedImages.Atlas> atlases = new Dictionary<string, DerivedImages.Atlas>(StringComparer.Ordinal);
+
+        void Images()
+        {
+            DerivedImages.Atlas A(string name) => atlases.TryGetValue("textures/" + name, out var a) ? a : null;
+            foreach (var set in new[] { DerivedImages.HudImages(A), DerivedImages.ItemIcons(A) })
+                foreach (var (path, rgba, w, h) in set)
+                    Write(path + ".png", PngWriter.Encode(rgba, w, h, dropOpaqueAlpha: false), "", path, "cut from the atlases");
+            atlases.Clear();
+        }
 
         /// <summary>The .bin a table is made from (for the manifest).</summary>
         static string TableSource(string table)
@@ -176,6 +191,7 @@ namespace GoF2Remake.Data
                     {
                         var img = AeiImage.Read(read());
                         string rel = ProjectRel(data);
+                        if (atlasNames.Contains(rel)) atlases[rel] = new DerivedImages.Atlas { Rgba = img.Rgba, Width = img.Width, Height = img.Height };
                         Write("Textures/" + rel + ".png", PngWriter.Encode(img.Rgba, img.Width, img.Height), package, entry, img.Format);
                         // the hulls' metallic / smoothness map, made from the normal map's specular alpha
                         // (Reference/tools/asset_conversion/split_spec.py: metallic 0, smoothness = that alpha)

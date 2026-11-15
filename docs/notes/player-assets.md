@@ -218,6 +218,15 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   the Mod Builder's audio index) are filled entry by entry when asked (`OriginalRefs.Entry`, StoryAssets.Voice,
   GameAudioIndex.Clip): all at once took ~20 s. Not yet: the derived images some tables hold (SkyLayerAssets,
   ShipShadows, ModAssets' materials, the story's portrait parts) and the build profiles' app icons.
+- **Interface images** (2026-11-15): DerivedImages (GoF2.Core, plain C#): the HUD images (HudImageBuilder's table, moved
+  here and shared with the builder) and the shop's item / ship icons and bare ship frame (ItemIconBuilder's; the rects in
+  `ItemIconTable.cs`, generated from `Reference/research/item_icons.json` by `Reference/tools/player_assets/item_icon_table.py`),
+  cut by the converter from the decoded interface atlases (both copies have all 11, the same sizes) into
+  `Resources/GoF2Hud/*.png` / `Resources/GoF2Icons/*.png` in the cache: against the project's, 237 HUD images pixel-
+  identical and 45 within 4 / 255 (the edge bleed's float averaging), the 297 icons and the frame within 2 / 255.
+  `OriginalTextures.Image(<Resources path>)` (Resources first, else the cache, set up as UI images) replaces the
+  `Resources.Load<Texture2D>("GoF2Hud/..." / "GoF2Icons/...")` calls. Not made: the remake's own `option_*` icons and
+  `ship_ring_open_*` markers (2026-10-17 / 21: common pack), `HullIconBuilder`'s rendered hull icons (rendered models).
 
 ## Plan
 

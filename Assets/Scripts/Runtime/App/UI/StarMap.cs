@@ -321,7 +321,7 @@ namespace GoF2Remake.UI
         bool dragged;
         int lastPadDir;
 
-        static Texture2D Tex(string name) => Resources.Load<Texture2D>("GoF2Hud/" + name);
+        static Texture2D Tex(string name) => GoF2Remake.Data.OriginalTextures.Image("GoF2Hud/" + name);
         static string T(int id) => Localization.Get(id);
 
         // ---- opening / closing ---------------------------------------------------------------------------

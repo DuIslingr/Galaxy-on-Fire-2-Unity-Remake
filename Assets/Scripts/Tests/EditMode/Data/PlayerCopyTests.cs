@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using GoF2Remake.Data;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace GoF2Remake.Tests
 {
@@ -93,6 +94,20 @@ namespace GoF2Remake.Tests
             var music = OriginalAudio.Get("Audio/MUSIC/Space_Battle_Medium.ogg");
             Assert.IsNotNull(music);
             Assert.Greater(music.length, OriginalAudio.StreamSeconds);
+        }
+
+        [Test]
+        public void TheInterfaceImagesComeFromTheConvertedCopy()
+        {
+            // cut from the atlases by the converter (DerivedImages), loaded by Resources path (OriginalTextures.Image)
+            var ring = OriginalTextures.Image("GoF2Hud/lock_00");
+            Assert.IsNotNull(ring, "the lock ring's first frame");
+            Assert.AreEqual(80, ring.width); Assert.AreEqual(80, ring.height);
+            var icon = OriginalTextures.Image("GoF2Icons/item_000");
+            Assert.IsNotNull(icon, "item 0's shop icon");
+            Assert.AreEqual(DerivedImages.IconW, icon.width); Assert.AreEqual(DerivedImages.IconH, icon.height);
+            Assert.IsNotNull(OriginalTextures.Image("GoF2Icons/ship_000"));
+            Assert.AreEqual(TextureWrapMode.Repeat, OriginalTextures.Image("GoF2Hud/strip_red").wrapMode);
         }
 
         [Test]
