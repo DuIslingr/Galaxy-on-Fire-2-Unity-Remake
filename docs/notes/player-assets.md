@@ -27,6 +27,10 @@ first, proposed upstream once complete); the current `Resources` path keeps work
   (named `..._prototype` on iOS: an alias to map, not necessarily a gap), two hangar bot animations and the iPad 1440
   interface images; Android lacks the German voice banks and `zs` / `zt.lang`, and ~90 meshes / 27 textures iOS keeps at
   other paths (asteroid fields, explosions: to map before calling them gaps).
+  - **Lower-resolution copies** (the user, 2026-11-15): iOS 1.1.19's PVRTC textures are 1/2 (359), 1/4 (47) or 1/8 (9)
+  of Android's resolution. An iOS player's game runs from the iOS copy's own textures; Android's full-resolution versions
+  are an optional "HD textures" part of the iOS gap pack. The same rule for any edition: what it has at lower quality is
+  an optional upgrade, what it lacks entirely is required.
   - The mapping is per project asset: its source entry in each edition (aliases included) and whether that edition's
   conversion reproduces it; `Reference/tools/player_assets` gets that table, and the packs are made from it.
 - Not decided here: `Reference/binaries` (the Android APK, `libgof2hdaa.so`, `libfmodevent.so`, default economy .bin) and
@@ -81,6 +85,18 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
   `DLC_VOICE_deu`, `DLC2_VOICE_deu`, `GENERIC_deu`, `LOUNGE_deu`) and no Chinese text; iOS has no Arabic text (`ar.lang`)
   but both Chinese tables (`zs`, `zt`). Every other bank has the same samples in both. The converter takes either or both
   (layered); without German voices the game falls back to the English ones.
+
+## Importers so far
+
+- **AeiImage** (`Scripts/Runtime/Core/Content/AeiImage.cs`, GoF2.Core, plain C#; 2026-11-15): the header and regions,
+  RGBA8 / cubemap strips, ETC1, PVRTC 4 and 2 bpp, level 0 only. Checked outside Unity (a console harness on the
+  Editor's own .NET SDK): Android 2.0.16's 1,145 textures, 0 failures, byte-identical to the project's original
+  conversion wherever the remake didn't edit a texture later (438 of 447 against the files before KiritoJPK's 2026-10-07
+  update; the 9 others and 12 resized are the remake's edits: the Vossk hangar and stations, the suns); iOS 1.1.19's 435
+  PVRTC textures byte-identical to texture2ddecoder. The words' Morton order puts y in the even bits (x there decoded each
+  image mirrored about its diagonal). Type 0x24 (iOS' unused cloak map) isn't read.
+  - iOS' `v_galaxymap_planets` has no alpha (Android's ring quadrant is translucent): a real difference between the
+  copies, so that texture is in the iOS gap pack.
 
 ## Plan
 
