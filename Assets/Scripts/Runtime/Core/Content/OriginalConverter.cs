@@ -175,7 +175,17 @@ namespace GoF2Remake.Data
                     case ".aei":
                     {
                         var img = AeiImage.Read(read());
-                        Write("Textures/" + ProjectRel(data) + ".png", PngWriter.Encode(img.Rgba, img.Width, img.Height), package, entry, img.Format);
+                        string rel = ProjectRel(data);
+                        Write("Textures/" + rel + ".png", PngWriter.Encode(img.Rgba, img.Width, img.Height), package, entry, img.Format);
+                        // the hulls' metallic / smoothness map, made from the normal map's specular alpha
+                        // (Reference/tools/asset_conversion/split_spec.py: metallic 0, smoothness = that alpha)
+                        if (rel.EndsWith("_normal_specular"))
+                        {
+                            var ms = new byte[img.Rgba.Length];
+                            for (int i = 3; i < ms.Length; i += 4) ms[i] = img.Rgba[i];
+                            Write("Textures/" + rel.Replace("_normal_specular", "_metallic_smoothness") + ".png",
+                                  PngWriter.Encode(ms, img.Width, img.Height, dropOpaqueAlpha: false), package, entry, "metallic from " + img.Format);
+                        }
                         break;
                     }
                     case ".aem":

@@ -196,6 +196,15 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   (Localization takes the cache's language without a table asset). `PlayerCopyTests` (EditMode, ignored without a
   converted copy: `$GOF2_ORIGINAL_CACHE` or the tools' cache_android) pass in the test bed: the database and the text from
   the player's Android copy with no original in the project.
+- **OriginalModels** (`Scripts/Runtime/Space/Content/OriginalModels.cs`, 2026-11-15): OriginalTextures (a cache PNG as the
+  importer set it up; the game's normal maps, specular in alpha, rewritten (1, G, B, R) so URP reads X right on desktop and
+  Android), OriginalMaterials (PrefabBuilder.CreateMaterial + PostProcessing.ApplyGlow), OriginalModels (a model from the
+  cache's .aem as its per-mesh prefab: parts, PartAnimation from the sidecar as a run-time TextAsset, ResourceInfo) and
+  OriginalAssemblies (AssemblyBuilder: templates kept under an inactive holder); AssembledObject.LoadPrefab falls back to
+  them when Resources has no prefab. The converter now writes the `_metallic_smoothness` maps (split_spec.py's: metallic
+  0, smoothness the normal map's alpha). **The mesh space** (OriginalModelsTests, 2026-11-15, three models imported into
+  the test bed against the same models built from the cache: parts, bounds, signed volume all equal): a vertex (x, y, z)
+  of the original -> (-x, y, z) x 0.05, normals (-x, y, z), the triangles' order reversed.
 
 ## Plan
 
