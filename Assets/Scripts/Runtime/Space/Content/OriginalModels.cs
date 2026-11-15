@@ -308,7 +308,7 @@ namespace GoF2Remake.Visuals
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            table = null; byName = null; templates.Clear(); holder = null;
+            table = null; byName = null; templates.Clear(); explosions.Clear(); holder = null;
             GameContent.Refreshed -= ResetStatics;
             GameContent.Refreshed += ResetStatics;   // (a new copy converted)
         }
@@ -333,14 +333,9 @@ namespace GoF2Remake.Visuals
             if (templates.TryGetValue(entry.name, out var t) && t != null) return t;
             var e = Entry(entry.name);
             if (e == null) return null;
-            if (holder == null)
-            {
-                holder = new GameObject("Game models");
-                holder.SetActive(false);
-                if (Application.isPlaying) UnityEngine.Object.DontDestroyOnLoad(holder);
-            }
+            var parent = Holder;
             t = Build(e);
-            if (t != null) t.transform.SetParent(holder.transform, false);
+            if (t != null) t.transform.SetParent(parent, false);
             templates[entry.name] = t;
             return t;
         }
@@ -401,12 +396,36 @@ namespace GoF2Remake.Visuals
 
         static readonly Dictionary<string, GameObject> explosions = new Dictionary<string, GameObject>(StringComparer.OrdinalIgnoreCase);
 
-        static GameObject ExplosionTemplate(string model)
+        static GameObject ExplosionTemplate(string model) => ModelTemplate(model);
+
+        /// <summary>A model as its per-mesh prefab (Prefabs/<rel>.prefab), built from the converted copy and kept inactive
+        /// like a prefab for Instantiate (OriginalContent: the tables' references to Prefabs/...); null without it.</summary>
+        public static GameObject ModelTemplate(string model)
         {
+            if (string.IsNullOrEmpty(model) || !GameContent.Installed) return null;
             if (explosions.TryGetValue(model, out var t) && t != null) return t;
             t = OriginalModels.Build(model);
-            if (t != null) t.transform.SetParent(holder.transform, false);
+            if (t != null) t.transform.SetParent(Holder, false);
             return explosions[model] = t;
+        }
+
+        /// <summary>The inactive holder the templates live under (DontDestroyOnLoad in Play mode). Made from a scene the game
+        /// loaded: under Unity 7's entity-backed transforms one made before (Bootstrap's tables, the test runner's own first
+        /// scene) is in another Entities World than the scenes after it, and every model parented under it logged "A transform
+        /// hierarchy holds entities of more than one Entities World" (OriginalRefs defers its prefabs for that).</summary>
+        static Transform Holder
+        {
+            get
+            {
+                if (holder == null)
+                {
+                    holder = new GameObject("Game models");
+                    holder.SetActive(false);
+                    if (Application.isPlaying) UnityEngine.Object.DontDestroyOnLoad(holder);
+                    else holder.hideFlags = HideFlags.DontSave;   // (edit mode: never saved into a scene)
+                }
+                return holder.transform;
+            }
         }
 
         /// <summary>Destroyed in Play mode, at once in edit mode (the tests).</summary>

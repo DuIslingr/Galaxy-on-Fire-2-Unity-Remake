@@ -216,8 +216,8 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   when a table loads (`OriginalRefs.Load` in place of Resources.Load) or a scene opens (sceneLoaded, by class and GameObject
   name); only empty fields, so a build with the originals is unchanged. Lists of more than 64 entries (the story's voices,
   the Mod Builder's audio index) are filled entry by entry when asked (`OriginalRefs.Entry`, StoryAssets.Voice,
-  GameAudioIndex.Clip): all at once took ~20 s. Not yet: the derived images some tables hold (SkyLayerAssets,
-  ShipShadows, ModAssets' materials, the story's portrait parts) and the build profiles' app icons.
+  GameAudioIndex.Clip): all at once took ~20 s. Materials and prefabs: see "Materials, prefabs and the backdrop". Not
+  yet: ShipShadows, the story's portrait parts and the build profiles' app icons.
 - **Interface images** (2026-11-15): DerivedImages (GoF2.Core, plain C#): the HUD images (HudImageBuilder's table, moved
   here and shared with the builder) and the shop's item / ship icons and bare ship frame (ItemIconBuilder's; the rects in
   `ItemIconTable.cs`, generated from `Reference/research/item_icons.json` by `Reference/tools/player_assets/item_icon_table.py`),
@@ -239,6 +239,23 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   with mipmaps (ModTextureEncoder), copied into the cube on the GPU and stored (below). `Reflection(name)` makes a Cubemap
   of the original's own 6-face strip (128 px faces; Resources/GoF2Reflections are 4x upscales of them: an optional
   upgrade). OrbitBuilder's skies and SkyReflection read through them.
+- **Materials, prefabs and the backdrop** (2026-11-15): `OriginalBackdrop` (GoF2.Space) makes the far-plane materials
+  of `Resources/GoF2Backdrop` from the converted copy as `SpaceSceneBuilder` made them: suns (GoF2/Backdrop, One One,
+  queue 2900), planets and rings (alpha, 2901; `sn_planet_ring` 2902), space dust and fog (GoF2/SpaceDust), the sky
+  layers' `sky_*` (GoF2/SkyLayer; the asteroid belt with its normal and specular maps); the copy's 67 planet / sun / ring
+  textures are exactly the project's 67 backdrop materials. Backdrop, ModBackdrop's templates, the star map's supernova
+  sun and the Mod Builder's texture list read through it. `OriginalContent.Resolve` (reached from OriginalRefs through
+  `GameHooks.ResolveOriginal`) makes every material and prefab the remake's own assets point at (106 distinct in the
+  manifest, `PlayerCopyTests`): `Materials/mat_<id>_*` (OriginalMaterials.For), `Prefabs/*` (a per-mesh prefab,
+  `OriginalAssemblies.ModelTemplate`), `Resources/Assembled/*`, the backdrop's, `Materials/sn_galaxymap_sun_012`
+  (StarMapBuilder's copy of 27307 with sn_sun_012) and the story intros' `Skyboxes/skybox_N` (the old combined bakes:
+  `OriginalSkies.Skybox`, stars_(N % 3) under nebula_N rendered into one cube). Checked by eye on three orbits (the
+  backdrop planets, the Supernova system's sun and haze).
+  - **Templates and Entities worlds:** the templates live under a DontDestroyOnLoad holder made from a scene the game
+    loaded. Bootstrap's BeforeSceneLoad installers load tables (FpsCounter -> StarMapAssets), so OriginalRefs holds their
+    prefab references until the game's first scene (not the test runner's InitTestScene): a holder made before it is in
+    another Entities World, and every model parented under it logged "A transform hierarchy holds entities of more than
+    one Entities World" (Unity 7's entity-backed transforms), which failed the play-mode tests.
 - **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
   - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is
     `# gof2 original cache v<N>`. `GameContent.Installed` only for this version's stamp; `GameContent.Stale` for a

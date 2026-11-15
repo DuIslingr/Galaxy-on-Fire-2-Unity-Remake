@@ -24,17 +24,33 @@ namespace GoF2Remake.Data
 
         static Dictionary<string, Dictionary<string, string>> map;
         static readonly HashSet<UnityEngine.Object> filled = new HashSet<UnityEngine.Object>();
-        static bool hooked;
+        static bool hooked, sceneLoaded;
+
+        /// <summary>Prefab references met before the game's first scene loaded (Bootstrap's BeforeSceneLoad installers load
+        /// tables): set once it has. A template built before lands in another Entities World than the scenes', and every
+        /// model later parented under the same holder (OriginalAssemblies) logged "A transform hierarchy holds entities of
+        /// more than one Entities World".</summary>
+        static readonly List<(UnityEngine.Object target, string path, string asset)> beforeScene = new List<(UnityEngine.Object, string, string)>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { map = null; filled.Clear(); lazy.Clear(); hooked = false; }
+        static void ResetStatics() { map = null; filled.Clear(); lazy.Clear(); beforeScene.Clear(); hooked = sceneLoaded = false; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Hook()
         {
             if (hooked) return;
             hooked = true;
-            SceneManager.sceneLoaded += (scene, _) => FillScene(scene);
+            SceneManager.sceneLoaded += (scene, _) =>
+            {
+                // (the test runner's own first scene doesn't count: its Entities World isn't the game's scenes')
+                if (!sceneLoaded && !scene.name.StartsWith("InitTestScene", StringComparison.Ordinal))
+                {
+                    sceneLoaded = true;
+                    foreach (var (target, path, asset) in beforeScene) if (target != null) Set(target, path, asset);
+                    beforeScene.Clear();
+                }
+                FillScene(scene);
+            };
         }
 
         static Dictionary<string, Dictionary<string, string>> Map
@@ -84,6 +100,8 @@ namespace GoF2Remake.Data
             {
                 string head = ListHead(kv.Key);
                 if (head != null && sizes[head] > LazyListSize && !kv.Key.Contains(".")) lazy[(target, kv.Key)] = kv.Value;
+                else if (Application.isPlaying && !sceneLoaded && kv.Value.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
+                    beforeScene.Add((target, kv.Key, kv.Value));   // (built once a scene has loaded)
                 else Set(target, kv.Key, kv.Value);
             }
         }
@@ -138,8 +156,13 @@ namespace GoF2Remake.Data
                 var text = GameContent.LanguageText(code);
                 return text != null ? new TextAsset(text) { name = "text_" + code } : null;
             }
-            return null;   // (the derived images, materials: not made here yet)
+            // the materials and prefabs (OriginalContent, GoF2.Space)
+            return GameHooks.ResolveOriginal?.Invoke(type, asset);
         }
+
+        /// <summary>The original's asset by its project path, as the content layer makes it from the converted copy (null
+        /// without it): for code that loaded an original directly.</summary>
+        public static T Find<T>(string projectPath) where T : UnityEngine.Object => GameContent.Installed ? Resolve(typeof(T), projectPath) as T : null;
 
         static readonly Regex Step = new Regex(@"^([A-Za-z_][A-Za-z0-9_]*)(?:\[(\d+)\])?$");
 

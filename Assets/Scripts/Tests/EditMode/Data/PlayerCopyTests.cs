@@ -110,6 +110,37 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(TextureWrapMode.Repeat, OriginalTextures.Image("GoF2Hud/strip_red").wrapMode);
         }
 
+        [Test]
+        public void TheMaterialsAndPrefabsComeFromTheConvertedCopy()
+        {
+            // every material / prefab reference of the remake's own assets to the originals (OriginalRefs' manifest)
+            var json = Resources.Load<TextAsset>(OriginalRefs.ManifestPath).text;
+            var paths = System.Text.RegularExpressions.Regex.Matches(json, "\"([^\"]+\\.(?:mat|prefab))\"").Cast<System.Text.RegularExpressions.Match>()
+                            .Select(m => m.Groups[1].Value).Distinct().ToList();
+            Assert.Greater(paths.Count, 50, "the manifest's materials and prefabs");
+            bool gpu = SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null;
+            var missing = paths.Where(p => gpu || !p.StartsWith("Skyboxes/"))   // (the intro skies are rendered: a GPU)
+                               .Where(p => (p.EndsWith(".mat") ? (UnityEngine.Object)OriginalRefs.Find<Material>(p) : OriginalRefs.Find<GameObject>(p)) == null)
+                               .ToList();
+            Assert.IsEmpty(missing, "not made: " + string.Join(", ", missing));
+            TestContext.WriteLine($"{paths.Count} materials and prefabs made");
+
+            // the backdrop as SpaceSceneBuilder made it
+            var sun = GoF2Remake.Visuals.OriginalBackdrop.Get("sun_004");
+            Assert.IsNotNull(sun, "sun_004");
+            Assert.AreEqual("GoF2/Backdrop", sun.shader.name);
+            Assert.AreEqual(2900, sun.renderQueue);
+            Assert.AreEqual(TextureWrapMode.Clamp, sun.mainTexture.wrapMode);
+            var planet = GoF2Remake.Visuals.OriginalBackdrop.Get("planet_010_big");
+            Assert.IsNotNull(planet, "planet_010_big");
+            Assert.AreEqual(2901, planet.renderQueue);
+            Assert.AreEqual((float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha, planet.GetFloat("_DstBlend"));
+            Assert.AreEqual(2902, GoF2Remake.Visuals.OriginalBackdrop.Get("sn_planet_ring").renderQueue);
+            foreach (var n in new[] { "v_planet_020_big", "sn_sun_011", "sn_supernova", "space_particle", "fog", "v_fog_ice", "sky_asteroid_belt", "planet_void_big" })
+                Assert.IsNotNull(GoF2Remake.Visuals.OriginalBackdrop.Get(n), n);
+            Assert.Greater(GoF2Remake.Visuals.OriginalBackdrop.TextureNames().Count, 60, "the Mod Builder's list of planets and suns");
+        }
+
         static void Forget(Type t) =>
             t.GetMethod("ResetStatics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, null);
 

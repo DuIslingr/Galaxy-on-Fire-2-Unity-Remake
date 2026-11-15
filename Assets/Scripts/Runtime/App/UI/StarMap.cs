@@ -174,7 +174,7 @@ namespace GoF2Remake.UI
         {
             if (containedSun != null) return containedSun;
             if (from == null) return null;
-            var tex = Resources.Load<Material>("GoF2Backdrop/sn_sun_011")?.mainTexture;
+            var tex = Visuals.OriginalBackdrop.Get("sn_sun_011")?.mainTexture;
             if (tex == null) return null;
             containedSun = new Material(from) { name = "sn_sun_011 (map)" };
             containedSun.SetTexture("_MainTex", tex);

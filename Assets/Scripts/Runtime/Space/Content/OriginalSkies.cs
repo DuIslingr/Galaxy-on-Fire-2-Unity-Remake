@@ -26,6 +26,7 @@ namespace GoF2Remake.Visuals
         static void ResetStatics()
         {
             made.Clear();
+            skyboxes.Clear();
             GameContent.Refreshed -= ResetStatics;
             GameContent.Refreshed += ResetStatics;   // (a new copy converted)
         }
@@ -44,16 +45,44 @@ namespace GoF2Remake.Visuals
             return t;
         }
 
-        /// <summary>The meshes and textures of a sky layer (SkyboxBaker: stars_i the stars mesh, nebula_t its system's).</summary>
-        static (string model, string shader, string texture)? LayerOf(string name)
+        /// <summary>The meshes and textures of a sky (SkyboxBaker: stars_i the stars mesh, nebula_t its system's; combined_i
+        /// the old combined bake, Bake(i): stars_(i % 3) under nebula_i, the story intros' skyboxes).</summary>
+        static (string model, string shader, string texture)[] LayersOf(string name)
         {
+            if (name.StartsWith("combined_") && int.TryParse(name.Substring(9), out int c))
+            {
+                var stars = LayersOf($"stars_{c % 3:000}");
+                var nebula = LayersOf($"nebula_{c:000}");
+                return stars != null && nebula != null ? new[] { stars[0], nebula[0] } : null;
+            }
             if (name.StartsWith("stars_") && int.TryParse(name.Substring(6), out int i))
-                return ("Models/main/skyboxes/skybox_stars.fbx", "GoF2/Unlit", $"Textures/main/skyboxes/skybox_stars_{i:000}.png");
+                return new[] { ("Models/main/skyboxes/skybox_stars.fbx", "GoF2/Unlit", $"Textures/main/skyboxes/skybox_stars_{i:000}.png") };
             if (!name.StartsWith("nebula_") || !int.TryParse(name.Substring(7), out int t)) return null;
-            if (t <= 10) return ($"Models/main/skyboxes/skybox_{t:000}.fbx", "GoF2/Additive", $"Textures/main/skyboxes/skybox_{t:000}.png");
-            if (t <= 14) return ($"Models/valkyrie/skyboxes/v_skybox_{(t == 14 ? 13 : t):000}.fbx", "GoF2/Additive", $"Textures/valkyrie/skyboxes/v_skybox_{t:000}.png");
-            return ($"Models/supernova/skyboxes/sn_skybox_{t:000}.fbx", "GoF2/Additive", $"Textures/supernova/skyboxes/sn_skybox_{t:000}.png");
+            if (t <= 10) return new[] { ($"Models/main/skyboxes/skybox_{t:000}.fbx", "GoF2/Additive", $"Textures/main/skyboxes/skybox_{t:000}.png") };
+            if (t <= 14) return new[] { ($"Models/valkyrie/skyboxes/v_skybox_{(t == 14 ? 13 : t):000}.fbx", "GoF2/Additive", $"Textures/valkyrie/skyboxes/v_skybox_{t:000}.png") };
+            return new[] { ($"Models/supernova/skyboxes/sn_skybox_{t:000}.fbx", "GoF2/Additive", $"Textures/supernova/skyboxes/sn_skybox_{t:000}.png") };
         }
+
+        /// <summary>A skybox material of the old combined bakes (Skyboxes/skybox_NNN.mat, SkyboxBaker.Bake: Skybox/Cubemap,
+        /// exposure 1): the story intros' skies. Null without a GPU or the copy.</summary>
+        public static Material Skybox(int index)
+        {
+            string key = $"skybox:{index}";
+            if (skyboxes.TryGetValue(key, out var have)) return have;
+            var cube = Sky($"combined_{index:000}");
+            var shader = Shader.Find("Skybox/Cubemap");
+            Material m = null;
+            if (cube != null && shader != null)
+            {
+                m = new Material(shader) { name = $"skybox_{index:000}" };
+                m.SetTexture("_Tex", cube);
+                m.SetFloat("_Exposure", 1f);
+            }
+            skyboxes[key] = m;
+            return m;
+        }
+
+        static readonly Dictionary<string, Material> skyboxes = new Dictionary<string, Material>();
 
         static readonly Vector3[] FaceForward = { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
         static readonly Vector3[] FaceUp = { Vector3.up, Vector3.up, Vector3.back, Vector3.forward, Vector3.up, Vector3.up };
@@ -64,40 +93,48 @@ namespace GoF2Remake.Visuals
         /// mipmaps (ModTextureEncoder) and stored. Null without a GPU or the layer's model / texture.</summary>
         static Texture Render(string name)
         {
-            var layer = LayerOf(name);
+            var layers = LayersOf(name);
             // (no GPU: a server or a -nographics batch run renders nothing)
-            if (layer == null || !GameContent.Installed || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;
+            if (layers == null || !GameContent.Installed || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;
             string cacheFile = Path.Combine(GameContent.GpuCache, "skies", $"{name}_{FaceSize}_{SystemInfo.graphicsDeviceType}.sky");
             var cached = ReadCube(cacheFile, name);
             if (cached != null) return cached;
-            var strip = RenderStrip(layer.Value);
+            var strip = RenderStrip(layers);
             if (strip == null) return null;
             var cube = CompressedCube(strip, name, cacheFile);
             OriginalAssemblies.Gone(strip);
             return cube;
         }
 
-        /// <summary>SkyboxBaker.BakeCube's strip: six 90-degree renders of the layer seen from its centre, read back.</summary>
-        static Texture2D RenderStrip((string model, string shader, string texture) layer)
+        /// <summary>SkyboxBaker.BakeCube's strip: six 90-degree renders of the layers seen from their centre, read back.</summary>
+        static Texture2D RenderStrip((string model, string shader, string texture)[] layers)
         {
-            var go = OriginalModels.Build(layer.model);
-            var shader = Shader.Find(layer.shader);
-            var tex = OriginalTextures.Get(layer.texture);
-            if (go == null || shader == null || tex == null) { if (go != null) OriginalAssemblies.Gone(go); return null; }
             const int Layer = 31;
             var origin = Vector3.zero;   // on a layer of its own: only this camera sees it
-            go.transform.position = origin;
-            var mat = new Material(shader);
-            mat.SetTexture("_MainTex", tex);
-            mat.SetFloat("_Cull", 0f);   // seen from inside
-            foreach (var r in go.GetComponentsInChildren<MeshRenderer>(true))
+            var gos = new List<GameObject>();
+            var mats = new List<Material>();
+            void Drop() { foreach (var g in gos) { g.SetActive(false); OriginalAssemblies.Gone(g); } foreach (var m in mats) OriginalAssemblies.Gone(m); }
+            foreach (var layer in layers)
             {
-                r.sharedMaterial = mat;
-                r.shadowCastingMode = ShadowCastingMode.Off;
-                r.gameObject.layer = Layer;
+                var go = OriginalModels.Build(layer.model);
+                var shader = Shader.Find(layer.shader);
+                var tex = OriginalTextures.Get(layer.texture);
+                if (go != null) gos.Add(go);
+                if (go == null || shader == null || tex == null) { Drop(); return null; }
+                go.transform.position = origin;
+                var mat = new Material(shader);
+                mats.Add(mat);
+                mat.SetTexture("_MainTex", tex);
+                mat.SetFloat("_Cull", 0f);   // seen from inside
+                foreach (var r in go.GetComponentsInChildren<MeshRenderer>(true))
+                {
+                    r.sharedMaterial = mat;
+                    r.shadowCastingMode = ShadowCastingMode.Off;
+                    r.gameObject.layer = Layer;
+                }
+                var anim = go.GetComponent<PartAnimation>();
+                if (anim != null) anim.enabled = false;
             }
-            var anim = go.GetComponent<PartAnimation>();
-            if (anim != null) anim.enabled = false;
             int s = FaceSize;
             var rt = new RenderTexture(s, s, 24, RenderTextureFormat.ARGB32);
             var strip = new Texture2D(s * 6, s, TextureFormat.RGB24, false);
@@ -126,12 +163,10 @@ namespace GoF2Remake.Visuals
             RenderTexture.active = prev;
             strip.Apply();
             cam.targetTexture = null;
-            go.SetActive(false);   // (Destroy waits for the frame's end: no other camera draws it meanwhile)
             rt.Release();
             OriginalAssemblies.Gone(rt);
             OriginalAssemblies.Gone(camGo);
-            OriginalAssemblies.Gone(go);
-            OriginalAssemblies.Gone(mat);
+            Drop();   // (inactive first: Destroy waits for the frame's end, and no other camera draws them meanwhile)
             return strip;
         }
 
