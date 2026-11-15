@@ -263,6 +263,7 @@ namespace GoF2Remake.World
                 if (Spec.wreckPrefab != null && modelGo != null)
                 {
                     wreck = Instantiate(Spec.wreckPrefab, transform, false);
+                    if (StructureScale != 1f) wreck.transform.localScale *= StructureScale;   // OrbitScale: as big as the structure
                     wreckDamageMs = 140f;
                     float len = PartAnimation.PlayOnce(wreck);
                     if (len > 0f) dyingMs = len;
@@ -407,7 +408,7 @@ namespace GoF2Remake.World
             // PlayerFixedObject::update: setScaling(6), 8 for the Terran battleship (0x37e7) and the pirate outpost (0x37a3).
             // Remake mods: the ship's own death effect (ModDeathFx "main") instead of the game's explosion, its sound kept
             if (IsFixed || !ModDeathFx.SpawnMain(Spec.ship, transform.position, transform.rotation, IsFreighter ? Vector3.zero : deathDir * speed * M * 1000f))
-                explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? FreighterExplosionScale : FighterExplosionScale);
+                explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale * StructureScale : IsFreighter ? FreighterExplosionScale : FighterExplosionScale);
             else explosion = null;
             if (throes != null) ThroesBlast();
             // Remake mods: a ship with a "wreck" breaks into its pieces there (World.WreckBreakup), its hull gone with the blast.
@@ -426,7 +427,7 @@ namespace GoF2Remake.World
             if (obstacle != null && !IsFixed && Spec.modCapital) obstacle.volumes = new List<CollisionVolume>();   // a mod's: no wreck
             else if (obstacle != null && !IsFixed) obstacle.volumes = CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
             // A Pirate Outpost's wreck (0x37a3 -> wreck volume 5): in state 4 only the wreck volumes collide.
-            else if (obstacle != null && Spec.fixedObject == "station_pirates") obstacle.volumes = CollisionVolume.ForWreckId(5);
+            else if (obstacle != null && Spec.fixedObject == "station_pirates") obstacle.volumes = CollisionVolume.Scaled(CollisionVolume.ForWreckId(5), StructureScale);   // (OrbitScale: grown)
             // Remake (CapitalShips): a capital ship without a wreck leaves nothing to fly into.
             else if (obstacle != null && Spec.capitalEnhanced && wreck == null) obstacle.volumes = new List<CollisionVolume>();
             if (!IsFreighter) DropCrate();

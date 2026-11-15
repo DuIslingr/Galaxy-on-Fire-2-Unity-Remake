@@ -123,8 +123,9 @@ namespace GoF2Remake.World
             }
         }
 
-        Vector3 Centre => new Vector3(centreGame.x, centreGame.y, -centreGame.z) * M;
-
+        // OrbitScale: centreGame is the encounter's point in the original's coordinates: mapped here, the spread around it
+        // not (CruiseEncounterSpawner.Near); spawn specs take the original's coordinates (NpcShip maps them).
+        Vector3 Centre => OrbitScale.ToUnity(centreGame);
         /// <summary>Where the last stage's survivors are (their middle), else the run's centre.</summary>
         Vector3 StageMiddle()
         {
@@ -132,7 +133,7 @@ namespace GoF2Remake.World
             foreach (var e in enemies) if (e != null && !e.Gone) { sum += e.transform.position; n++; }
             return n > 0 ? sum / n : Centre;
         }
-        Vector3 Around(float units) => centreGame + new Vector3(Random.Range(-units, units), Random.Range(-units, units) * 0.5f, Random.Range(-units, units));
+        Vector3 Around(float units) => CruiseEncounterSpawner.Near(centreGame, new Vector3(Random.Range(-units, units), Random.Range(-units, units) * 0.5f, Random.Range(-units, units)));
 
         /// <summary>The run's look: the rift at its centre, its sky.</summary>
         void Dress(Modding.ModEncounters.RiftLook l)
@@ -307,7 +308,7 @@ namespace GoF2Remake.World
             }
             if (run.HasMutator(RiftRun.Vengeance) && e.Role != NpcRoles.Role.Detonator)
             {
-                var d = Spawn(RiftRun.Kind.Drone, new Vector3(at.x, at.y, -at.z) / M, "detonator");
+                var d = Spawn(RiftRun.Kind.Drone, OrbitScale.ToGame(at), "detonator");   // OrbitScale: the spec's coordinates
                 if (d != null && run.HasMutator(RiftRun.ExplodeOnKill)) d.Target.invulnerable = true;
             }
             if (run.IsBossStage)
@@ -518,7 +519,8 @@ namespace GoF2Remake.World
             boss.Target.invulnerable = true;
             for (int i = 0; i < 2; i++)
             {
-                var g = Spawn(RiftRun.Kind.Cruiser, new Vector3(boss.transform.position.x, boss.transform.position.y, -boss.transform.position.z) / M + new Vector3(Random.Range(-3000f, 3000f), 0f, Random.Range(-3000f, 3000f)));
+                // OrbitScale: beside the boss (an offset, not mapped), in the spec's coordinates
+                var g = Spawn(RiftRun.Kind.Cruiser, OrbitScale.ToGame(boss.transform.position + new Vector3(Random.Range(-3000f, 3000f), 0f, Random.Range(-3000f, 3000f)) * M));
                 if (g != null) guards.Add(g);
             }
             if (guards.Count == 0) boss.Target.invulnerable = false;
@@ -532,7 +534,7 @@ namespace GoF2Remake.World
             bossTimerS = Random.Range(RiftRun.BossTimerMinS, RiftRun.BossTimerMaxS);
             if (run.HasMutator(RiftRun.BossTeleportRepairs))
             {
-                boss.transform.position = OrbitLayout.ToUnity(Around(SpawnSpread));
+                boss.transform.position = OrbitScale.ToUnity(Around(SpawnSpread));
                 bossMending = true;   // (repairing until the pilot hits it)
                 Explosion.Spawn(boss.transform.position, 0.6f, false);
             }
