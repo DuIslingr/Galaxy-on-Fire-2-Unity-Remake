@@ -190,6 +190,10 @@ namespace GoF2Remake.UI
             var liveSkies = Toggle("liveSkies", OptionPage.Graphics, () => X("liveSkies", "Live mod skies"), () => Settings.LiveSkies, v => Settings.LiveSkies = v);
             liveSkies.description = () => X("liveSkiesHelp", "Mod skies that come with their own shader (such as Chorus's) drawn live, sharp at any resolution. Off: their baked image, lighter on phones. From the next orbit.");
             list.Add(liveSkies);
+            // Remake (2026-11-14, the user's request): the game's skies with sharp stars and upscaled nebulae (OrbitBuilder.Enhance).
+            var enhancedSkies = Toggle("enhancedSkies", OptionPage.Graphics, () => X("enhancedSkies", "Enhanced skies"), () => Settings.EnhancedSkies, v => Settings.EnhancedSkies = v);
+            enhancedSkies.description = () => X("enhancedSkiesHelp", "The game's skies with their stars drawn sharp at any resolution and the nebulae upscaled by an AI model (Real-ESRGAN), which invents fine detail the original art doesn't have. Off: the original skies. From the next orbit.");
+            list.Add(enhancedSkies);
             list.Add(Toggle("npcPlayerEngines", OptionPage.Graphics, () => X("npcPlayerEngines", "Other ships' engines like yours"),
                 () => Settings.NpcPlayerEngines, v => Settings.NpcPlayerEngines = v));
             // Remake: the planets as the rebuilt 3D spheres (World.RebuiltPlanets); on by default.

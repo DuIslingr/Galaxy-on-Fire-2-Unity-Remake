@@ -178,6 +178,12 @@ namespace GoF2Remake.Data
             set => SetBool("liveSkies", value);
         }
 
+        /// <summary>Remake (2026-11-14, the user's request): the game's own skies enhanced (OrbitBuilder.Enhance): their point stars
+        /// and specks drawn sharp at any resolution (World.SkyStars) over the nebulae upscaled 4x by Real-ESRGAN's anime model
+        /// (Reference/tools/sky/enhance_skies.py). Off by default: the upscale invents fine detail the original art doesn't
+        /// have. From the next orbit.</summary>
+        public static bool EnhancedSkies { get => GetBool("enhancedSkies", false); set => SetBool("enhancedSkies", value); }
+
         /// <summary>Remake: the hangar ships' contact shadows (HangarShipShadow): 0 off, 1 only the player's own ship, 2 every
         /// ship (default). Off also drops the station camera's depth texture they read.</summary>
         public static int HangarShadows { get => Mathf.Clamp(Mathf.RoundToInt(Get("hangarShadows", Default("hangarShadows", HangarShadowsPlayer))), 0, 2); set => Set("hangarShadows", Mathf.Clamp(value, 0, 2)); }
@@ -902,7 +908,7 @@ namespace GoF2Remake.Data
         public static readonly string[] GraphicsKeys =
         {
             "displayMode", "resolutionWidth", "resolutionHeight", "frameRate", "quality", "fireSmoke", "fog", "detailDistance", "textureFiltering", "renderScale", "upscaler", "upscalerQuality",
-            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "npcPlayerEngines", "rebuiltPlanets", "fov",
+            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "enhancedSkies", "npcPlayerEngines", "rebuiltPlanets", "fov",
             "cameraShake", "originalChaseCamera", "es2FreeFlightCamera", "originalUi", "uiWidth", "uiMargin", "showFps", "fpsPosition", "gameCursor",
         };
         public static readonly string[] ControlsKeys =

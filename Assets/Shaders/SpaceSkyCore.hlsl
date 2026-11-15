@@ -18,17 +18,23 @@ TEXTURE2D(_ChorusLayer1); SAMPLER(sampler_ChorusLayer1);
 TEXTURE2D(_ChorusLayer2); SAMPLER(sampler_ChorusLayer2);
 TEXTURE2D(_ChorusLayer3); SAMPLER(sampler_ChorusLayer3);
 TEXTURE2D(_ChorusLayer4); SAMPLER(sampler_ChorusLayer4);
+TEXTURE2D(_StarIndex); SAMPLER(sampler_StarIndex);
+TEXTURE2D(_StarData);  SAMPLER(sampler_StarData);
+TEXTURE2D(_BlendStarIndex); SAMPLER(sampler_BlendStarIndex);
+TEXTURE2D(_BlendStarData);  SAMPLER(sampler_BlendStarData);
 float _WarpLevel, _WarpTime, _WarpKhador;
 float3 _WarpAxis;
 float _SkyBlend, _BlendStarsGain, _BlendNebulaGain, _BlendExposure, _BlendStarsMode, _BlendNebulaMode;
 float4x4 _BlendRotation;
 float4 _BlendStarsTexel, _BlendNebulaTexel;
+float4 _BlendStarGrid;   // the other sky's _StarGrid (InterstellarField.LoadBlendSky)
 
 CBUFFER_START(UnityPerMaterial)
     float4x4 _SkyRotation;   // world direction -> baked cube direction, set by OrbitBuilder.SetupSky
     float4 _StarsMap_TexelSize;
     float4 _NebulaMap_TexelSize;
     half _Exposure, _StarsGain, _NebulaGain;
+    float4 _StarGrid;            // Enhanced skies' stars (StarPoints, World.SkyStars): grid cells a face, data width; 0: off
     // Chorus's sky (_CHORUS_SKY, ChorusSky below; OrbitBuilder.SetChorusSky fills them from a systems.json skybox "chorus")
     float4 _ChorusGradUp;        // the gradient's up (Unreal axes, normalized), its bias
     float4 _ChorusGradA, _ChorusGradB;   // colour A, gamma; colour B, opacity (0: no gradient)
@@ -79,6 +85,48 @@ half3 Layer(TEXTURECUBE_PARAM(cube, cubeSampler), TEXTURE2D_PARAM(map, mapSample
     return SAMPLE_TEXTURECUBE(cube, cubeSampler, d).rgb;
 }
 
+
+// Remake: the Enhanced skies' stars (Settings.EnhancedSkies, World.SkyStars): the point stars and specks lifted out of the
+// baked layers into star lists (Reference/tools/sky/enhance_skies.py), each a gaussian of its own size, drawn sharper (0.6 of
+// it) down to 0.6 of a screen pixel, so sharp at any resolution; a star drawn smaller than its source is brighter by the
+// area it lost, at most twice (a pin-sharp star keeps its light, but doesn't flare into the bloom). The grid's 2 x 2 cells
+// round the pixel hold every star within half a cell (SkyStars.Cells); at a face's edge the clamped cell is read once.
+half3 StarPoints(TEXTURE2D_PARAM(index, si), TEXTURE2D_PARAM(data, sd), float4 grid, float3 d, half starsGain, half nebulaGain)
+{
+    float3 n = normalize(d);
+    float pix = max(max(length(ddx(n)), length(ddy(n))), 1e-6);
+    float3 a = abs(n);
+    int face; float2 f;
+    if (a.x >= a.y && a.x >= a.z) { face = n.x > 0 ? 0 : 1; f = float2(n.x > 0 ? -n.z : n.z, n.y) / a.x; }
+    else if (a.y >= a.z) { face = n.y > 0 ? 2 : 3; f = float2(n.x, n.y > 0 ? -n.z : n.z) / a.y; }
+    else { face = n.z > 0 ? 4 : 5; f = float2(n.z > 0 ? n.x : -n.x, n.y) / a.z; }
+    int g = (int)grid.x, w = (int)grid.y;
+    int2 b = (int2)floor((f * 0.5 + 0.5) * grid.x - 0.5);
+    int2 c0 = clamp(b, 0, g - 1), c1 = clamp(b + 1, 0, g - 1);
+    half3 c = 0;
+    [unroll] for (int k = 0; k < 4; k++)
+    {
+        bool right = (k & 1) != 0, upper = (k >> 1) != 0;
+        if ((right && c1.x == c0.x) || (upper && c1.y == c0.y)) continue;
+        int2 cell = int2(right ? c1.x : c0.x, upper ? c1.y : c0.y);
+        float4 e = LOAD_TEXTURE2D(index, int2(face * g + cell.x, cell.y)) * 255.0 + 0.5;
+        int2 ids = int2((int)e.r * 256 + (int)e.g, (int)e.b * 256 + (int)e.a);
+        [unroll] for (int j = 0; j < 2; j++)
+        {
+            int id = j == 0 ? ids.x : ids.y;
+            if (id <= 0) continue;
+            int t = (id - 1) * 2;
+            int2 at = int2(t % w, t / w);
+            float4 s = LOAD_TEXTURE2D(data, at);
+            float4 col = LOAD_TEXTURE2D(data, at + int2(1, 0));
+            float sg = max(s.w * 0.6, pix * 0.6);
+            float3 off = n - s.xyz;
+            float lit = exp(-dot(off, off) / (2.0 * sg * sg)) * min(s.w * s.w / (sg * sg), 2.0);
+            c += col.rgb * lit * (col.a > 0.5 ? nebulaGain : starsGain);
+        }
+    }
+    return c;
+}
 
 // Chorus's sky, as its M_Skybox_MASTER draws it (its compiled shader, MI_Skybox_LocRSA's pixel shader and its variants with a
 // fourth layer / no gradient; the importer's tools/sky.py, the same formula in numpy for the baked panorama): a gradient
@@ -160,12 +208,14 @@ half3 Sky(float3 world)
     #endif
     half3 c = Layer(TEXTURECUBE_ARGS(_Stars, sampler_Stars), TEXTURE2D_ARGS(_StarsMap, sampler_StarsMap), _StarsMap_TexelSize, d, starsMode) * _StarsGain
             + Layer(TEXTURECUBE_ARGS(_Nebula, sampler_Nebula), TEXTURE2D_ARGS(_NebulaMap, sampler_NebulaMap), _NebulaMap_TexelSize, d, nebulaMode) * _NebulaGain;
+    if (_StarGrid.x > 0) c += StarPoints(TEXTURE2D_ARGS(_StarIndex, sampler_StarIndex), TEXTURE2D_ARGS(_StarData, sampler_StarData), _StarGrid, d, _StarsGain, _NebulaGain);
     #endif
     if (_SkyBlend > 0.001)
     {
         float3 e = mul((float3x3)_BlendRotation, world);
         half3 other = Layer(TEXTURECUBE_ARGS(_BlendStars, sampler_BlendStars), TEXTURE2D_ARGS(_BlendStarsMap, sampler_BlendStarsMap), _BlendStarsTexel, e, (int)_BlendStarsMode) * _BlendStarsGain
                     + Layer(TEXTURECUBE_ARGS(_BlendNebula, sampler_BlendNebula), TEXTURE2D_ARGS(_BlendNebulaMap, sampler_BlendNebulaMap), _BlendNebulaTexel, e, (int)_BlendNebulaMode) * _BlendNebulaGain;
+        if (_BlendStarGrid.x > 0) other += StarPoints(TEXTURE2D_ARGS(_BlendStarIndex, sampler_BlendStarIndex), TEXTURE2D_ARGS(_BlendStarData, sampler_BlendStarData), _BlendStarGrid, e, _BlendStarsGain, _BlendNebulaGain);
         c = lerp(c, other * _BlendExposure / max(_Exposure, 0.001), _SkyBlend);
     }
     return c;

@@ -3388,5 +3388,7 @@
  "ctlDrift": "Driften (vasthouden)",
  "hudDrift": "DRIFTEN",
  "ctlTravelBoost": "Reisboost aan / uit",
- "hudTravelBoost": "REISBOOST"
+ "hudTravelBoost": "REISBOOST",
+ "enhancedSkies": "Verbeterde luchten",
+ "enhancedSkiesHelp": "De luchten van het spel met sterren die op elke resolutie scherp getekend worden en nevels die door een AI-model (Real-ESRGAN) zijn opgeschaald, dat fijne details verzint die de originele afbeeldingen niet hebben. Uit: de originele luchten. Vanaf de volgende baan."
 }

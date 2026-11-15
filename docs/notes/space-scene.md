@@ -34,6 +34,25 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   the hangar is shown its race's own (`SkyReflection.SetHangar(HangarIndex)`, `Resources/GoF2Reflections/cubemap_hangar_terran
   / vossk / nivelian / midorian`, glossy convolution; the Supernova systems too), the Valkyrie hangars (7 / 8) a black one
   (no reflection, the rim stays), a mod's own hangar and the lounge the system's.
+- **Enhanced skies** (remake, 2026-11-14, the user's request to rebuild GoF2's skies "the same way Chorus does"; Options >
+  Graphics "Enhanced skies", `Settings.EnhancedSkies`, off by default: the upscale invents detail): `OrbitBuilder.Enhance`
+  puts `Resources/GoF2SkyHd` on the game's own layers of a sky (not a mod's images, not a Chorus sky): its stars_00X /
+  nebula_0XX cubemaps (the same 2048 faces) and their star lists drawn by `GoF2/SpaceSky` (`World.SkyStars`, `SpaceSkyCore`
+  `StarPoints`). `Reference/tools/sky/enhance_skies.py` makes them from `GoF2Sky`: every point star of the stars layers
+  (~23 - 44 thousand each) and every speck of the nebulae (a 5 x 5 peak standing 10 and 8x its neighbourhood's grain over
+  its 9 x 9 median, its light falling off fast; up to a few thousand in the dusty ones, 015 / 016 / 018) goes into a list
+  (direction, gaussian size, amplitude) and out of the image (its ring's median in its place; what stays: the big stars'
+  halos, the clouds); each nebula face is then shrunk to 512 (the art's real detail), padded with 32 px of its neighbours
+  (the faces meet without a seam), upscaled 4x by Real-ESRGAN's anime model (`realesrgan-x4plus-anime`; the user picked
+  it over `realesrgan-x4plus`, which came out waxy), trimmed and brought back to the original's colours at low frequency.
+  The specks had to come out first: a 512 shrink averages a 1 - 2 px speck away. The stars are drawn as gaussians 0.6 of
+  their source size down to 0.6 of a screen pixel, brighter by the area lost, at most 2x; found through a 512 x 512
+  grid a cube face (two slots a cell, the brightest first; one within half a cell of a face's edge also in the edge cell
+  beyond; a pixel reads its 2 x 2 cells), built at load per pair of layers (4 kept). Chorus's own sky is up to four placed
+  image patches; GoF2's nebulae don't fit that (even the patchy ones cover 15 - 60 % of every face), so they stay cube
+  faces. The crossfade between systems (`InterstellarField.LoadBlendSky`, `_BlendStarGrid`) and the Khador rift (its
+  material copies the sky's) draw the other sky's stars too. Needs 32-bit float textures (`SkyStars.Supported`), else
+  the original skies. Tests `SkyStarsTests`.
 - **SRP Batcher** (2026-10-22): every shader the scenes draw is compatible, `GoF2/SpaceSky` too (its per-material values in
   `UnityPerMaterial`). A renderer with a MaterialPropertyBlock falls out of it: `PartAnimation.ownMaterials` (GunRig: the
   projectiles, muzzle flashes, impacts) writes their fades into a copy of the part's material made once instead (a fleet

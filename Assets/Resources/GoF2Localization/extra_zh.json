@@ -3388,5 +3388,7 @@
  "ctlDrift": "漂移（按住）",
  "hudDrift": "漂移",
  "ctlTravelBoost": "巡航加速 开启 / 关闭",
- "hudTravelBoost": "巡航加速"
+ "hudTravelBoost": "巡航加速",
+ "enhancedSkies": "增强星空",
+ "enhancedSkiesHelp": "游戏的星空：星星在任何分辨率下都清晰绘制，星云由 AI 模型（Real-ESRGAN）放大，它会生成原始美术中没有的细节。关闭：原始星空。从下一个轨道起生效。"
 }

@@ -41,6 +41,9 @@ Shader "GoF2/KhadorRift"
         [HideInInspector] _ChorusL4A ("_ChorusL4A", Vector) = (0, 0, 0, 0)
         [HideInInspector] _ChorusL4B ("_ChorusL4B", Vector) = (0, 0, 0, 0)
         [HideInInspector] _ChorusL4C ("_ChorusL4C", Vector) = (0, 0, 0, 0)
+        [NoScaleOffset] _StarIndex ("Enhanced stars: grid", 2D) = "black" {}
+        [NoScaleOffset] _StarData ("Enhanced stars: data", 2D) = "black" {}
+        [HideInInspector] _StarGrid ("_StarGrid", Vector) = (0, 0, 0, 0)
     }
     SubShader
     {

@@ -3388,5 +3388,7 @@
  "ctlDrift": "드리프트 (누르기)",
  "hudDrift": "드리프트",
  "ctlTravelBoost": "순항 부스트 켜기 / 끄기",
- "hudTravelBoost": "순항 부스트"
+ "hudTravelBoost": "순항 부스트",
+ "enhancedSkies": "향상된 하늘",
+ "enhancedSkiesHelp": "별을 어떤 해상도에서도 선명하게 그리고, 성운을 AI 모델(Real-ESRGAN)로 업스케일한 게임의 하늘. 원본 아트에 없는 세부 묘사가 만들어집니다. 끔: 원래 하늘. 다음 궤도부터."
 }

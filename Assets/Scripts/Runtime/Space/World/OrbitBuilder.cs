@@ -65,11 +65,17 @@ namespace GoF2Remake.World
             // (a station's orbit may have its own: stations.json orbit "skybox", the GoF3 Systems mod's sky of each GoF3 level)
             if (layout.systemIndex >= 0 && nebulaOverride < 0 && Modding.ModWorld.OrbitOf(layout.stationIndex)?.skybox is Modding.ModWorld.Skybox own) mod = own;
             if (skyOverride != null) mod = skyOverride;   // (a rift run's sky: ModEncounters' rift look, World.RiftEncounter)
+            int baseStars = stars, baseNebula = nebula;   // the game's own layers drawn (the Enhanced skies' swap)
             if (mod != null)
             {
-                SetModLayer(sky, mod.nebula, "_NebulaMap", "_NEBULA_PANORAMA", "_NEBULA_STRIP");
-                if (mod.stars != null) SetModLayer(sky, mod.stars, "_StarsMap", "_STARS_PANORAMA", "_STARS_STRIP");
-                else if (mod.starsLayer >= 0) sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{mod.starsLayer:000}"));
+                if (SetModLayer(sky, mod.nebula, "_NebulaMap", "_NEBULA_PANORAMA", "_NEBULA_STRIP")) baseNebula = -1;
+                if (mod.stars != null) { if (SetModLayer(sky, mod.stars, "_StarsMap", "_STARS_PANORAMA", "_STARS_STRIP")) baseStars = -1; }
+                else if (mod.starsLayer >= 0)
+                {
+                    baseStars = mod.starsLayer;
+                    sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{baseStars:000}"));
+                }
+                if (mod.starsLayer == -2) baseStars = -1;
                 sky.SetFloat("_NebulaGain", mod.nebulaBrightness);
                 sky.SetFloat("_StarsGain", mod.starsLayer == -2 ? 0f : mod.starsBrightness);
                 // "chorus": Chorus's sky drawn live (the image layers above stay set: the crossfade between systems reads them)
@@ -83,7 +89,26 @@ namespace GoF2Remake.World
             if (layout.modSkyRotation.HasValue) rotation = Quaternion.Euler(layout.modSkyRotation.Value);
             // The shader maps world directions into the baked cube: the inverse of the sky's Unity rotation.
             sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(rotation)));
+            if (Settings.EnhancedSkies && !sky.IsKeywordEnabled("_CHORUS_SKY")) Enhance(sky, baseStars, baseNebula);
             return sky;
+        }
+
+        /// <summary>Remake (2026-11-14, the user's request): the Enhanced skies (Settings.EnhancedSkies) on the game's own layers
+        /// of 'sky' (-1: that layer is a mod's image): GoF2SkyHd's cubemaps (the stars layer without its point stars; the
+        /// nebula upscaled by Real-ESRGAN, without its specks) and those stars drawn sharp (World.SkyStars). Nothing changes
+        /// without GoF2SkyHd or where the device can't draw the stars (the cubemaps without them would lose them).</summary>
+        public static void Enhance(Material sky, int stars, int nebula)
+        {
+            if ((stars < 0 && nebula < 0) || !SkyStars.Supported) return;
+            var starsCube = stars >= 0 ? Resources.Load<Cubemap>($"GoF2SkyHd/stars_{stars:000}") : null;
+            var nebulaCube = nebula >= 0 ? Resources.Load<Cubemap>($"GoF2SkyHd/nebula_{nebula:000}") : null;
+            if (starsCube == null) stars = -1;
+            if (nebulaCube == null) nebula = -1;
+            var grid = SkyStars.Grid(stars, nebula);
+            if (grid == null) return;
+            if (starsCube != null) sky.SetTexture("_Stars", starsCube);
+            if (nebulaCube != null) sky.SetTexture("_Nebula", nebulaCube);
+            SkyStars.Apply(sky, grid);
         }
 
         /// <summary>A skybox's "chorus" block on GoF2/SpaceSky (_CHORUS_SKY, SpaceSkyCore's ChorusSky): Chorus's M_Skybox_MASTER
@@ -123,23 +148,24 @@ namespace GoF2Remake.World
         }
 
         /// <summary>A mod's sky image on a GoF2/SpaceSky layer: 2:1 = a panorama, 6:1 = a strip of cube faces (else a warning
-        /// and the game's layer stays).</summary>
-        static void SetModLayer(Material sky, string name, string property, string panorama, string strip)
+        /// and the game's layer stays: false).</summary>
+        static bool SetModLayer(Material sky, string name, string property, string panorama, string strip)
         {
-            if (name == null) return;
+            if (name == null) return false;
             var tex = Modding.ModBackdrop.Texture(name);
-            if (tex == null) return;
+            if (tex == null) return false;
             float aspect = tex.width / (float)Mathf.Max(1, tex.height);
             bool isStrip = Mathf.Abs(aspect - 6f) < 0.05f, isPanorama = Mathf.Abs(aspect - 2f) < 0.05f;
             if (!isStrip && !isPanorama)
             {
                 Debug.LogWarning($"OrbitBuilder: the skybox image {name} is {tex.width} x {tex.height}: a panorama is 2:1, a strip of cube faces 6:1");
-                return;
+                return false;
             }
             tex.wrapMode = isPanorama ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
             tex.wrapModeV = TextureWrapMode.Clamp;
             sky.SetTexture(property, tex);
             sky.EnableKeyword(isPanorama ? panorama : strip);
+            return true;
         }
 
         /// <summary>R_sky in Unity (the baked cubemaps are the sky meshes at identity, after the import's 180 deg yaw).</summary>

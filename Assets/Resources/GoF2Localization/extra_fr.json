@@ -3388,5 +3388,7 @@
  "ctlDrift": "Dérapage (maintenir)",
  "hudDrift": "DÉRAPAGE",
  "ctlTravelBoost": "Boost de voyage oui / non",
- "hudTravelBoost": "BOOST DE VOYAGE"
+ "hudTravelBoost": "BOOST DE VOYAGE",
+ "enhancedSkies": "Ciels améliorés",
+ "enhancedSkiesHelp": "Les ciels du jeu avec des étoiles nettes à toute résolution et des nébuleuses agrandies par un modèle d'IA (Real-ESRGAN), qui invente des détails fins absents des illustrations d'origine. Désactivé : les ciels d'origine. À partir de la prochaine orbite."
 }

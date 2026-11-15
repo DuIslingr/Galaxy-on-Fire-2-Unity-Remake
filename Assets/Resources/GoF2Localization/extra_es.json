@@ -3388,5 +3388,7 @@
  "ctlDrift": "Derrape (mantener)",
  "hudDrift": "DERRAPE",
  "ctlTravelBoost": "Impulso de viaje sí / no",
- "hudTravelBoost": "IMPULSO DE VIAJE"
+ "hudTravelBoost": "IMPULSO DE VIAJE",
+ "enhancedSkies": "Cielos mejorados",
+ "enhancedSkiesHelp": "Los cielos del juego con estrellas nítidas a cualquier resolución y nebulosas ampliadas por un modelo de IA (Real-ESRGAN), que inventa detalles finos que el arte original no tiene. Desactivado: los cielos originales. Desde la próxima órbita."
 }

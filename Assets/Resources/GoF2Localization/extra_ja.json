@@ -3388,5 +3388,7 @@
  "ctlDrift": "ドリフト（長押し）",
  "hudDrift": "ドリフト",
  "ctlTravelBoost": "巡航ブースト オン / オフ",
- "hudTravelBoost": "巡航ブースト"
+ "hudTravelBoost": "巡航ブースト",
+ "enhancedSkies": "強化された星空",
+ "enhancedSkiesHelp": "星をどの解像度でもシャープに描き、星雲を AI モデル（Real-ESRGAN）でアップスケールしたゲームの星空。元のアートにはない細部が作り出されます。オフ：元の星空。次の軌道から。"
 }

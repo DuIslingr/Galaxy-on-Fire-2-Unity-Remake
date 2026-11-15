@@ -30,7 +30,7 @@ namespace GoF2Remake.EditorTools
         /// leaves at full size: the space skies (their stars blur when smaller), the reflection cubemaps (picked by mip
         /// level for their blur), the HUD / UI images.</summary>
         static bool KeepsFullMips(string path, string name) =>
-            path.StartsWith("Assets/Resources/GoF2Sky/") || path.StartsWith("Assets/Resources/GoF2Reflections/")
+            path.StartsWith("Assets/Resources/GoF2Sky/") || path.StartsWith("Assets/Resources/GoF2SkyHd/") || path.StartsWith("Assets/Resources/GoF2Reflections/")
             || path.StartsWith("Assets/Resources/GoF2Hud/") || path.StartsWith("Assets/UI/")
             || (path.StartsWith(ImportSettings.Root + "/Textures/") && name.Contains("cubemap"));
 
