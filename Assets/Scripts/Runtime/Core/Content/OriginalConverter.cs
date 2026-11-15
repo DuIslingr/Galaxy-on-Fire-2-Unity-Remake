@@ -6,7 +6,8 @@
 //   Models/<rel>.gof2mesh.json  (AemMesh's sidecar) + Models/<rel>.aem (the mesh file itself, built into a Unity mesh at run
 //                               time: the converter keeps the original, a few hundred bytes to a few MB each)
 //   Audio/<bank>/<name>.mp3|.wav (FsbBank; <bank> without FMOD_GOF2_)
-//   Localization/text_<lang>.json (LangFile)
+//   Localization/text_<lang>.json (LangFile; the packs' string overlay applied)
+//   Resources/GoF2Data/<table>.json (GameTables, from the copy's .bin files and its English text, the overlay applied)
 //   _manifest.tsv               (each file: its source package and entry, and the format it was read from)
 // Plain C#, no Unity types: the game runs it on a worker thread, the tools run it from the command line.
 
@@ -31,6 +32,16 @@ namespace GoF2Remake.Data
         /// <summary>Called with (done, total, entry) as entries are converted (any thread).</summary>
         public Action<int, int, string> Progress;
 
+        /// <summary>The packs' string overlay: language code (text_<code>) -> string id -> text, put over the copy's own
+        /// strings (the remake's corrections; an edition's differing strings); applied before the data tables are made,
+        /// whose names and descriptions come from the English table.</summary>
+        public Dictionary<string, Dictionary<int, string>> TextOverlay;
+
+        readonly Dictionary<string, (byte[] bytes, string package, string entry)> bins =
+            new Dictionary<string, (byte[], string, string)>(StringComparer.Ordinal);
+        readonly Dictionary<string, (List<string> strings, string package, string entry)> langs =
+            new Dictionary<string, (List<string>, string, string)>(StringComparer.Ordinal);
+
         public OriginalConverter(string cacheRoot) { root = cacheRoot; }
 
         /// <summary>Converts every package in order (a later one's file replaces an earlier one's), then writes the
@@ -38,10 +49,54 @@ namespace GoF2Remake.Data
         public void Run(IEnumerable<string> packages)
         {
             foreach (var p in packages) Package(p);
+            Finish();
             var m = new StringBuilder("path\tpackage\tentry\tformat\n");
             foreach (var it in Items) m.Append(it.Path).Append('\t').Append(it.Package).Append('\t').Append(it.Entry).Append('\t').Append(it.Format).Append('\n');
             Directory.CreateDirectory(root);
             File.WriteAllText(Path.Combine(root, "_manifest.tsv"), m.ToString());
+        }
+
+        /// <summary>The text tables and the data tables, once every package is read (a later package's files win).</summary>
+        void Finish()
+        {
+            foreach (var kv in langs)
+            {
+                var strings = new List<string>(kv.Value.strings);
+                if (TextOverlay != null && TextOverlay.TryGetValue(kv.Key, out var over))
+                    foreach (var o in over)
+                    {
+                        while (strings.Count <= o.Key) strings.Add("");
+                        strings[o.Key] = o.Value;
+                    }
+                if (kv.Key == "en") english = strings;
+                Write($"Localization/text_{kv.Key}.json", Encoding.UTF8.GetBytes(LangFile.ToJson(strings)), kv.Value.package, kv.Value.entry, ".lang");
+            }
+            if (bins.Count == 0) return;
+            if (english == null) { Problems.Add("no English text (gb.lang): the data tables need it"); return; }
+            try
+            {
+                var tables = GameTables.Build(p => bins.TryGetValue(p, out var b) ? b.bytes : null, bins.Keys, english);
+                foreach (var t in tables)
+                {
+                    var src = bins.TryGetValue(TableSource(t.Key), out var b) ? b : (null, "", "");
+                    Write($"Resources/GoF2Data/{t.Key}.json", Encoding.UTF8.GetBytes(t.Value), src.Item2, src.Item3, "GameTables");
+                }
+            }
+            catch (FormatException ex) { Problems.Add("data tables: " + ex.Message); }
+        }
+
+        List<string> english;
+
+        /// <summary>The .bin a table is made from (for the manifest).</summary>
+        static string TableSource(string table)
+        {
+            switch (table)
+            {
+                case "item_attributes": return "bin/items.bin";
+                case "names": return "bin/names_terran.bin";
+                case "v_collisions": return "assets/valkyrie/bin/v_collisions.bin";
+            }
+            return table.StartsWith("sn_") ? $"assets/supernova/bin/{table}.bin" : table.StartsWith("v_") ? $"assets/valkyrie/bin/{table}.bin" : $"bin/{table}.bin";
         }
 
         void Package(string path)
@@ -106,8 +161,13 @@ namespace GoF2Remake.Data
         void Entry(string package, string entry, Func<byte[]> read)
         {
             string ext = Path.GetExtension(entry).ToLowerInvariant();
-            if (ext != ".aei" && ext != ".aem" && ext != ".fsb" && ext != ".lang") return;
+            if (ext != ".aei" && ext != ".aem" && ext != ".fsb" && ext != ".lang" && ext != ".bin") return;
             string data = DataPath(entry);
+            if (ext == ".bin")
+            {
+                if (data.StartsWith("data/")) bins[data.Substring(5)] = (read(), package, entry);   // (the tables, in Finish)
+                return;
+            }
             try
             {
                 switch (ext)
@@ -141,7 +201,7 @@ namespace GoF2Remake.Data
                     {
                         string stem = Path.GetFileNameWithoutExtension(entry);
                         if (!LangFile.Codes.TryGetValue(stem, out var code)) { Problems.Add($"{entry}: unknown language"); break; }
-                        Write($"Localization/text_{code}.json", Encoding.UTF8.GetBytes(LangFile.ToJson(LangFile.Read(read()))), package, entry, ".lang");
+                        langs[code] = (LangFile.Read(read()), package, entry);   // (written in Finish, with the overlay)
                         break;
                     }
                 }
