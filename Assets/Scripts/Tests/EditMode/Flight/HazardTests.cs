@@ -186,8 +186,9 @@ namespace GoF2Remake.Tests
             var spin = GoF2Remake.World.Portable.SpinBetween(a, b, 0.01f);
             Assert.AreEqual(90f * UnityEngine.Mathf.Deg2Rad, spin.y, 1e-3f);
             Assert.AreEqual(0f, spin.x, 1e-4f);
-            // Let go it keeps it (Detach bKeepMomentum) and turns on: half a second at 90 deg/s is 45 deg.
-            var turned = GoF2Remake.World.Portable.Turned(UnityEngine.Quaternion.identity, spin, 0.5f);
+            // Let go it keeps it (Detach bKeepMomentum) and turns on: half a second at 90 deg/s is 45 deg (an exact spin here:
+            // the one measured above from a 0.9 deg step is only good to float precision, about 0.02 deg after half a second).
+            var turned = GoF2Remake.World.Portable.Turned(UnityEngine.Quaternion.identity, new UnityEngine.Vector3(0f, 90f * UnityEngine.Mathf.Deg2Rad, 0f), 0.5f);
             Assert.AreEqual(45f, UnityEngine.Quaternion.Angle(UnityEngine.Quaternion.identity, turned), 0.01f);
             Assert.AreEqual(UnityEngine.Vector3.zero, GoF2Remake.World.Portable.SpinBetween(a, a, 0.01f), "no turn, no spin");
         }
