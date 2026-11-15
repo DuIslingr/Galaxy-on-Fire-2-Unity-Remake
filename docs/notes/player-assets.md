@@ -182,6 +182,10 @@ that make Resources folders from them. Each builder becomes a run-time step over
 
 Testing it needs a Unity project without the originals: this branch's worktree with the original and derived folders
 left out (sparse checkout) is exactly a shipped build's content, a fast import, and the cache supplies the rest.
+- **The test bed** (2026-11-15): a worktree (`git worktree add`, `GIT_LFS_SKIP_SMUDGE=1`) with a non-cone sparse checkout
+  made from the inventory (every original / derived file and its .meta left out: 17 whole folders, 427 single files);
+  1,470 asset files, 53 MB. **Don't run a plain `git lfs pull` there:** git-lfs writes every LFS file into the working
+  tree, the sparse ones too; remove them and `git sparse-checkout reapply` if it happens (or pull with `--include`).
 
 ## Plan
 
