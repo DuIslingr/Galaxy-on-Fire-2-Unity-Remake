@@ -3390,5 +3390,7 @@
  "ctlTravelBoost": "Dopalacz podróżny wł. / wył.",
  "hudTravelBoost": "DOPALACZ PODRÓŻNY",
  "enhancedSkies": "Ulepszone niebo",
- "enhancedSkiesHelp": "Niebo gry z gwiazdami ostrymi w każdej rozdzielczości i mgławicami powiększonymi przez model SI (Real-ESRGAN), który dodaje drobne szczegóły, których oryginalna grafika nie ma. Wyłączone: oryginalne niebo. Od następnej orbity."
+ "enhancedSkiesHelp": "Niebo gry z gwiazdami ostrymi w każdej rozdzielczości i mgławicami powiększonymi przez model SI (Real-ESRGAN), który dodaje drobne szczegóły, których oryginalna grafika nie ma. Wyłączone: oryginalne niebo. Od następnej orbity.",
+ "nebulaClouds": "Chmury mgławicy",
+ "nebulaCloudsHelp": "Chmury gazu wokół orbit, w kolorach mgławicy ich układu, przez które i obok których przelatujesz. Nie ma ich w oryginale. Od następnej orbity."
 }

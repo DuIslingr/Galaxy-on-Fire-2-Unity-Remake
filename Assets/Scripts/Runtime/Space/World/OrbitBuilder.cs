@@ -89,6 +89,7 @@ namespace GoF2Remake.World
             if (layout.modSkyRotation.HasValue) rotation = Quaternion.Euler(layout.modSkyRotation.Value);
             // The shader maps world directions into the baked cube: the inverse of the sky's Unity rotation.
             sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(rotation)));
+            if (sky.IsKeywordEnabled("_CHORUS_SKY")) SetChorusSun(sky, rotation, layout);
             if (Settings.EnhancedSkies && !sky.IsKeywordEnabled("_CHORUS_SKY")) Enhance(sky, baseStars, baseNebula);
             return sky;
         }
@@ -111,9 +112,10 @@ namespace GoF2Remake.World
             SkyStars.Apply(sky, grid);
         }
 
-        /// <summary>A skybox's "chorus" block on GoF2/SpaceSky (_CHORUS_SKY, SpaceSkyCore's ChorusSky): Chorus's M_Skybox_MASTER
-        /// values as its compiled shader reads them, the angles' sines and cosines worked out here (its preshader's: heading
-        /// x 2 pi, elevation x -pi / 2, rotation x 2 pi).</summary>
+        /// <summary>A skybox's "chorus" block, the layered sky, on GoF2/SpaceSky (_CHORUS_SKY, SpaceSkyCore's ChorusSky): Chorus's
+        /// M_Skybox_MASTER values as its compiled shader reads them, the angles' sines and cosines worked out here (its
+        /// preshader's: heading x 2 pi, elevation x -pi / 2, rotation x 2 pi), and EVERSPACE 2's star clustering, tinted
+        /// masks and gradients (ChorusLayer kinds).</summary>
         public static void SetChorusSky(Material sky, Modding.ModWorld.ChorusSky c)
         {
             Texture2D Image(string name)
@@ -128,23 +130,60 @@ namespace GoF2Remake.World
             sky.SetVector("_ChorusGradB", new Vector4(c.gradientB.r, c.gradientB.g, c.gradientB.b, c.gradientUp.HasValue ? c.gradientOpacity : 0f));
             var stars = Image(c.stars);
             sky.SetTexture("_ChorusStarsMap", stars != null ? stars : Texture2D.blackTexture);
-            sky.SetVector("_ChorusStars", new Vector4(c.starsTiling, c.starsOffset.x, c.starsOffset.y, c.starsBrightness));
+            sky.SetVector("_ChorusStars", new Vector4(c.starsTiling, c.starsOffset.x, c.starsOffset.y, stars != null ? c.starsBrightness : 0f));
+            sky.SetVector("_ChorusStarsB", new Vector4(c.starsTilingV, c.starsNoiseScale, c.starsNoiseExponent, c.keepBase ? 1f : 0f));
+            sky.SetVector("_ChorusStarsW", new Vector4(c.starsChannels.x, c.starsChannels.y, c.starsChannels.z, 0f));
             sky.SetVector("_ChorusCurve0", c.curve0);
             sky.SetVector("_ChorusCurve1", c.curve1);
             int n = 0;
             foreach (var l in c.layers)
             {
-                var map = Image(l.image);
-                if (map == null) continue;   // (unreadable: the layers after it move up)
+                if (n >= Modding.ModWorld.ChorusSky.MaxLayers) break;
+                var map = l.image != null ? Image(l.image) : null;
+                if (l.kind == Modding.ModWorld.ChorusLayer.Image && map == null) continue;   // (unreadable: the layers after it move up)
                 n++;
+                if (l.kind == Modding.ModWorld.ChorusLayer.Gradient)
+                {
+                    // ES2's M_Skybox_Gradient: Schlick's bias as its preshader passes it, 1 / bias - 2
+                    sky.SetVector($"_ChorusL{n}A", new Vector4(l.up.x, l.up.y, l.up.z, l.gradientOffset));
+                    sky.SetVector($"_ChorusL{n}B", new Vector4(l.min, l.max, 1f / Mathf.Max(l.bias, 1e-4f) - 2f, l.power));
+                    sky.SetVector($"_ChorusL{n}C", new Vector4(l.color.r, l.color.g, l.color.b, l.opacity));
+                    sky.SetVector($"_ChorusL{n}D", new Vector4(2f, l.absolute ? 1f : 0f, l.invert ? 1f : 0f, 0f));
+                    sky.SetVector($"_ChorusL{n}E", Vector4.zero);
+                    continue;
+                }
                 float h = l.heading * 2f * Mathf.PI, e = -l.elevation * 0.5f * Mathf.PI, r = l.rotation * 2f * Mathf.PI;
-                sky.SetTexture($"_ChorusLayer{n}", map);
+                if (map != null) { if (l.kind == Modding.ModWorld.ChorusLayer.Mask) map.wrapMode = TextureWrapMode.Repeat; sky.SetTexture($"_ChorusLayer{n}", map); }
                 sky.SetVector($"_ChorusL{n}A", new Vector4(Mathf.Sin(h), Mathf.Cos(h), Mathf.Sin(e), Mathf.Cos(e)));
-                sky.SetVector($"_ChorusL{n}B", new Vector4(Mathf.Abs(l.scale) > 1e-4f ? l.scale : 1e-4f, Mathf.Cos(r), Mathf.Sin(r), l.emissive));
-                sky.SetVector($"_ChorusL{n}C", new Vector4(l.exponent, l.opacity, 0f, 0f));
+                float scale = Mathf.Abs(l.scale) > 1e-4f ? l.scale : 1e-4f;
+                if (l.kind == Modding.ModWorld.ChorusLayer.Image)
+                {
+                    sky.SetVector($"_ChorusL{n}B", new Vector4(scale, Mathf.Cos(r), Mathf.Sin(r), l.emissive));
+                    sky.SetVector($"_ChorusL{n}C", new Vector4(l.exponent, l.opacity, 0f, 0f));
+                    sky.SetVector($"_ChorusL{n}D", Vector4.zero);
+                    sky.SetVector($"_ChorusL{n}E", new Vector4(1f, 1f, 0f, 0f));
+                }
+                else
+                {
+                    sky.SetVector($"_ChorusL{n}B", new Vector4(scale, Mathf.Cos(r), Mathf.Sin(r), l.intensity));
+                    sky.SetVector($"_ChorusL{n}C", new Vector4(l.color.r, l.color.g, l.color.b, l.exponent));
+                    sky.SetVector($"_ChorusL{n}D", new Vector4(1f, map != null ? l.channel : 4f, l.falloff * Mathf.Deg2Rad, l.sunScatter));
+                    sky.SetVector($"_ChorusL{n}E", new Vector4(l.tiling.x, l.tiling.y, l.offset.x, l.offset.y));
+                }
             }
             sky.SetVector("_ChorusMisc", new Vector4(c.starsExponent, c.emissive, n, 0f));
             sky.EnableKeyword("_CHORUS_SKY");
+        }
+
+        /// <summary>The layered sky's sun (ES2's masks are brighter toward it): toward the orbit's sun in the sky's own frame, in
+        /// Unreal's axes (Unity's z, x, y), and its colour.</summary>
+        public static void SetChorusSun(Material sky, Quaternion skyRotation, OrbitLayout layout)
+        {
+            var world = OrbitLayout.DirToUnity(layout.lightDirection).normalized;
+            var d = Quaternion.Inverse(skyRotation) * world;
+            sky.SetVector("_ChorusSun", new Vector4(d.z, d.x, d.y, 0f));
+            var sc = layout.sunColor.maxColorComponent > 0f ? layout.sunColor : Color.white;
+            sky.SetVector("_ChorusSunColor", new Vector4(sc.r, sc.g, sc.b, 0f));
         }
 
         /// <summary>A mod's sky image on a GoF2/SpaceSky layer: 2:1 = a panorama, 6:1 = a strip of cube faces (else a warning

@@ -3390,5 +3390,7 @@
  "ctlTravelBoost": "Reisboost aan / uit",
  "hudTravelBoost": "REISBOOST",
  "enhancedSkies": "Verbeterde luchten",
- "enhancedSkiesHelp": "De luchten van het spel met sterren die op elke resolutie scherp getekend worden en nevels die door een AI-model (Real-ESRGAN) zijn opgeschaald, dat fijne details verzint die de originele afbeeldingen niet hebben. Uit: de originele luchten. Vanaf de volgende baan."
+ "enhancedSkiesHelp": "De luchten van het spel met sterren die op elke resolutie scherp getekend worden en nevels die door een AI-model (Real-ESRGAN) zijn opgeschaald, dat fijne details verzint die de originele afbeeldingen niet hebben. Uit: de originele luchten. Vanaf de volgende baan.",
+ "nebulaClouds": "Nevelwolken",
+ "nebulaCloudsHelp": "Gaswolken rond de banen, in de kleuren van de nevel van hun stelsel, waar je doorheen en langs vliegt. Niet in het origineel. Vanaf de volgende baan."
 }

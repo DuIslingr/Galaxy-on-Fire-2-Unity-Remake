@@ -3390,5 +3390,7 @@
  "ctlTravelBoost": "Boost de voyage oui / non",
  "hudTravelBoost": "BOOST DE VOYAGE",
  "enhancedSkies": "Ciels améliorés",
- "enhancedSkiesHelp": "Les ciels du jeu avec des étoiles nettes à toute résolution et des nébuleuses agrandies par un modèle d'IA (Real-ESRGAN), qui invente des détails fins absents des illustrations d'origine. Désactivé : les ciels d'origine. À partir de la prochaine orbite."
+ "enhancedSkiesHelp": "Les ciels du jeu avec des étoiles nettes à toute résolution et des nébuleuses agrandies par un modèle d'IA (Real-ESRGAN), qui invente des détails fins absents des illustrations d'origine. Désactivé : les ciels d'origine. À partir de la prochaine orbite.",
+ "nebulaClouds": "Nuages de nébuleuse",
+ "nebulaCloudsHelp": "Des nuages de gaz autour des orbites, aux couleurs de la nébuleuse de leur système, que vous traversez et longez. Absent de l'original. À partir de la prochaine orbite."
 }

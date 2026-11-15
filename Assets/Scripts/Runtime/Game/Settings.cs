@@ -184,6 +184,11 @@ namespace GoF2Remake.Data
         /// have. From the next orbit.</summary>
         public static bool EnhancedSkies { get => GetBool("enhancedSkies", false); set => SetBool("enhancedSkies", value); }
 
+        /// <summary>Remake (2026-11-14, the user: EVERSPACE 2's sky methods in the base game): clouds of gas round the orbit in its
+        /// sky's colours, flown through with parallax (World.NebulaClouds, as ES2's local nebulae). Off by default: the original
+        /// has none. From the next orbit.</summary>
+        public static bool NebulaClouds { get => GetBool("nebulaClouds", false); set => SetBool("nebulaClouds", value); }
+
         /// <summary>Remake: the hangar ships' contact shadows (HangarShipShadow): 0 off, 1 only the player's own ship, 2 every
         /// ship (default). Off also drops the station camera's depth texture they read.</summary>
         public static int HangarShadows { get => Mathf.Clamp(Mathf.RoundToInt(Get("hangarShadows", Default("hangarShadows", HangarShadowsPlayer))), 0, 2); set => Set("hangarShadows", Mathf.Clamp(value, 0, 2)); }
@@ -908,7 +913,7 @@ namespace GoF2Remake.Data
         public static readonly string[] GraphicsKeys =
         {
             "displayMode", "resolutionWidth", "resolutionHeight", "frameRate", "quality", "fireSmoke", "fog", "detailDistance", "textureFiltering", "renderScale", "upscaler", "upscalerQuality",
-            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "enhancedSkies", "npcPlayerEngines", "rebuiltPlanets", "fov",
+            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "enhancedSkies", "nebulaClouds", "npcPlayerEngines", "rebuiltPlanets", "fov",
             "cameraShake", "originalChaseCamera", "es2FreeFlightCamera", "originalUi", "uiWidth", "uiMargin", "showFps", "fpsPosition", "gameCursor",
         };
         public static readonly string[] ControlsKeys =

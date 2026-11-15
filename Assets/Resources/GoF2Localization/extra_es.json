@@ -3390,5 +3390,7 @@
  "ctlTravelBoost": "Impulso de viaje sí / no",
  "hudTravelBoost": "IMPULSO DE VIAJE",
  "enhancedSkies": "Cielos mejorados",
- "enhancedSkiesHelp": "Los cielos del juego con estrellas nítidas a cualquier resolución y nebulosas ampliadas por un modelo de IA (Real-ESRGAN), que inventa detalles finos que el arte original no tiene. Desactivado: los cielos originales. Desde la próxima órbita."
+ "enhancedSkiesHelp": "Los cielos del juego con estrellas nítidas a cualquier resolución y nebulosas ampliadas por un modelo de IA (Real-ESRGAN), que inventa detalles finos que el arte original no tiene. Desactivado: los cielos originales. Desde la próxima órbita.",
+ "nebulaClouds": "Nubes de nebulosa",
+ "nebulaCloudsHelp": "Nubes de gas alrededor de las órbitas, con los colores de la nebulosa de su sistema, que atraviesas y dejas atrás. No están en el original. Desde la próxima órbita."
 }

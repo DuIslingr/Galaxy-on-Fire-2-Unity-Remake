@@ -194,6 +194,10 @@ namespace GoF2Remake.UI
             var enhancedSkies = Toggle("enhancedSkies", OptionPage.Graphics, () => X("enhancedSkies", "Enhanced skies"), () => Settings.EnhancedSkies, v => Settings.EnhancedSkies = v);
             enhancedSkies.description = () => X("enhancedSkiesHelp", "The game's skies with their stars drawn sharp at any resolution and the nebulae upscaled by an AI model (Real-ESRGAN), which invents fine detail the original art doesn't have. Off: the original skies. From the next orbit.");
             list.Add(enhancedSkies);
+            // Remake (2026-11-14, the user's request): EVERSPACE 2's local nebulae in the base game (World.NebulaClouds).
+            var nebulaClouds = Toggle("nebulaClouds", OptionPage.Graphics, () => X("nebulaClouds", "Nebula clouds"), () => Settings.NebulaClouds, v => Settings.NebulaClouds = v);
+            nebulaClouds.description = () => X("nebulaCloudsHelp", "Clouds of gas round the orbits, in the colours of their system's nebula, that you fly through and past. Not in the original. From the next orbit.");
+            list.Add(nebulaClouds);
             list.Add(Toggle("npcPlayerEngines", OptionPage.Graphics, () => X("npcPlayerEngines", "Other ships' engines like yours"),
                 () => Settings.NpcPlayerEngines, v => Settings.NpcPlayerEngines = v));
             // Remake: the planets as the rebuilt 3D spheres (World.RebuiltPlanets); on by default.

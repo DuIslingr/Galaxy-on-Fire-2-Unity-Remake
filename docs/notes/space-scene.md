@@ -53,6 +53,23 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   faces. The crossfade between systems (`InterstellarField.LoadBlendSky`, `_BlendStarGrid`) and the Khador rift (its
   material copies the sky's) draw the other sky's stars too. Needs 32-bit float textures (`SkyStars.Supported`), else
   the original skies. Tests `SkyStarsTests`.
+- **Nebula clouds** (remake, 2026-11-14, the user: EVERSPACE 2's sky methods in the base game, "this shouldnt require es2s
+  files"; Options > Graphics "Nebula clouds", `Settings.NebulaClouds`, off by default: the original has none):
+  `World.NebulaClouds` (spawned by `SpaceLevel` after the sky layers, not between the systems) puts 0-3 clouds of gas round
+  the orbit (`CountFor` the orbit's nebula sky's coverage), placed as EVERSPACE 2 places its local nebulae
+  (BP_Skybox_Nebula_Local's construction script: of 101 random points in a sphere of the radius, those under 0.3 x radius
+  x r^2 off its plane each a flat sprite at a random turn, 1-3 x its piece size, its own random values and one of three
+  mask channels). ES2's are ~20 km across with their middles a few km out (221 in its location levels, most levels two,
+  density 1, their own colours); GoF2's far plane is 15 km, so here 6-14 km with pieces 0.18 x radius x 1-3, and a piece
+  past the far plane is drawn at 95 % of it in its own direction (`GoF2/NebulaCloud`'s vertex shader). Seeded by the station:
+  the same each visit. The look (`Resources/GoF2SkyLayers/NebulaCloud.shader`, after M_Nebula_Local_Parent): radial falloff
+  x the mask channel at two octaves (the smaller), ^2.2, faded edge-on (Fresnel) and within 400 m of the camera, brighter
+  toward the sun (^32), premultiplied (added light, half of it covering what is behind, so they show on bright skies; the
+  pieces aren't sorted). The remake's own assets (`Reference/tools/sky/nebula_clouds.py`): `cloud_masks.png` (tileable
+  spectral noise: billowy clumps, ridged lanes, stretched wisps; no detail under 10 px) and `nebula_clouds.json` (each GoF2
+  nebula sky's coverage, brightness and three main colours, k-means of its bright pixels); a cloud takes one of them, the
+  less common as likely (in the sky's main colour it vanished against it). In still shots they show on the darker skies
+  (007, 008) and hardly on the full ones (011, 016); their part is the parallax in flight. Tests `NebulaCloudsTests`.
 - **SRP Batcher** (2026-10-22): every shader the scenes draw is compatible, `GoF2/SpaceSky` too (its per-material values in
   `UnityPerMaterial`). A renderer with a MaterialPropertyBlock falls out of it: `PartAnimation.ownMaterials` (GunRig: the
   projectiles, muzzle flashes, impacts) writes their fades into a copy of the part's material made once instead (a fleet
