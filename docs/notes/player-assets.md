@@ -109,6 +109,13 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
   played), PCM16 as a `.wav` trimmed to the sample count (its data is padded). Checked on the user's copies: 4,416 iOS and
   2,373 Android samples, every name one of the project's audio files; the 224 IMA / PCM samples sample-identical to
   vgmstream's decode, the MPEG ones the same length and within 2 LSB of vgmstream's (mpg123 vs ffmpeg rounding, 73 dB+).
+- **LangFile** (`Scripts/Runtime/Core/Content/LangFile.cs`, 2026-11-15): the `.lang` text tables (big-endian u16 length +
+  UTF-8, string after string) to text_<lang>.json (gb -> en, ptl -> pt, zs -> zh, zt -> zh-Hant). Android's tables equal
+  the project's except the remake's corrections (3,392-3,399 of 3,401 a language: "Rockets", "S'kolptorr", "your next
+  target", lowercase gods, 2026-11-01) and Arabic (Android's `ar.lang` is an older 3,291-string table; the project's was
+  realigned and completed, #224, 2026-11-03 / 05). iOS' tables have 3,402 strings and wording of its own (English 3,281
+  the same, Portuguese 2,961, Chinese: the original's `zs` vs the remake's PR #50 table 2,124). The corrections, the
+  remake's own translations (ar, nl, hi, zh) and an edition's differing strings are string overlays in the packs.
   - iOS' `v_galaxymap_planets` has no alpha (Android's ring quadrant is translucent): a real difference between the
   copies, so that texture is in the iOS gap pack.
 
