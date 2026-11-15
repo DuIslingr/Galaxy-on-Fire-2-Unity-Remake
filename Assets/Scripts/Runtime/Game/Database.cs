@@ -1166,7 +1166,12 @@ namespace GoF2Remake.Data
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetShared() { shared = null; sharedRevision = -1; applying = null; }
+        static void ResetShared()
+        {
+            shared = null; sharedRevision = -1; applying = null;
+            GameContent.Refreshed -= ResetShared;
+            GameContent.Refreshed += ResetShared;   // (the player's copy converted: the tables are read again)
+        }
 
         /// <summary>The Cronus' price in the finished world (multiplayer): see Load.</summary>
         public const int CronusSessionPrice = 1_150_000;

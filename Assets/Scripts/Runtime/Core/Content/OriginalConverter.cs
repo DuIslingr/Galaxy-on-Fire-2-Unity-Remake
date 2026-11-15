@@ -41,6 +41,10 @@ namespace GoF2Remake.Data
         /// <summary>Called with (done, total, entry) as entries are converted (any thread).</summary>
         public Action<int, int, string> Progress;
 
+        /// <summary>Called as the conversion moves on: "read <package file>", then "tables" (the text, data tables and
+        /// interface images, made once every package is read).</summary>
+        public Action<string> Phase;
+
         /// <summary>The packs' string overlay: language code (text_<code>) -> string id -> text, put over the copy's own
         /// strings (the remake's corrections; an edition's differing strings); applied before the data tables are made,
         /// whose names and descriptions come from the English table.</summary>
@@ -57,7 +61,8 @@ namespace GoF2Remake.Data
         /// manifest. A package may be a zip (.ipa, .obb, .xapk: an XAPK's OBB is read from inside it) or a folder.</summary>
         public void Run(IEnumerable<string> packages)
         {
-            foreach (var p in packages) Package(p);
+            foreach (var p in packages) { Phase?.Invoke("read " + Path.GetFileName(p.TrimEnd('/', '\\'))); Package(p); }
+            Phase?.Invoke("tables");
             Finish();
             var m = new StringBuilder(ManifestHeader + "\npath\tpackage\tentry\tformat\n");
             foreach (var it in Items) m.Append(it.Path).Append('\t').Append(it.Package).Append('\t').Append(it.Entry).Append('\t').Append(it.Format).Append('\n');
@@ -135,10 +140,13 @@ namespace GoF2Remake.Data
                 }
                 return;
             }
-            using (var zip = ZipFile.OpenRead(path)) Zip(Path.GetFileName(path), zip);
+            using (var fs = File.OpenRead(path))
+            using (var zip = new ZipArchive(fs, ZipArchiveMode.Read))
+                Zip(Path.GetFileName(path), zip, fs);
         }
 
-        void Zip(string package, ZipArchive zip)
+        /// <summary>The entries of 'zip' ('raw' the stream it reads, for an archive stored inside it).</summary>
+        void Zip(string package, ZipArchive zip, Stream raw)
         {
             int done = 0, total = zip.Entries.Count;
             foreach (var e in zip.Entries)
@@ -146,11 +154,25 @@ namespace GoF2Remake.Data
                 done++;
                 if (e.FullName.EndsWith(".obb", StringComparison.OrdinalIgnoreCase))
                 {
-                    // an XAPK: its OBB inside (stored, so this reads it through)
-                    using (var s = e.Open()) using (var ms = new MemoryStream())
+                    // an XAPK: its OBB inside, read where it lies when stored (ZipSlice: no 1.4 GB copy in memory), else
+                    // through a temporary file
+                    string name = package + "/" + Path.GetFileName(e.FullName);
+                    var slice = ZipSlice.Stored(raw, e.FullName);
+                    if (slice != null)
                     {
-                        s.CopyTo(ms); ms.Position = 0;
-                        using (var inner = new ZipArchive(ms, ZipArchiveMode.Read)) Zip(package + "/" + Path.GetFileName(e.FullName), inner);
+                        var sub = new ZipSlice.SubStream(raw, slice.Value.offset, slice.Value.length);
+                        using (var inner = new ZipArchive(sub, ZipArchiveMode.Read)) Zip(name, inner, sub);
+                    }
+                    else
+                    {
+                        Directory.CreateDirectory(root);
+                        string tmp = Path.Combine(root, "_package.tmp");
+                        try
+                        {
+                            using (var s = e.Open()) using (var f = File.Create(tmp)) s.CopyTo(f);
+                            using (var f = File.OpenRead(tmp)) using (var inner = new ZipArchive(f, ZipArchiveMode.Read)) Zip(name, inner, f);
+                        }
+                        finally { if (File.Exists(tmp)) File.Delete(tmp); }
                     }
                     continue;
                 }

@@ -57,8 +57,8 @@ namespace GoF2Remake.UI
             if (GoF2Remake.Multiplayer.DedicatedServer.ShutOff(gameObject.scene)) return;
             LogosShown = Running = true;
             DontDestroyOnLoad(gameObject);   // over the menu scene until the last logo is gone
-            SplashMusic.Begin();
-            Modding.ModLoading.Preload();   // the mods load while the logos show (the menu waits for the rest)
+            setup = GoF2Remake.Data.OriginalSetup.Needed;   // the player's copy first (OriginalSetupView): no music, no mods yet
+            if (!setup) BeginLoading();
             // Nothing to draw but the panel: until the menu's own, a camera that only clears the screen (black).
             cam = new GameObject("Splash camera").AddComponent<Camera>();
             cam.transform.SetParent(transform, false);
@@ -76,6 +76,15 @@ namespace GoF2Remake.UI
             panelRenderer.RegisterUIReloadCallback(OnUIReload);
             panelRenderer.visualTreeAsset = emptyTree;
             anyKey = InputSystem.onAnyButtonPress.Call(_ => skip = true);
+        }
+
+        bool setup;
+        VisualElement uiRoot;
+
+        void BeginLoading()
+        {
+            SplashMusic.Begin();
+            Modding.ModLoading.Preload();   // the mods load while the logos show (the menu waits for the rest)
         }
 
         void OnDestroy()
@@ -115,6 +124,7 @@ namespace GoF2Remake.UI
 
         void OnUIReload(PanelRenderer renderer, VisualElement root, int version)
         {
+            uiRoot = root;
             root.pickingMode = PickingMode.Ignore;
             root.style.position = Position.Absolute;
             root.style.left = root.style.top = root.style.right = root.style.bottom = 0;
@@ -135,6 +145,16 @@ namespace GoF2Remake.UI
             // The menu loads behind the logos from the first frame on: started as the first scene wakes, the load ignored
             // allowSceneActivation and replaced this scene before its first frame.
             yield return null;
+            if (setup)
+            {
+                // a build without the original's content: the player's copy converted before anything else
+                while (uiRoot == null || logo == null) yield return null;
+                logo.style.display = DisplayStyle.None;   // (its 44 % of the height would push the card down)
+                yield return new OriginalSetupView(uiRoot).Run();
+                logo.style.display = DisplayStyle.Flex;
+                setup = false;
+                BeginLoading();
+            }
             menuLoad = SceneManager.LoadSceneAsync(menuScene);
             if (menuLoad == null) { Destroy(gameObject); yield break; }
             menuLoad.allowSceneActivation = false;
@@ -154,6 +174,7 @@ namespace GoF2Remake.UI
 
         void Update()
         {
+            if (setup) return;   // (no game data before the player's copy is converted: the mods wait for it)
             _ = Modding.ModLoading.Busy;   // polled as the menu's loading screen does (the hangar shadows)
             if (held && menuLoad != null && menuLoad.progress >= 0.9f) Activate();
         }

@@ -2521,3 +2521,93 @@
     margin-top: var(--space-s);
     justify-content: center;
 }
+
+/* ---- The first start (OriginalSetupView, docs/notes/player-assets.md "First start"): the player's copy of the game */
+
+.original-setup {
+    width: 90%;
+    max-width: 1000px;
+    padding: 40px 48px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+}
+
+.original-setup-title {
+    font-size: var(--text-title);
+    color: #FFFFFF;
+    margin-bottom: 16px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.original-setup-text {
+    font-size: var(--text-body);
+    color: var(--gof-text);
+    white-space: normal;
+    margin-bottom: 12px;
+}
+
+.original-setup-hint {
+    font-size: var(--text-small);
+    color: var(--gof-text-dim);
+    white-space: normal;
+    margin-top: 8px;
+}
+
+.original-setup-heading {
+    font-size: var(--text-subhead);
+    color: var(--gof-cyan);
+    margin-top: 16px;
+    margin-bottom: 4px;
+}
+
+.original-setup-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom-width: 1px;
+    border-color: var(--gof-line);
+}
+
+.original-setup-file {
+    font-size: var(--text-body);
+    color: var(--gof-text);
+    white-space: normal;
+}
+
+.original-setup-file-detail {
+    font-size: var(--text-small);
+    color: var(--gof-text-dim);
+    white-space: normal;
+}
+
+.original-setup-problem {
+    font-size: var(--text-small);
+    color: var(--gof-amber);
+    white-space: normal;
+}
+
+.original-setup-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 28px;
+}
+
+.original-setup-buttons > .gof-button {
+    margin-left: 12px;
+    margin-top: 8px;
+}
+
+.original-setup-bar {
+    height: 10px;
+    margin: 20px 0 10px 0;
+    background-color: var(--gof-cyan-faint);
+}
+
+.original-setup-bar-fill {
+    height: 100%;
+    width: 0;
+    background-color: var(--gof-cyan);
+}

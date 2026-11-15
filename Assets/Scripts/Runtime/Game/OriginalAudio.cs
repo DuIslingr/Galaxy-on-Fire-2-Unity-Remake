@@ -20,7 +20,12 @@ namespace GoF2Remake.Data
         static readonly Dictionary<string, AudioClip> clips = new Dictionary<string, AudioClip>(StringComparer.OrdinalIgnoreCase);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => clips.Clear();
+        static void ResetStatics()
+        {
+            clips.Clear();
+            GameContent.Refreshed -= ResetStatics;
+            GameContent.Refreshed += ResetStatics;   // (a new copy converted: what wasn't there may be now)
+        }
 
         /// <summary>The clip of a sound by its project path ("Audio/VOICE_eng/NAME.ogg"; the extension doesn't matter), null
         /// when the converted copy hasn't it.</summary>

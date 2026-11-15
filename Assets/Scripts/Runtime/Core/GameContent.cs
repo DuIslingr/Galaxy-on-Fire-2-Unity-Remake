@@ -16,10 +16,25 @@ namespace GoF2Remake.Data
         /// <summary>The converted cache's folder (GamePaths.Data/Original), or the folder set for tests.</summary>
         public static string Root
         {
-            get => root ?? Path.Combine(GamePaths.Data, "Original");
+            get => root ?? DevCache ?? Path.Combine(GamePaths.Data, "Original");
             set { root = value; installed = null; }
         }
         static string root;
+
+        /// <summary>The Editor and development builds: $GOF2_ORIGINAL_CACHE names a converted copy to run from (the test bed's
+        /// Play mode and its play-mode tests, whose sandboxed data folder has none).</summary>
+        static string DevCache
+        {
+            get
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                string d = System.Environment.GetEnvironmentVariable("GOF2_ORIGINAL_CACHE");
+                return string.IsNullOrEmpty(d) ? null : d;
+#else
+                return null;
+#endif
+            }
+        }
         static bool? installed;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -53,8 +68,17 @@ namespace GoF2Remake.Data
             catch (IOException) { return null; }
         }
 
-        /// <summary>Forget what was found (after a conversion or a pack installed).</summary>
-        public static void Refresh() => installed = null;
+        /// <summary>Forget what was found (after a conversion or a pack installed); the content caches start again
+        /// (Refreshed).</summary>
+        public static void Refresh()
+        {
+            installed = null;
+            Refreshed?.Invoke();
+        }
+
+        /// <summary>After Refresh: what was read from the cache (or found missing in it) is to be read again. The caches
+        /// subscribe as they reset their statics (never cleared here: their order is undefined).</summary>
+        public static event System.Action Refreshed;
 
         /// <summary>A file of the cache by its path there ("Resources/GoF2Data/items.json"), null when it has none.</summary>
         public static string CachePath(string rel)

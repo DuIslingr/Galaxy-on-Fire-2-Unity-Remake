@@ -18,7 +18,13 @@ namespace GoF2Remake.Data
         static readonly Dictionary<string, Texture2D> loaded = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { loaded.Clear(); images.Clear(); }
+        static void ResetStatics()
+        {
+            loaded.Clear();
+            images.Clear();
+            GameContent.Refreshed -= ResetStatics;
+            GameContent.Refreshed += ResetStatics;   // (a new copy converted)
+        }
 
         /// <summary>The kind a project texture path is imported as (ImportPostprocessor: *_normal* normal maps, the
         /// generated *_metallic_smoothness linear data, the rest sRGB colour).</summary>

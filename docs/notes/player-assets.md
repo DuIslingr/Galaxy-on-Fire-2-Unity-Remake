@@ -251,6 +251,33 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
     1.5 s from the cache; a sky rendered 1.2 s, read back 7 ms. Size: what the GPU holds (a 2048 px DXT5 with mipmaps
     5.6 MB; 399 textures 1.5 GB, a sky 17 MB), next to the 2.3 GB of PNGs (kept: another device or format re-encodes).
 
+- **First start** (2026-11-15): a build without the original's content (`OriginalSetup.BuiltIn`: no `GoF2Data/ships` in
+  Resources) and without a converted copy of this version (`OriginalSetup.Needed`) shows `OriginalSetupView` on the
+  startup splash before anything else: the splash's music, the mods' preload and the menu scene wait for it.
+  - **Choosing:** the system's file picker only (`ModImport.Pick` with `OriginalSetup.Extensions`; no scan of the
+    player's folders, the user's call): Android's and iOS' document pickers copy the file into
+    `temporaryCachePath/OriginalImport` (deleted after the conversion); the desktops' dialogs hand over the file where it
+    is (`copyIn: false`). Several packages: a later one's files win (iOS, then Android for its HD textures).
+  - **Converting:** `OriginalSetup.Convert` on a worker thread into `<cache>.new`, its phases ("read <file>", "tables")
+    and entries shown with a bar; checked (no data tables or English text: nothing installed, the half-made folder
+    deleted, the reason shown); then the old cache (its GPU caches with it) deleted and the new one moved in. 
+    `GameContent.Refresh` raises `GameContent.Refreshed`: Database.Shared, Localization, OriginalTextures / Audio /
+    Skies / Models / Assemblies drop what they read (or found missing) before. The result: files per kind, what the
+    converter couldn't read, Continue to the logos and the menu. A copy of an older format (`GameContent.Stale`): the
+    same screen, its own title.
+  - **An XAPK's OBB is read where it lies** (`ZipSlice`: the 1.4 GB OBB is stored in the XAPK, so its bytes are found
+    from the central directory and opened as a window of the file); a compressed one goes through a temporary file in
+    the cache folder, never memory (the converter used to copy it into a MemoryStream).
+  - **Tests:** `OriginalSetupTests` (EditMode: the stored zip in a zip, a file that isn't the game installs nothing);
+    `FirstStartTests` (PlayMode, Smoke; only where nothing is built in, i.e. the test bed): the setup screen comes up
+    instead of the menu; with `$GOF2_ORIGINAL_PACKAGE` (the XAPK) it converts it and goes on to the menu and its
+    backdrop. The conversion writes ~4 GB into the play-mode sandbox (`Path.GetTempPath()`): run with `TMPDIR` on a disk.
+  - **The Editor / development builds:** `$GOF2_ORIGINAL_CACHE` points `GameContent.Root` at a converted copy (the test
+    bed's Play mode and play-mode tests).
+  - **Not yet:** the dedicated server has no screen (it needs a converted copy in its data folder: a `-convert <package>`
+    switch to come); a VR headset shows the splash's panel on the monitor only; the setup texts are in English
+    (`setup.*` keys of `Localization.Extra`, which loads with a text table: there is none before the conversion).
+
 ## Plan
 
 1. Inventory and this note (done 2026-11-15); the importers, the converter, the packs (done 2026-11-15).
@@ -261,7 +288,7 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
 3. **Importers in C#** (GoF2.Game, plain C#, testable): AEI (RGBA8, ETC1, PVRTC 2 / 4 bpp, regions, cubemap strips), AEM
    (meshes, the .gof2mesh.json animation data), FSB5 (MPEG, IMA ADPCM, PCM), `.lang`, `.bin`. Each checked against the
    current project's converted files (the reference output) in edit-mode tests that skip without a source copy.
-4. **First start:** "Show the game your Galaxy on Fire 2" with a file picker (desktop), Android's document picker, iOS's
+4. **First start** (the screen and the conversion done 2026-11-15, see "First start" above): "Show the game your Galaxy on Fire 2" with a file picker (desktop), Android's document picker, iOS's
    document picker; the conversion with progress, a check of what came out, then the derived assets.
 5. **Derived assets on the player's machine:** assembled objects, 3D planets, sky layers, reflections; the optional
    desktop sky upscale.

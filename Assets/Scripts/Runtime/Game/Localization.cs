@@ -54,6 +54,20 @@ namespace GoF2Remake.Data
 
         static bool autoLoadTried;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void HookContent()
+        {
+            GameContent.Refreshed -= Forget;
+            GameContent.Refreshed += Forget;
+        }
+
+        /// <summary>The player's copy converted: the next Get loads its table (a table found missing before, too).</summary>
+        static void Forget()
+        {
+            texts = new string[0];
+            autoLoadTried = false;
+        }
+
         static void AutoLoad()
         {
             if (autoLoadTried) return;

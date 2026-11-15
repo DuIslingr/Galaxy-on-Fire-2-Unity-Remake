@@ -23,7 +23,12 @@ namespace GoF2Remake.Visuals
         static readonly Dictionary<string, Texture> made = new Dictionary<string, Texture>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => made.Clear();
+        static void ResetStatics()
+        {
+            made.Clear();
+            GameContent.Refreshed -= ResetStatics;
+            GameContent.Refreshed += ResetStatics;   // (a new copy converted)
+        }
 
         /// <summary>The face size of a rendered sky (SkyboxBaker's 2048; phones 1024, its strips are 8192 there).</summary>
         public static int FaceSize => Application.isMobilePlatform ? 1024 : 2048;

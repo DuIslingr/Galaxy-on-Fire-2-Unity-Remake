@@ -171,7 +171,13 @@ namespace GoF2Remake.Visuals
         static readonly Dictionary<string, Mesh[]> meshes = new Dictionary<string, Mesh[]>(StringComparer.OrdinalIgnoreCase);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { parsed.Clear(); meshes.Clear(); }
+        static void ResetStatics()
+        {
+            parsed.Clear();
+            meshes.Clear();
+            GameContent.Refreshed -= ResetStatics;
+            GameContent.Refreshed += ResetStatics;   // (a new copy converted)
+        }
 
         /// <summary>A model's converted file and its sidecar (as a TextAsset, PartAnimation's key) by its project path
         /// ("Models/main/ships/ship_000.fbx"); null mesh when the cache has none.</summary>
@@ -300,7 +306,12 @@ namespace GoF2Remake.Visuals
         static GameObject holder;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { table = null; byName = null; templates.Clear(); holder = null; }
+        static void ResetStatics()
+        {
+            table = null; byName = null; templates.Clear(); holder = null;
+            GameContent.Refreshed -= ResetStatics;
+            GameContent.Refreshed += ResetStatics;   // (a new copy converted)
+        }
 
         static OriginalAsmEntry Entry(string name)
         {
