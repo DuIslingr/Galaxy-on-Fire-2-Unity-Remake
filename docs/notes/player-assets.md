@@ -103,6 +103,12 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
   Nivelian hangars, the remade Vossk bar 2026-10-25, a few Supernova / Valkyrie add meshes): common-pack material.
   Still to do: the Unity mesh itself, in the space the FBX import gives (aem2fbx's axes, Blender's validate, Unity's
   x flip and ModelOrientationPostprocessor's 180 deg).
+- **FsbBank** (`Scripts/Runtime/Core/Content/FsbBank.cs`, 2026-11-15): FSB5 banks, each sample as a file ModAudio loads:
+  MPEG as its own frames (`.mp3`, the bank's zero padding between frames dropped: lossless), IMA ADPCM decoded to a 16-bit
+  `.wav` (Xbox IMA: per channel and 0x24-byte block the header's sample, then the first 63 nibbles; the 64th is never
+  played), PCM16 as a `.wav` trimmed to the sample count (its data is padded). Checked on the user's copies: 4,416 iOS and
+  2,373 Android samples, every name one of the project's audio files; the 224 IMA / PCM samples sample-identical to
+  vgmstream's decode, the MPEG ones the same length and within 2 LSB of vgmstream's (mpg123 vs ffmpeg rounding, 73 dB+).
   - iOS' `v_galaxymap_planets` has no alpha (Android's ring quadrant is translucent): a real difference between the
   copies, so that texture is in the iOS gap pack.
 
