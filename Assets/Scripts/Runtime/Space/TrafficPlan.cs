@@ -63,6 +63,7 @@ namespace GoF2Remake.Flight
         // freighter ('ship' 13 / 15 of 'race') shown as its wreck held at the animation's end, invulnerable, still lockable.
         public bool deadButSelectable;
         public bool eventWreck;            // remake: an event's / quest's hackable wreck ("spawn ... wreck"): hacked once
+        public bool derelict;              // remake (Settings.DerelictWrecks): a random derelict freighter, hacked once for its cargo
         public float explosionScale = 1f;
         // Capital-ship turrets (PlayerTurret, npc_combat_specials.md 1): a static turret object.
         public string turretAssembly;  // turret_002_static (Terran) / turret_003_static (Vossk)
@@ -89,6 +90,7 @@ namespace GoF2Remake.Flight
         // The Most Wanted criminal (KIPlayer+0x3e / +0x44) and its escort (wingmen_wanted.md 2.6).
         public int wantedIndex = -1;
         public bool noDevices;         // remake: a boss's shadow clone: none of its hull's traffic devices (NpcDevices)
+        public bool noFighterTurret;   // remake: no Level::createFighterTurrets turret on ship 45 / 51 (the Challenge's Rhinos)
         public int wantedEscortOf = -1;
         public int gunItem = -1;       // Level::assignGuns: the wanted's own weapon ...
         public float gunFactor = 1f;   // ... at x4
@@ -151,6 +153,10 @@ namespace GoF2Remake.Flight
                 hitRadius = 4000f,
             };
         }
+
+        /// <summary>Remake (Settings.DerelictWrecks): the chance in 100 of a derelict freighter per orbit visit: 4 in a Secure
+        /// system (3) up to 10 in a Dangerous one (0).</summary>
+        public static int DerelictChance(int security) => 10 - 2 * Mathf.Clamp(security, 0, 3);
 
         /// <summary>'playerGame': the player's start (game units), where freelance escorts gather.</summary>
         /// <param name="wormholeGame">The orbit's visible wormhole (game units), where a Void raid comes from; null = none.</param>
@@ -267,14 +273,15 @@ namespace GoF2Remake.Flight
             if (story && cm > 0x29 && cm < 0x2c) raiders = escorts = baseEscorts = 0;
             // Loma's black market (system 25): 6-9 pirates (Extreme rnd(3) + 2n), nothing else. The pirate loot orbits
             // (systems 32 / 33): 10-13 pirates (the same on Extreme) with double hull, speed 3.5, around the player.
-            bool lootOrbit = system.index == 32 || system.index == 33;
+            // (remake mods: a system marked "pirateHideout" too, ModWorld.PirateHideout, flown by its "raiders" if it names any)
+            bool lootOrbit = system.index == 32 || system.index == 33 || Modding.ModWorld.PirateHideout(system.index);
             if (system.index == 25 || lootOrbit)
             {
                 escorts = baseEscorts = local = jumpers = freighters = 0;
                 raiders = Random.Range(0, 4) + (lootOrbit ? 10 : 6);
                 if (hardcore) raiders = Random.Range(0, 3) + raiders * 2;
                 raidersOn = true;
-                raiderRace = Standing.Pirate;
+                if (raiderRaces == null) raiderRace = Standing.Pirate;
             }
             // Late-campaign Specter raids (100 < campaign < 0x91): (campaign / 144 * 15 + 5) % (x2 Extreme), 2-4 (x2).
             int specters = 0;
@@ -430,6 +437,20 @@ namespace GoF2Remake.Flight
                 var wreck = HackableWreck(derelict.derelictRace, at);
                 wreck.modBlueprint = derelict.product;
                 list.Add(wreck);
+            }
+            // Remake (players' wish, Discord 2026-10-18; Options > Gameplay "Derelict freighters"): now and then a derelict
+            // freighter of any race out in front of the station, hacked once for its cargo (Traffic.OnHackWon); in a Risky or
+            // Dangerous system 2-4 pirates wait at it. One wreck an orbit, not in the special or the storylines' orbits, a
+            // pirate base's system, Mido or a freelance mission's orbit. A session rule: the orbit's runner rolls it, the
+            // other players hack a stand-in of its copy (NetOrbit.UpdateDerelictStandIns).
+            if (Settings.DerelictWrecks && !quietOrbit && !baseSystem && system.index != 15 && (fm == null || fm.target != station)
+                && !PirateEventRules.InStoryline(station) && !list.Exists(s => s.deadButSelectable) && Random.Range(0, 100) < DerelictChance(secEff))
+            {
+                var at = new Vector3(Random.Range(-80000f, 80000f), Random.Range(-40000f, 40000f), Random.Range(60000f, 140000f));
+                var wreck = HackableWreck(-1, at);
+                wreck.derelict = true;
+                list.Add(wreck);
+                if (secEff <= 1) AddRaiders(list, Random.Range(2, 5), pirateRace, at);
             }
             // 7 Specters, always enemy: one point near the player, each at it + createShip's +-20000 jitter.
             if (specters > 0)

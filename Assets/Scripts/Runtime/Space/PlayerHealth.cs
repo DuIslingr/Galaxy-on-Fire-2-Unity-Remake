@@ -196,7 +196,7 @@ namespace GoF2Remake.Flight
                 invincibleLoop.volume = Settings.SfxVolume;
                 invincibleLoop.Play();
             }
-            // Material 27150 draws with SimpleRefractionShader: an invisible sphere bending the screen behind its rim.
+            // Material 27150 (type 0x22) draws with EnergyShield: the screen behind the sphere bent, and a blue rim (#251).
             bubble?.Hide();
             bubble = EmergencyBubble.Show(assets, ship.visualModel != null ? ship.visualModel : transform,
                                           ship.visualModel != null ? ship.visualModel.GetComponentInChildren<Renderer>() : null);
@@ -583,6 +583,7 @@ namespace GoF2Remake.Flight
         {
             if (TryEmergency()) return;
             Dead = true;
+            GoF2Remake.Modding.ModScripts.Raise("playerDestroyed");
             if (EmergencyActive) EndEmergency();
             if (injectorLoop != null) injectorLoop.Stop();
             deathMs = 0f;

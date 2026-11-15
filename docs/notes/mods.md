@@ -250,6 +250,18 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   Options page names who sets it (`OptionsCatalog.FlightStyleForcedNote`). Expression `freeflight`. Verified on `FlightModel`
   in the Editor (the bonuses per style, a free-only booster, freeBoostFactor, a ship's JSON, the validation, a ship-forced
   style); not yet played with a real mod.
+- **Flight rules** (2026-11-12, players' requests for full control of the movement; `Flight.FlightRules`, the guide's
+  "Flight rules"): every number `FlightModel` and the dodge (`Maneuver`) move the player's ship by is a named field
+  (~70: base speed, turn ramp / decay, tilt, boost formula, strafe, dodge, level-out, free flight's turning, acceleration,
+  braking, dampeners, boost, auto-roll, the speed passives' thresholds), its default the original's constant (the consts
+  stay in FlightModel as the defaults, `internal`), `[Range]` the clamp, `[Tooltip]` the builder's note. A mod's
+  `flight.json` (`ModFlight.ParseFile` -> `ModContent.Parsed.flightRules`) for every ship, ships.json `"flight": { "rules" }`
+  (`ShipData.flightRules`) for one; `ModFlight.RulesFor` (in `Database.BuildFlightStats`, `FlightStats.rules`): the defaults,
+  every active mod's flight.json in order, the ship's; `FlightRules.Default` itself when none (no copy).
+  `FlightModel.Configure` takes them (`Rules`); `ShipController` hands the dodge's four to `Maneuver` each dodge frame.
+  Unknown names warn, values out of range clamp with a warning, a non-number is an error. Only the player's ship (and
+  multiplayer players'): NPCs fly by `NpcShip`'s AI; the engine effects still compare speeds with `FlightModel.BaseSpeed`.
+  `ModFlightRulesTests`.
 - **Conditions** (`Events.EventRunner.Condition(expression, out error)`: the event graphs' expression language outside an
   event, a throwaway run like the quests' "Starts when"; new words `option(mod:id)`, `won(main | valkyrie | supernova)`
   (or the multiplayer finished world), `systemsvisited` (distinct systems of `Session.VisitedStations`), `standing(race)`
@@ -444,7 +456,14 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   stations.json `"mobile": true | { "route", "stayMinutes", "systemMinutes", "exclude", "speed", "race", "engines",
   "engineColor", "engineFx" }`, `ModWorld.MobileSpec` / `IsMobile` / `Mobiles`; `MobileStations` (Game layer, plain C#);
   `World.MobileStation`): a new station with no planet (not added to its system's `stations`, so not on the map, not in
-  the 7, never a random target). Its route (any systems' stations, default every station of its own system; `"any"`:
+  the 7, never a random target). Its own orbit layout (`OrbitLayout.Build` with its index: docked at it, the look of
+  one without a model) draws a planet for every station of the host system, 7 in a full mod system, where the sun can
+  leave 6 of the original's slots (7..17, three or more from the sun): the original's draw-until-free loop never ended
+  there, the main thread spinning under the scene's black fade with the music playing (found 2026-11-13 from a
+  Discord report of a black screen with mods on Android, not confirmed as its cause). `OrbitLayout.PlanetSlot` draws
+  only while such a slot is left, else takes the free slot furthest from the sun (7..17 first, then the whole ring);
+  the layouts that ended before draw the same numbers (`ItsOrbitInAFullSystemStillGetsItsPlanets`).
+  Its route (any systems' stations, default every station of its own system; `"any"`:
   every system, the user's request for the Manticore: `systemMinutes` in one, its orbits there in turn, then another,
   every system once per round in an order drawn from the station and the round (`RoamSystemAt`, never the same twice in
   a row), never `MobileStations.RoamSkip`'s story / Kaamo orbits; `exclude` systems) is walked by the UTC clock
@@ -581,6 +600,24 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   1.5 km behind, scanned once a second, then 30 s quiet; playerDown under a fifth) through `Traffic.WingmanSay` (one every
   12 s, never over other chatter; slot 0 with the agent's face). Tests `WingmanDeviceTests`, `ModWingmenTests`,
   `WingmenTests.AModCrewsShipsGoWithItsPilots`. Untested in Play mode.
+- **Mod medals** (`ModMedals`, a mod's `medals.json`; TypedKibbles960's request on Discord 2026-10-23: mods' medals with
+  their own conditions, tiers like platinum, medals that unlock the fireworks / VoidX / Specter; Modding/README.md
+  "Medals"): built lazily per `ModManager.Revision` like `ModUnlocks` (tiers of every mod first, then the medals). Tiers:
+  the game's bronze 1 / silver 2 / gold 3 / supernova 4 (`elite` an alias; the elite plate) plus mods' `tiers` (`rank`,
+  default above the highest; `color`, `reward`, `plate`: a game plate or a PNG, default the silver plate tinted). A medal:
+  `counter` (`GameHooks.Number` = `EventRunner.Number`, the conditions' language as a value) against numbers per tier, or
+  conditions per tier; the best met counts and is kept (`Session.ModMedals` key -> tier id, saved `modMedals`, kept for a
+  mod that is off, New Game+ `Carry`). Numbered after the 45 (`Achievements.Count + k`): `Achievements.Check` appends
+  `ModMedals.Check`, `Achievements.Name`; the Status window's grid (a hidden / unavailable one keeps its number with a
+  null button), `ModMedalPlate`, `MedalColor`; the toast pays `Reward` (none on Extreme), shows the tier and
+  `TakeNotes` (the unlocks). `unlocks` from a tier on: `blueprint` (learnt; also re-learnt on every check for an earned
+  medal), `item` (into the hold once at the improvement, the rest paid at its average price), `ship` (`AddShips`, first
+  in `Shop.GenerateShips` before the `available` / campaign filters, and into this visit's stock in
+  `StationMenu.CheckMedals`). Conditions: `medal(key | 0-44[, tier])` (`Reached`), `medals(tier | supernova | off)`,
+  gold / silver / bronze / any counting the mods' too, `killswith(item)` / `killed(ship)` (`Session.KillTally`
+  "with:<ItemRef>" / "ship:<ShipRef>", counted in `TrafficToll.CountKill`, saved `killTally`), `stat(name)`. The game's
+  own gates (Champion, all gold, all Supernova) stay the 45's; none in multiplayer / without medals. No Mod Builder kind
+  yet. Tests `ModMedalsTests`.
 - **Crates** (remake, 2026-11-02, the user's request for GoF3's loot containers; `ModCrates`, test `ModCratesTests`): ships.json
   `crate` (a glTF file) / `crateSize` (game units) on `CustomShipData`. Each file loads once at mod load (`ModLoading`,
   hidden DontDestroyOnLoad templates); `Crate.Model` draws a container (look 0) with it when it is loaded, fitted to the
@@ -616,13 +653,13 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   `LoungeAllowedAt`; "seller" there puts a named character in instead of a local visitor: a story speaker's face, race and
   own lines for the offer, the sale and after it, `ModBlueprints.Seller`, `AgentGenerator.PlaceModSeller`, `LoungeChat.SellerOf`;
   `AddNamedSellers` adds them to a bar whose visitors were kept, a station among the last 3), "derelict" (`TrafficPlan.Build`: one hackable freighter wreck per visit at
-  most, `TrafficPlan.HackableWreck` + `SpawnSpec.modBlueprint`; `Traffic.OnHackWon` leaves a data crate; "stations" limits it
+  most, `TrafficPlan.HackableWreck` + `SpawnSpec.modBlueprint`; `Traffic.OnHackWon` teaches it at once (a data crate until 2026-11-13, supernova.md "Derelict freighters"); "stations" limits it
   to those orbits, `RollDerelict(station)` / `DerelictAllowedAt`, the chance then defaulting to 100, a list of unknown ones =
   nowhere; "position" [x, y, z] game units in the orbit, else out in front) and "drops" per race or per ship type (`{
   "ship", "chance" }`, `Def.shipDrops`, rolled first: a boss hull's own blueprint) (`NpcShip.OnDied`, a kill by the
   player: `RollDrop`, a data crate). A blueprint is obtained once (2026-10-24, the user's rule): a seller standing in a
-  bar since before it was learnt has 858 (`LoungeChat.Start`), a derelict hacked after leaves no crate and no data crate
-  is made while one with it floats (`Crate.HoldsAny`, `NpcShip.OnDied`, `Traffic.OnHackWon`); production stays
+  bar since before it was learnt has 858 (`LoungeChat.Start`), a derelict hacked after says "Blueprint already known" and no data crate
+  is made while one with it floats (`Crate.HoldsAny`, `NpcShip.OnDied`); production stays
   repeatable. A data crate is a `Crate` (look 3, the junk container) holding the product item;
   `CombatRadar.Capture` learns a mod blueprint's product instead of loading it ("Blueprint found: X"). An item product gets the
   recipe on its `ItemData.blueprint`; a ship product is a hidden "blueprint item" ("<mod>:blueprint:<id>", numbered like a mod
@@ -642,6 +679,103 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   refs, and the event graphs' names (`NetAdmin.FindShip` / `FindItem` / `FindHull`, `NetTeleport.ParseStation`).
 - **Quests and bar missions** (event graphs in a mod's `events/*.gof2event`, found by `EventRunner.Load` / `List` after the
   Events folders, the later mod in the load order winning; then the built-ins): see "Event graph quests" in Multiplayer.
+- **Mod scripts** (remake, 2026-11-14, the user's request: "scripting ... so people don't have to use the script graph, but
+  can also edit anything of the game"; `ModScripts` + `ModScriptsApi` + `ModScriptsSandbox` (`ScriptAccess`) +
+  `ModScriptDriver`, GoF2.Game): a mod's Lua files in `scripts/` (`*.lua`), run by **MoonSharp** 3.0.0-beta.1
+  (`Assets/Plugins/MoonSharp`, the NuGet package's netstandard2.0 DLL, the user's pick over 2.0.0; Lua 5.2 in C#: IL2CPP
+  can't load C# compiled at runtime, an interpreter runs on every platform; `UserData.DefaultAccessMode` Reflection, no
+  generated code). The user's choices: Lua, "game only" access, scripts run in every player's game in multiplayer.
+  **Files**: every `.lua` directly in `scripts/` runs when the mod starts (`main.lua` first, the rest by name, each
+  through `require` so one a script required earlier isn't run twice); subfolders are modules (`require("lib.util")`,
+  `"othermod:lib.util"` an active, allowed dependency's; the script loader `Vm` reads the mod's `ModSource` only).
+  **States**: one Lua state per mod (`Vm`), following `ModManager.Active` (`Sync`, on a `Revision` change: from
+  `ModScriptDriver.Update` and before every `Raise`): the same script files (id # `ScriptHash` @ location) go on and are
+  rebound to the rescan's new `ModInfo` (its "Script: ..." warnings carried over), anything else stops all states
+  (`stop` raised, `game.saved` captured, hooks undone last first) and starts them afresh. They run from the main menu on.
+  **Approval**: scripts reach every game class, so they run only once the player said yes to those files: PlayerPrefs
+  `mods_scripts_ok` = "id#scripthash;..." (`IsApproved` / `SetApproved`; changed script files ask again; the mod's other
+  content loads meanwhile). `ModBrowser.Toggle` asks when turning on a mod with unallowed scripts (its own or a
+  dependency's that comes on with it, `TurnsOn`; Extra `modsScriptsAsk`), the row says "Scripts", the details warn
+  (`modsScriptsNote`) or say they wait (`modsScriptsBlocked`). No question for the Mod Builder's project, the base content
+  and a dedicated server (`AutoApprove`, set by `NetMods.BeginHost`).
+  **Sandbox** (`ScriptAccess`, best effort, not a proof): Lua side MoonSharp's soft sandbox + `require` / `load` (no io,
+  debug, os but the clock; `LimitedPlatformAccessor`); C# side a registration policy: a type becomes userdata only if it
+  is one of the game's runtime assemblies' public types (GoF2.Core / Game / Space / Net / App) or of Unity's scene
+  namespaces (`UnityNamespaces`), minus the doors out (`UnityDenied`: Application, PlayerPrefs, GUIUtility, asset
+  bundles, WWW, webcam ...; `GameDenied`: GamePaths, FileDialog, ModSource, ModImport, the patcher, UpdateCheck, WebAdmin,
+  ModBuilderMcp*, NetProfiles*, ModScripts itself ...; `EveryDeniedGameClassStillExists` keeps the list honest), plus
+  lists / dictionaries / sets of those; a game class's public methods with a text parameter named like a path, file,
+  folder, url or address are removed from its descriptor (`Trim`, `PathWords`). System.Type never converts, so no
+  reflection. ~125 game source files touch files or the network, so a determined script may still find a public method
+  that lets a path through: hence the approval and the warning.
+  **API** (the global `game`, `ModScriptsApi`; `ModScripts.ApiHelp` is the short reference the builder shows): `on` /
+  `off` / `after` / `every` / `emit`, `saved` (a table per mod in the save: `Session.ScriptData`, SaveData `scriptData`,
+  JSON through MoonSharp's JsonTableConverter; captured in `SaveGame.Capture`, restored after `Load` / `ApplyProfile`
+  (raising `gameLoaded`), emptied by `ResetNewGame`), `log` / `print`, `message` (`GameHooks.Notice`: the flight HUD's
+  line, else a station toast; queued and shown from the next frame, retried 3 s, because `station` is raised while the
+  station menu is still being built: its toast label was null), `command` (`GameHooks.RunCommand` ->
+  `NetCommands.RunOnServer`: single player or the server), `multiplayer()` (`NetSession.Hosting`), `scene()`, `type` /
+  `import` (short names when unique, the game's class winning over Unity's), `describe` / `classes` (what a class offers,
+  from `ScriptAccess.Describe`), `find` / `findOne` / `component(s)` / `addComponent`, `table` / `get` / `set` (C#
+  collections stay userdata; arrays arrive as tables), `hook` (a public delegate field / property replaced by a delegate
+  built with an expression tree, the Lua function getting the original first; a failing hook falls back to the
+  original; off the main thread the original runs) and `listen` (events, or Delegate.Combine). Globals: Session,
+  Database, Settings, Localization, Vector2/3, Quaternion, Color, Mathf, Time, GameObject, Debug, Resources.
+  **Events** (`ModScripts.Raise`, a no-op without running states): `update(dt)` and timers (`ModScriptDriver`, game
+  time), `scene(name)`, `space(level)` (`SpaceLevel`, after `SpaceHooks.LevelBuilt`), `station(level)`
+  (`StationLevelInteriors`), `database(db)` (the end of `Database.Load`'s mod step), `shipDestroyed(ship, byPlayer)`
+  (`Traffic.OnShipDied`), `playerDestroyed` (`PlayerHealth.StartDeath`), `gameLoaded`, `saving`, `stop`.
+  **Errors**: every call from the game runs as a coroutine with `AutoYieldCounter` = `CallBudget` (10 M instructions):
+  one that is force-suspended is dropped ("ran for too long"); an error is the mod's warning ("Script: file:(line,col):
+  ..."), a console line (`ModScripts.Lines`) and a LogWarning, never a logged exception; a handler failing 5 times in a
+  row is removed. A Lua coroutine a script makes itself has no budget.
+  **Multiplayer** (`NetMods`): a session's script mods run in every game. `BeginHost` leaves out the host's mods whose
+  scripts the host hasn't allowed; a joining game with a session mod's scripts not allowed is stopped in
+  `NetState.OnNetworkSpawn` before `ApplyFromServer` (`ScriptRefusal` -> `NetGame.RefuseJoin` the next frame: the
+  reason in the panel's status line); the server browser tags such games "Scripts" and names the mods to allow
+  (`ScriptMods` / `UnallowedScripts`, from this game's own copies of the session's mods); the Host card's row reads
+  "Mods (N on, with scripts)".
+  **Docs**: Modding/README.md "Scripts", SKILL.md "Scripts (Lua)", the generated `scripting.md`
+  (`ModdingScriptingReference`: the API, the hook classes with their summaries from the source, the main classes'
+  members, every class name), the example `Modding/Examples/pirate_bounty`. `Assets/link.xml` keeps the interpreter and
+  the game's assemblies whole should the stripping level be raised.
+  Verified: `ModScriptTests` (24: files and order, require, events, timers, the sandbox, an endless loop, failing
+  handlers, approval, saved, the database event, hook / listen, collections, emit, the project's files, the example,
+  describe, syntax errors, the session rules), and in Play mode in the Editor: the browser's question and the mod
+  running after Yes, the builder's Scripts tab (below). Not yet: an IL2CPP build (reflection access and the expression
+  trees under AOT), a script mod in a real session, `space` / `shipDestroyed` / `playerDestroyed` in flight.
+  The player-facing texts are translated; the builder's Scripts tab is English only (`mbScript*`).
+  **Made complete** (the same day, "make the scripting as complete as possible": what the first version couldn't do;
+  `ModScriptsMore`, `ModScriptsReflection`, `LuaBehaviour`). *Sequences*: `game.wait(s)` / `game.waitUntil(fn)` are
+  callbacks returning a MoonSharp yield request; every call from the game is a coroutine already (the budget), so one
+  that ends Suspended is kept as a `Routine` (`Vm.Adopt`) and resumed by `Tick` when its time is up or its condition
+  holds; `game.run(fn)` starts one, `game.off` ends it; a hook, a command and a condition are called with `mayWait`
+  false (their caller needs the answer now: "game.wait can't be used here"). *Classes as globals*: the globals table has
+  an `__index` that looks an unset name up with `ScriptAccess.Find` and keeps it (`Standing.Pirate` without import).
+  *Any member*: `game.field` / `setField` / `call` find a member public or not up the class chain (`AnyMember`,
+  `Chain`), `game.generic` makes a generic method with named type arguments; the same rules as the bridge (allowed
+  classes, `Usable` types, no path-taking method); `game.describe(x, true)` lists the private members. *Delegates*:
+  `RegisterDelegateTypes` scans the game's classes once for every delegate type in a field, property or parameter and
+  gives MoonSharp a function -> delegate conversion for each (so `GameHooks.Notice = function(text) ... end` and callback
+  arguments work); `MakeDelegate` now takes out / ref parameters (the Lua function returns the result, then the out
+  values; `CoerceAt`, `Multi` for the passed-through original), so all hook delegates can be hooked. *The mod's files*:
+  `game.files` / `readText` / `readJson` / `texture` (`ImageImport.Decode`, cached, destroyed on stop) / `sound`
+  (`ModAudio.Load`), through the mod's `ModSource` only. *Keys*: `game.item` / `ship` / `system` / `station`
+  (`ModContent.TryResolve*`, a bare id = this mod's). *Components*: `game.behaviour(go, table)` adds a `LuaBehaviour`
+  forwarding Unity's messages to the table's functions (removed on stop, or after 5 failures in a row). *Interface*:
+  `game.uiEvent(element, "ClickEvent", fn)` = `RegisterCallback<T>` by reflection. *Commands*: `game.addCommand(name,
+  fn(args, who))`, run by `NetCommands.TryRun` for an unknown `/name` (this game), by `RunOnServer` for a name that is
+  no command of the game's (an event graph's Command node, `game.command`), listed by `/help`. *Messages*:
+  `game.send(name, ...)` packs numbers / texts / booleans (one a line, `Pack` / `Unpack`, 900 characters) ->
+  `GameHooks.ScriptSend` -> `NetState.ScriptMessageRpc` (the chat's rate limit, lengths checked) ->
+  `ScriptMessageEveryoneRpc` -> `ModScripts.Receive` -> the `net:<name>` handlers of `game.onMessage(name, fn(sender,
+  ...))`; single player: straight back. *Settings*: `game.config`, JSON in PlayerPrefs `mod_script_config_<id>`,
+  written on stop / `game.saveConfig()`. *The scene*: `game.space()` / `station()` / `player()`, `game.myId()`. *More
+  events*: `lateUpdate`, `trade` (`Hangar.Shared`), `missionAccepted` / `missionSucceeded` / `missionFailed`
+  (`Freelance`), `storyStep` (`Story.Advance`), `chat` (`NetChat.Added`). Still not possible, by nature: rewriting a
+  method that isn't behind a delegate (no runtime patching under IL2CPP), defining C# classes, anything before the main
+  menu. Verified: `ModScriptMoreTests` (13; 37 with `ModScriptTests`). Not yet: the message RPCs in a real session,
+  `game.sound`, a `LuaBehaviour`'s physics messages, the new game events in play.
 - **Mod browser** (`ModBrowser`, the main menu's Mods button and `modsPanel`; styles `.mods-*` in MainMenu.uss): the list in
   load order (thumbnail, name, version · author, On / Off / Error / Can't load), a click or keyboard / controller focus
   selecting a row (the mouse's hover focus doesn't: passing over the rows on the way to Turn on changed the mod it acted
@@ -672,6 +806,19 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   warning: runtime Ogg Vorbis works on iOS; the textures cached as ETC2, the simulator offers no DXT) and its Sentinel
   flown; the browser names the folder as the Files app shows it on iOS (`ModBrowser.Shown`: "Files › On My iPhone › GoF2
   Remake › Mods", not the sandbox path); not yet run on an Android phone, Linux, macOS or UWP.
+- **Mods folder (Android)** (2026-11-12, a player's request: Android/data is out of the file managers' reach): the browser's
+  footer "Mods folder" picks a folder through `SaveFolderPicker` (the SAF tree picker, a persistable grant; one in use asks
+  to stop using it instead), kept as `ModManager.PickedFolder` (PlayerPrefs `mods_folder`). Mods can't load from a tree
+  (no plain paths), so its `Mods/` subfolder (made when missing) is copied one way into `persistentDataPath/ModsFolderCopy`
+  on every `Scan` (`SaveFolderActivity.mirror`: only files whose size / time changed, what the folder lost deleted), one
+  of `ModManager.Folders`; those mods' Delete is off (they'd come back) and their place shows as `<folder>/<file>`. Its
+  `ModProjects/` is synced both ways with the Mod Builder's projects (`SyncPickedProjects`, `SaveFolderActivity.sync`,
+  on the project list's Open and Close): against the last sync's size / time per file (`mod_projects_sync.tsv`, for that
+  tree only), changed on one side = copied, both or no past = the newer wins (the loser overwritten), gone on one side and
+  unchanged on the other = deleted there; empty folders removed on both sides. A failure leaves both sides as they are and
+  shows in the notes. Copies run on the main thread (the first copy of a big mod stalls the menu). The grant is let go on
+  "stop" unless it is the save folder's tree too (the save folder's own "This device only" lets a shared grant go).
+  Compiled for Android (javac against android.jar, the player scripts); not yet run on a phone.
 - **Multiplayer** (`NetMods`): the Host card's "Mods (N on)" Off / Allowed (`mp_allow_mods`, off by default; a dedicated
   server's `-allowmods` / `ALLOWMODS=1` = every usable mod in its Mods folders). Every session starts without mods
   (`PrepareSession` → `BeginClient`); the host's `BeginHost` sets `ModManager.BeginSession` and `NetMods.SessionList`

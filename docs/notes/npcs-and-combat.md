@@ -268,7 +268,9 @@ simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/co
   remake plate's 14 px lower position), white / red / green / orange; remake: with keys or a controller the booster's,
   the cloak's and the time extender's shop icons under the status bars show their recharge (`CooldownView`: a
   left-to-right sweep, the part not yet recharged see-through, opaque when ready, a flash then; while it runs the lit
-  part drains with what is left, a cyan edge; touch shows them on its buttons); ship markers red / green / yellow: off
+  part drains with what is left, a cyan edge; touch shows them on its buttons; the first icon, a player's wish,
+  2026-10-18: the selected secondary's, lit as it reloads, `WeaponSystem.SecondaryReload` / `Gun.ReloadRate`: each mount
+  reloads on its own, the furthest along counts; shown as the plate is); ship markers red / green / yellow: off
   screen a dot on the radar ellipse, far a dot (ring + distance when locked), near a hull bar (+ bracket when locked);
   remake (players' request, 2026-10-17: the far dot hid the ship), Options > Gameplay "Far ship markers"
   (`Settings.FarShipMarkers`, per player): Original (default) / Ring (the lock ring's arcs with the centre dot cleared,
@@ -499,6 +501,12 @@ battle spawns in 156 ms with its hulls.
 - **Scanner cargo readout** (`CombatRadar.ReadCargo`, `Radar+0x1a5`): with a scanner of attr 31 = 1 (Ecoscan / Proscan /
   Ultrascan) a new ship lock within 24000 units per axis shows the ship's first cargo entry ("<n>t <item>", white; a
   capture is green) or "Nothing to salvage." (542) when it carries no cargo list.
+  Remake mods (a Discord suggestion, 2026-11-14; `ModScannerTests`): attr 31 = 2 reads the whole hold; "scanHitpoints"
+  (141) / "scanWeapons" (142) add "Shield / Armor / Hull n/max" and "Weapons: <gun>, <second gun>" ("Unarmed") on the
+  same Scan line, joined by " · " (`CombatRadar.ScanReadout`, traffic ships only: `NpcShip.GunItem` / `SecondGunItem`);
+  "scanShip" (140) puts the hull after the plate's name, "Pirate · Phantom 85%" (`Target.shipType`, -1 for fixed objects,
+  turrets and other players; CombatView). Every completed ship lock fires "on scanned" (`SpaceHooks.ShipScanned`, the
+  plate name as %victim%, `CombatRadar.PlateName`; in a session `NetState.ShipScannedRpc`).
 - **Voices of generic speakers** (`GenericVoice`, `Globals::getDialogueSoundId`): the text -> voice table 0x255210
   (`Resources/GoF2Data/voice_table.json` from `Reference/tools/dialogue/build_voice_table.py`), else the agent's GENERIC
   set by race / gender / face (Terran male / female, Vossk, Nivelian (Midorians of body 2), Multipod, Bobolan, Grey,

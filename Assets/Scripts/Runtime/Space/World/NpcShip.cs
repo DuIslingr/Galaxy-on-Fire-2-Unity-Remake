@@ -390,6 +390,9 @@ namespace GoF2Remake.World
         // (PlayerFighter+0x2e0), Harval's cluster missiles too.
         Gun secondGun;
         GunRig secondRig;
+        /// <summary>Remake mods: the item of its gun and of its second gun (-1 = none), for a scanner's "scanWeapons".</summary>
+        public int GunItem => gun != null ? gun.itemIndex : -1;
+        public int SecondGunItem => secondGun != null ? secondGun.itemIndex : -1;
         bool useSecond;
         float slotMs;
         const float SlotToggleMs = 20000f;
@@ -463,6 +466,7 @@ namespace GoF2Remake.World
             Target = gameObject.AddComponent<Target>();
             Target.isShip = true;
             Target.race = spec.race;
+            Target.shipType = spec.fixedObject == null && spec.turretAssembly == null ? spec.ship : -1;   // remake mods: "scanShip"
             Target.customDeath = true;
             Target.mineProof = spec.fixedObject == "station_pirates";   // KIPlayer+0x3d
             Target.plateNameOnly = spec.nameText == 1611 || spec.nameText == 1663;
@@ -839,9 +843,10 @@ namespace GoF2Remake.World
         /// hostile target in its box instead of the first of the list (the player), spread over the targets. Not for the ships
         /// whose targets a script, a mission or the original's special rules decide: story and mission orbits, a script's only
         /// enemy, mission ships, a turned ship (it goes for the player who shot it, box or not), the Specters (player-only in
-        /// free flight), the fleet battles' fighters (their own nearest pick). Wingmen and turrets never get here.</summary>
+        /// free flight), the fleet battles' fighters (their own nearest pick), the Supernova Challenge (every Specter on the player).
+        /// Wingmen and turrets never get here.</summary>
         bool SmartTargeting =>
-            Settings.SmarterNpcTargeting && !NpcTables.InCampaignLevel && NpcTables.LevelFreelanceType < 0 && ScriptEnemy == null
+            Settings.SmarterNpcTargeting && !SupernovaChallenge.Active && !NpcTables.InCampaignLevel && NpcTables.LevelFreelanceType < 0 && ScriptEnemy == null
             && !MissionShip && !turnedEnemy && Race != Standing.Specter && traffic != null
             && !(Spec.capitalPart && Spec.capitalHost != null && Spec.capitalHost.fleetBattle);
 

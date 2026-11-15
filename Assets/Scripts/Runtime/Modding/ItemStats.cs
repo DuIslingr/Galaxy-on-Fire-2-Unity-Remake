@@ -91,6 +91,10 @@ namespace GoF2Remake.Modding
             // out to beamReach (game units), and a gun's heat (shots before it overheats, cooling from full, overheated)
             ["beamRadius"] = 172, ["heatShots"] = 173, ["heatCoolMs"] = 174, ["overheatMs"] = 175, ["beamReach"] = 176,
             ["chargeMs"] = 177,
+            // A scanner's readout of a locked ship (Flight.CombatRadar, a Discord suggestion 2026-11-14): scanShip 1 names its
+            // hull on the lock plate; scanHitpoints / scanWeapons 1 add its shield / armor / hull and its guns to the readout
+            // on each new lock (beside radarShowsCargo, 31: 1 the first cargo entry, 2 the whole hold).
+            ["scanShip"] = 140, ["scanHitpoints"] = 141, ["scanWeapons"] = 142,
             // items.json's statList names
             ["steerable"] = 15, ["handling"] = 17,
             ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,

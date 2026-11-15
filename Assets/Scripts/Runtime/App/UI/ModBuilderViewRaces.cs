@@ -43,7 +43,7 @@ namespace GoF2Remake.UI
 
         /// <summary>A mod race's emblem from the project (null: none, or the project not read yet).</summary>
         static Texture2D ModRaceIcon(ProjectRace r) =>
-            r?.Icon != null && ModManager.BuilderProject != null ? ModMaterials.Texture(ModManager.BuilderProject, r.Icon, false, true) : null;
+            r?.Icon != null && ModManager.BuilderProject != null ? ModRaces.Emblem(ModManager.BuilderProject, r.Icon) : null;
 
         /// <summary>The project's systems a race owns.</summary>
         List<ProjectSystem> OwnedSystems(ProjectRace r) => Project.Systems.Where(s => s.ModRace != null && Project.OwnRace(s.ModRace) == r).ToList();
@@ -154,7 +154,7 @@ namespace GoF2Remake.UI
                 big.style.backgroundImage = new StyleBackground(icon);
             }
             ImageRow(modRacePage, T("mbModRaceIcon", "Emblem"), r.Icon, "icons", "race_" + r.Id, v => { r.Icon = v; ModRaceEdited(); RebuildModRaces(); });
-            Note(modRacePage, T("mbModRaceIconNote", "A square PNG, transparent around it, like the game's race emblems. None: its look race's."));
+            Note(modRacePage, T("mbModRaceIconNote", "A square PNG (64x64 to 256x256), transparent around it, like the game's race emblems. None: its look race's."));
             ColourRow(modRacePage, T("mbModRaceColour", "Colour (0..1)"), r.Colour, c => { r.Colour = c; ModRaceEdited(); RebuildModRaces(); });
 
             // ---- the player ----
@@ -264,6 +264,8 @@ namespace GoF2Remake.UI
             Note(systemPage, T("mbModRaceModTrafficNote", "No game freighters, pirate outposts or bosses; its raiders are those above."));
             FlagButton(Row(systemPage), T("mbPirateHeld", "Held by pirates"), s.PirateHeld, v => s.PirateHeld = v, () => SystemEdited());
             Note(systemPage, T("mbPirateHeldNote", "Every station here is besieged like the Kaamo Club at the start, on every visit: pirate outposts and pirates, no docking, gate or Khador Drive until the outposts fall. Driven out, they come back after 30 minutes. A station's orbit can say otherwise."));
+            FlagButton(Row(systemPage), T("mbPirateHideout", "Pirate hideout"), s.PirateHideout, v => s.PirateHideout = v, () => SystemEdited());
+            Note(systemPage, T("mbPirateHideoutNote", "Like Alda: on every visit 10 to 13 tough pirates wait around the arriving ship (the races set as its raiders, if any), and nothing else flies here. For a hideout without stations, switch the station off in each station's orbit."));
         }
 
         /// <summary>A list of races (game races by word, or by number when 'numbers'; mod races by key): each with ×, and

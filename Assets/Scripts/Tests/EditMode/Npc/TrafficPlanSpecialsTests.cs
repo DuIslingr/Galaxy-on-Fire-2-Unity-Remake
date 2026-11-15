@@ -447,6 +447,89 @@ namespace GoF2Remake.Tests
             Assert.IsFalse(Build(20).Any(x => x.hiddenBlueprint >= 0));
         }
 
+        // ---- derelict freighters (Options > Gameplay, Settings.DerelictWrecks) -------------------------------------
+
+        /// <summary>A plain orbit (no storyline, pirate base or special system) whose system's security fits.</summary>
+        static int PlainStation(System.Func<int, bool> security) => Db.Stations.Find(s =>
+            s.index < 100 && s.index != 10 && Db.Systems.Find(x => x.index == s.system) is var sys && sys != null && security(sys.securityLevel)
+            && sys.index != 15 && sys.index != 25 && sys.index != 27 && sys.index != 32 && sys.index != 33
+            && !PirateBases.SystemHasBase(Db, sys.index) && !PirateEventRules.InStoryline(s.index)).index;
+
+        [Test]
+        public void DerelictFreightersComeWithTheOption()
+        {
+            InFreePlay(4);
+            int unsafeOrbit = PlainStation(sec => sec <= 1), secure = PlainStation(sec => sec == 3);
+            Repeat(unsafeOrbit, 300, 31, list => Assert.IsFalse(list.Any(x => x.derelict), "off: the original's traffic"));
+            Settings.DerelictWrecks = true;   // (NpcTestBase puts it back)
+            foreach (int station in new[] { unsafeOrbit, secure })
+            {
+                int found = 0, guarded = 0;
+                Repeat(station, 300, 31, list =>
+                {
+                    var w = list.Where(x => x.derelict).ToList();
+                    Assert.LessOrEqual(w.Count, 1, "one an orbit");
+                    if (w.Count == 0) return;
+                    found++;
+                    Assert.IsTrue(w[0].deadButSelectable && w[0].dockingType == 3 && w[0].noLoot, "a hackable wreck");
+                    if (list.Any(x => x.group == NpcGroup.Raider && x.race == Standing.Pirate && (x.position - w[0].position).magnitude < 40000f)) guarded++;
+                });
+                Assert.Greater(found, 0, "station " + station);
+                Assert.Less(found, 60, "rare");
+                if (station == unsafeOrbit) Assert.AreEqual(found, guarded, "pirates wait at it in an unsafe system");
+            }
+            Repeat(132, 100, 31, list => Assert.IsFalse(list.Any(x => x.derelict), "not beside a hidden blueprint's wreck"));
+            for (int i = 0; i < 100; i++) Assert.IsNotEmpty(GoF2Remake.World.WreckField.DerelictLoot(Db));
+        }
+
+        // A hacked wreck's cargo goes straight into the hold; only what finds no room is left for a crate.
+        [Test]
+        public void DerelictCargoGoesIntoTheHold()
+        {
+            const int ore = 154;
+            int free = Shop.FreeCargo(Db), had = Story.CargoOf(ore);
+            var said = new System.Collections.Generic.List<string>();
+            var rest = GoF2Remake.World.WreckField.TakeAboard(Db, new System.Collections.Generic.List<ItemStack> { new ItemStack(ore, free + 5) }, said.Add);
+            try
+            {
+                Assert.AreEqual(free, Story.CargoOf(ore) - had, "as much as the hold takes");
+                Assert.AreEqual(0, Shop.FreeCargo(Db));
+                Assert.AreEqual((ore, 5), (rest.Single().item, rest.Single().amount), "the rest for a crate");
+                Assert.AreEqual(free > 0 ? 1 : 0, said.Count);
+            }
+            finally { Shop.RemoveFromCargo(ore, free); }
+        }
+
+        // A derelict's rare loot: now and then a piece of gear (a capital ship's pool), and a blueprint: one a lounge sells
+        // that the player doesn't know yet, none once every one is known.
+        [Test]
+        public void DerelictRareLoot()
+        {
+            InFreePlay(4);
+            UnityEngine.Random.InitState(7);
+            int gear = 0;
+            for (int i = 0; i < 400; i++)
+                if (GoF2Remake.World.WreckField.DerelictLoot(Db).Any(s => Db.Item(s.item) is var it && it.TypeId <= 3 && it.techLevel >= 8)) gear++;
+            Assert.Greater(gear, 0, "gear a freighter's own roll never holds (tech level 8+)");
+            Assert.Less(gear, 60, "rare");
+            var known = new System.Collections.Generic.List<int>(Session.UnlockedBlueprints);
+            try
+            {
+                Session.UnlockedBlueprints.Clear();
+                int bp = GoF2Remake.World.WreckField.DerelictBlueprint(Db);
+                Assert.GreaterOrEqual(bp, 0);
+                Assert.Greater(Db.Item(bp).blueprint.Count, 0, "a blueprint's product");
+                Assert.IsTrue(AgentData.StoryAgents.Any(a => a.sellBlueprint == bp), "one a lounge sells");
+                foreach (var a in AgentData.StoryAgents) if (a.sellBlueprint >= 0) Session.UnlockedBlueprints.Add(a.sellBlueprint);
+                Assert.AreEqual(-1, GoF2Remake.World.WreckField.DerelictBlueprint(Db), "every one known");
+            }
+            finally
+            {
+                Session.UnlockedBlueprints.Clear();
+                foreach (int b in known) Session.UnlockedBlueprints.Add(b);
+            }
+        }
+
         // ---- capital ships --------------------------------------------------------------------------------------
 
         static int Kind(System.Collections.Generic.List<SpawnSpec> list) => list.FirstOrDefault(x => x.capital != 0 && x.capitalHost == null)?.capital ?? 0;
@@ -539,14 +622,12 @@ namespace GoF2Remake.Tests
             Repeat(120, 1000, 30, list => Assert.AreEqual(0, Kind(list)));
         }
 
-        [Test, Category("Unverified")]
-        [Ignore("Unverified: npc_combat_specials.md 2.3 says the carrier's box is overwritten by the battleship's; the remake keeps " +
-                "(+-40000, +-20000, 100000..180000) as CLAUDE.md documents. Check Level::createMission before changing either.")]
+        [Test]
         public void CarrierUsesTheBattleshipsBox()
         {
-            // npc_combat_specials.md 2.3 (v): the carrier's point is "first drawn around (+-40000, +-20000, 100000..180000)
-            // (RNG only), then overwritten by the battleship formula (nextInt(80000) - 40000, nextInt(10000) - 5000,
-            // nextInt(80000) + 40000)". TrafficPlan.AddCapitalShip keeps the first box.
+            // Level::createMission: the carrier is placed around (+-40000, +-20000, 100000..180000), then moved like the
+            // battleship by vtable 0x48, setPosition(x, y, z): (nextInt(80000) - 40000, nextInt(10000) - 5000,
+            // nextInt(80000) + 40000) (PlayerFixedObject::setPosition(Vector&) forwards to that slot).
             InCompletedWorld(0);
             int carriers = 0;
             Repeat(70, 3000, 31, list =>

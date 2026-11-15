@@ -296,6 +296,30 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void HintSizeAndTheComboAndMedalSoundsAreOptions()
+        {
+            // #171: the hint rows' own size, 50..100 %, full size by default (Gameplay); #165: the Supernova Challenge's
+            // combo sounds and the medal sound, as now by default (Sound), each back with its tab's "Default settings".
+            AllDefaults();
+            Assert.AreEqual(100, Settings.HintScalePercent);
+            Assert.IsTrue(Settings.ChallengeComboSounds, "the original's combo sounds play");
+            Assert.AreEqual(Settings.MedalSoundChime, Settings.MedalSound, "the remake's chime");
+            Settings.HintScalePercent = 20; Assert.AreEqual(50, Settings.HintScalePercent);
+            Settings.HintScalePercent = 130; Assert.AreEqual(100, Settings.HintScalePercent);
+            Settings.MedalSound = 7; Assert.AreEqual(Settings.MedalSoundOff, Settings.MedalSound);
+            Settings.MedalSound = -1; Assert.AreEqual(Settings.MedalSoundChime, Settings.MedalSound);
+
+            Settings.HintScalePercent = 60;
+            Settings.ChallengeComboSounds = false;
+            Settings.MedalSound = Settings.MedalSoundOriginal;
+            Settings.Reset(Settings.GameplayKeys);
+            Assert.AreEqual(100, Settings.HintScalePercent, "Gameplay's Default settings");
+            Settings.Reset(Settings.SoundKeys);
+            Assert.IsTrue(Settings.ChallengeComboSounds, "Sound's Default settings");
+            Assert.AreEqual(Settings.MedalSoundChime, Settings.MedalSound);
+        }
+
+        [Test]
         public void MouseSensitivityScalesTheMouseMovementOnly()
         {
             // Discord "Mouse Sensitivity seems to do nothing": Sensitivity (the ramp, not for the mouse) left a high-DPI mouse
@@ -386,6 +410,20 @@ namespace GoF2Remake.Tests
             Settings.BloomStyle = Settings.BloomRemake; Assert.IsTrue(Settings.Bloom); Assert.IsFalse(Settings.ClassicBloom);
             Settings.BloomStyle = Settings.BloomOriginal; Assert.IsFalse(Settings.Bloom); Assert.IsTrue(Settings.ClassicBloom);
             Settings.BloomStyle = Settings.BloomBoth; Assert.IsTrue(Settings.Bloom); Assert.IsTrue(Settings.ClassicBloom);
+        }
+
+        // The strength slider: 100 % by default, 25..200 %, offered only while the remake's bloom is drawn.
+        [Test]
+        public void BloomStrengthScalesTheRemakeBloomOnly()
+        {
+            Assert.AreEqual(1f, Settings.BloomStrength);
+            Settings.BloomStrength = 5f; Assert.AreEqual(2f, Settings.BloomStrength);
+            Settings.BloomStrength = 0f; Assert.AreEqual(0.25f, Settings.BloomStrength);
+            var row = GoF2Remake.UI.OptionsCatalog.All().First(o => o.id == "bloomStrength");
+            Settings.BloomStyle = Settings.BloomOff; Assert.IsFalse(row.visible());
+            Settings.BloomStyle = Settings.BloomOriginal; Assert.IsFalse(row.visible());
+            Settings.BloomStyle = Settings.BloomRemake; Assert.IsTrue(row.visible());
+            Settings.BloomStyle = Settings.BloomBoth; Assert.IsTrue(row.visible());
         }
 
         [Test]

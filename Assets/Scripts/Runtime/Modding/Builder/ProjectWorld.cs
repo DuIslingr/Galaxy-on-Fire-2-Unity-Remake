@@ -57,6 +57,12 @@ namespace GoF2Remake.Modding
             get => json["pirateHeld"]?.Type == Newtonsoft.Json.Linq.JTokenType.Boolean && (bool)json["pirateHeld"];
             set { if (value) json["pirateHeld"] = true; else json.Remove("pirateHeld"); }
         }
+        /// <summary>"pirateHideout": a pirate hideout like Alda (ModWorld.PirateHideout).</summary>
+        public bool PirateHideout
+        {
+            get => json["pirateHideout"]?.Type == Newtonsoft.Json.Linq.JTokenType.Boolean && (bool)json["pirateHideout"];
+            set { if (value) json["pirateHideout"] = true; else json.Remove("pirateHideout"); }
+        }
         public bool ModTraffic
         {
             get => S("traffic") == "mod";
@@ -169,6 +175,8 @@ namespace GoF2Remake.Modding
         public string MapTexture { get => S("mapTexture"); set => SetS("mapTexture", value); }
         public bool MapRing { get => B("mapRing", false); set => SetB("mapRing", value, false); }
         public string Music { get => S("music"); set => SetS("music", value); }
+        /// <summary>The calm music in the station's orbit (beats its system's "spaceMusic").</summary>
+        public string SpaceMusic { get => S("spaceMusic"); set => SetS("spaceMusic", value); }
     }
 
     /// <summary>One interiors.json entry of a project: a hangar or a Space Lounge bar room, with its markers placed in the builder

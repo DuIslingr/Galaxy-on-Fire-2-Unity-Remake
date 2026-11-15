@@ -35,7 +35,7 @@ namespace GoF2Remake.Data
         /// <summary>The economy's short name for the menus and the save slots.</summary>
         public static string EconomyName(Economy e) => e == Economy.Android
             ? Localization.Extra("economyAndroid", "Android economy")
-            : Localization.Extra("economyDefault", "PC economy");
+            : Localization.Extra("economyDefault", "Default economy");
         /// <summary>Status::hardCoreMode 0xb9148: difficulty == 1.5. The economy, mining, standing and shop rules of Extreme
         /// only; the level-scaled formulas use DifficultyFactor.</summary>
         public static bool IsExtreme => Difficulty > 1.25f;
@@ -98,6 +98,8 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods (2026-11-05, EVERSPACE 2's unique loot): the orbits' fixed container loot already taken
         /// ("station:entry", World.LootContainer), so each comes once.</summary>
         public static HashSet<string> FixedLootTaken = new HashSet<string>();
+        /// <summary>Remake mods (2026-11-14): each script mod's game.saved table as JSON, by mod id (Modding.ModScripts).</summary>
+        public static Dictionary<string, string> ScriptData = new Dictionary<string, string>();
         /// <summary>Remake: the repeatable quests finished ("mission repeat"), each with the playing time (PlaySeconds) from which
         /// it may start again (EventRunner.CheckQuestStarts).</summary>
         public static Dictionary<string, float> GraphQuestRepeats = new Dictionary<string, float>();
@@ -401,6 +403,17 @@ namespace GoF2Remake.Data
         /// <summary>A ship's reference in ShipsBought.</summary>
         public static string ShipRef(int ship) => Modding.ModContent.ShipKey(ship) ?? ship.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
+        /// <summary>An item's reference ("12", a mod's "mod:id"), as ShipRef.</summary>
+        public static string ItemRef(int item) => Modding.ModContent.ItemKey(item) ?? item.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        /// <summary>Remake mods: the mods' medals earned (Modding.ModMedals), the medal's key ("mod_id:id") to its tier's id
+        /// ("bronze", "gold", a mod's "platinum"). Saved; kept for a mod that is off.</summary>
+        public static Dictionary<string, string> ModMedals = new Dictionary<string, string>(System.StringComparer.Ordinal);
+
+        /// <summary>Remake (the conditions' killswith(item) / killed(ship), for the mods' medals): the player's kills by the weapon
+        /// that dealt the last hit ("with:" + ItemRef) and by the ship type destroyed ("ship:" + ShipRef). Saved.</summary>
+        public static Dictionary<string, int> KillTally = new Dictionary<string, int>(System.StringComparer.Ordinal);
+
         /// <summary>Level::programmedStation: the destination picked on the star map, -1 = none. The autopilot routes to it
         /// after the launch / arrival camera (LevelScript::setAutoPilotToProgrammedStation).</summary>
         public static int ProgrammedStation = -1;
@@ -479,14 +492,24 @@ namespace GoF2Remake.Data
         public static int PlayerHull = -1, PlayerArmor = -1;
         public static float PlayerShield = -1f;
 
+        /// <summary>Remake (the Debug pages' "Player level" buttons, Cheats.SetRank): XP added to (or, negative, taken off)
+        /// what the player earned, so the level can be set without touching the kills and the other statistics. Saved.</summary>
+        public static int XpBonus;
+
+        /// <summary>The highest rank (DAT_00252b0c's last threshold).</summary>
+        public const int MaxRank = 20;
+
+        /// <summary>The XP rank 'rank' (0..MaxRank) starts at.</summary>
+        public static int RankStartXp(int rank) => RankXp[Mathf.Clamp(rank, 0, MaxRank)];
+
         /// <summary>DAT_00252b0c: XP needed per rank 0..20 (Status::checkForLevelUp).</summary>
         static readonly int[] RankXp = { 0, 7, 21, 42, 70, 105, 147, 196, 252, 315, 385, 462, 546, 637, 735, 840, 952, 1071, 1197, 1330, 1650 };
 
         /// <summary>Status::checkForLevelUp 0xb9978: XP = ore mined / 50 (+0xa0) + kills (+0x1c0) + wingmen hired / 3 (+0xd4)
         /// + cores mined (+0xa4) + 2 x missions completed (+0x1c4) + the campaign index (+0x1e8) + stations visited (+0x1d0);
-        /// the rank (Status::getLevel) is the highest threshold reached.</summary>
+        /// the rank (Status::getLevel) is the highest threshold reached. Remake: + XpBonus (the Debug pages' level buttons).</summary>
         public static int Xp => OreMined / 50 + Kills + WingmenHired / 3 + CoresMined + 2 * FreelanceCompleted
-                              + (FreePlay ? 0 : CampaignMission) + VisitedStations.Count;
+                              + (FreePlay ? 0 : CampaignMission) + VisitedStations.Count + XpBonus;
 
         public static int Rank
         {
@@ -573,6 +596,8 @@ namespace GoF2Remake.Data
             ShipBuilds = new Dictionary<string, string>();
             GraphQuestsDone = new HashSet<string>();
             FixedLootTaken = new HashSet<string>();
+            ScriptData = new Dictionary<string, string>();
+            Modding.ModScripts.RestoreSaved(false);   // the running scripts' game.saved: empty again
             GraphQuestRepeats = new Dictionary<string, float>();
             GameHooks.ResetLocalEvents?.Invoke();   // single player's graph runs go with the game
             Blueprints = new List<BlueprintState>();
@@ -646,6 +671,8 @@ namespace GoF2Remake.Data
             SystemShown = new Dictionary<int, bool>();
             VisitedStations = new HashSet<int> { 78 };
             ShipsBought = new HashSet<string>();
+            ModMedals = new Dictionary<string, string>(System.StringComparer.Ordinal);
+            KillTally = new Dictionary<string, int>(System.StringComparer.Ordinal);
             ProgrammedStation = -1;
             RouteDestination = -1;
             RouteSafest = false;
@@ -665,6 +692,7 @@ namespace GoF2Remake.Data
             AttackedStations = new HashSet<int>();
             RecentOrbits = new List<int>();
             Kills = PirateKills = 0;
+            XpBonus = 0;
             PlayerHull = PlayerArmor = -1;
             PlayerShield = -1f;
         }

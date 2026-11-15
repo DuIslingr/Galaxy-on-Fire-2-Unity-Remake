@@ -77,7 +77,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   game's five keys too, so `pirate_boss` is the pirate boss by rank; its escorts carry the event batch); the steps' hull /
   guns and Spawn an NPC ship type (`spawntype`, `QuestFieldKind.NpcShip`, picker `RefKind.NpcShip`), the nodes' Hull / Guns
   ports and Spawn NPC Type. **"on pad"** (same day): docked at a station's pad outside (`SpaceHooks.PadDocked`, in a
-  session `NetState.PadDockedRpc`, `EventTrigger.PlayerDocksAtPad`), the station as its orbit.
+  session `NetState.PadDockedRpc`, `EventTrigger.PlayerDocksAtPad`), the station as its orbit. **"on scanned"**
+  (2026-11-14, a Discord suggestion): the player's scanner completed a ship lock (`SpaceHooks.ShipScanned`, in a session
+  `NetState.ShipScannedRpc`, `EventTrigger.ShipScanned`), the ship's plate name as %victim%; see "Scanner cargo readout".
   **Make Hostile** (`/provoke [players] [race] [within <m>]`): the NPC ships around each player (NetProxy positions on the
   server) turn on that player and their squad: the ship's own game adds them to `NpcShip.aggressors` (neutral spawns too;
   `NetOrbit.HostileToLocalBySquad` counts the local player's own id). **Radio** (`/radio [players] <speaker> : <text>`):
@@ -238,7 +240,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   graphs = Event, a bar mission when titled) and **Starts when** ("mission starts <expr>"; empty = at once, "never" = only
   `startquest`). Quests start by themselves in a game scene (Space / Station, not a session's game, not the ending; while
   not paused) once their condition holds (`EventRunner.CheckQuestStarts`, every second; not the built-in graphs, which are
-  multiplayer examples) and are lasting runs: a `GraphQuestState` record (save v13 `graphQuests` / `graphQuestsDone`)
+  multiplayer examples). The graph list it reads (`AllGraphs`) is compiled once and again only when the mods change or,
+  looked at every 30 s, the Events folders' files do (`FolderStamp`: names, sizes, write times). Compiling every graph
+  each 30 s stalled an iPhone for 0.75 s (#275), and the mods' revision taken before `List()` (whose scan can bump it)
+  made the list stale at once, so it was compiled again every second. Quests are lasting runs: a `GraphQuestState` record (save v13 `graphQuests` / `graphQuestsDone`)
   written at the start and at each `checkpoint <name>` (top level only, `Step.depth`; the variables, objective, target, quiet
   orbits), restored after a load from its last checkpoint (`EventRunner.RestorePending` → `RestoreLocal` →
   `EventRun.Resume`: the top-level handlers and parallel / every blocks before it again, the music / waypoint / respawn /

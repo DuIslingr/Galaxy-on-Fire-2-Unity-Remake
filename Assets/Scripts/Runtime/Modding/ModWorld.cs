@@ -17,7 +17,8 @@
 //   default the owner), "raiders": [races / mod races] (who raids it, default the owner's hostile enemies, else pirates).
 //   Both may name "available": a condition (ModUnlocks, the event graphs' expressions): while it holds the system is on
 //   the map, while it doesn't it is hidden, revealed or not (GalaxyMap.Visibility); a player in it is taken out.
-// stations.json may name "music" too (that station's docked music).
+// stations.json may name "music" too (that station's docked music), "spaceMusic" (the calm music in that station's orbit)
+// and "battleMusic" (its orbit's fights, like a system's), each beating its system's (2026-11-14, a Discord request).
 // Looks (new or override): a station's own 3D model ("model": a glTF / GLB, "modelSize" its largest extent in game units
 // (default 40000 = 2 km; the originals are 1-5 km), "modelYaw" degrees, "modelCentre" (default true: the bounds' centre at
 // the station's origin), "materials" like ships.json's; its collision "collision": "box" (default: the model's bounds),
@@ -90,11 +91,11 @@ namespace GoF2Remake.Modding
 
         static readonly HashSet<string> SystemFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "race", "security", "visible", "position", "sky", "gates", "gateStation", "spaceMusic", "stationMusic",
-              "battleMusic", "sunTexture", "sunColor", "skybox", "available", "traffic", "locals", "raiders", "jumpgate", "pirateHeld" };
+              "battleMusic", "sunTexture", "sunColor", "skybox", "available", "traffic", "locals", "raiders", "jumpgate", "pirateHeld", "pirateHideout" };
         static readonly HashSet<string> StationFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "system", "techLevel", "planet", "looksLike", "music", "model", "modelSize", "modelYaw", "modelCentre",
               "materials", "collision", "volumes", "interior", "planetTexture", "mapTexture", "mapRing", "mapPlace", "orbit", "hangar", "bar", "mobile",
-              "subtitle", "description", "life", "planetSphere" };
+              "subtitle", "description", "life", "planetSphere", "spaceMusic", "battleMusic" };
 
         /// <summary>ModContent.Parse: a mod's systems.json and stations.json into 'systems' / 'stations'.</summary>
         public static void Parse(ModInfo mod, List<Def> systems, List<Def> stations)
@@ -602,13 +603,16 @@ namespace GoF2Remake.Modding
             { "nebula", "stars", "nebulaBrightness", "starsBrightness", "rotation", "sunAligned", "chorus" };
 
         static readonly Dictionary<int, string> systemSpaceMusic = new Dictionary<int, string>(), systemStationMusic = new Dictionary<int, string>(),
-                                                stationMusic = new Dictionary<int, string>();
-        static readonly Dictionary<int, List<string>> systemBattleMusic = new Dictionary<int, List<string>>();
+                                                stationMusic = new Dictionary<int, string>(), stationSpaceMusic = new Dictionary<int, string>();
+        static readonly Dictionary<int, List<string>> systemBattleMusic = new Dictionary<int, List<string>>(),
+                                                      stationBattleMusic = new Dictionary<int, List<string>>();
         static readonly Dictionary<int, string> stationSubtitle = new Dictionary<int, string>(), stationLore = new Dictionary<int, string>();
         static readonly HashSet<int> modTrafficSystems = new HashSet<int>();
         static readonly Dictionary<int, List<int>> systemLocals = new Dictionary<int, List<int>>(), systemRaiders = new Dictionary<int, List<int>>();
         /// <summary>systems.json "pirateHeld": pirates hold every station of the system (Data.PirateHold).</summary>
         static readonly HashSet<int> systemPirateHeld = new HashSet<int>();
+        /// <summary>systems.json "pirateHideout": a pirate hideout like Alda (TrafficPlan's loot orbits).</summary>
+        static readonly HashSet<int> systemPirateHideout = new HashSet<int>();
 
         // ---- mobile stations (MobileStations) -----------------------------------------------------------------------
 

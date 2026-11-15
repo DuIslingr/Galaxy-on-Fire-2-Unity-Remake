@@ -69,6 +69,14 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   approaching or landing gets the same message and undocks. An asteroid a player lands on, sits on or drills stops
   spinning for everyone there (`NetPlayer.LandedAsteroid`, `NetOrbit.UpdateHeldAsteroids`), and spins on once nobody is
   on it (a miner's own undock leaves it still while another player is on it, `NetOrbit.OthersOn`).
+- **Derelict freighters** (supernova.md; 2026-11-13, not tested with two games yet): the orbit's runner rolls the wreck
+  with its traffic, so everyone there sees it and its pirates (`ProxySpec` carries `SpawnSpec.derelict`). Object docking
+  takes a game's own ships only, so every other player gets a hidden stand-in of each open wreck at its copy's pose
+  (`NetOrbit.UpdateDerelictStandIns`, `NetProxy.OpenDerelict`: the owner's status flag `NetProxyStatus.Hackable`), like a
+  follower's mining plant. One hack a wreck: the loot goes into the hacker's hold (a crate only for what found no room,
+  shared like any crate; the blueprint is the hacker's), and their game tells the owner through the server (`NetProxy.ReportHacked`: from that orbit, while open), whose wreck closes; the
+  stand-ins go once it is closed or gone. Two players finishing the minigame at once both get the loot. A handover keeps
+  a hacked wreck closed (`NetOrbit.Restore`).
 - **NetProxy**: the ship's model by its Resources path (`NpcShip.ModelPath`), its description (`ProxySpec`, written once and
   again when its cargo or a reference changes), status (`NetProxyStatus`: race, standing, hull, hit radius, hidden, life,
   cloak, EMP, stealable cargo, mission role, killer, waypoint) and aggressors: four owner-written NetworkVariables where
@@ -124,8 +132,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (`Batch.down`), not just the ones present: a player leaving the orbit right after the spawn unloads their traffic, and
   Pirate Hideout paid out in 13 s (a log of 2026-10-12). The batch keeps the orbits it was seen in, so the players leaving
   them still ends the event (`CheckEmpty`; a mission fails). A completion logs its time and the players' kills.
-- **Shared shop stock** (`NetStock`; every game in the session on one economy, Android or a co-op campaign's,
-  docs/notes/multiplayer-coop.md "Economy"): every station's items and dealer ships are one list for all players, kept by the
+- **Shared shop stock** (`NetStock`; every game in the session on one economy; not in a co-op campaign, where each
+  player has their own, docs/notes/multiplayer-coop.md "Each player's own shop"): every station's items and dealer ships are one list for all players, kept by the
   host: made with the single-player rules (`Shop.GenerateItems` / `GenerateShips`) the first time anyone docks there and
   made again every 15 minutes (`NetStock.ResetSeconds`; no 3-station re-roll or re-docking nibble in sessions); rare
   goods (commodities with a max price of 5000+: Buskat, Vossk Organs, Implants...; a report: Buskat back at Sao Perula
@@ -144,7 +152,7 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   price on demand, `Hangar.PriceOf`). The host decides: a bought unit it no longer has is taken back and paid back
   (`NetStock.ItemRefused`), a dealer ship is reserved first (`NetStock.ReserveShip`); the docked list is empty until the
   host's arrives; lists are applied between frames (`NetStock.Flush`). The host's lists carry the stations' docking extras
-  that aren't one player's (`NetStock.HostExtras`: Kappa's EMP GL I at free play, energy cells at 10 / 100 / 101). Not
+  that aren't one player's (`NetStock.HostExtras`: energy cells at 10 / 100 / 101). Not
   shared: the owned Kaamo Club's storage.
 - **Bandwidth** (2026-11-01, the user's request "reduce used bandwidth drastically"): measured with `NetTrafficMeter`
   (Editor only, `Assets/Scripts/Editor/NetTraffic`: Netcode's message hooks, counted per NetworkVariable component, RPC

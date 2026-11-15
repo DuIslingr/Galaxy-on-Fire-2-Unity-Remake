@@ -107,23 +107,32 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 - **Input modes:** `InputMode` tracks the last input kind (Touch / KeyboardMouse / Gamepad, switching on the first real
   input of another kind, on any platform). The flight HUD (`UI/Flight`, `FlightHud`) shows the touch controls (see
   **Touch controls** below) only for touch, keycap hints for keyboard and controller button hints for a controller, in
-  the **Xbox** or the **PlayStation** style (`InputMode.Style`, remake; Options > Controls "Controller button icons",
-  `Settings.PadGlyphs` Auto / Xbox / PlayStation, Auto by default: the controller last used picks it,
+  the **Xbox**, the **PlayStation** or the **Switch** style (`InputMode.Style`, remake; Options > Controls "Controller button
+  icons", `Settings.PadGlyphs` Auto / Xbox / PlayStation / Switch, Auto by default: the controller last used picks it,
   `InputMode.StyleOf`: the Input System's DualShock / DualSense layouts (`DualShockGamepad` and every layout based on
   it, any platform) or a pad reporting Sony as its maker (or DualSense / DualShock / PlayStation in its product name) =
-  PlayStation, anything else (XInput, Switch Pro, VR's `VrPad`) = Xbox; switched live, `InputMode.StyleChanged`, which
+  PlayStation, a Nintendo pad (`InputMode.IsNintendo`: the `SwitchProControllerHID` layout, Nintendo as its maker, a Pro
+  Controller / Joy-Con product) = Switch (#162), anything else (XInput, VR's `VrPad`) = Xbox; switched live, `InputMode.StyleChanged`, which
   `GameControls.Changed` passes on). Every controller glyph is a `PadGlyph` (`InputGlyph.Pad` / `For`), which redraws
   itself when the style changes, so the glyphs built once (dialogue buttons, Launch, the hangar's LT / RT, the mod
   browser's X) follow too; Xbox unchanged (coloured A / B / X / Y, LB / RB, LT / RT, LS / RS, VIEW / MENU), PlayStation
   dark face buttons with their symbols drawn by Painter2D (cross blue, circle red, square pink, triangle green: the UI
   font has no ✕), L1 / R1, L2 / R2, L / R sticks, L3 / R3 presses, OPTIONS, CREATE (SHARE on a DualShock 4,
   `InputMode.DualShock4`), TOUCHPAD. The text names (`GameControls.ShortName(path, style)`: binding cells, the `#KEY_*`
-  tokens) use × ○ □ △ (Inter has them). Touch steering goes through `ShipController.SetSteer` (the stronger of touch and
+  tokens) use × ○ □ △ (Inter has them). Switch (#162): dark round face buttons with Nintendo's letters where they sit
+  (`GameControls.SwitchName`: south B, east A, west Y, north X), L / R, ZL / ZR, LS / RS (L / R are its shoulders),
+  − / +. **Nintendo button layout** (Controls, `Settings.NintendoLayout`, on by default): a Nintendo pad's A (right)
+  confirms and B (bottom) goes back, as on a Switch: `InputMode.SwapFaceButtons` exchanges its buttonSouth / buttonEast
+  in each event from `InputSystem.onEvent`, which runs after the device's own pre-processing (the Switch Pro's HID
+  report is its own state by then) and before the state is written, so every binding and direct read follows; the
+  labels follow `InputMode.NintendoSwap` (buttonSouth shows A). Off: by position, the Input System's own mapping.
+  Checked in Play mode with a virtual Switch Pro: its A pressed reads as buttonSouth, the hints switch to Switch. Touch steering goes through `ShipController.SetSteer` (the stronger of touch and
   the built-in actions wins); touch mode also switches the chase camera to the original's fixed touch damping. Esc /
   Android back / controller Menu / the touch pause button open the **pause menu** (`PauseMenu`, MenuTouchWindow mode 1:
   40 Pause; Resume 41, Missions 129 (remake: also in the alien orbit, where the original hides it, and with the Most
   Wanted criminals on the move), Cargo hold 166, Options 31 (every option, the text language too: the Language tab's
   row, `OptionDef.inGameOnly`, see **Options**), Skip 395 during the prologue / rescue, Back to Main Menu 522 → 523):
+  remake: last, "Report an issue" (the form and what it sends: "Issue reports" in platforms.md);
   game time and sounds pause (`Navigation.PauseMenuOpen`, `AudioListener.pause`); after the player's death Esc goes
   straight to the main menu; remake: a click / tap beside the menu resumes (on the release, a press begun there; not on
   a question, nor when it only closed an Options drop-down or "?" window). **Action Freeze** (59, `PhotoMode`, the pause
@@ -199,8 +208,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   selected, `PhotoMode.ShowInFolder`). A press that begins on the panel, the notice or a button never turns the camera,
   even dragged off it (`PhotoTools.PressOverUi`, also the hosts' orbit drags). The panel flies in from the left and
   fades (0.45 s, ease-out cubic, USS transitions on `.photo-panel` / `--open`; closed it is hidden by `visibility`;
-  `PhotoTools.Capture` hides it inline too, since the open class's `visibility: visible` beats the overlay's inherited
-  hidden and the panel showed in screenshots until 2026-10-18). Inspect ship fades the station menu's `side-shade` /
+  `PhotoTools.Capture` takes it and the last shot's notice out with `display: none`: the open class's `visibility:
+  visible` beats the overlay's inherited hidden (the panel showed in screenshots until 2026-10-18), and an inline
+  `visibility` waits for the transition, 0.45 s for the panel and 0.25 s for `.gof-toast` (no property list, so every
+  property), which put the notice in shots taken in quick succession until 2026-11-15). Inspect ship fades the station menu's `side-shade` /
   `bottom-shade` with the menu (`.station-inspecting`): they darkened the left of the view and its screenshots. The
   effects are a global volume of its own (layer 26, priority 1000, a profile made in code;
   `Assets/Settings/PhotoModeShaders.asset` keeps their shaders in builds, URP strips unused post-processing variants; it
@@ -230,7 +241,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   camera (the next mode's icon), secondary 0x4bc (hidden at 0 ammo; held 350 ms: the weapon strip, see "NPCs and
   combat", HUD), the auto-turret toggle), pause 0x4b8 at (w − 121, 24) in the HUD root (also during cutscenes, the
   launch / arrival camera and jump scenes, there at 12 % opacity, opaque while held (remake, `Frame.cinematic`, for
-  immersion), at its last place in flight: a cutscene hides the safe area (display: none), which zeroes the touch
+  immersion; Options > Controls "Touch controls opacity", `Settings.TouchOpacity` 30..100 %, fades the touch layer, the
+  pause button and the autopilot buttons, `TouchControls.Draw`, not the secondary plate / weapon strip: a player's
+  wish, 2026-10-17), at its last place in flight: a cutscene hides the safe area (display: none), which zeroes the touch
   layer's size, and the width's 1920 fallback pushed it off a narrower HUD; sounds 124 / 123; the top-right readout
   moves left of it: set from the button's place each frame, `FlightHud.KeepReadoutClearOfPause`, after a phone showed
   the readout over it; the HUD root's input classes are re-applied whenever they disagree with `InputMode.Current`), the
@@ -292,7 +305,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   or COCKPIT (HOLD) with D-pad up. The ship view picked last is kept for the next flights (PlayerPrefs
   `flight_camera_cockpit`, `FreeLookCamera.Base`); a turret view or free look ending by itself goes back to it. The
   dodge works in it (`FreeLookCamera.ShipView`). Not offered in VR (it flies from the seat). Local only: multiplayer is
-  unaffected.
+  unaffected. Back in the cycle as an option (a player's wish, 2026-11-13; Options > Controls "Camera button: include the
+  cockpit view", `Settings.CockpitInCameraCycle`, off by default): standard -> cockpit -> turrets -> free look -> standard
+  (`FreeLookCamera.NextMode`); the hold and F2 work as before.
 - **Free look with the mouse** (remake): with mouse steering the cursor stays captured in free look and plain mouse movement
   orbits the camera (`FreeLookCamera.mouseLook`, the mouse delta), the ship's mouse steering pauses; the middle button held
   works without mouse steering; docked at an object (`ObjectDocking.PlayerDocked`, the guns off) the left button held

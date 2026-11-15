@@ -760,6 +760,13 @@
     border-color: rgba(216, 236, 247, 0.55);
 }
 
+.mods-pad-x.pad-face--switch {
+    background-color: rgb(16, 21, 28);
+    border-width: 2px;
+    border-color: rgba(216, 236, 247, 0.55);
+    color: #E3ECF3;
+}
+
 .input-gamepad .mods-pad-x {
     display: flex;
 }
@@ -2181,6 +2188,15 @@
 .layout-tv .mods-preview {
     height: 220px;
     min-height: 0;   /* a DLC's place line or a long path: the picture goes rather than the buttons onto the footer */
+}
+
+/* Remake (#242): a wide phone's panel is shorter still (an iPhone 17 Pro Max with a two-line mod name and 64-unit touch
+   buttons put the action rows on the footer): there the picture and the description give way, down to nothing. */
+.layout-phone .mods-preview,
+.layout-handheld .mods-preview,
+.layout-phone .mods-desc-scroll,
+.layout-handheld .mods-desc-scroll {
+    min-height: 0;
 }
 
 /* Remake mods: the loading screen (ModLoadingView) on the startup splash and the fade before a game. */

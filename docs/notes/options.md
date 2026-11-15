@@ -7,7 +7,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 - Text comes from the original table via `Localization.Get(textId)`; remake-only strings via `Extra(key, english)`,
   translated per language in `Resources/GoF2Localization/extra_<lang>.json` (a { key: text } object, loaded with the
   table by `Localization.LoadExtra`; 11 languages, KiritoJPK, PR #54, then Chinese and Hindi; a key it lacks stays
-  English: add new keys there when adding Extra texts). **Languages in the menu** (`LanguageTables.Offered`, the one
+  English: add new keys there when adding Extra texts, to every language, `ExtraTablesShareTheirKeys`; 169 keys of
+  the cruise drive, rifts, encounters, devices, hazards and cargo jettison had gone into none and were translated into
+  all 13 on 2026-11-13, with text_ja's 594 / 1719 / 1720 the original left in English). **Languages in the menu** (`LanguageTables.Offered`, the one
   list: `MainMenuBuilder.Languages` writes it into the main menu scene's `MainMenu.languageCodes / Names / Tables` for
   its language buttons, and the in-game Options' language row reads it; the station scene and
   `Resources/GoF2LanguageTables` take every `text_*.json`, `LanguageTables.TableFor`). **In a running game** the pause
@@ -91,7 +93,9 @@ FSR needs shader model 4.5, STP compute and no GLES, so Vulkan on Android; DLSS 
 force MSAA off) and its quality (DLSS / FSR 2+: Native = DLAA / native AA, Quality, Balanced, Performance, Ultra
 performance; they pick their resolution from it, not the render scale) and MSAA (the URP asset; 0 = the platform's own),
 bloom (Off / Remake: URP Bloom on the HDR glow, threshold 1 / Original: `ClassicBloomPass`, see below / Both: the two
-together, #45), hangar depth of field (see "Station scene"), lens flare, skies (`Settings.SkyStyle`: Original (default) /
+together, #45; "Bloom strength" 25..200 %, a player's wish, 2026-10-18: `Settings.BloomStrength`, a factor on each scene
+volume's own Bloom intensity in `Bootstrap.ApplyPostProcessing`, shown with Remake and Both, the original's pass is not
+scaled), hangar depth of field (see "Station scene"), lens flare, skies (`Settings.SkyStyle`: Original (default) /
 Enhanced / EVERSPACE 2 style / Combined, not in the presets, space-scene.md "Skies"), nebula clouds
 (`Settings.NebulaClouds`, off by default, not in the presets: space-scene.md "Nebula clouds"), hangar ship shadows (Off / Player ship only /
 All ships, see "Station scene"), levels of detail (see "Assembled prefabs"), field of view (chase camera, default the
@@ -102,7 +106,10 @@ button hints (Gameplay, `Settings.InputHints`; "Button hints in flight" until 20
 the menus: the flight HUD's, the station's and the star map's hint rows through `InputGlyph.TrackHintsOption`, which
 sets `display: none` inline as well as `.hints--off`, since a screen's own rules beat the class (`.hangar-open .station-hints`
 kept the hangar window's row); the menus' prompt bars in `MenuKeys.Bar`; Inspect ship's / Action Freeze's in
-`OrbitViewUi.BuildHints`, whose tappable hints stay on touch, their only Hide UI / Screenshot buttons), the flight HUD
+`OrbitViewUi.BuildHints`, whose tappable hints stay on touch, their only Hide UI / Screenshot buttons), button hint
+size (#171, Gameplay, `Settings.HintScalePercent` 50-100 %: the flight HUD's, station's and star map's rows drawn smaller
+by a transform around their anchor, `InputGlyph.ScaleHints`, so their neighbours stay put; in flight times the HUD size,
+`FlightHud.ApplyHudLook`; the menus' bars and the station windows' rows keep the Interface / Text size), the flight HUD
 (Gameplay tab, `Settings.HudMode`, players' request "for maximum immersion": Full / Minimal / Off, also the Toggle HUD
 binding, F1, which steps through them with a HUD message; `FlightHud` puts `.hud-minimal` / `.hud-off` on the root,
 FlightHud.uss hides by `visibility`, since the markers' layers, the status panel and the readout set their display in
@@ -110,11 +117,16 @@ code: Minimal hides the status bars, the radar ellipse, every marker (ships, lan
 readouts, the hints, the cooldown icons, the hit arcs and, with keys or a controller, the throttle gauge / secondary
 plate / weapon strip; Off also the crosshair, lock ring, action prompt, missile warning, charge bar, mouse reticle /
 stick circle and the arrival's orbit information; always kept: the HUD messages, the radio, conversations, the menus,
-the mining and hacking games, the touch controls (and on touch their secondary plate) and game over; the lens flare is
+the mining and hacking games, the touch controls (and on touch their secondary plate) and game over; in Minimal a new
+lock's plate shows for 4 s and fades (a player's wish, 2026-10-17, for the Informer's / Hijacker's name:
+`FlightHud.LateUpdate`, `.lock-plate--peek`; the hull's percentage changing doesn't show it again); the lens flare is
 its own option), Show FPS (`FpsCounter`, its own panel over every screen; where, Graphics "FPS counter position",
 `Settings.FpsPosition`, shown while Show FPS is on: the four corners and the middles of the four sides, top centre by
 default, clear of the safe area; at the top centre the flight HUD's lock plate and messages move under it, `.hud-fps`,
-#137), every weapon's own shot sound (`Settings.EachWeaponSound`, Sound tab), the battle music tracks one by one
+#137), every weapon's own shot sound (`Settings.EachWeaponSound`, Sound tab), the Supernova Challenge's combo sounds
+(#165, Sound tab, `Settings.ChallengeComboSounds`, on: SV_Mode_01..10 in `ChallengeOrbit.PlaySound`), the medal sound
+(#165, Sound tab, `Settings.MedalSound`: the remake's chime, the original's info blip, or none; the toast in
+`StationMenu`), the battle music tracks one by one
 (Sound tab, `MusicTracks`, "Music tracks off" in npcs-and-combat.md), mute in background (desktop,
 `Settings.MuteInBackground`: `Bootstrap` zeroes the listener volume while the window is unfocused), double-press fire
 for auto-fire (`Settings.KeyAutofire`, off by default: the touch fire button's 249 ms latch, `AutofireLatch`, on the
@@ -189,7 +201,8 @@ verified on a Mac or an iPhone.
   **An option added to the presets later** goes into `AddedExperienceKeys` (and a column of every row and of
   `DefaultsBefore`): the migration's version 2 (`ExperienceVersion`) gives an install migrated before it the preset's
   value when its other options match one (`KeepPresetForAddedKeys`), so a Remake player's row doesn't turn Custom; bump
-  the version for the next one. First: `bombArming` (2026-11-05).
+  the version for the next one. First: `bombArming` (2026-11-05); `derelictWrecks` (2026-11-13, version 3; "Derelict
+  freighters", see supernova.md).
 - **Welcome screen** (remake, 2026-11-04, `MainMenuWelcome`): on the first start, 1.3 s after the main buttons come in (not
   over a panel), the menu's own dialog: what the remake is and where things are (Options > Gameplay, Controls / Key
   bindings, Mods, Multiplayer and Co-op, named by their buttons' own texts), Next, then "How do you want to play?" with

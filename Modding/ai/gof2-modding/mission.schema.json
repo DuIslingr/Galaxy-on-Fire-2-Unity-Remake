@@ -590,11 +590,12 @@
                 "respawned",
                 "hacked",
                 "pad",
+                "scanned",
                 "joined",
                 "left",
                 "pvpkill"
               ],
-              "description": "When: died = The player is destroyed, docked = The player docks, launched = The player launches, kill = A spawned ship is destroyed, cleared = Every spawned enemy is gone, entered = The player enters an orbit, near = The player gets near a point, respawned = The player respawns, hacked = The player hacks a wreck, pad = The player docks at a station's pad outside, joined = A player joins, left = A player leaves, pvpkill = A player destroys another",
+              "description": "When: died = The player is destroyed, docked = The player docks, launched = The player launches, kill = A spawned ship is destroyed, cleared = Every spawned enemy is gone, entered = The player enters an orbit, near = The player gets near a point, respawned = The player respawns, hacked = The player hacks a wreck, pad = The player docks at a station's pad outside, scanned = The player scans a ship, joined = A player joins, left = A player leaves, pvpkill = A player destroys another",
               "default": "died"
             },
             "station": {
@@ -1084,6 +1085,67 @@
             "at": {
               "type": "string",
               "description": "At (x y z, game units from the station; empty: cleared); \"x y z\" in game units (20 = 1 m)"
+            },
+            "pos": {
+              "type": "array",
+              "description": "the node's place in the builder's graph view [x, y] (optional)"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "title": "Pickup",
+          "description": "A glowing orb in an orbit, its name on the HUD; a \"near\" at its point collects it (remove it there)",
+          "properties": {
+            "type": {
+              "const": "pickup"
+            },
+            "who": {
+              "$ref": "#/$defs/who",
+              "description": "For",
+              "default": "@a"
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "show",
+                "remove",
+                "clear"
+              ],
+              "description": ": show = Show one, remove = Remove one (collected), clear = Remove them all",
+              "default": "show"
+            },
+            "station": {
+              "anyOf": [
+                {
+                  "type": [
+                    "integer",
+                    "string"
+                  ],
+                  "description": "In the orbit of; the game's number, its name, or a key \"mod_id:id\""
+                },
+                {
+                  "$ref": "#/$defs/wire"
+                }
+              ],
+              "description": "In the orbit of; the game's number, its name, or a key \"mod_id:id\""
+            },
+            "at": {
+              "type": "string",
+              "description": "At (x y z, game units from the station); \"x y z\" in game units (20 = 1 m)",
+              "default": "0 0 20000"
+            },
+            "name": {
+              "$ref": "#/$defs/text",
+              "description": "Its name (on the HUD; remove uses it)"
+            },
+            "marked": {
+              "type": "boolean",
+              "description": "Its name on the HUD",
+              "default": true
             },
             "pos": {
               "type": "array",

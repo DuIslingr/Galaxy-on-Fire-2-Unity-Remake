@@ -114,6 +114,11 @@ generator).
     out, the blueprint is unstarted again (station -1). Saved with the game; a save from before has 0 per slot. The
     200 $ shipping is not refunded. Produce / ResetAtStation clear the share (`BlueprintWithdrawTests`,
     `BlueprintSaveTests`).
+  - **At the owned Kaamo Club** (remake, a player's wish, 2026-10-18: no trips to the Store tab and back): ADD takes an
+    ingredient from the hold, then from the storage (`Hangar.BlueprintSupply` / `TakeForBlueprint`); the row's left
+    amount and the trade box ("SHIP + STORE") count both, the badge reads "STORE | n t". TAKE still goes to the hold;
+    staged units a freight refuses go back to the hold and, without room, to the storage (`ReturnFromBlueprint`).
+    Add all is the held ADD arrow (`HeldTrade`, the owner's choice of 2026-10-21 over separate buttons).
 - **Wingmen** (`Wingmen`, `Traffic.SpawnWingmen`, `NpcShip` wingman mode): spawned next to the player in every orbit
   (model seeded by the name length, 600 hull, unarmed in a Challenge), formation slots, attack the first hostile ship;
   the flight menu's Wingmen entry (306) gives the commands 307-311 (fire at will, attack my target, secure next
@@ -170,4 +175,10 @@ generator).
   `noMedalsFireworks`; 650 / 651 congratulate on the medals). The event conditions `medals(allgold | allsupernova)` read
   the same gates, so mod content behind them stays reachable; `medals(gold ...)` counts 0. Save v18 (`noMedals`; older
   saves have medals); the slot rows say NO MEDALS. Tests `NoMedalsTests`.
+- **Mods' medals** (`Modding.ModMedals`, medals.json, 2026-11-13) come after the 45 in the grid, the toast and the
+  conditions, with tiers of their own: see docs/notes/mods.md "Mod medals".
 - Type 15 Ore Mining (unreachable in the original's generator) is only rolled in multiplayer sessions (see "Multiplayer").
+
+- **Bonus percentage** (767 "#P %"): `(int)(getMissionBonus x 100f)` (SpaceLounge::startChat 0x19a582,
+  Globals::getAgentMissionText 0xfbd62; the decompile drops the x 100), cut, not rounded: standing 53 reads 52 %, 59 reads
+  58 % (the only two from 0 to 100 that differ). `LoungeChat` rounded it until 2026-11-15.

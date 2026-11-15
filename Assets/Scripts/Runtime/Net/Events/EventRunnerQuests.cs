@@ -14,14 +14,27 @@ namespace GoF2Remake.Events
 {
     public static partial class EventRunner
     {
-        /// <summary>Every event graph's details (its Start node's Mission settings), read again after 30 s or when the mods change.</summary>
-        static List<MissionInfo> AllGraphs()
+        /// <summary>Every event graph's details (its Start node's Mission settings), read again when the mods change or
+        /// the Events folders' files do (looked at every 30 s).</summary>
+        internal static List<MissionInfo> AllGraphs()
         {
-            if (graphCache != null && EventHost.Now - graphCacheTime < 30f && graphCacheMods == Modding.ModManager.Revision) return graphCache;
+            if (graphCache != null && graphCacheMods == Modding.ModManager.Revision)
+            {
+                if (EventHost.Now - graphCacheTime < 30f) return graphCache;
+                // Modified: only when a file there changed. Reading and compiling every graph each 30 s stalled the
+                // game for 0.75 s on an iPhone (#275: CheckQuestStarts asks every second in flight).
+                graphCacheTime = EventHost.Now;
+                if (FolderStamp() == graphCacheFiles) return graphCache;
+            }
             graphCache = new List<MissionInfo>();
             graphCacheTime = EventHost.Now;
+            graphCacheFiles = FolderStamp();
+            GraphCompiles++;
+            var names = List();
+            // after List: its ModManager.Active may scan the mods and bump the revision, which made the list stale as soon
+            // as it was made (read again on the next call, every second)
             graphCacheMods = Modding.ModManager.Revision;
-            foreach (string name in List())
+            foreach (string name in names)
             {
                 string text = Load(name, out string from, out string error);
                 if (text == null || error != null) continue;
@@ -139,7 +152,7 @@ namespace GoF2Remake.Events
                 int i = st.index, sys = st.system;
                 if (i < 0 || i == Session.StationIndex || sys < 0 || sys >= visible.Length || !visible[sys]) continue;
                 if (i == 10 || i == 100 || i == 101 || i == 108 || (i >= 102 && i <= 104)) continue;
-                if (sys == 25 || sys == 27 || sys == 32 || sys == 33 || PirateBases.SystemHasBase(db, sys)) continue;
+                if (sys == 25 || sys == 27 || sys == 32 || sys == 33 || Modding.ModWorld.PirateHideout(sys) || PirateBases.SystemHasBase(db, sys)) continue;
                 if (World.OrbitLayout.IsEmptyOrbit(i, Session.WorldIndex) || PirateEventRules.InStoryline(i)) continue;
                 if (Modding.ModWorld.IsMobile(i) || Modding.ModWorld.IsMissingStation(i)) continue;
                 picks.Add(i);
@@ -184,6 +197,18 @@ namespace GoF2Remake.Events
             if (string.IsNullOrWhiteSpace(expression)) return true;
             var probe = new EventRun("condition", new List<Step>(), new MissionInfo(), new HashSet<ulong> { 0 }, -1, LocalPilot.Instance, new Dictionary<string, double>());
             try { return probe.Probe(expression) != 0; }
+            catch (Exception e) { error = e.Message; return false; }
+        }
+
+        /// <summary>Remake (mods' medals, Modding.ModMedals "counter"): an expression's value outside any event, as Condition
+        /// reads it. False with 'error' when it can't be read.</summary>
+        public static bool Number(string expression, out double value, out string error)
+        {
+            value = 0;
+            error = null;
+            if (string.IsNullOrWhiteSpace(expression)) { error = "empty"; return false; }
+            var probe = new EventRun("number", new List<Step>(), new MissionInfo(), new HashSet<ulong> { 0 }, -1, LocalPilot.Instance, new Dictionary<string, double>());
+            try { value = probe.Probe(expression); return true; }
             catch (Exception e) { error = e.Message; return false; }
         }
 

@@ -73,6 +73,7 @@ namespace GoF2Remake
             Visuals.PreTransformGuard.Install();  // Android Vulkan: the scene never drawn straight to the pre-rotated back buffer
             HitchLogger.Install();                // development builds: frame hitches to hitches.log
             UI.ScreenshotKey.Install();           // F12: a screenshot to the pictures library
+            UI.IssueReport.Install();               // keeps the last log lines for an issue report (the pause menu's)
             UI.DiscordPresence.Install();         // desktop: Discord Rich Presence
             Flight.Haptics.Install();             // controller rumble and phone vibration
             UI.FpsCounter.Install();              // the frame rate option (Settings.ShowFps)
@@ -420,7 +421,12 @@ namespace GoF2Remake
             {
                 if (!v.isGlobal || v.sharedProfile == null) continue;
                 var p = v.profile;
-                if (p.TryGet(out Bloom bloom)) bloom.active = Settings.Bloom;
+                if (p.TryGet(out Bloom bloom))
+                {
+                    bloom.active = Settings.Bloom;
+                    // The strength option scales the profile asset's own intensity ('p' is this volume's runtime copy).
+                    if (v.sharedProfile.TryGet(out Bloom own)) bloom.intensity.value = own.intensity.value * Settings.BloomStrength;
+                }
                 if (!p.TryGet(out ColorAdjustments color)) color = p.Add<ColorAdjustments>();
                 color.postExposure.overrideState = true;
                 color.postExposure.value = Settings.BrightnessExposure;

@@ -6,7 +6,7 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 - **Mod Builder** (remake, experimental; every kind of content, see "Its other kinds" below): the main menu's Mods button opens a hub
   (`MainMenu.BuildModsHub`, `modsHubPanel`: Mod Browser / Mod Builder; Back from either returns to it). The projects page
-  (`ModBuilderProjects`, `modBuilderPanel`, styles `.mb-*` in MainMenu.uss): `persistentDataPath/ModProjects/<id>`
+  (`ModBuilderProjects`, `modBuilderPanel`, styles `.mb-*` in MainMenu.uss): `persistentDataPath/ModProjects/<id>` (Android: also synced with a picked folder, "Mods folder (Android)" in mods.md)
   (`Modding.ModProject`: a mod folder in the normal format, mod.json / ships.json / models / textures, plus builder.json
   (never exported): each ship's test loadout, the test cheats, the last ship), the field above the list both searches it
   (every word in the name, id, author or description) and names a new project (Create / Enter), each row with what it
@@ -38,7 +38,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `modelOffset`, game units in the ship's frame, nudges of 2 % and Centre on pivot; moves and resizes carry the hardpoints
   along, every change re-measures the hangar height), hangar height + Auto, hull textures: one
   `materials` entry for all meshes, for GLBs without their own), Hardpoints (add by clicking the hull, list, X / Y / Z, mirror,
-  centre, delete, slot counts following the points, a turret's facing (see "Missile turrets and salvos"), engine flame
+  centre, delete (the button or the Delete key; not Backspace, the key for correcting a number: a player's wish,
+  2026-10-17), slot counts following the points, a turret's facing (see "Missile turrets and salvos"), engine flame
   shape / half width / half height / length / particles: `glowShape`, see mods-models.md "engine glow discs"), Loadout
   (per-slot item pickers, Auto-fill, god mode / infinite ammo). The 3D editor is `World.ModBuilderGizmo` (balls drawn over the
   hull by `Hidden/GoF2/BuilderGizmo`, Unity-style move arrows along the ship's axes (X = game +x = the pilot's left), a drag on
@@ -180,6 +181,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (amber) and pads (red) are `ModBuilderGizmo` balls bound to the station itself (`ModBuilderSpaceViewOrbit`: its 180 deg
   turn makes `WeaponSystem.MountToLocal` + the station's rotation = `OrbitLayout.ToUnity`, so the balls' game units are the
   orbit's), dragged over the hull or along the arrows (Ctrl: 100 units) and saved on release (the orbit built again).
+  A click that moved nothing only selects the ball, and the selection outlives the rebuild (`orbitSelected`): until
+  2026-11-12 every click rebuilt the orbit with a new gizmo and nothing selected, so the arrows never showed and the
+  arrival / jumpgate (off the hull) couldn't be dragged at all, only typed (a Discord report).
   Systems: "Held by pirates". Missions: Take an item, Bring cargo's "Hand it in", Restrict travel's "The Khador Drive only",
   Spawn's hull x / gun damage x, Spawn an NPC ship type (an NPC ship type picker, `RefKind.NpcShip`: the game's five, the
   project's, other mods'), When something happens "docks at a station's pad outside" (event-graphs.md). A bar mission's "Who
@@ -391,3 +395,29 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   map (glTFast makes them only for a glTF normal texture, so these maps shaded wrong). Checked in Play mode with the Narn
   zip (79 865 triangles, ~100 m, 2048 px textures): the project, the report, the textured hull on the turntable, nose
   forward. Tests `OriginalModImportTests`. Not yet: a station's or weapon's `.aem` as its replacement.
+- **Flight rules** (2026-11-12; mods.md "Flight rules"): the menu's Flight rules (`ModBuilderScreenFlight.ShowFlightRules`)
+  edits the project's flight.json (`ModProject.FlightRules`, read / saved / undone with the rest; written only while it has
+  a field), a ship's page a Flight section (`ModBuilderViewMore.BuildShipFlight`: "Flies with" = `flightStyle`, the
+  `flight` bonuses, a toggle for its own `rules`). Both list every `FlightRules` field by its `[Header]` groups with the
+  game's value (`FlightRulesFields`); a value set back to it is removed. Its texts are English only (`mbRule_*`,
+  `mbRuleNote_*`, `mbFlightGroup_*`). Not yet tried in the builder's UI.
+- **Scripts kind** (2026-11-14; mods.md "Mod scripts"): `ModBuilder.Kind.Scripts` (before AiTools, `KindCount` 17), a
+  tab of the hangar screen (`ModBuilderViewScripts`) and a card on the projects page ("N scripts"). The project's files
+  (`ModProjectScripts`: `ScriptFiles` main.lua first, then the start files, then the modules; `AddScript` (the first
+  is main.lua with `ScriptTemplate`, a module gets a `local M = {}` skeleton), `RenameScript`, `RemoveScript`,
+  `ScriptName`: a-z 0-9 _ -, folders with /, no dots; never outside scripts/). Left: the files with "runs when the mod
+  starts" / "module: require(...)", New / Rename / Remove. Right, as wide as the screen (`.mbv-root--scripts .mbv-right`
+  from the left panel to the right edge; the kind doesn't fly, so the panel reaches the bottom): the file in a multiline
+  `TextField` with a monospace system font (`CodeFont`: Consolas, Cascadia Mono, Menlo, DejaVu Sans Mono ... through
+  `FontAsset.CreateFontAsset(family, style, size)`; none found = the interface font), Tab types four spaces, the
+  cursor's line and column, the syntax check 0.25 s after the last key (`ModScripts.SyntaxError`; a click on the error
+  goes to its line), **Save & run** (the file saved, `RequestReload`, then the scripts started afresh unless the changed
+  file restarted them already, `ModScripts.Starts`), **API reference** (`ModScripts.ApiHelp` in a read-only field) and the
+  console (the project's `ModScripts.Lines`, errors red, `game.message` lines as "[message] ..."). A typed change is
+  written 0.4 s after the last key (`SaveScript` -> `MarkDirty`: a save point, so an undo step;
+  `ModProjectHistory.TrackedFolders` has `scripts`). No syntax colouring, no line numbers beside the text. The MCP
+  server's `write_file` takes `scripts/*.lua` and answers a syntax error and the scripts' errors (`syntaxError`,
+  `scriptErrors`). Verified in Play mode (2026-11-14, 1280 x 720): the tab with two files, the template, a broken text's
+  error with its line, Save & run writing the file and the console showing what the script printed (`require`,
+  `Session`, `game.find`, `game.describe`). Not yet: New / Rename / Remove through their dialogs, Tab, the error click,
+  undo of a script edit, a phone's screen.

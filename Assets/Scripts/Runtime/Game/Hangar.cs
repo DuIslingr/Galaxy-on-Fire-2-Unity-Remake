@@ -123,10 +123,17 @@ namespace GoF2Remake.Data
 
         /// <summary>Item::mixItems: everything in cargo or in stock, by item index. Remake: an item number the item table
         /// doesn't have is left out (logged once): the window reads every row's item, and one unknown number in the hold
-        /// or the stock threw on every trade (crash reports from a Windows build, 2026-10-12, source not found yet).</summary>
-        public List<int> ShopItems() =>
-            Session.Cargo.Where(s => s.amount > 0).Select(s => s.item)
-                .Concat(Stock.items.Where(s => s.amount > 0).Select(s => s.item)).Distinct().Where(Known).OrderBy(i => i).ToList();
+        /// or the stock threw on every trade (crash reports from a Windows build, 2026-10-12, source not found yet).
+        /// Remake (PR #282, Settings.ShopByCategory, off by default): by category, then tech level, then index, so the DLC
+        /// items (indices after the base game's) sit beside their kind.</summary>
+        public List<int> ShopItems()
+        {
+            var items = Session.Cargo.Where(s => s.amount > 0).Select(s => s.item)
+                .Concat(Stock.items.Where(s => s.amount > 0).Select(s => s.item)).Distinct().Where(Known);
+            return (Settings.ShopByCategory
+                ? items.OrderBy(i => db.Item(i).categoryId).ThenBy(i => db.Item(i).techLevel).ThenBy(i => i)
+                : items.OrderBy(i => i)).ToList();
+        }
 
         static readonly HashSet<int> reportedUnknown = new HashSet<int>();
 
@@ -442,6 +449,7 @@ namespace GoF2Remake.Data
         /// <summary>A unit bought (-1, at 'price') or sold (+1) for the shared stock: at once, or into the batch.</summary>
         void Shared(int item, int delta, int price)
         {
+            Modding.ModScripts.Raise("trade", item, -delta, price, Station);   // the mod scripts: +1 bought, -1 sold
             if (!batching) { GameHooks.StockItemChanged?.Invoke(Station, item, delta, price); return; }
             if (batchItem >= 0 && batchItem != item) { EndBatch(); batching = true; }   // (never in a shop's batch: one item)
             batchItem = item;
@@ -500,6 +508,33 @@ namespace GoF2Remake.Data
         }
 
         static void AddToCargo(int item, int amount) => Shop.AddToCargo(item, amount);
+
+        // ---- blueprint ingredients -----------------------------------------------------------------------------
+        // Remake (a player's wish, 2026-10-18: "treat the stuff stored at Kaamo as accessible for blueprint building"): at
+        // the owned club a blueprint takes its ingredients from the hold and then from the storage, without the trip
+        // through the Store tab.
+
+        /// <summary>The units of 'item' a blueprint can take here: the hold's, at the owned club the storage's too.</summary>
+        public int BlueprintSupply(int item) => CargoOf(item) + (Storage ? StockOf(item) : 0);
+
+        /// <summary>One unit of 'item' out for a blueprint: from the hold, else at the owned club from the storage.</summary>
+        public bool TakeForBlueprint(int item)
+        {
+            if (CargoOf(item) > 0) { Shop.RemoveFromCargo(item, 1); return true; }
+            var row = Storage ? Stock.items.Find(s => s.item == item && s.amount > 0) : null;
+            if (row == null) return false;
+            if (--row.amount <= 0) Stock.items.Remove(row);
+            return true;
+        }
+
+        /// <summary>Units a blueprint hands back (a freight refused): into the hold; at the owned club what the hold has no
+        /// room for goes into the storage, where it may have come from.</summary>
+        public void ReturnFromBlueprint(int item, int units)
+        {
+            int store = Storage ? Mathf.Clamp(units - Mathf.Max(0, MaxLoad - Load), 0, units) : 0;
+            Shop.AddToCargo(item, units - store);
+            if (store > 0) KaamoClub.AddToStorage(new[] { new ItemStack(item, store) });
+        }
 
         // ---- mounting ------------------------------------------------------------------------------------------
 

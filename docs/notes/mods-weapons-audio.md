@@ -32,6 +32,12 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   unit long. Test `ModWeaponsTests.ABeamsSpriteRunsAlongTheBeamFacingTheCamera`; checked in an off-screen render. Loaded in the background with the rest
   (`ModLoading`, the menu's `Preload`). Verified in Play mode: the example's Plasma Lance (fired: violet bolts stretched
   along their flight, the flash at the gun, the ring impact, its own shot sound).
+  **The impact as the blast** (a modder's wish, 2026-10-18: "the fx of a missile's or bomb's explosion"): an `impact` the
+  mod gave itself (`WeaponFx.modImpact`; not one inherited from the base or an effect's base) is shown where a rocket /
+  missile hits in place of the burst (`GunRig.ShowImpact`) and where a bomb, mine or shock blast goes off in place of
+  its explosion, the blast sound kept (`GunRig.ShowBlast`: the player's `WeaponSystem.OnIgnited`, other players'
+  `NetShotMirror.Blast`, the builder's range); `false` = nothing. Not scatter shells (no impact pool). Test
+  `ModWeaponsTests.AModsImpactShowsWhereAMissileHits`.
 - **Weapon effects** (2026-11-01, the user's request: the Weapon fx kind adds whole effects and changes a game weapon's):
   `weaponfx.json` (`ModContent.WeaponEffectsFile`, `ModWeapons.Effects`): { "id", "name", "base", the fx fields }, keyed
   "mod id:id"; an item takes one with items.json `"fx": "<id>"` / `"<mod id>:<id>"` (`ParseEffect`: `File` is weaponfx.json
@@ -162,7 +168,13 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   track, systems.json `spaceMusic` / `stationMusic` / `battleMusic` and stations.json `music` (`ModWorld.SpaceMusic` via
   `Traffic.RaceSpaceMusic`, `ModWorld.StationMusic`; `ModWorld.BattleMusic` in Traffic's music switch for categories 1-3,
   one track or [low, medium, full], before CombatAssets.battleMusic: the Void, Specter and Most Wanted fights
-  keep theirs; 2026-11-05, for the GoF3 systems' combat layers; not in the Mod Builder's system page). All tracks load
+  keep theirs; 2026-11-05, for the GoF3 systems' combat layers; not in the Mod Builder's system page). stations.json
+  `spaceMusic` / `battleMusic` (2026-11-14, a Discord request) beat the system's (`ModWorld.SpaceMusicName` /
+  `BattleMusicName` look at the station first); `Traffic.CalmClip` plays a station's own (`OrbitSpaceMusic`) right after
+  the Void and the rescue, before the Kaamo Club / 101 / Supernova / deep science tracks, and ends in `RaceSpaceMusic`:
+  until then a system's `spaceMusic` reached only the cutscenes that call RaceSpaceMusic, never the flight's calm track.
+  The builder's station page has "Music in its orbit" (`ProjectStation.SpaceMusic`); battleMusic stays JSON only.
+  Test `ModBattleMusicTests.AStationsOrbitMusicBeatsItsSystems`. Not heard in game. All tracks load
   (kept compressed) when the mods change; the menu's Leave waits for `ModMusic.Ready` too.
 - **One clip per audio file** (`ModAudio.Load`'s cache, 2026-10-30): music, sounds, voices, ship and weapon sounds share it;
   a new mod revision reads only files whose date / size changed (a zip mod: the zip's), and `ModAudio.Sweep` destroys the

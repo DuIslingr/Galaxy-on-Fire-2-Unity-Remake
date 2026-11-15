@@ -51,14 +51,25 @@ namespace GoF2Remake.World
         {
             if (ship != null && ship.Spec.modBlueprint >= 0)
             {
-                // Remake mods: a derelict's blueprint, in a data crate drifting off the wreck (pulled in, it is learnt); none
-                // when it was learnt meanwhile (a blueprint is handed out once).
+                // Remake mods: a derelict's blueprint is learnt at once, like the hidden blueprints' (players' feedback,
+                // 2026-11-13: it was a data crate to pull in, which needs a tractor beam; #242: players didn't know to).
                 ship.DockingType = 0;
-                if (!Blueprints.IsUnlocked(ship.Spec.modBlueprint) && !Crate.HoldsAny(ship.Spec.modBlueprint))
+                LearnBlueprint(ship.Spec.modBlueprint);
+                return;
+            }
+            if (ship != null && ship.Spec.derelict)
+            {
+                // Remake (Settings.DerelictWrecks): a derelict's hold goes straight aboard, like the original's docked
+                // transfers (the same feedback: it was a crate); only what the hold has no room for is ejected in one. Now
+                // and then a blueprint too: one a lounge sells that this player doesn't know yet.
+                ship.DockingType = 0;
+                var rest = WreckField.TakeAboard(db, WreckField.DerelictLoot(db), text => GameHooks.FlightMessage?.Invoke(text));
+                int bp = UnityEngine.Random.Range(0, WreckField.DerelictBlueprintOdds) == 0 ? WreckField.DerelictBlueprint(db) : -1;
+                if (bp >= 0) LearnBlueprint(bp);
+                if (rest.Count > 0)
                 {
-                    Crate.Spawn(ship.transform.position + ship.transform.up * 300f * M, new[] { new ItemStack(ship.Spec.modBlueprint, 1) },
-                            ship.Spec.race, Crate.LookJunk);
-                    // #242: it drifted off without a word; players didn't know to pull it in.
+                    Crate.Spawn(ship.transform.position + ship.transform.up * 300f * M, rest, ship.Spec.race, Crate.LookJunk);
+                    GameHooks.FlightMessage?.Invoke(Localization.Get(322));
                     GameHooks.FlightMessage?.Invoke(Localization.Extra("hackCrateEjected", "Cargo container ejected. Use the tractor beam to check its contents."));
                 }
                 return;
@@ -70,6 +81,14 @@ namespace GoF2Remake.World
             Blueprints.Unlock(TrafficPlan.HiddenBlueprints[k].blueprint);
             ship.DockingType = 0;
             QueueLine(3156 + k, 0, $"BLUEPRINT_RECOVERED_{k}");
+        }
+        /// <summary>A hacked wreck's blueprint: known from now on, with the data crate's message (CombatRadar.Capture).</summary>
+        static void LearnBlueprint(int product)
+        {
+            bool known = Blueprints.IsUnlocked(product);
+            Blueprints.Unlock(product);
+            GameHooks.FlightMessage?.Invoke(string.Format(known ? Localization.Extra("bpKnown", "Blueprint already known: {0}")
+                                                                : Localization.Extra("bpFound", "Blueprint found: {0}"), GameNames.Item(product)));
         }
         /// <summary>An uncovered criminal is alive (Radar::draw: music 151).</summary>
         public bool WantedUncovered => wantedShip != null && wantedShip.Target.Alive && wantedShip.alwaysEnemy;
@@ -273,11 +292,12 @@ namespace GoF2Remake.World
         /// <summary>The supernova system (27) before campaign 0x9e: its own calm music (148).</summary>
         bool SupernovaCalm => !Session.FreePlay && Session.CampaignMission < 0x9e && (db.Stations.Find(s => s.index == StationIndex)?.system ?? -1) == 27;
         /// <summary>DAT_00252010[race]: the system race's space track (Globals::playMusicAndFadeOutCurrent(1)).</summary>
-        public AudioClip RaceSpaceMusic() => Modding.ModWorld.SpaceMusic(StationIndex)   // remake mods: a system's own space music
+        public AudioClip RaceSpaceMusic() => Modding.ModWorld.SpaceMusic(StationIndex)   // remake mods: the orbit's / system's own space music
             ?? (assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[Mathf.Clamp(Standing.Look(SystemRace), 0, 3)] : null);
         /// <summary>Radar::draw 0x157c6c: the calm track (no hostile ship). The alien orbit and a Void-attacked station 145,
         /// campaign 1 (the rescue) 143, the Kaamo Club 146, 101 147, the supernova system the mission target's 2241 (before
-        /// 0x6a) / 2242 or else 148, the deep science orbits (10 / 100) 152, else the system race's (DAT_00252010).</summary>
+        /// 0x6a) / 2242 or else 148, the deep science orbits (10 / 100) 152, else the system race's (DAT_00252010).
+        /// Remake mods: a station's own "spaceMusic" after the Void and the rescue, a system's in place of its race's.</summary>
         public AudioClip CalmClip()
         {
             var story = StoryAssets.Load();
@@ -285,6 +305,7 @@ namespace GoF2Remake.World
             bool campaign = !Session.FreePlay;
             if (VoidAttack) return story?.voidMusic;
             if (campaign && Session.CampaignMission == 1) return story?.introAtmo;
+            if (Modding.ModWorld.OrbitSpaceMusic(StationIndex) is AudioClip own) return own;   // remake mods: the orbit's own
             if (StationIndex == KaamoClub.Station) return assets.homeBaseMusic;
             if (StationIndex == 101) return assets.valkyrieMusic;
             if (SupernovaCalm)
@@ -295,7 +316,7 @@ namespace GoF2Remake.World
                 return target ? (Session.CampaignMission < 0x6a ? sn?.mission102Loop : sn?.mission102Loop2) : sn?.gammaRayMusic;
             }
             if (StationIndex == 10 || StationIndex == 100) return assets.deepScienceMusic;
-            return assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[Mathf.Clamp(Standing.Look(SystemRace), 0, 3)] : null;
+            return RaceSpaceMusic();   // a mod system's own "spaceMusic", else the race's
         }
         void UpdateMusic(float dt)
         {
@@ -340,7 +361,7 @@ namespace GoF2Remake.World
                              : musicCategory == 5 ? sn?.stealthMusic1
                              : musicCategory == 6 ? sn?.stealthMusic2
                              : (GoF2Remake.World.EncounterMusic.Current is string em ? Modding.ModMusic.Track(em) : null)   // remake mods: an encounter's own "music"
-                               ?? Modding.ModWorld.BattleMusic(StationIndex, musicCategory)   // remake mods: a system's own "battleMusic"
+                               ?? Modding.ModWorld.BattleMusic(StationIndex, musicCategory)   // remake mods: an orbit's / system's own "battleMusic"
                                ?? (assets.battleMusic != null && assets.battleMusic.Length == 3 ? assets.battleMusic[musicCategory - 1] : null);
                     music.clip = clip = Modding.ModMusic.Replace(clip);   // a mod's track of the same name
                     if (clip != null) music.Play();

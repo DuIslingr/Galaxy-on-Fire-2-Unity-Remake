@@ -1,7 +1,9 @@
 # Making mods for the Galaxy on Fire 2 Unity Remake
 
-A mod is a folder (or a `.zip`) of plain files: JSON for data, PNG for images. Mods contain no code, so a mod you download can't
-harm your computer. Players turn mods on and off in the main menu's **Mods** screen.
+A mod is a folder (or a `.zip`) of plain files: JSON for data, PNG for images. Most mods contain no code. A mod may also
+carry **scripts** (Lua, see [Scripts](#scripts)): those run inside the game only, without access to files, the network or
+other programs, so a mod you download can't harm your computer, and the game asks before it runs a mod's scripts.
+Players turn mods on and off in the main menu's **Mods** screen.
 
 **Making a mod in the game:** main menu > **Mods** > **Mod Builder** (experimental) makes projects in this same format
 without writing any JSON: new ships from a `.glb` model or on one of the game's ship models (no 3D file needed), or
@@ -26,6 +28,7 @@ in the game:
 | Systems | the star map | every system shown: drag yours to their place, their gates, sky, sun, music, stations |
 | Stations, Weapon fx | in space | a station in its own orbit (model, size, turn, rooms, planet); weapons firing from one ship onto another |
 | NPC ships | in space | capital ships, freighters and bosses nobody flies, new or the game's changed: the hull beside the station, hardpoints and docking pads clicked onto it, escorts, loot, where and how often they come, the dock's shop, launches |
+| Scripts | a text editor | the project's Lua files (`scripts/`): a syntax check as you type, **Save & run**, an API reference and a console with what they print and their errors (see [Scripts](#scripts)) |
 | Hangars & bars | the room itself | a `.glb` room or one of the game's (its markers filled in), the markers clicked into the room, light, fog, lens |
 
 Wherever content names other content (a mission's speaker, a station's system, a blueprint's product, a campaign's ship) the
@@ -105,6 +108,8 @@ What mods can do so far:
 - **Build on other mods**: a story mod can use the ships, items and systems of a mod it depends on.
 - **Make a whole new game**: a campaign of its own under New Game, with its own start, galaxy, shops and NPC ships.
 - **Translate** their own texts into any of the game's languages.
+- **Run scripts**: Lua code for what the files can't express, with the game's events, its data and its own classes within
+  reach (see [Scripts](#scripts)). Players are asked before a mod's scripts run.
 
 **Image formats:** wherever this guide asks for a PNG (icons, portraits, textures and skins, planets, suns, skies, card art,
 the preview), JPG, TGA (uncompressed or RLE), BMP, DDS (DXT1, DXT3, DXT5, ATC or uncompressed; not BC7) and the game's own `.aei`
@@ -284,7 +289,7 @@ energy cells.
 | `agility` | 28 | Steering nozzle handling bonus |
 | `lockTimeMs` | 29 | Scanner lock time (ms) |
 | `showClassAAsteroids` | 30 | 1 = marks class-A asteroids (Ultrascan) |
-| `radarShowsCargo` | 31 | 1 = shows a locked ship's cargo |
+| `radarShowsCargo` | 31 | 1 = shows a locked ship's cargo (its first entry); 2 = its whole hold (see [Scanner readouts](#scanner-readouts)) |
 | `drillSpeed` | 32 | Mining laser speed |
 | `miningYield` | 33 | Mining laser yield |
 | `cabins` | 34 | Passenger cabins |
@@ -316,6 +321,9 @@ energy cells.
 | `freeBoostFactor` | 121 | Free flight's boost top speed in hundredths of the top speed (350 = x3.5) instead of the booster's own |
 | `tractorTargets` | 122 | Tractor beams: how many containers it pulls at once, 1 to 8 (default 1; see [Multi-grab tractor beams](#multi-grab-tractor-beams)) |
 | `tractorRange` | 123 | Multi-grab tractor beams: how far the extra beams reach for containers (game units, 20 per metre; default 30000 = 1.5 km) |
+| `scanShip` | 140 | Scanners: 1 = the lock plate names the locked ship's hull, "Pirate · Phantom 85%" (see [Scanner readouts](#scanner-readouts)) |
+| `scanHitpoints` | 141 | Scanners: 1 = a new lock shows the ship's shield, armor and hull |
+| `scanWeapons` | 142 | Scanners: 1 = a new lock shows the ship's weapons |
 | `tractorNoLock` | 137 | Tractor beams: 1 = the scanner never locks a container; every beam takes containers by itself (see [Multi-grab tractor beams](#multi-grab-tractor-beams)) |
 | `shieldDamage` | 124 | A weapon's damage to a shield in percent (default 100; the Disruptor Laser and items based on it 200). What the shield doesn't absorb hits the armor and hull at the plain damage. Only ships with a shield feel it: the players (each other in multiplayer), not the game's NPCs |
 | `echoDelayMs` | 127 | A second, weaker blast at each hit, this many ms after it (0 or none = no echo; see [Echo blasts](#echo-blasts)) |
@@ -702,6 +710,38 @@ is still taken the usual way, by locking the ship for the beam's `tractorLockMs`
 }
 ```
 
+### Scanner readouts
+
+A scanner (an item based on one of the scanners, 81 to 84) tells what it locks. The game's own read a locked ship's first
+cargo entry (`radarShowsCargo` 1: the Ecoscan, Proscan and Ultrascan). A mod scanner can read more:
+
+- `"scanShip": 1` names the ship's hull on the lock plate, after its name or race: "Pirate · Phantom 85%".
+- `"scanHitpoints": 1` shows its shield, armor and hull on each new lock ("Hull 260/300"; the game's own ships have a hull
+  only).
+- `"scanWeapons": 1` shows its guns ("Weapons: Shredder Blaster, Hammerhead D1"), or "Unarmed".
+- `"radarShowsCargo": 2` reads the whole hold ("5t Gold, 2t Iron") instead of the first entry.
+
+The readouts share one line under the lock plate, for 4 seconds, like the game's cargo readout. They read the game's
+ships (traffic, event and mission ships), not other players.
+
+Every completed ship lock is a scan, with any scanner: the `scanned` trigger (`on scanned`, the **On** node's Ship
+Scanned, a quest's "The player scans a ship"; limited to a station like the others) runs with the player as `@trigger`
+and the ship's name as `%victim%` (its own, as the plate shows it, else its race's). Build a survey or an identification
+job on it: in an orbit that is the mission's (**Mission Orbit**: no other traffic), spawn the ship to identify, wait for
+the scan, pay the reward.
+
+```json
+{ "id": "deep_scan", "base": 84, "name": "Deep Scan Array", "techLevel": 8, "price": [240000, 260000],
+  "stats": { "lockTimeMs": 1200, "scanShip": 1, "scanHitpoints": 1, "scanWeapons": 1, "radarShowsCargo": 2 } }
+```
+
+```json
+{ "type": "spawn", "ship": "Phantom", "race": "pirate", "name": "Smuggler", "at": "0 0 30000" },
+{ "type": "on", "trigger": "scanned", "steps": [
+    { "type": "radio", "speaker": "pirate Snake", "text": "Stop scanning %victim%!" },
+    { "type": "reward", "credits": 5000 } ] }
+```
+
 ### Missile turrets and salvos
 
 Any gun or turret that fires ordinary shots (not beam lasers, bombs, mines or cluster missiles) can fire homing missiles
@@ -791,7 +831,7 @@ original's hue is replaced by yours (the Nirai Impulse's orange bolt turns purpl
 |---|---|
 | `projectile` | What flies. For a beam weapon the beam itself (stretched from the gun to what it hits along its length), for a missile the missile. |
 | `muzzle` | The flash at the gun on every shot. |
-| `impact` | What shows where a shot hits. |
+| `impact` | What shows where a shot hits. Given for a rocket or missile it replaces the game's burst at the hit, for a bomb, mine or blast weapon the game's explosion (the blast sound stays); `false` there: nothing to see. |
 | `shot` | The sound of a shot: a file, or a list of files (one is picked at random each shot). `.ogg`, `.wav` or `.mp3`. Or an item's number: that item's shot sound (`46`: the AMR Extinctor's launch). |
 | `shotLoops` | `true`: the shot sound loops while the trigger is held (like the auto-cannons); `false`: one per shot. Default: the base item's (or, with `shot` an item's number, that item's). |
 | `explosionSound` | Bombs, mines and blast weapons: the sound of the blast (a file, a list, or an item's number). |
@@ -1667,7 +1707,8 @@ meanwhile).
 
 The remake has two ways to fly the player's ship: the **original** (a throttle, the ship always flying forward) and **free
 flight** (the EVERSPACE 2-style option under Options > Controls: held thrust, strafe and up / down, a held boost, inertial
-dampeners). A mod decides for itself whether its content touches one, the other or both.
+dampeners). A mod decides for itself whether its content touches one, the other or both, and can change every number
+either style flies by (see [Flight rules](#flight-rules)).
 
 **Items** (their `stats`, see [Stats](#stats)): a booster's and a Steering Nozzle's own stats (`boostSpeed`,
 `boostRechargeMs`, `boostDurationMs`, `agility`) count in both styles unless `flightScope` keeps them to one. On top of that,
@@ -1699,7 +1740,7 @@ bonuses instead.
 | Field | |
 |---|---|
 | `flightStyle` | `"free"`, `"chorus"` or `"original"`: this ship always flies so, whatever the player's option (`"player"` or no field: the player's). Chorus flight is a free-flight style: the `free` bonuses and `flightScope` 2 count in it too. |
-| `flight` | Bonuses in % for both styles: `topSpeed`, `turnRate`, `strafeSpeed`, `acceleration` (free flight only: the original has none), `boostFactor` (free flight's boost in hundredths of the top speed), `fullStopDamage` and `lowSpeedResistance` (EVERSPACE 2's ship passives, see the [stats](#stats) 138 / 139: the guns hit harder while the ship stands still, it takes less once it has flown slower than 30 m/s for a second). `original` / `free` inside it: the same, for one style only. |
+| `flight` | Bonuses in % for both styles: `topSpeed`, `turnRate`, `strafeSpeed`, `acceleration` (free flight only: the original has none), `boostFactor` (free flight's boost in hundredths of the top speed), `fullStopDamage` and `lowSpeedResistance` (EVERSPACE 2's ship passives, see the [stats](#stats) 138 / 139: the guns hit harder while the ship stands still, it takes less once it has flown slower than 30 m/s for a second). `original` / `free` inside it: the same, for one style only. `rules`: the ship's own [flight rules](#flight-rules). |
 
 **Who decides the style**, first match: an event or mission (the **Set Flight Model** node, `/flightstyle`), the ship flown,
 the mod campaign (`campaign.json`'s `"flightStyle"`), a new-game option that is on (`gameoptions.json`'s `"flightStyle"`), then
@@ -1710,6 +1751,105 @@ tilt and VR always fly the original. Missions can ask with `freeflight` (1 in fr
 In the original a top speed bonus speeds the boost up too, and a turn rate bonus keeps the time the ship takes to reach its
 turn rate. Free flight's top speed, turn rate and acceleration otherwise come from the ship's handling (with its Steering
 Nozzle and Kaamo Club upgrades), its boost from the booster.
+
+### Flight rules
+
+Past the bonuses, **every number the player's ship moves by** can be changed: the top speed, how fast the turn rate builds
+and dies away, the strafe, the dodge, the level-out, free flight's acceleration, braking, dampeners, boost and auto-roll.
+A mod's **`flight.json`** sets them for every ship the player flies while the mod is on; a ship's `"flight": { "rules": { ... } }`
+sets them for that ship (over `flight.json`). Later mods win field by field; anything not named keeps the game's value.
+
+```json
+{ "baseSpeed": 3, "turnRampBase": 2.6, "freeTurnRateDeg": 160, "freeBrakeShare": 0.6, "dodgeDurationMs": 800 }
+```
+
+```json
+{ "override": 10, "flight": { "turnRate": 10, "rules": { "freeInheritInertia": 0, "freeTurningBoost": 3 } } }
+```
+
+A name the game doesn't know is reported (and ignored); a value outside a rule's range is set to the nearest end of it,
+with a warning in the Mods screen. The Mod Builder edits both: the menu's **Flight rules** (`flight.json`) and a ship's
+**Flight** section (its style, bonuses and own rules). The rules move the player's ship (also a multiplayer player's); NPC
+ships fly by their own AI. Times are in ms, speeds in game units per ms (2 = 100 m/s), the original's roll rates in radians
+per ms.
+
+| Rule | Game value | What it does |
+|---|---|---|
+| **Original flight** | | |
+| `baseSpeed` | 2 | Top speed of every ship, game units per ms (2 = 100 m/s). |
+| `handlingPerUpgrade` | 0.2 | Handling each handling upgrade adds (0.2 = +20 handling). |
+| `turnRateScale` | 750 | Top turn rate: full stick x this x handling / the divisor below. |
+| `turnRateDivisor` | 63 | Divides the top turn rate (whole numbers, like the original). |
+| `turnRampBase` | 3.3 | Turn rate build-up: dt x handling / ((this - sensitivity) x the scale below). Lower = snappier. |
+| `turnRampScale` | 20 | Turn rate build-up scale (see above). Lower = snappier. |
+| `turnDecayDivisor` | 126 | Turn rate fall-off with the stick let go: dt x handling / this. Lower = stops turning sooner. |
+| `tiltPitchUpScale` | 1.25 | Tilt steering: the sensitivity's share pitching up. |
+| `tiltPitchDownScale` | 1.45 | Tilt steering: the sensitivity's share pitching down. |
+| `boostSpeedScale` | 2 | Boost speed = this x the booster's boost speed / 100 + the top speed. |
+| `truncateBoostSpeed` | true | The boost speed in whole units per ms (the original's: Linear and Cyclotron boost alike). |
+| `cargoHandlingLoss` | 0.4 | Hardcore: the handling a full hold takes away (0.4 = 40 %). |
+| `collisionPushDecay` | 0.7 | A collision's push left after each frame. |
+| **Original flight: strafe** | | |
+| `strafeHandlingFactor` | 0.06 | Strafe speed = handling x this (units per ms), at most the maximum below. |
+| `strafeMaxSpeed` | 2 | Top strafe speed, units per ms. |
+| `strafeRampStart` | 0.1 | Strafe speed share at the first frame. |
+| `strafeRampGrowth` | 1.5 | Strafe speed share growth per original frame (to full). |
+| `strafeDecay` | 0.7 | Strafe speed left after each original frame once the key is let go. |
+| **Dodge** | | |
+| `dodgeDurationMs` | 1200 | How long a dodge lasts, ms. |
+| `dodgeSlide` | 0.2 | The dodge's slide: dt x this x handling units, fading over the dodge. |
+| `dodgeTurn` | 0.00628319 | The dodge's nose turn, radians per original frame, fading over the dodge. |
+| `dodgeBank` | 0.4 | The dodge's bank. |
+| **Level out** | | |
+| `levelRequestDelayMs` | 1000 | A level-out request waits this long (ms); steering meanwhile drops it. |
+| `levelRateNear` | 0.00025 | Roll rate close to level, radians per ms (0.00025 = 14 deg/s). |
+| `levelRateFar` | 0.00035 | Roll rate far from level, radians per ms. |
+| `levelFarLean` | 0.3 | The lean (0..1) past which the far rate rolls. |
+| `levelRateUpsideDown` | 0.00075 | Roll rate upside down, radians per ms. |
+| `levelRateOvershoot` | 0.00035 | Roll rate the frame the lean overshoots, radians per ms. |
+| `levelRateFine` | 0.0002 | Roll rate after an overshoot, radians per ms. |
+| `levelDoneLean` | 0.015 | The lean (0..1) that counts as level. |
+| `levelPitchRate` | 0.0006 | Option "Level out also levels the nose": its pitch rate, radians per ms. |
+| `levelSteepNose` | 0.906 | A nose this close to vertical (its share of world up) ends a roll-only level-out. |
+| `levelArmMs` | 150 | A neutral stick this long (ms) lets steering end a level-out. |
+| `levelCancelInput` | 0.3 | The stick push (0..1) that ends a level-out. |
+| `levelGraceMs` | 300 | After this long (ms) a push ends a level-out without the neutral stick. |
+| **Free flight: turning** | | |
+| `freeTurnRateDeg` | 125 | Top turn rate at handling 100, degrees per second. |
+| `freeTurnExponent` | 0.75 | The turn rate grows with (handling / 100) to this power. |
+| `freeTurnAboveShare` | 0.1 | The share of the turn rate above the top rate at handling 100 that counts. |
+| `freeTurnRampMs` | 400 | Time from no turn to the top turn rate and back, ms. |
+| `freeRollShare` | 1 | Roll rate, of the turn rate. |
+| `freeBoostTurnShare` | 0.85 | Turn rate while boosting, of the turn rate. |
+| **Free flight: moving** | | |
+| `freeReverseShare` | 0.5 | Top speed backward, of the forward one. |
+| `freeStrafeShare` | 0.5 | Top speed sideways, of the forward one. |
+| `freeHoverShare` | 0.5 | Top speed up and down, of the forward one. |
+| `freeAccelForward` | 1.3851 | Forward acceleration, top speeds per second (at handling 100). |
+| `freeAccelSide` | 1.88877 | Backward, sideways and up / down acceleration, their top speeds per second. |
+| `freeAccelHandlingExponent` | 0.5 | The acceleration grows with (handling / 100) to this power. |
+| `freeEaseExponent` | 3 | Dampeners on: the acceleration eases out as 1 - (speed / top speed) to this power. |
+| `freeBrakeShare` | 0.25 | Dampeners on: braking, of the forward acceleration. |
+| `freeBrakeAboveTopExponent` | 1.67 | Above the top speed the braking grows with (speed / top speed) to this power. |
+| `freeInheritInertia` | 0.9 | Thrusting the way the ship moves brakes up to this much less. |
+| `freeTurningBoost` | 1 | Dampeners on: how hard the velocity turns toward the thrust (1 = EVERSPACE 2's). |
+| **Free flight: boost** | | |
+| `freeBoostScale` | 1.06667 | Boost top speed = the booster's original boost x this (of the top speed). |
+| `freeBoostFallback` | 3.2 | Boost top speed of a booster without a boost speed, of the top speed. |
+| `freeBoostAccel` | 1.63 | Acceleration while boosting, of the forward one. |
+| `freeBoostDurationMs` | 3500 | A full boost pool lasts this long (ms) for a booster without a duration. |
+| `boostRestartEnergy` | 0.2 | An emptied boost pool boosts again from this share. |
+| **Free flight: auto-roll** | | |
+| `autoRollMaxInput` | 0.15 | The auto-roll's strongest roll input. |
+| `autoRollAngleDeg` | 15 | It rolls once the ship leans past this, degrees. |
+| `autoRollToleranceDeg` | 3 | It stops within this of level, degrees. |
+| `autoRollPitchAngleDeg` | 81 | A nose pitched past this (degrees) holds it back. |
+| `autoRollPitchInput` | 0.9 | A pitch input past this holds it back. |
+| `autoRollEaseInMs` | 2000 | Held back, it eases in again over this long, ms. |
+| **Speed passives** | | |
+| `fullStopSpeed` | 0.0001 | Below this speed (units per ms) the ship counts as stopped (full-stop damage). |
+| `lowSpeedSpeed` | 0.6 | At or below this speed (units per ms; 0.6 = 30 m/s) the low-speed resistance counts... |
+| `lowSpeedDelayMs` | 1000 | ...once the ship has flown so slowly this long, ms. |
 
 ## systems.json and stations.json
 
@@ -1758,6 +1898,7 @@ New star systems and their stations. Both are lists: `"id"` adds one, `"override
 | `locals` | The races (the game's or mods') whose patrols fly here, e.g. `["guild", "allies"]`. Default: the system's `race`. |
 | `raiders` | The races (the game's or mods') that raid it, e.g. `["gang"]`. Default: the game's pick (pirates, or the system race's enemy). |
 | `pirateHeld` | `true`: pirates hold every station of the system (a station's `orbit` can say otherwise), see the orbit's `pirateHeld`. |
+| `pirateHideout` | `true`: a pirate hideout like Alda. On every visit 10 to 13 pirates with double hulls wait around the arriving ship (the system's `raiders` instead, if it names any), and nothing else flies there: no patrols, freighters, pirate events or fleet battles. For a hideout without stations give its stations `"orbit": { "station": false }`. |
 | `security` | 0 (lawless) to 3 (secure): how many raiders show up. |
 | `visible` | On the star map from the start (default true). A hidden system can't be reached yet. |
 | `available` | A condition (the expressions of [Conditions](#conditions)) for a system that comes and goes: while it holds the system is on the star map, while it doesn't it is hidden, whatever was revealed, with its routes and jumps. A player inside when it disappears is told so and, 4 seconds later, taken to the nearest system on the map. For example `"available": "quest(smuggler_run) == 1"`: only while that story mission or bar mission is under way. |
@@ -1857,11 +1998,12 @@ by hand it looks like this:
 | `mapPlace` | `{ "angle": degrees, "distance": n }`: where its planet sits in the star map's system view, round the sun (0 to 360) and how far out (the game's planets lie about 8000 to 45000 out). Either may be left out. Default: the game's place for it. |
 | `orbit` | The layout of its orbit level: station or not, jumpgate, arrivals, asteroids, fog, sun and planet. See [Orbit layouts](#orbit-layouts). |
 | `music` | A mod's track for its docked music (see [Music](#music)). |
+| `spaceMusic`, `battleMusic` | A mod's track for the calm music in its orbit, and for its orbit's fights (one or three, like a system's). Each beats its system's; without them the system's plays. See [Music](#music). |
 | `mobile` | A new station that moves: `true` or `{ "route": [stations] \| "any", "stayMinutes": 15, "systemMinutes": 90, "speed": 0.2, "race": "terran", "engines": [mounts] }`. See [Mobile stations](#mobile-stations). |
 | `life` | Drones at work round its own `model`, like EVERSPACE 2's worker drones. See [Station life](#station-life). |
 
 Changing a station (`"override"`): `name`, `subtitle`, `description`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
-`mapTexture`, `mapRing`, `mapPlace`, `orbit`, `music` (an original station can get a new model too).
+`mapTexture`, `mapRing`, `mapPlace`, `orbit`, `music`, `spaceMusic`, `battleMusic` (an original station can get a new model too).
 
 ### Station life
 
@@ -2009,7 +2151,7 @@ a race goes (a system's or ship's `race`, `/spawn`, `/standing`, `standing(...)`
 |---|---|
 | `id`, `name`, `description` | As for items. Other mods name it `"mod_id:id"`. |
 | `look` | The game race whose hangar, bar, lounge visitors, music, NPC guns and jumpgate the race borrows: `terran`, `vossk`, `nivelian`, `midorian`, `pirates` or `void` (default `terran`). |
-| `icon` | Its emblem, a PNG (square, transparent around it, like the game's race emblems). Default: its look race's. Shown on the station's header, the star map, the lock plate and the Status window. |
+| `icon` | Its emblem, a PNG (square, transparent around it, like the game's race emblems; drawn at 36 px on the lock plate and star map, larger on the station header, so 64x64 to 256x256 looks sharp everywhere). Default: its look race's. Shown on the station's header, the star map, the lock plate and the Status window. |
 | `color` | `[r, g, b]` (0 to 1). |
 | `standing` | The player's standing at the start of a game, -100 to 100 (default 0). At -71 and below the race is hostile, at 71 and above a friend, as with the game's races. Killing its ships costs 5 (10 on Extreme). |
 | `hostile` | `true`: always the player's enemy, whatever the standing, and the enemy of every race it doesn't call a friend, like the game's pirates. It isn't listed on the Status window. Killing one of its ships in the system of a race it is at war with raises that race's standing by 1. |
@@ -2150,7 +2292,12 @@ the event graphs' expression language and is checked when it matters (a shop's s
 | `rank`, `credits`, `kills`, `station`, `system`, `ship` | The player's rank, credits, kills, where they are docked / flying, the ship they fly. |
 | `visited(station)`, `has(item)`, `cargo(item)`, `quest(name)` | A station docked at; how many of an item the player has (mounted too) / has in the hold; a mission under way (1) or done (2). |
 | `docked(station)`, `inorbit(station)` | How many of the players are docked at that station now / alive in its orbit (single player: 1 or 0). |
-| `medals(gold)`, `medals(silver)`, `medals(bronze)`, `medals(any)` | How many medals the player holds of that grade (`any`: earned at all). |
+| `medals(gold)`, `medals(silver)`, `medals(bronze)`, `medals(any)` | How many medals the player holds of that grade (`any`: earned at all), the mods' [medals](#medals) at that tier included. |
+| `medals(supernova)`, `medals(tier)` | The nine Supernova medals earned (and mods' medals at the supernova tier); a mod's own tier (`medals(platinum)`): the mods' medals earned at it. |
+| `medals(off)` | 1 when this game earns no medals (started without medals, or multiplayer): an `available` can then offer another way. |
+| `medal(medal)`, `medal(medal, tier)` | 1 once that medal is earned (at that tier or a higher one): a mod's `"mod_id:id"` or a game medal's number 0-44 (`medal(4, gold)`: Butcher gold). |
+| `killswith(item)`, `killed(ship)` | How many ships the player destroyed whose last hit came from that weapon / of that ship type (a number, a name or `"mod_id:id"`; counted from 2026-11-13 on). |
+| `stat(name)` | One of the game's counters: `kills`, `piratekills`, `asteroids`, `ore`, `cores`, `oretypes`, `coretypes`, `crates`, `junk`, `containers`, `passengers`, `freelance`, `stations`, `jumpgates`, `goodsproduced`, `blueprints`, `wingmen`, `battleships`, `bombs`, `agents`, `booze`, `boozetypes`, `alienremains`, `highestcredits`, `hours`, `cloakminutes`, `medals`. |
 | `medals(allgold)`, `medals(allsupernova)` | 1 with every medal of the main game gold (what puts the VoidX at Thynome), or those and the nine Supernova medals too. In a game started without medals: 1 once the main story is won, or the Supernova story finished. |
 | `bought(ship)` | 1 once the player has bought (or built from a blueprint) that ship in this game: a number, a name or `"mod_id:id"`. Ships bought before this word existed don't count. |
 | `produced(item)` | How many times the player has built that item's blueprint in this game (a number, a name or `"mod_id:id"`): `produced(85) > 0` once the Khador Drive is built. |
@@ -2206,7 +2353,7 @@ autocomplete), and the product is made at the station where the first ingredient
 | `available` | A [condition](#conditions) before any source offers it. On a game blueprint you took over (the same `item`), the story character who sells it waits for it too: Gunant at Var Hastra and his drill (90) with `"available": "unlocked(85)"` only once the Khador Drive's blueprint is known. |
 | `unlocked` | `true`: the player knows it as soon as it is available (the next docking), without finding it. |
 | `lounge` | A Space Lounge visitor sells it: `chance` % each time a bar fills with new visitors, for `price` (default half the product's price), in `systemRace` systems (-1 = any). `stations`: only in those bars (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100), like the game's own blueprint sellers, each at one station: `{ "stations": [ 54 ], "price": 59999 }`. With `stations`, `seller` puts a named character there instead of a local visitor (Kothar and Valkyrie have no lounge): `{ "name": "Khador", "speaker": 20, "race": 7, "offer": "...", "thanks": "...", "known": "..." }`, `speaker` a story character's number for the face, and the optional lines for the offer (`#N` the product, `#C` the price), the sale and every chat after it. |
-| `derelict` | `chance` % of the orbits visited hold a derelict freighter (`race`: terran, vossk, nivelian, midorian or any) to dock at and hack; it leaves the blueprint in a data container. `stations`: only in those orbits (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100, always there). `position`: `[ x, y, z ]` in game units (what `/pos` shows in that orbit), else somewhere out in front of the station. Hacking it also fires the missions' and events' `hacked` trigger. |
+| `derelict` | `chance` % of the orbits visited hold a derelict freighter (`race`: terran, vossk, nivelian, midorian or any) to dock at and hack; the hack teaches the blueprint at once. `stations`: only in those orbits (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100, always there). `position`: `[ x, y, z ]` in game units (what `/pos` shows in that orbit), else somewhere out in front of the station. Hacking it also fires the missions' and events' `hacked` trigger. |
 | `drops` | A ship the player destroys may leave it in a data container: `race` (terran, vossk, nivelian, midorian, pirate, void, specter or any), `chance` % per kill (decimals allowed). Or `ship` (a number or `"mod_id:ship_id"`) instead of `race`: only ships of that type drop it, whatever their race, and before any race-wide drop; `{ "ship": "my_mod:boss_hull", "chance": 100 }` makes a boss leave its own hull's blueprint. A blueprint already known is never dropped again. |
 
 A blueprint found in a data container is learnt when the tractor beam pulls the container in ("Blueprint found: ..."). A
@@ -2245,6 +2392,72 @@ The Space Lounges' wingmen offers can fly your ships: a `wingmen.json` in the mo
 
 A ship's `wingmanDevice` (see [ships.json](#shipsjson)) works whenever a hired wingman flies it, with or without a
 `wingmen.json`. The crew's ships are saved with the contract; a ship no longer there is replaced the game's way.
+
+## Medals
+
+A `medals.json` adds medals to the Status window's Medals tab, after the game's 45. They are checked when the player docks,
+like the game's: the same "New medal!" toast and credits (none on Extreme), the same progress bars and hints. Each medal is
+earned at the game's tiers (`bronze`, `silver`, `gold`, `supernova`: the Supernova medals' orange plate) or at tiers a mod
+adds, and keeps the best one reached.
+
+```json
+{
+    "tiers": [
+        { "id": "platinum", "name": "Platinum", "rank": 3.5, "color": "#e5e4e2", "reward": 10000 }
+    ],
+    "medals": [
+        {
+            "id": "plasma_master",
+            "name": "Plasma Master",
+            "hint": "Destroy # ships with the Plasma Lance.",
+            "icon": "medals/plasma.png",
+            "counter": "killswith(plasma_lance)",
+            "grades": { "bronze": 10, "silver": 50, "gold": 100, "platinum": 250 },
+            "reward": { "platinum": 20000 },
+            "unlocks": [
+                { "tier": "gold", "blueprint": 232 },
+                { "tier": "platinum", "ship": 8, "stations": [ 10 ] },
+                { "tier": "bronze", "item": "plasma_cell", "amount": 5 }
+            ]
+        },
+        { "id": "tycoon", "name": "Tycoon", "hint": "Own a million credits.", "icon": 25, "hidden": true,
+          "grades": { "gold": "credits >= 1000000" } }
+    ]
+}
+```
+
+The file may also be just the list of medals.
+
+| Medal field | |
+|---|---|
+| `id` | Its id; other mods and conditions name it `"mod_id:id"`. |
+| `name`, `hint` | Texts (one string, or one per language like `{ "en": "...", "de": "..." }`, or `medals.<id>.name` / `.hint` in the mod's [texts](#texts)). `#` in the hint is the number of the grade earned, else of the next one. The hint also lists the grades ("Bronze 10 · Silver 50 · Gold 100"). |
+| `icon` | The symbol on the plate: a PNG of the mod (drawn in its own colours, dimmed until earned), or a game medal's number 0-44 for its symbol (tinted in the tier's colour like the game's). |
+| `counter` | A number in the [conditions](#conditions)' language the grades' numbers are compared with: `kills`, `killswith(item)`, `killed(ship)`, `produced(item)`, `has(item)`, `stat(ore)`, `credits`... |
+| `grades` | Tier to what earns it: a number the counter must reach (`strict`: pass), or a condition (`"gold": "won(supernova) and medal(4, gold)"`). The best tier met counts. |
+| `strict` | `true`: the counter must be more than the number (the game's "more than #" medals). |
+| `reward` | Credits for every grade (`5000`), or per tier (`{ "gold": 7500 }`); default the tier's: bronze 1000, silver 2500, gold and supernova 5000, a mod tier its own `reward`. |
+| `available` | A condition: while it doesn't hold the medal is neither counted nor shown (one already earned stays). |
+| `hidden` | `true`: shown only once earned. |
+| `unlocks` | What a grade gives, each from its `tier` on (default the lowest grade): `blueprint` (learnt, like the fireworks for every Supernova medal), `ship` with `stations` (on sale first at those dealers from then on, like the VoidX at Thynome; without `stations` at every dealer that has ships), `item` with `amount` (into the hold once; what doesn't fit is paid at its price). Items and ships by number, `"mod_id:id"` or your own `id`. The toast lists what was unlocked. |
+
+| Tier field | |
+|---|---|
+| `id` | Its id (not one of the game's four); any mod's medals can use it. |
+| `name` | Its name (shown on the toast and in the hint). |
+| `rank` | Where it sits among the others: bronze 1, silver 2, gold 3, supernova 4. Default: above the highest so far (5, 6...). `3.5` puts platinum between gold and supernova. |
+| `color` | `"#rrggbb"`: the symbol, the toast's border and the progress bar. |
+| `plate` | `bronze`, `silver`, `gold`, `supernova` or a PNG of the mod. Default: the silver plate in the tier's colour. |
+| `reward` | Credits when a medal reaches it (default 5000). |
+
+Medals unlock other content through conditions too: `"available": "medal(my_mod:plasma_master, gold)"` on an item,
+ship, system, blueprint or mission. To tie one of the game's medal rewards to your medal instead, override it in
+`ships.json`: `{ "override": 8, "available": "medal(my_mod:plasma_master, platinum)" }` keeps the VoidX (or 44, the
+Specter) off sale until then, and a `ship` unlock puts it on sale even without every gold medal.
+
+The game's own rules still count its 45 medals only: Champion, all-gold (the VoidX), every Supernova medal (the fireworks
+and the Specter). A game started without medals, and multiplayer, earn none of these either (`medals(off)` is 1 there).
+Earned medals are saved by key, so they stay when the mod is off and come back with it; New Game+ carries them over.
 
 ## Most Wanted
 
@@ -2492,7 +2705,7 @@ Nodes made for missions:
 Everything else is the event graphs' toolbox: **Dialog** (conversations with portraits, see [Voice-over](#voice-over)), **Radio**,
 **Spawn** (ships, friendly or hostile, named; objects as scenery; `wreck`: a hackable freighter wreck), **Wait Until**, **On**
 triggers (docked, entered an orbit, destroyed, a spawned ship destroyed, all enemies cleared, arriving near a point, a wreck
-hacked, docked at a station's pad outside), **Set Waypoint**, **Open Wormhole** / **Close Wormhole** (see below), **Restrict Travel**,
+hacked, docked at a station's pad outside, a ship scanned: see [Scanner readouts](#scanner-readouts)), **Set Waypoint**, **Open Wormhole** / **Close Wormhole** (see below), **Restrict Travel**,
 **Give Item**, **Take Item** (a hand-in; Mounted takes mounted ones too), **Spawn NPC Type**, **Reward**, **Title**, **Timer**, **Play Music**, **Set Flight Model** (free flight, Chorus flight or the original for a race
 or a chase, undone when the graph ends; see [Flight styles](#flight-styles)) and more. Game values for conditions: `campaign` (the story
 step, -1 without one), `credits`, `rank`, `station`, `system`, `ship`, `kills`, `freeflight` (1 in free flight), and the functions `cargo(item)`, `has(item)`
@@ -2698,6 +2911,381 @@ The same in typed commands (multiplayer admins): `/cutscene start freeze`, `/cam
 look station`, `/camera chase`, `/fade out 1 ffffff`, `/letterbox on`, `/cutscene end`; a ship name with spaces goes in
 "quotes" there (`ship "Pirate Boss"`).
 
+## Scripts
+
+Everything above is data: the game reads it and does what it already knows how to do. A **script** is code of your own, for
+what the files and the mission graphs can't express: a bounty paid for every pirate you destroy, a price that follows the
+day's news, a HUD element, a new rule. Scripts are written in **Lua** (5.2), a small language many games use for mods; the
+game runs them with the MoonSharp interpreter on every platform it runs on.
+
+A script can read and change **anything in the game**: its data tables, the running game's state, the objects in the scene,
+and the functions the game's parts call each other through. That is why players are asked before a mod with scripts runs
+(see [What players see](#what-players-see)), and why a script can't reach outside the game: no files but the mod's own, no
+network, no other programs.
+
+You don't have to choose between scripts and the mission graphs: a mod can have both, a script can run every command a
+graph can (`game.command`), and a graph can run a script's commands (`game.addCommand`).
+
+### The files
+
+Scripts are `.lua` files in the mod's `scripts` folder:
+
+```
+my_mod/
+├─ mod.json
+└─ scripts/
+   ├─ main.lua          runs first when the mod starts
+   ├─ prices.lua        every other .lua directly in scripts/ runs too, by name
+   └─ lib/
+      └─ util.lua       files in subfolders are modules: they run when a script asks for them
+```
+
+Split your code over as many files as you like. A file in a subfolder is a **module**: it runs once, the first time a script
+calls `require`, and hands back what it returns:
+
+```lua
+-- scripts/lib/util.lua
+local M = {}
+function M.clamp(x, low, high) return math.max(low, math.min(high, x)) end
+return M
+```
+
+```lua
+-- scripts/main.lua
+local util = require("lib.util")          -- scripts/lib/util.lua
+print(util.clamp(15, 0, 10))              -- 10
+```
+
+`require("other_mod:lib.util")` loads a module of a mod yours depends on (list it in `dependencies`). Each mod has its own
+Lua state: your globals are yours alone.
+
+**In the Mod Builder:** the **Scripts** tab lists the project's script files (**+ New script**; name one `lib/util` to make
+a module in a folder), with an editor that checks the syntax as you type (click the error to jump to its line), **Save &
+run** to start the project's scripts afresh, an **API reference** and a console showing what your scripts print and their
+errors. A saved change restarts the scripts by itself. Any text editor works as well: the files are plain text.
+
+### When scripts run
+
+A mod's scripts start when the mod becomes active, in the main menu already, and keep running through every scene: the
+menu, flying, docked. They start again from the top when the set of active mods changes (a mod turned on or off, a
+multiplayer session joined or left, a file saved in the Mod Builder). So the top of a file is for setting up: say which
+events you want to hear, and do the work there.
+
+```lua
+game.on("station", function(level)        -- every time the player is docked and the hangar stands
+    game.message("Welcome back, " .. Session.Credits .. " $ in the bank")
+end)
+```
+
+What must survive a restart or a saved game goes into `game.saved` (below).
+
+### The game table
+
+Every script has the global table `game`:
+
+| | |
+|---|---|
+| `game.mod.id`, `.name`, `.version` | this mod |
+| `game.on(event, fn)` | calls `fn` whenever the event happens; returns a handle |
+| `game.after(seconds, fn)` | calls `fn` once, after that much game time (it waits while the game is paused) |
+| `game.every(seconds, fn)` | calls `fn` again and again |
+| `game.off(handle)` | ends a handler, a timer, a hook or a waiting function |
+| `game.wait(seconds)`, `game.waitUntil(fn)`, `game.run(fn)` | functions that wait and go on later (see [Waiting](#waiting)) |
+| `game.emit(event, ...)` | an event of your own for every script mod in this game (numbers, texts and booleans travel) |
+| `game.saved` | a table kept in the player's save file, per mod |
+| `game.config`, `game.saveConfig()` | a table kept outside the saves: your mod's own settings |
+| `game.log(...)`, `print(...)` | a line in the Mod Builder's console and the game's log |
+| `game.message(text)` | a line on the player's screen (the flight HUD's message line, a notice in a station) |
+| `game.command(line)` | runs a chat / event command as the server does and returns its answer |
+| `game.addCommand(name, fn)` | a command of your own (see [Commands](#commands)) |
+| `game.multiplayer()` | `"none"`, `"host"` or `"client"` |
+| `game.send(name, ...)`, `game.onMessage(name, fn)`, `game.myId()` | messages between the players' scripts (see [Scripts in multiplayer](#scripts-in-multiplayer)) |
+| `game.scene()` | `"MainMenu"`, `"Space"` or `"Station"` |
+| `game.space()`, `game.station()`, `game.player()` | the flight level, the docked level, the player's ship in flight; `nil` when not there |
+| `game.type(name)`, `import(name)` | one of the game's or Unity's classes by its full name |
+| `game.describe(x)` | what a class or object offers, as text: `print(game.describe(Session))` |
+| `game.classes(part)` | the names of the classes with `part` in their name |
+| `game.find(class)`, `game.findOne(class)` | the scene's objects of a class |
+| `game.component(object, class)`, `game.components(...)`, `game.addComponent(...)` | Unity components of an object |
+| `game.behaviour(object, table)` | a component written in Lua (see [Objects and the interface](#objects-and-the-interface)) |
+| `game.uiEvent(element, event, fn)` | an interface element's events |
+| `game.table(list)`, `game.get(list, key)`, `game.set(list, key, value)` | the game's lists and dictionaries |
+| `game.field(x, name)`, `game.setField(x, name, value)`, `game.call(x, name, ...)`, `game.generic(x, name, types, ...)` | members that aren't public, generic methods (see [The game's classes](#the-games-classes)) |
+| `game.hook(target, member, fn)`, `game.listen(target, member, fn)` | changing and hearing the game's own functions |
+| `game.files(folder)`, `game.readText(path)`, `game.readJson(path)`, `game.texture(path)`, `game.sound(path, fn)` | your mod's own files (see [Your mod's files and content](#your-mods-files-and-content)) |
+| `game.item(key)`, `game.ship(key)`, `game.system(key)`, `game.station(key)` | a mod's content by its key, as its number in this game |
+
+### Events
+
+| Event | When | Arguments |
+|---|---|---|
+| `update`, `lateUpdate` | every frame | the frame's seconds (0 while the game is paused) |
+| `scene` | a scene was loaded | its name |
+| `space` | the flight level stands: after a launch, a jump, a loaded game | the level (`SpaceLevel`) |
+| `station` | docked: the hangar stands | the level (`StationLevel`) |
+| `database` | the game loaded its tables (items, ships, systems, stations), your mods' content included | the tables (`Database`) |
+| `shipDestroyed` | an NPC ship was destroyed | the ship (`NpcShip`), whether the player did it |
+| `playerDestroyed` | the player's ship was destroyed | |
+| `trade` | an item was bought or sold in a shop | the item's number, the amount (+ bought, - sold), the price, the station |
+| `missionAccepted`, `missionSucceeded`, `missionFailed` | a Space Lounge mission | the mission (`FreelanceMission`); succeeded: also the pay |
+| `storyStep` | the campaign moved on | the new step, the one before |
+| `chat` | a chat line arrived (multiplayer) | who, the text, whether it is your own |
+| `gameLoaded` | a saved game was loaded: `game.saved` is that save's now | |
+| `saving` | just before `game.saved` is written | |
+| `stop` | your scripts are about to stop | |
+
+`update` runs every frame for every handler: keep it light, or use `game.every`. For anything else the game does, look at
+the hook classes ([Hooks](#hooks)): most of what happens passes through one.
+
+### Waiting
+
+`game.wait(seconds)` pauses the function it is called in; the game goes on, and the function continues from that line
+when the time has passed. `game.waitUntil(fn)` waits until `fn` returns true (it is asked every frame). They work in any
+event handler or timer, and in a function started with `game.run`:
+
+```lua
+game.on("space", function(level)
+    game.wait(3)
+    game.command("spawn @a Phantom pirate 2")
+    game.waitUntil(function() return #game.find("NpcShip") == 0 end)
+    game.message("All clear")
+end)
+```
+
+This is how to write what a mission graph does as a sequence. `game.run` returns a handle `game.off` ends. Waiting isn't
+possible inside a hook or a command: the game needs their answer at once (start a `game.run` from there instead). Game
+time stands still while the game is paused.
+
+### Keeping things
+
+`game.saved` is an ordinary Lua table. What you put in it (numbers, texts, booleans and tables of those) is written into the
+player's save file with the rest of the game and is there again when that save is loaded; a new game starts with it empty.
+
+```lua
+game.on("shipDestroyed", function(ship, byPlayer)
+    if byPlayer then game.saved.kills = (game.saved.kills or 0) + 1 end
+end)
+```
+
+Read it inside your handlers, not once at the top of the file: loading a save changes what is in it.
+
+`game.config` is the same kind of table for what belongs to the mod and not to one saved game (its own options, a high
+score across games): it is kept with the game's settings and written when the scripts stop, or at once with
+`game.saveConfig()`.
+
+### The game's classes
+
+Scripts use the game's own C# classes by their names: every class of the game, and of Unity's scene namespaces, is a global.
+`Session` is the running game (credits, ship, cargo, where the player is), `Database` the tables, `Settings` the options,
+`Standing` the reputations, `Vector3` and `Mathf` Unity's. Where two classes share a name, `import` takes the full one.
+
+```lua
+Session.Credits = Session.Credits + 1000  -- statics and fields: a dot
+local db = Database.Shared
+local item = db:Item(5)                   -- an object's methods: a colon
+print(item.name, item.maxPrice)
+local up = Vector3.__new(0, 1, 0)         -- __new makes an object
+if ship.Race == Standing.Pirate then ... end
+local Thing = import("GoF2Remake.World.NpcShip")   -- by its full name
+```
+
+To find out what there is, ask the game: `print(game.describe(Session))` lists the members of a class a script can use,
+`game.classes("Ship")` the class names with "Ship" in them. `Modding/ai/gof2-modding/scripting.md` in the repository has the
+main classes written out, and every class name.
+
+A few things differ from Lua:
+
+- The game's **lists and dictionaries are objects**, not Lua tables: `list.Count`, `game.get(list, 0)` (they count from 0),
+  `game.set(dictionary, "key", value)`, `list:Add(x)`. `for _, x in ipairs(game.table(list))` walks a Lua copy.
+  Arrays do arrive as Lua tables (counting from 1).
+- Names are exact, capitals included.
+- **Structs are copies.** `transform.position.x = 5` changes a copy and does nothing; set the whole value:
+  `transform.position = Vector3.__new(5, 0, 0)`.
+- The game's time is in **milliseconds**, its positions in game units (one is 0.05 m).
+- A **Lua function works wherever the game takes a delegate**: `SpaceHooks.WreckHacked = function(station, wreck) ... end`,
+  or as an argument of a method that takes a callback.
+
+**Members that aren't public** (the game keeps much of its state private) are reached by name:
+
+```lua
+local n = game.field(level, "spawnTimer")            -- a private field or property
+game.setField(level, "spawnTimer", 0)
+local answer, extra = game.call(level, "PickTarget", 3)   -- a private method: its result, then its out values
+```
+
+(Those names are made up: `print(game.describe(level, true))` lists an object's private members beside its public ones.)
+`game.generic(object, "GetComponent", { "BoxCollider" })` calls a generic method with its type arguments named. Private
+members can change with any update of the game: prefer the public ones where they do the job.
+
+### Changing the game's data
+
+The `database` event hands you the tables each time the game loads them, after every mod's JSON has been applied, so what
+you change there is in the shops, the ships and the star map:
+
+```lua
+game.on("database", function(db)
+    local item = db:Item(5)
+    item.maxPrice = item.maxPrice * 2
+end)
+```
+
+Change them only there: the game loads its tables again whenever a game starts or loads, and a change made elsewhere is gone
+with the next load. New items, ships and systems still belong in the JSON files (they get their numbers and their place in
+the saves there); a script changes what exists and decides what happens.
+
+### Hooks
+
+The game's parts call each other through delegates kept in the **hook classes** `GameHooks`, `SpaceHooks`, `UiHooks` and
+`NetSession`. `game.hook` puts your function in the place of one. It gets the function it replaced as its first argument,
+then the call's own arguments; what it returns is what the game gets:
+
+```lua
+-- A faction station's buying price: half of what the game would ask.
+game.hook("GameHooks", "FactionBuyPrice", function(original, station, price)
+    return math.floor(original(station, price) / 2)
+end)
+```
+
+Call `original(...)` wherever you want the game's own behaviour; don't call it and the game's code doesn't run. A hook that
+fails with an error leaves the game's own behaviour in place. Where the game's function has `out` values, return them
+after the result (and `original` returns them the same way). `game.listen` only adds your function, for the game's C#
+events and for delegates you want to hear without changing them:
+
+```lua
+game.listen("Settings", "Changed", function() print("an option changed") end)
+```
+
+Both are undone when your scripts stop, or with `game.off(handle)`. `scripting.md` lists every hook with what it is for.
+`game.hook` and `game.listen` take any public delegate or event of any object, not only the hook classes'.
+
+### Commands
+
+`game.command` runs one of the chat and event commands, the lines an event graph's Command node takes (`events.md` lists
+them): spawning ships, dialogues, titles, rewards, starting an event graph.
+
+```lua
+game.command("title @a Pirate season for 5")
+game.command("event waves")
+```
+
+Only the game that runs the world can: single player, or the host of a multiplayer session.
+
+`game.addCommand` adds a command of your own. Its function gets the text after the name and who ran it, and returns the
+answer:
+
+```lua
+game.addCommand("bounty", function(args, who)
+    return "Pirates destroyed: " .. (game.saved.kills or 0)
+end)
+```
+
+Players type it in the chat (`/bounty`), a mission graph runs it from a Command node (`bounty`), and other scripts with
+`game.command("bounty")`: this is how a graph hands work to a script.
+
+### Your mod's files and content
+
+A script reads the files of its own mod (and only those):
+
+```lua
+local prices = game.readJson("data/prices.json")     -- a JSON file as a table
+local text = game.readText("data/readme.txt")        -- nil when there is no such file
+for _, path in ipairs(game.files("data")) do print(path) end
+local badge = game.texture("icons/badge.png")        -- a Unity Texture2D
+game.sound("sounds/ping.ogg", function(clip)         -- a Unity AudioClip, when it is loaded
+    if clip then ... end
+end)
+```
+
+Content of your mod or another's is named by its key, `<mod id>:<id>` (a bare id means your own mod's); `game.item`,
+`game.ship`, `game.system` and `game.station` give its number in this player's game, which is what the game's own functions
+take. The commands take the keys themselves: `game.command("spawn @a starwars_ships:millennium_falcon 1")`.
+
+### Objects and the interface
+
+`game.behaviour` turns a Lua table into a component on a scene object. Unity calls its functions, each with the table
+itself first:
+
+```lua
+local level = game.space()
+local marker = GameObject.__new("My marker")
+game.behaviour(marker, {
+    angle = 0,
+    update = function(self, dt)
+        self.angle = self.angle + 90 * dt
+        self.transform.rotation = Quaternion.Euler(0, self.angle, 0)
+    end,
+    destroyed = function(self) print("gone") end,
+})
+```
+
+The functions it may have: `update`, `lateUpdate`, `fixedUpdate` (with the seconds), `enabled`, `disabled`, `destroyed`,
+`triggerEnter`, `triggerExit` (with the collider) and `collisionEnter` (with the collision). `self.gameObject` and
+`self.transform` are the object's. The component goes when your scripts stop.
+
+The game's interface is Unity's UI Toolkit: its classes (`VisualElement`, `Label`, `Button` ...) are there like any other,
+and `game.uiEvent(element, "ClickEvent", function(event) ... end)` listens to an element's events.
+
+### What players see
+
+A mod with scripts is marked **Scripts** in the Mods screen, and turning it on asks first: scripts can change anything in the
+game, saves and settings included, so players should only run script mods from authors they trust. The answer is remembered
+for those script files; an update that changes them asks again (until then the mod's other content works and its scripts
+don't run). Say in your mod's description what its scripts do.
+
+Scripts can't harm the computer: they have no files but their own mod's, no network, no other programs and none of .NET,
+only the game's own classes and Unity's scene classes. A script that fails doesn't stop the game: the error (with its file
+and line) is listed under the mod in the Mods screen and in the Mod Builder's console, a call that runs too long (an endless
+loop) is stopped, and a handler that fails five times in a row is dropped.
+
+### Scripts in multiplayer
+
+With the Host card's **Mods: Allowed**, a session's script mods run in **every player's game**: everyone has the same files,
+so everyone runs the same scripts. Each game runs them for itself. `game.multiplayer()` tells a script where it is:
+
+```lua
+if game.multiplayer() ~= "client" then
+    -- single player, or the host: the game that runs the world (spawns, commands, rewards)
+end
+```
+
+The players' scripts talk to each other with messages. `game.send` goes to every player's game (your own too), through
+the host; `game.onMessage` hears it, with the sender's id first (0 is the host, `game.myId()` your own):
+
+```lua
+game.onMessage("score", function(sender, points)
+    if sender ~= 0 then return end                  -- only the host may say what the score is
+    game.message("Score: " .. points)
+end)
+
+if game.multiplayer() == "host" then
+    game.every(10, function() game.send("score", game.saved.score or 0) end)
+end
+```
+
+A message carries numbers, texts and booleans, up to about 900 characters, and a player may send only so many a second.
+Any player can send any message: check on the host what must not be cheated. In single player a message comes straight
+back to you, so the same script works there.
+
+A player who hasn't allowed a session mod's scripts is told so on joining and can't join until they have turned the mod on
+once in their Mods screen. The server browser tags such games **Scripts**. A mod whose scripts the host hasn't allowed stays
+out of the host's session; a dedicated server runs the scripts of every mod in its Mods folder.
+
+### Limits
+
+- Lua 5.2 with its standard library, without `io`, `debug` and the parts of `os` that reach the system (the clock and dates
+  work). `json.parse` / `json.serialize` turn JSON text into tables and back.
+- No .NET classes: nothing from `System`, no reflection of your own. A game function that takes or returns such a type
+  can't be called.
+- Some of the game's own classes are left out because they open files or the network (the file pickers, the mod importer,
+  the updater, the save folder tools), and so are the game's functions that take a file name, a path or an address.
+- A script can't rewrite a function of the game that isn't behind a delegate: it changes the data and state the function
+  works with, or replaces the hook it is called through.
+- New classes can't be written in Lua; `game.behaviour` is how a script gets a component of its own.
+- Scripts run on the game's main thread, between its frames: a long calculation makes the game stutter, and a single call
+  is stopped after ten million Lua instructions.
+- Nothing runs before the main menu.
+- On phones and consoles a few rarely used Unity classes may be missing from the build; they are then `nil`.
+
 ## Characters
 
 A mod can bring its own cast: `characters.json` lists characters with a name and a portrait, and every place a speaker is
@@ -2768,12 +3356,24 @@ Put tracks in the mod's `music` folder (`.ogg`, `.wav` or `.mp3`):
 { "id": "kepler", "name": "Kepler", ..., "spaceMusic": "kepler_space", "stationMusic": "kepler_bar" }
 ```
 
-`spaceMusic` is the calm music in the system's orbits and `stationMusic` the music docked at its stations. A station's own
-`"music"` in stations.json beats its system's. Both work in an `override` of an original system or station too.
+`spaceMusic` is the calm music in the system's orbits and `stationMusic` the music docked at its stations. Both work in an
+`override` of an original system or station too.
 
 `battleMusic` is the music of the system's fights: one track for all of them, or three, `["low", "medium", "full"]`, for
 the game's three battle tracks (1-2 enemies around, 3-4, 5 or more). Fights with the Void, Specters or a Most Wanted
 criminal keep their own music.
+
+A station can have its own music too, so one place can feel different from the rest of its system (a capital world, a
+pirate hideout, a derelict orbit):
+
+```json
+{ "id": "kepler_prime", "name": "Kepler Prime", ..., "music": "kepler_bar", "spaceMusic": "kepler_orbit", "battleMusic": "kepler_fight" }
+```
+
+A station's `"music"` (docked), `"spaceMusic"` (calm, in its orbit) and `"battleMusic"` (its orbit's fights, one or three
+tracks) each beat its system's. A field it leaves out falls back to the system's, and then to the game's. A station's own
+`spaceMusic` also replaces the game's special orbit tracks (the Kaamo Club, the deep science orbits); a system's
+`spaceMusic` doesn't.
 
 ## Sound effects
 
@@ -2948,11 +3548,16 @@ data) can join a PC build's game and the other way round. A ship's lighter model
 fires, so the hits can differ a little at the edges of a hull. The server browser tags such games **Modded** and lists their mods. A dedicated
 server uses every mod in its Mods folder with `-allowmods` (`ALLOWMODS=1` in its start script).
 
+A session's script mods run in every player's game, and each player must have allowed them: see
+[Scripts in multiplayer](#scripts-in-multiplayer).
+
 ## When something is wrong
 
 A mod with a broken file shows **Error** in the Mods screen, and the selected mod lists the problem with the file and line
 (`items.json line 2: unknown stat "dammage"`). A mod with errors can't be turned on. Smaller problems (an unknown field) show as
-warnings and are skipped. The game's log (`Player.log`) lists every problem too.
+warnings and are skipped. The game's log (`Player.log`) lists every problem too. A script's errors show the same way, as
+warnings starting with "Script:" and the file and line (`scripts/main.lua:(12,5-9): attempt to index a nil value`); the mod
+stays on and its other scripts keep running.
 
 ## Example
 
@@ -2962,3 +3567,6 @@ PR #34) show ships with models, materials, glows, two turrets and lounge sellers
 Kepler system with jumpgate routes and two stations: Kepler Prime with its own station model, its own planet and its own
 hangar and bar (GLBs built from simple shapes, with their markers), and the Rho Freeport looking like an original with a
 Nivelian interior; the system has its own sun and its own nebula sky. It also brings a character, Captain Vega, with a (placeholder) portrait.
+`Modding/Examples/pirate_bounty` is a script mod: `scripts/main.lua` pays a bounty for every pirate you destroy, counts them
+in the save and reports the count a moment after you dock (`game.wait`), with its numbers read from `data/bounty.json`
+by the module `scripts/lib/bounty.lua` and a `/bounty` command of its own.

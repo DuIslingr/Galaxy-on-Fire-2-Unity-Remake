@@ -376,6 +376,21 @@
     top: 80px;
 }
 
+/* Remake (#247): the Khador Drive / cloak charge frame (top 76, 69 tall) under a lock: a message under the lock plate
+   (56..100) was drawn over the frame, so while it charges the message goes under the frame instead. With the FPS counter
+   the frame moves down with the lock plate (30..87 reached into it), keeping the original's 13 px between them. */
+.hud-charging .hud-messages--low {
+    top: 146px;
+}
+
+.hud-fps .jump-charge {
+    top: 100px;
+}
+
+.hud-fps.hud-charging .hud-messages--low {
+    top: 170px;
+}
+
 .hud-message {
     position: absolute;
     left: -200px;
@@ -607,7 +622,7 @@
     top: 160px;
 }
 
-/* Remake: the booster's, the cloak's and the time extender's recharge for keys / controllers (CooldownView): their shop icons (180 x 88),
+/* Remake: the selected secondary weapon's reload, the booster's, the cloak's and the time extender's recharge for keys / controllers (CooldownView): their shop icons (180 x 88),
    lit left to right as they recharge (see-through until ready), a short flash when ready. Touch shows them on its own buttons. */
 .cooldowns {
     flex-direction: row;
@@ -1208,6 +1223,64 @@
     margin: 4px 0 12px 0;
 }
 
+/* "Report an issue" (PauseMenuReport): the screenshot that goes along, small, beside what the report carries; then the box
+   for what went wrong. */
+.pause-report-top {
+    flex-direction: row;
+    align-items: flex-start;
+    margin: 0 0 12px 0;
+}
+
+.pause-report-shot {
+    width: 176px;
+    height: 99px;
+    flex-shrink: 0;
+    margin: 4px 14px 0 0;
+    border-width: 1px;
+    border-color: var(--gof-line);
+    background-color: rgb(0, 0, 0);
+}
+
+.pause-report-intro {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    margin: 0;
+    font-size: var(--text-small);
+}
+
+.pause-report-field {
+    margin: 0 0 12px 0;
+    padding: 0;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+.pause-report-field .unity-base-text-field__input {
+    -unity-text-align: upper-left;
+    font-size: var(--text-label);
+}
+
+/* A multi-line field holds its text in a scroll view that takes one line's height by itself: four lines, then it scrolls. */
+.pause-report-field .unity-scroll-view--inner-input-field-component {
+    height: 104px;
+    flex-grow: 1;
+}
+
+.pause-report-field .unity-text-element {
+    white-space: normal;
+}
+
+/* The menu's highlight on the box: the amber bar and outline, no fill behind the text. */
+.pause-report-field.autopilot-menu-item--selected {
+    background-color: rgba(0, 0, 0, 0);
+    border-left-color: var(--gof-amber);
+}
+
+.pause-report-field.autopilot-menu-item--selected .unity-base-text-field__input {
+    border-color: var(--gof-amber);
+}
+
 .pause-heading,
 .pause-heading--red {
     font-size: var(--text-label);
@@ -1788,4 +1861,9 @@
 .hud-off .mouse-stick,
 .hud-off .orbit-info {
     visibility: hidden;
+}
+
+/* Minimal: a new lock's plate shows for a few seconds (FlightHud.LateUpdate). After the rule above, which it beats. */
+.hud-minimal .lock-plate--peek {
+    visibility: visible;
 }

@@ -25,7 +25,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   field, kind and default, a JSON Schema 2020-12 with shared `$defs` who / text / value / wire; a new step row there is in
   them at the next run); `events.md` (`ModdingEventsReference`: every event graph node's options and ports, read from
   `EventGraphNodes.cs` by a small tokenizer, so keep the node classes in that file's style, plus every command from
-  `NetCommands.Reference`); and `guide.md`, a copy of `Modding/README.md`. For the AI modding guide (modders kept asking
+  `NetCommands.Reference`); `scripting.md` (`ModdingScriptingReference`, 2026-11-14: the mod scripts' reference from the
+  code itself: `ModScripts.ApiHelp`, the hook classes' delegates with their signatures and the summaries read from
+  GameHooks / SpaceHooks / UiHooks / NetSession's source, the main classes' members through `ScriptAccess.Describe`, every
+  class name scripts can reach; add a class to `MainClasses` to have its members listed); and `guide.md`, a copy of
+  `Modding/README.md`. For the AI modding guide (modders kept asking
   for ids). Run it again after changing the game data; headless: `Unity.exe -batchmode -nographics -projectPath . -executeMethod GoF2Remake.EditorTools.ModdingReferenceBuilder.Batch -quit`.
 - **GoF2 > Build > Combat Assets**: `Resources/GoF2Combat/CombatAssets` (`CombatAssets`). Also run by Create Space Scene.
 - **GoF2 > Build > Star Map Assets**: `Resources/GoF2StarMap/StarMapAssets` (`StarMapAssets`). Also run by Create Space
@@ -68,7 +72,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   when Windows is active. Not in Docker or the server image (Linux only).
 - **GoF2 > Build > Update Patch** (`PatchPublisherWindow`, Core `PatchPublish`, 2026-11-05): for the in-game updater
   (platforms.md "Update patcher"), run after the release builds; everything goes into Build/Release beside the zips, to
-  upload with them to the GitHub release. Windows / Linux (`Build/Release/<platform>/GoF2Remake`) and Android (the newest
+  upload with them to the GitHub release. Windows / Linux (`Build/Release/<platform>/GoF2Remake`), macOS
+  (`Build/Release/macOS/GoF2Remake.app`, built on a Mac and copied over) and Android (the newest
   .apk in Build/Release or Build/Release/Android): cut into chunks, the ones no earlier release published packed into
   `GoF2Remake-<platform>-<tag>.pack` (all cores), plus `GoF2Remake-<platform>-<tag>.patch.json`. UWP (the newest .msix under
   Build/Release/UWP): `GoF2Remake-UWP-<tag>.msix` and `GoF2Remake-UWP.appinstaller`. First it fetches the earlier releases'

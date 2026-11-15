@@ -74,6 +74,12 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   win (no Kaamo call, state or mission count); multiplayer as the Kaamo siege (one runner, `NetState.SiegeWonRpc` accepts a
   marked station, its own news). Builder: Systems "Held by pirates", a station's orbit "Held by pirates" (as the system /
   yes / no). Tests `ModWorldTests.StationPadsAndPirateHeldStations`.
+  **Pirate hideouts** (remake, a modder's wish of 2026-10-18: "pirate systems without stations like Alda, lawless is not
+  dangerous enough"): systems.json `"pirateHideout": true` (`ModWorld.PirateHideout`) gives every orbit of the system
+  `TrafficPlan`'s loot-orbit traffic (systems 32 / 33: 10-13 pirates with double hull, speed 3.5, around the player,
+  nothing else; the system's `raiders` in the pirates' place if it names any) and leaves out what those systems leave
+  out (pirate events, cruise encounters, fleet battles, quest targets). The stations stay unless their `orbit` says
+  `"station": false`. Builder: Systems "Pirate hideout". Test `ModWorldTests.APirateHideoutSystem`.
   **Orbit layouts and map places** (remake, 2026-10-23, the user's request): stations.json `"orbit"` (`ModWorld.OrbitSpec`,
   `OrbitOf`; parsed with the rest, ores resolved in Apply) is applied by `OrbitLayout.ApplyMod` after the seeded layout:
   station (`hasStation` / `stationObject`: dock, `"nodock"`, none), docking pads outside (remake 2026-11-02, a modder's
@@ -256,6 +262,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `Agent.modRace` (saved as "faction" before: `FormerlySerializedAs`), `LoungeChat`: restores to 0). The Status window
   lists the non-hostile mod races in the game's reputation look (the race status bar, the emblem with a standing-coloured
   glow, `StatusWindow.RaceEmblem`). The station header, star map, lock plate and HUD use the mod race's name and emblem.
+  The lock plate (CombatView, NavigationView) draws it 36x36 like race_N: it took the PNG's own size, so a big emblem
+  overflowed and squashed the plate (Discord 2026-11-11).
+  Emblems load through `ModRaces.Emblem`, a cache of their own: ModMaterials destroys its textures at every mods revision
+  (each Mod Builder reload), which blanked the emblems a race list or the builder's star map still showed; an emblem keeps
+  its texture while its file's bytes are unchanged (Discord 2026-11-11).
   campaign.json `raceStanding` { race: value } sets the start (`ModCampaigns.Start`, after the races are numbered);
   `/peace` (`Cheats.MakePeace`) sets the non-hostile ones to 0 too; `/standing` and `standing(race)` (event-graphs.md,
   chat-and-commands.md) change and read them. Multiplayer: each player's own standings

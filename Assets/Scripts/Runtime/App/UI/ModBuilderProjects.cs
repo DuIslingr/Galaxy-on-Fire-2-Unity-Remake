@@ -65,6 +65,7 @@ namespace GoF2Remake.UI
             ("mbNpcShips", "NPC ships", "Capital ships, freighters and bosses nobody flies, new or the game's changed: turrets, escorts, loot, where they come, a dock with a shop. In space.", ModBuilder.Kind.NpcShips),
             ("mbInteriors", "Hangars & bars", "Hangar and Space Lounge rooms of your own, with their markers. In the room itself.", ModBuilder.Kind.Interiors),
             ("mbCampaigns", "Campaign", "A new game of your own: start, galaxy, ships; new-game options.", ModBuilder.Kind.Campaigns),
+            ("mbScripts", "Scripts", "Lua scripts for what the other kinds can't do: they hear the game's events and can change anything in it. Players are asked before they run.", ModBuilder.Kind.Scripts),
         };
 
         public ModBuilderProjects(VisualElement host, Action back, Action<VisualElement> hookFocus, Action click, Action<ModProject> open,
@@ -229,6 +230,7 @@ namespace GoF2Remake.UI
         public void Open()
         {
             string keep = selected?.Folder;
+            syncProblem = ModManager.SyncPickedProjects(ModProject.Root);   // Android's picked folder: both ways
             projects = ModProject.List();
             selected = projects.FirstOrDefault(p => p.Folder == keep) ?? projects.FirstOrDefault();
             RebuildRows();
@@ -236,7 +238,13 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>Leaving the page: what was typed is kept.</summary>
-        public void Close() => SaveIfDirty();
+        public void Close()
+        {
+            SaveIfDirty();
+            ModManager.SyncPickedProjects(ModProject.Root);
+        }
+
+        string syncProblem;
 
         void RebuildRows()
         {
@@ -266,7 +274,10 @@ namespace GoF2Remake.UI
             empty.style.display = shown.Count == 0 ? DisplayStyle.Flex : DisplayStyle.None;
             count.text = projects.Count == 1 ? T("mbCountOne", "1 project") : string.Format(T("mbCount", "{0} projects"), projects.Count);
             note.text = string.Format(T("mbNote", "Projects are in {0}. Export as mod puts one into your Mods folder."),
-                                      ModProject.Root);
+                                      ModProject.Root)
+                        + (ModManager.PickedFolder.Length > 0 ? "\n" + string.Format(T("mbPickedFolder", "Synced with {0}"),
+                              ModManager.PickedFolderName + "/" + ModManager.PickedProjectsSub)
+                              + (syncProblem != null ? " (" + string.Format(T("modsPickedProblem", "can't be read: {0}"), syncProblem) + ")" : "") : "");
         }
 
         /// <summary>The search field's filter: every word typed is in the project's name, id, author or description.</summary>
@@ -393,6 +404,7 @@ namespace GoF2Remake.UI
                     ModBuilder.Kind.Kits => Count(selected.Kits.Count, "mbOneKit", "1 kit", "mbKitsN", "{0} kits"),
                     ModBuilder.Kind.Quests => Count(selected.Quests.Count + selected.EventGraphs().Count, "mbOneQuest", "1 mission", "mbQuestsN", "{0} missions"),
                     ModBuilder.Kind.Audio => Count(AudioCount(selected), "mbOneAudio", "1 sound", "mbAudioN", "{0} sounds"),
+                    ModBuilder.Kind.Scripts => Count(selected.ScriptFiles().Count, "mbOneScript", "1 script", "mbScriptsN", "{0} scripts"),
                     ModBuilder.Kind.Systems => Count(selected.Systems.Count, "mbOneSystem", "1 system", "mbSystemsN", "{0} systems"),
                     ModBuilder.Kind.Races => Count(selected.Races.Count, "mbOneModRace", "1 race", "mbModRacesN", "{0} races"),
                     ModBuilder.Kind.Stations => Count(selected.Stations.Count, "mbOneStation", "1 station", "mbStationsN", "{0} stations"),

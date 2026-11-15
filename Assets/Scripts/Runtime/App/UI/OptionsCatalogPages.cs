@@ -165,6 +165,12 @@ namespace GoF2Remake.UI
             list.Add(Choice("bloom", OptionPage.Graphics, () => X("bloom", "Bloom"), true,
                 () => new[] { X("off", "Off"), X("bloomRemake", "Remake"), X("bloomOriginal", "Original"), X("bloomBoth", "Both") },
                 () => Mathf.Clamp(Settings.BloomStyle, 0, 3), i => Settings.BloomStyle = i));
+            // Remake (a player's wish, 2026-10-18): the remake bloom's strength, shown with Remake and Both.
+            var bloomStrength = Slider("bloomStrength", OptionPage.Graphics, () => X("bloomStrength", "Bloom strength"), 0.25f, 2f,
+                () => Settings.BloomStrength, v => Settings.BloomStrength = v, Percent);
+            bloomStrength.description = () => X("bloomStrengthHelp", "How strong the Remake glow is. The Original glow stays as it is.");
+            bloomStrength.visible = () => Settings.Bloom;
+            list.Add(bloomStrength);
             // Remake: the hangar ships' contact shadows (HangarShipShadow); fewer for slower devices.
             list.Add(Choice("hangarShadows", OptionPage.Graphics, () => X("hangarShadows", "Hangar ship shadows"), true,
                 () => new[] { X("off", "Off"), X("hangarShadowsPlayer", "Player ship only"), X("hangarShadowsAll", "All ships") },
@@ -385,6 +391,11 @@ namespace GoF2Remake.UI
                 () => Settings.InvertOrbitX, v => Settings.InvertOrbitX = v);
             orbitX.description = orbitY.description;
             list.Add(orbitX);
+            // Remake: the cockpit view as a step of the camera button's cycle again (FreeLookCamera.NextMode; not in VR).
+            var cockpitCycle = Toggle("cockpitInCycle", OptionPage.Controls, () => X("cockpitInCycle", "Camera button: include the cockpit view"),
+                () => Settings.CockpitInCameraCycle, v => Settings.CockpitInCameraCycle = v);
+            cockpitCycle.description = () => X("cockpitInCycleHelp", "On: the camera button also steps through the cockpit view. Off: hold the camera button or use the cockpit view key.");
+            list.Add(cockpitCycle);
             if (Flight.ControllerGyro.Supported)
             {
                 list.Add(Toggle("gyroSteering", OptionPage.Controls, () => X("gyroSteering", "Controller gyro (DualSense, DualShock 4, Switch Pro)"),
@@ -432,6 +443,12 @@ namespace GoF2Remake.UI
             floatingStick.description = () => X("floatingTouchStickHelp", "Touching near the stick moves it under your thumb, so the ship doesn't turn until you move it. It goes back to its place when you let go.");
             floatingStick.visible = () => Application.isMobilePlatform || InputMode.Current == InputKind.Touch;
             list.Add(floatingStick);
+            // Remake: how solid the touch controls are drawn (TouchControls.Draw), 30..100 %.
+            var touchOpacity = Slider("touchOpacity", OptionPage.Controls, () => X("touchOpacity", "Touch controls opacity"), 0.3f, 1f,
+                () => Settings.TouchOpacity, v => Settings.TouchOpacity = v, Percent);
+            touchOpacity.description = () => X("touchOpacityHelp", "How solid the stick and buttons on screen are; menus stay opaque.");
+            touchOpacity.visible = floatingStick.visible;
+            list.Add(touchOpacity);
             // Remake VR: the cockpit's grabbable stick (right grip) and throttle lever (left grip), else the controllers as a gamepad.
             var vrGrab = Toggle("vrGrabControls", OptionPage.Controls, () => X("vrGrabControls", "VR flight: grab the stick and throttle"),
                 () => Settings.VrGrabControls, v => Settings.VrGrabControls = v);
@@ -449,9 +466,14 @@ namespace GoF2Remake.UI
                 () => Settings.StickDeadzone, v => Settings.StickDeadzone = v, Percent));
             // Remake: the controller hints' button icons (InputMode.Style, PadGlyph): the controller in use, or always one style.
             list.Add(Choice("padGlyphs", OptionPage.Controls, () => X("padGlyphs", "Controller button icons"), true,
-                () => new[] { X("padGlyphsAuto", "Auto"), "Xbox", "PlayStation" },
+                () => new[] { X("padGlyphsAuto", "Auto"), "Xbox", "PlayStation", "Switch" },
                 () => Settings.PadGlyphs, i => Settings.PadGlyphs = i,
-                () => X("padGlyphsHelp", "Auto: PlayStation buttons for a DualSense or DualShock, Xbox buttons for others.")));
+                () => X("padGlyphsHelp", "Auto: PlayStation buttons for a DualSense or DualShock, Switch buttons for a Nintendo controller, Xbox buttons for others.")));
+            // Remake (#162, a player's request): a Nintendo controller confirms with A (right) and goes back with B (bottom), as
+            // on a Switch (InputMode.SwapFaceButtons); off, by position like other pads.
+            list.Add(Described(Toggle("nintendoLayout", OptionPage.Controls, () => X("nintendoLayout", "Nintendo button layout"),
+                () => Settings.NintendoLayout, v => Settings.NintendoLayout = v),
+                () => X("nintendoLayoutHelp", "On a Nintendo controller, A (right) confirms and B (bottom) goes back, as on a Switch. Off: by position, as on Xbox and PlayStation controllers.")));
             // Remake: every flight control rebindable (GameControls): two keyboard / mouse keys and a controller button each.
             list.Add(new OptionDef
             {
@@ -558,6 +580,11 @@ namespace GoF2Remake.UI
                 () => Settings.CapitalShips, v => Settings.CapitalShips = v);
             capitalShips.description = () => X("capitalShipsHelp", "Capital ships get escorts and stronger turrets; carriers and Vossk battleships can be destroyed and docked at.");
             list.Add(SessionRule(capitalShips));
+            // Remake (players' wish, Discord 2026-10-18; TrafficPlan.Build): now and then a derelict freighter to hack.
+            var derelicts = Toggle("derelictWrecks", OptionPage.Gameplay, () => X("derelictWrecks", "Derelict freighters"),
+                () => Settings.DerelictWrecks, v => Settings.DerelictWrecks = v);
+            derelicts.description = () => X("derelictWrecksHelp", "Now and then a wrecked freighter drifts in an orbit: dock at it and hack it for its cargo. In unsafe systems pirates wait there.");
+            list.Add(SessionRule(derelicts));
             var kaamoStacking = Toggle("kaamoStacking", OptionPage.Gameplay, () => X("kaamoStacking", "Stackable Kaamo Club upgrades"),
                 () => Settings.KaamoStacking, v => Settings.KaamoStacking = v);
             kaamoStacking.description = () => string.Format(X("kaamoStackingHelp", "Kaamo Club upgrades can be fitted again, each level twice the price, up to level {0}."),
@@ -580,6 +607,11 @@ namespace GoF2Remake.UI
                 () => new[] { X("kaamoVipOff", "Off"), X("kaamoVipCard", "Buy at the club"), X("kaamoVipAlways", "Always on") },
                 () => (Settings.KaamoVipMode + 1) % 3, i => Settings.KaamoVipMode = (i + 2) % 3,   // Off (the original) first
                 () => X("kaamoVipOptionHelp", "The VIP Card adds a search box and sorting to the Kaamo Club's Store, a Ships tab for your stored ships, and a Kaamo marker on ships you already keep there. Buy at the club: the card is sold in the Store tab. Always on: no card needed. Off: the original club.")));
+            // Remake (PR #282): the shop's and storage's item order (Hangar.ShopItems); off = the original's, by item number.
+            var shopOrder = Toggle("shopByCategory", OptionPage.Gameplay, () => X("shopByCategory", "Sort the shop by category"),
+                () => Settings.ShopByCategory, v => Settings.ShopByCategory = v);
+            shopOrder.description = () => X("shopByCategoryHelp", "The shop and storage list items by category, then tech level, so add-on equipment sits beside its kind. Off: by item number, as in the original.");
+            list.Add(shopOrder);
             var cloakBay = Toggle("cloakBay", OptionPage.Gameplay, () => X("cloakBay", "Cloak bay on cloaking ships"),
                 () => Settings.CloakBay, v => Settings.CloakBay = v);
             cloakBay.description = () => X("cloakBayHelp", "On the Specter and Scimitar a mounted cloak takes no equipment slot.");
@@ -636,6 +668,12 @@ namespace GoF2Remake.UI
                 () => Settings.InputHints, v => Settings.InputHints = v);
             inputHints.description = () => X("inputHintsHelp", "Shows which keys and controller buttons do what, in flight, in the menus and in the station.");
             list.Add(inputHints);
+            // Remake (#171, a player's request): the hint rows' own size, apart from the Interface and Text sizes.
+            var hintScale = Choice("hintScale", OptionPage.Gameplay, () => X("hintScale", "Button hint size"), false,
+                () => System.Array.ConvertAll(HintScaleSteps, p => p + " %"),
+                () => Mathf.Max(0, System.Array.IndexOf(HintScaleSteps, Settings.HintScalePercent)), i => Settings.HintScalePercent = HintScaleSteps[Mathf.Clamp(i, 0, HintScaleSteps.Length - 1)],
+                () => X("hintScaleHelp", "Sizes the key and controller button hints in flight, in the station and on the star map, apart from the interface and text sizes."));
+            list.Add(hintScale);
             // Remake (immersion): the flight HUD's markings Full / Minimal / Off (FlightHud); also the "Toggle HUD" key (F1).
             list.Add(Choice("hudMode", OptionPage.Gameplay, () => X("hudMode", "Flight HUD"), true,
                 () => new[] { X("hudFull", "Full"), X("hudMinimal", "Minimal"), X("hudOff", "Off") },

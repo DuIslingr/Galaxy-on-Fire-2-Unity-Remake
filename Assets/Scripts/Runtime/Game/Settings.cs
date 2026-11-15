@@ -164,6 +164,9 @@ namespace GoF2Remake.Data
         public static bool Bloom => BloomStyle == BloomRemake || BloomStyle == BloomBoth;
         /// <summary>The original's bloom (ClassicBloomPass), alone or with the remake's.</summary>
         public static bool ClassicBloom => BloomStyle == BloomOriginal || BloomStyle == BloomBoth;
+        /// <summary>Remake (a player's wish, 2026-10-18): the remake bloom's strength, a factor 0.25..2 on each scene
+        /// volume's own intensity (Bootstrap.ApplyPostProcessing). The original's bloom is the original's: not scaled.</summary>
+        public static float BloomStrength { get => Mathf.Clamp(Get("bloomStrength", 1f), 0.25f, 2f); set => Set("bloomStrength", Mathf.Clamp(value, 0.25f, 2f)); }
 
         /// <summary>The sun's lens flare in flight (LensFlareView).</summary>
         public static bool LensFlare { get => GetBool("lensFlare", Default("lensFlare", 1f) > 0.5f); set => SetBool("lensFlare", value); }
@@ -326,14 +329,21 @@ namespace GoF2Remake.Data
         /// Mod Builder's views (not the flight's steering, which has its own pair).</summary>
         public static bool InvertOrbitY { get => GetBool("invertOrbitY", false); set => SetBool("invertOrbitY", value); }
         public static bool InvertOrbitX { get => GetBool("invertOrbitX", false); set => SetBool("invertOrbitX", value); }
+        /// <summary>Remake: the camera button's cycle includes the cockpit view (FreeLookCamera.NextMode); off, only a held
+        /// camera button or the "Cockpit view" binding reaches it.</summary>
+        public static bool CockpitInCameraCycle { get => GetBool("cockpitInCycle", false); set => SetBool("cockpitInCycle", value); }
         /// <summary>An orbit / look camera's turn input with InvertOrbitX / InvertOrbitY applied.</summary>
         public static Vector2 OrbitTurn(Vector2 d) => new Vector2(InvertOrbitX ? -d.x : d.x, InvertOrbitY ? -d.y : d.y);
         /// <summary>Globals::mouseCursorActivated (the PC version): the mouse moves the crosshair and steers (desktop only).</summary>
         public static bool MouseSteering { get => GetBool("mouseSteering", true); set => SetBool("mouseSteering", value); }
         /// <summary>Remake: the controller hints' button icons (InputMode.Style): 0 Auto (the controller last used: Sony's
-        /// PlayStation, any other Xbox), 1 always Xbox, 2 always PlayStation.</summary>
-        public static int PadGlyphs { get => Mathf.Clamp(Mathf.RoundToInt(Get("padGlyphs", PadGlyphsAuto)), 0, 2); set => Set("padGlyphs", Mathf.Clamp(value, 0, 2)); }
-        public const int PadGlyphsAuto = 0, PadGlyphsXbox = 1, PadGlyphsPlayStation = 2;
+        /// PlayStation, Nintendo's Switch, any other Xbox), 1 always Xbox, 2 always PlayStation, 3 always Switch (#162).</summary>
+        public static int PadGlyphs { get => Mathf.Clamp(Mathf.RoundToInt(Get("padGlyphs", PadGlyphsAuto)), 0, 3); set => Set("padGlyphs", Mathf.Clamp(value, 0, 3)); }
+        public const int PadGlyphsAuto = 0, PadGlyphsXbox = 1, PadGlyphsPlayStation = 2, PadGlyphsSwitch = 3;
+        /// <summary>Remake (#162, a player's request): on a Nintendo controller A (right) confirms and B (bottom) goes back,
+        /// as on a Switch: InputMode swaps its buttonSouth / buttonEast in every event, so every binding and direct read
+        /// follows. Off: by position, like an Xbox or PlayStation pad (the Input System's own mapping). On by default.</summary>
+        public static bool NintendoLayout { get => GetBool("nintendoLayout", true); set => SetBool("nintendoLayout", value); }
         /// <summary>Remake: mouse steering's dead zone, a fraction of the steering range around the centre (0 = none, the
         /// original's: PlayerEgo::update steers by the raw offset).</summary>
         public static float MouseDeadzone { get => Get("mouseDeadzone", DefaultMouseDeadzone); set => Set("mouseDeadzone", Mathf.Clamp(value, 0f, 0.3f)); }
@@ -383,6 +393,8 @@ namespace GoF2Remake.Data
         /// <summary>Remake (the user's request, 2026-10-27): a touch on the stick's area moves the stick under the thumb (that
         /// spot is the centre, no deflection) and it goes back to its place when let go; off = the original's fixed stick.</summary>
         public static bool FloatingTouchStick { get => GetBool("floatingTouchStick", false); set => SetBool("floatingTouchStick", value); }
+        /// <summary>Remake (a player's wish, 2026-10-17): how solid the touch controls are drawn, 0.3..1 (TouchControls.Draw).</summary>
+        public static float TouchOpacity { get => Mathf.Clamp(Get("touchOpacity", 1f), 0.3f, 1f); set => Set("touchOpacity", Mathf.Clamp(value, 0.3f, 1f)); }
         public static float StickDeadzone { get => Get("stickDeadzone", DefaultDeadzone); set => Set("stickDeadzone", Mathf.Clamp(value, 0.05f, 0.4f)); }
 
         // ---- gameplay ----------------------------------------------------------------------------------------
@@ -566,6 +578,7 @@ namespace GoF2Remake.Data
             if (GetBool("smarterNpcTargeting", false)) m |= R.SmarterNpcTargeting;
             if (GetBool("es2Aiming", false)) m |= R.Es2Aiming;
             if (GetBool("es2NpcFlight", false)) m |= R.Es2NpcFlight;
+            if (GetBool("derelictWrecks", false)) m |= R.DerelictWrecks;
             return R.WithDogfight(R.WithCollision(m, LocalCollision), LocalDogfight);
         }
 
@@ -590,6 +603,12 @@ namespace GoF2Remake.Data
         /// it: Khador doesn't offer its blueprint and a mounted one neither cruises nor leaves the system. Mod drives keep theirs.</summary>
         public static bool KhadorSlipstream { get => GetBool("khadorSlipstream", false); set => SetBool("khadorSlipstream", value); }
 
+        /// <summary>Remake (players' wish, Discord 2026-10-18: freighter wrecks that keep turning up): now and then an orbit
+        /// holds a derelict freighter to hack for its cargo (TrafficPlan.Build, Traffic.OnHackWon). A session rule (the
+        /// orbit's runner rolls the wreck for everyone there); off = the original, whose only wrecks are the five hidden
+        /// blueprints'.</summary>
+        public static bool DerelictWrecks { get => Rule(R.DerelictWrecks, "derelictWrecks", false); set => SetRule(R.DerelictWrecks, "derelictWrecks", value); }
+
         // ---- game experience (remake, the user's request 2026-11-04) --------------------------------------------------
 
         /// <summary>Options > Gameplay "Game experience" (and the welcome screen's choice): Original = the game as it was,
@@ -604,17 +623,17 @@ namespace GoF2Remake.Data
             "launchCamera", "dyingCargoMarkers", "hangarFlights", "animatedDialogue", "pirateEvents", "capitalShips",
             "kaamoStacking", "kaamoKeepsEquipment", "kaamoVip", "cloakBay", "informerOriginalRule", "originalTargetLock", "keepEnemyLock",
             "cloakLosesPursuers", "empBreaksCloak", "smarterNpcTargeting", "shipCollision", "playOnInConversations", "fastForwardCruise",
-            "khadorSlipstream", "markerDistance", "bombArming",
+            "khadorSlipstream", "markerDistance", "bombArming", "derelictWrecks",
         };
 
         // One row per preset, in ExperienceKeys' order. The first two are the original's own features (on everywhere; turned
         // off they make it Custom). shipCollision: SessionRules.Collision*; kaamoVip: KaamoVip*.
         static readonly float[][] Experiences =
         {
-            //      launch cargo hangar anim pirate capital stack keep vip     bay informerO lockO keepLock cloakLoses emp smartNpc collision  conv cruise slip distance bombArming
-            new[] { 1f, 1f, 0f, 0f, 0f, 0f, 0f, 0f, KaamoVipOff,  0f, 1f, 1f, 1f, 0f, 0f, 0f, R.CollisionOriginal, 0f, 0f, 0f, 0f, 0f },
-            new[] { 1f, 1f, 1f, 1f, 0f, 0f, 0f, 0f, KaamoVipOff,  0f, 1f, 1f, 1f, 0f, 0f, 0f, R.CollisionOriginal, 0f, 0f, 0f, 0f, 0f },
-            new[] { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, KaamoVipCard, 1f, 0f, 0f, 1f, 1f, 1f, 1f, R.CollisionMixed,    1f, 1f, 1f, 1f, 1f },
+            //      launch cargo hangar anim pirate capital stack keep vip     bay informerO lockO keepLock cloakLoses emp smartNpc collision  conv cruise slip distance bombArming derelicts
+            new[] { 1f, 1f, 0f, 0f, 0f, 0f, 0f, 0f, KaamoVipOff,  0f, 1f, 1f, 1f, 0f, 0f, 0f, R.CollisionOriginal, 0f, 0f, 0f, 0f, 0f, 0f },
+            new[] { 1f, 1f, 1f, 1f, 0f, 0f, 0f, 0f, KaamoVipOff,  0f, 1f, 1f, 1f, 0f, 0f, 0f, R.CollisionOriginal, 0f, 0f, 0f, 0f, 0f, 0f },
+            new[] { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, KaamoVipCard, 1f, 0f, 0f, 1f, 1f, 1f, 1f, R.CollisionMixed,    1f, 1f, 1f, 1f, 1f, 1f },
         };
 
         /// <summary>'key''s value in 'experience' (ExperienceOriginal..ExperienceRemake).</summary>
@@ -630,7 +649,7 @@ namespace GoF2Remake.Data
             PlayerPrefs.Save();
             int rules = LocalRules();
             foreach (int bit in new[] { R.CloakLosesPursuers, R.PirateEvents, R.CapitalShips, R.InformerOriginalRule, R.KaamoStacking,
-                                        R.KaamoKeepsEquipment, R.CloakBay, R.EmpBreaksCloak, R.SmarterNpcTargeting })
+                                        R.KaamoKeepsEquipment, R.CloakBay, R.EmpBreaksCloak, R.SmarterNpcTargeting, R.DerelictWrecks })
                 GameHooks.RuleChangedByHost?.Invoke(bit, (rules & bit) != 0);
             int collision = LocalCollision;
             GameHooks.RuleChangedByHost?.Invoke(R.PreciseShipCollision, collision == R.CollisionExact);
@@ -661,12 +680,13 @@ namespace GoF2Remake.Data
         /// <summary>The defaults before 2026-11-04 (the remake's, before the Original experience became the default), in
         /// ExperienceKeys' order: MigrateExperienceDefaults keeps them for a player who played before.</summary>
         static readonly float[] DefaultsBefore =
-            { 1f, 1f, 1f, 1f, 1f, 0f, 1f, 1f, KaamoVipCard, 1f, 0f, 0f, 1f, 0f, 1f, 0f, R.CollisionMixed, 0f, 0f, 1f, 0f, 0f };
+            { 1f, 1f, 1f, 1f, 1f, 0f, 1f, 1f, KaamoVipCard, 1f, 0f, 0f, 1f, 0f, 1f, 0f, R.CollisionMixed, 0f, 0f, 1f, 0f, 0f, 0f };
         const string ExperienceVersionKey = "experienceDefaults";
-        /// <summary>The migration's version: 2 = the experience options added after the presets (AddedExperienceKeys).</summary>
-        const float ExperienceVersion = 2f;
+        /// <summary>The migration's version: 2 = the experience options added after the presets (AddedExperienceKeys), one
+        /// more for each of them after the first.</summary>
+        const float ExperienceVersion = 3f;
         /// <summary>Experience options added after 2026-11-04's presets, oldest first.</summary>
-        static readonly string[] AddedExperienceKeys = { "bombArming" };
+        static readonly string[] AddedExperienceKeys = { "bombArming", "derelictWrecks" };
 
         /// <summary>Once (Bootstrap, before any option is read): an install that was played before the Original experience
         /// became the default keeps what it played with: every experience option it never set is stored at its old default
@@ -747,6 +767,9 @@ namespace GoF2Remake.Data
         /// original's club).</summary>
         public static int KaamoVipMode { get => Mathf.Clamp(Mathf.RoundToInt(Get("kaamoVip", KaamoVipOff)), 0, 2); set => Set("kaamoVip", Mathf.Clamp(value, 0, 2)); }
         public const int KaamoVipCard = 0, KaamoVipAlways = 1, KaamoVipOff = 2;
+        /// <summary>Remake (PR #282): the shop and storage list items by category, then tech level (Hangar.ShopItems); off
+        /// (default) by item index, as the original's Item::mixItems.</summary>
+        public static bool ShopByCategory { get => GetBool("shopByCategory", false); set => SetBool("shopByCategory", value); }
 
         /// <summary>Remake: the dialogue and radio text types in with pacing, shouting, actions and tinted names
         /// (TextReveal); off = the original's plain page at once.</summary>
@@ -762,6 +785,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake (docs/UI-DESIGN.md "HUD"): the flight HUD's panels (status bars, readouts, lock plate, messages,
         /// hints, crosshair) at 70..150 % of their size, apart from the menus' Interface size (FlightHud.ApplyHudLook).</summary>
         public static int HudScalePercent { get => Mathf.Clamp(Mathf.RoundToInt(Get("hudScale", 100f)), 70, 150); set => Set("hudScale", Mathf.Clamp(value, 70, 150)); }
+        /// <summary>Remake (#171, a player's request: the controller buttons' frames came out large at a big Interface /
+        /// Text size): the key and button hint rows of the flight HUD, the station and the star map at 50..100 % of their
+        /// size, apart from those (InputGlyph.TrackHintsOption; in flight times the HUD size, FlightHud.ApplyHudLook).</summary>
+        public static int HintScalePercent { get => Mathf.Clamp(Mathf.RoundToInt(Get("hintScale", 100f)), 50, 100); set => Set("hintScale", Mathf.Clamp(value, 50, 100)); }
         /// <summary>Remake: the flight HUD's markings at 30..100 % opacity (the messages, the radio and the menus stay
         /// opaque; FlightHud.ApplyHudLook).</summary>
         public static int HudOpacityPercent { get => Mathf.Clamp(Mathf.RoundToInt(Get("hudOpacity", 100f)), 30, 100); set => Set("hudOpacity", Mathf.Clamp(value, 30, 100)); }
@@ -777,6 +804,18 @@ namespace GoF2Remake.Data
         public static bool InterstellarDistance { get => GetBool("interstellarDistance", true); set => SetBool("interstellarDistance", value); }
         /// <summary>Remake: every primary weapon item sounds its own shots (the original: only the first primary gun).</summary>
         public static bool EachWeaponSound { get => GetBool("eachWeaponSound", false); set => SetBool("eachWeaponSound", value); }
+        /// <summary>Remake (#165, a player's request): the Supernova Challenge's combo sounds (SV_Mode_01..10: the combo
+        /// growing, its bonus paid; ChallengeOrbit.PlaySound) play, as in the original (default).</summary>
+        public static bool ChallengeComboSounds { get => GetBool("challengeComboSounds", true); set => SetBool("challengeComboSounds", value); }
+        /// <summary>Remake (the user's request, 2026-11-15): the Supernova Challenge's orbit also holds what the original's
+        /// createMission 0xb7 makes besides the Specters: the burning platform, the Terran carrier and four Rhinos shuttling
+        /// between them (World.ChallengeOrbit.SpawnScenery). Off by default: the original's round shows none of them (#179).
+        /// The challenge's start dialog asks each time and keeps the answer here (MainMenu.ShowChallengeStart).</summary>
+        public static bool ChallengeScenery { get => GetBool("challengeScenery", false); set => SetBool("challengeScenery", value); }
+        /// <summary>Remake (#165): a medal's toast sounds the remake's chime (default), the original's info blip (what the
+        /// original played) or nothing (StationMenu.ShowMedalToast).</summary>
+        public const int MedalSoundChime = 0, MedalSoundOriginal = 1, MedalSoundOff = 2;
+        public static int MedalSound { get => Mathf.Clamp(Mathf.RoundToInt(Get("medalSound", MedalSoundChime)), MedalSoundChime, MedalSoundOff); set => Set("medalSound", Mathf.Clamp(value, MedalSoundChime, MedalSoundOff)); }
         /// <summary>Remake (a player's request, 2026-11-04): a flight music track plays (default) or is skipped (MusicTracks:
         /// a battle track off leaves the calm track playing).</summary>
         public static bool MusicTrackOn(string track) => GetBool(MusicTracks.Key(track), true);
@@ -918,25 +957,25 @@ namespace GoF2Remake.Data
         // key goes in its tab's list. Not reset: the text language and the tilt calibration (taken on the device, not an
         // option); the Key bindings tab resets the bindings (GameControls), the in-game Difficulty and Debug tools rows are
         // the game's / Cheats' state.
-        public static readonly string[] SoundKeys = { "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "eachWeaponSound", "muteInBackground",
+        public static readonly string[] SoundKeys = { "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "eachWeaponSound", "challengeComboSounds", "medalSound", "muteInBackground",
             "musicTrack.battleLow", "musicTrack.battleMedium", "musicTrack.battleFull", "musicTrack.voidBattle", "musicTrack.specters1",
             "musicTrack.specters2", "musicTrack.wanted" };
         public static readonly string[] GraphicsKeys =
         {
             "displayMode", "resolutionWidth", "resolutionHeight", "frameRate", "quality", "fireSmoke", "fog", "detailDistance", "textureFiltering", "renderScale", "upscaler", "upscalerQuality",
-            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "skyStyle", "nebulaClouds", "npcPlayerEngines", "rebuiltPlanets", "fov",
+            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "bloomStrength", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "skyStyle", "nebulaClouds", "npcPlayerEngines", "rebuiltPlanets", "fov",
             "cameraShake", "originalChaseCamera", "es2FreeFlightCamera", "originalUi", "uiWidth", "uiMargin", "showFps", "fpsPosition", "gameCursor",
         };
         public static readonly string[] ControlsKeys =
         {
             "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "autoRoll", "boostToggle", "invertPitch", "invertYaw", "invertDrillY",
-            "invertDrillX", "invertOrbitY", "invertOrbitX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "mouseSensitivity", "vrGrabControls", "haptics", "stickDeadzone",
-            "touchLeftHeight", "touchRightHeight", "floatingTouchStick", "flightStyle", "padGlyphs",
+            "invertDrillX", "invertOrbitY", "invertOrbitX", "cockpitInCycle", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "mouseSensitivity", "vrGrabControls", "haptics", "stickDeadzone",
+            "touchLeftHeight", "touchRightHeight", "floatingTouchStick", "touchOpacity", "flightStyle", "padGlyphs", "nintendoLayout",
         };
         public static readonly string[] GameplayKeys =
         {
-            "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "collisionDamage", "pirateEvents", "capitalShips", "kaamoStacking", "kaamoMaxLevel", "kaamoKeepsEquipment", "kaamoVip", "cloakBay", "informerOriginalRule",
-            "originalTargetLock", "keepEnemyLock", "modShipTraffic", "dyingCargoMarkers", "cloakLosesPursuers", "empBreaksCloak", "bombArming", "smarterNpcTargeting", "npcDogfight", "es2Aiming", "es2NpcFlight", "shipCollision", "preciseShipCollision", "autoAdvanceDialogue", "animatedDialogue", "playOnInConversations", "fastForwardCruise", "autoJumpgate", "khadorSlipstream", "inputHints", "hudMode", "hudScale", "hudOpacity", "discordPresence",
+            "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "collisionDamage", "pirateEvents", "capitalShips", "kaamoStacking", "kaamoMaxLevel", "kaamoKeepsEquipment", "kaamoVip", "shopByCategory", "cloakBay", "informerOriginalRule",
+            "originalTargetLock", "keepEnemyLock", "modShipTraffic", "dyingCargoMarkers", "cloakLosesPursuers", "empBreaksCloak", "bombArming", "smarterNpcTargeting", "npcDogfight", "es2Aiming", "es2NpcFlight", "shipCollision", "preciseShipCollision", "autoAdvanceDialogue", "animatedDialogue", "playOnInConversations", "fastForwardCruise", "autoJumpgate", "khadorSlipstream", "derelictWrecks", "inputHints", "hintScale", "hudMode", "hudScale", "hudOpacity", "discordPresence",
             "farShipMarkers", "markerDistance", "interstellarDistance", "speedrunTimer", "speedrunSplits", "speedrunLength", "speedrunTiming", "speedrunCompare",
             "speedrunPosition", "speedrunLiveSplit",
         };

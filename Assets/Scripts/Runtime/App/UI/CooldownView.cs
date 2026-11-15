@@ -12,6 +12,8 @@
 // Remake (2026-11-13, Chorus's Rites): a Rite's slot sweeps with the Void energy toward its cost (PlayerDevices.Charge), and
 // the pool itself follows the slots as pips (Chorus's PlayerEnergyWidget segments): the regular ones amber, the one growing
 // back filled from the left, the bonus ones cyan; then the Void Crystals aboard that feed the regrowth (red with none).
+// Remake (a player's wish, 2026-10-18): the first slot is the selected secondary weapon's icon, lit as it reloads
+// (WeaponSystem.SecondaryReload); shown as its plate is (ammo left, not in the turret view).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -36,7 +38,7 @@ namespace GoF2Remake.UI
         }
 
         readonly VisualElement row;
-        readonly Slot boost, cloak, extender;
+        readonly Slot secondary, boost, cloak, extender;
         readonly List<Slot> devices = new List<Slot>();
         VisualElement rite;
         Label fuel;
@@ -47,6 +49,7 @@ namespace GoF2Remake.UI
             row = new VisualElement { name = "cooldowns", pickingMode = PickingMode.Ignore };
             row.AddToClassList("cooldowns");
             parent.Add(row);
+            secondary = Make();
             boost = Make();
             cloak = Make();
             extender = Make();
@@ -64,8 +67,12 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>Each frame. 'shown' = keyboard / controller flight with the HUD up.</summary>
-        public void Update(Database db, ShipController ship, PlayerCloak playerCloak, TimeExtender timeExtender, PlayerDevices playerDevices, bool shown)
+        public void Update(Database db, ShipController ship, PlayerCloak playerCloak, TimeExtender timeExtender, PlayerDevices playerDevices,
+                           WeaponSystem weapons, bool shown)
         {
+            bool armed = shown && weapons != null && weapons.SelectedSecondary >= 0 && weapons.SecondaryAmmo > 0 && !weapons.TurretView;
+            float reload = armed ? weapons.SecondaryReload : 1f;
+            Set(secondary, armed ? weapons.SelectedSecondary : -1, reload, reload >= 1f, -1f);
             var model = ship != null ? ship.Model : null;
             var booster = shown && model != null && model.HasBooster && db != null ? Shop.FirstMounted(db, BoosterCategory) : null;
             var rules = shown && playerCloak != null ? playerCloak.Rules : null;
@@ -89,7 +96,7 @@ namespace GoF2Remake.UI
                 Set(devices[i], d.item, playerDevices.Charge(list[i]), playerDevices.Ready(list[i]), d.Active ? d.ActiveLeft : -1f);
             }
             ShowVoid(n > 0 ? playerDevices.VoidPool : null);
-            row.style.display = booster != null || rules != null || slowItem != null || n > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            row.style.display = armed || booster != null || rules != null || slowItem != null || n > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         /// <summary>The Void energy as pips after the slots (none without a Rite).</summary>

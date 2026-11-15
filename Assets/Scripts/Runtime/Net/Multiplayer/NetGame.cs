@@ -241,9 +241,9 @@ namespace GoF2Remake.Multiplayer
             return true;
         }
 
-        /// <summary>Unity Services up and this player signed in anonymously (a profile per -mpname, so two games on one
-        /// machine are two players).</summary>
-        public static async Task SignInForOnline()
+        /// <summary>Unity Services up, no sign-in (what an issue report's upload needs, UI.IssueReportUpload); with the profile
+        /// of -mpname, since whoever starts them first decides it.</summary>
+        public static async Task StartServices()
         {
             if (UnityServices.State == ServicesInitializationState.Uninitialized)
             {
@@ -253,6 +253,13 @@ namespace GoF2Remake.Multiplayer
                 await UnityServices.InitializeAsync(options);
             }
             while (UnityServices.State == ServicesInitializationState.Initializing) await Task.Yield();
+        }
+
+        /// <summary>Unity Services up and this player signed in anonymously (a profile per -mpname, so two games on one
+        /// machine are two players).</summary>
+        public static async Task SignInForOnline()
+        {
+            await StartServices();
             // A sign-in that expired while offline (its refresh failed): signed out first, the cached session token kept,
             // so the same anonymous player signs in again (a dedicated server starting again after a lost connection).
             if (AuthenticationService.Instance.IsExpired) AuthenticationService.Instance.SignOut(false);
@@ -601,6 +608,16 @@ namespace GoF2Remake.Multiplayer
             try { Shutdown(); }
             catch (Exception again) { Debug.LogException(again); }
             Status = string.Format(Localization.Extra("mpStartError", "Couldn't start the session: {0}"), e.GetBaseException().Message);
+        }
+
+        /// <summary>A joining game that can't play this session (NetState: a script mod not allowed here): it leaves before
+        /// the world is built, the reason in the panel's status line like a failed join's.</summary>
+        internal static void RefuseJoin(string reason)
+        {
+            lostHandled = true;
+            Shutdown();
+            sessionGame = false;
+            Status = reason;
         }
 
         /// <summary>Ends the session (leaving to the main menu, a failed connection). The host with players connected tells

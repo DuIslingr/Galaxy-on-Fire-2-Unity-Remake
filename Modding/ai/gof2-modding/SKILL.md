@@ -6,7 +6,8 @@ description: Make mods for the Galaxy on Fire 2 Unity Remake - JSON data mods wi
 # Galaxy on Fire 2 Remake modding
 
 You help a player make a mod for the Galaxy on Fire 2 Unity Remake. A mod is a folder (or a .zip of it) of JSON files plus
-the PNG / GLB / OGG assets they name. Mods contain no code. This file is the format reference with the rules; next to it:
+the PNG / GLB / OGG assets they name. Most mods contain no code; a mod may also carry Lua scripts (see "Scripts (Lua)").
+This file is the format reference with the rules; next to it:
 
 - `reference.md`: every number and name of the original game a mod can refer to: items (every stat and raw attribute),
   item categories, attribute numbers, blueprint recipes, ships (hull size, hangar height, model name), every original
@@ -16,6 +17,8 @@ the PNG / GLB / OGG assets they name. Mods contain no code. This file is the for
 - `voices.md`: every voice clip with its speaker and English line (for `[voice <clip>]`).
 - `events.md`: every event graph node with its options, ports, types, choices and defaults, the expression words, every
   command with its syntax and the player selectors (for mission / bar mission / cutscene recipes).
+- `scripting.md`: the mod scripts' reference (Lua): the `game` table, the events, the hook classes with what each is
+  for, the members of the main game classes and the name of every class a script can use.
 - `guide.md`: the full modders' guide, every field of every file with more detail and examples than this file. When a
   field or behaviour isn't covered here, look it up there.
 
@@ -77,6 +80,7 @@ my_mod/
   events/*.gof2event  story missions and bar missions as Unity event graphs
   events/*.gof2mission  story missions and bar missions as step lists (by hand or the Mod Builder)
   text/<lang>.json    translations
+  scripts/*.lua       Lua scripts (main.lua first; subfolders are modules for require); the player is asked before they run
   music/, sounds/, voices/, textures/          replacement / new audio and skins
 ```
 
@@ -136,7 +140,9 @@ copied.
 Stats (name = attribute): damage 9, empDamage 10, reloadMs 11, lifetimeMs 12 (shot flight time; with speed = range), speed 13
 (units/ms), blastRadius 14, guided 15, automatic 16 (auto turret), turretTurnSpeed 17, shieldCapacity 18, shieldRegenMs 19,
 armor 20, cargoBonus 22, tractorAuto 23 (1 nearest, 2 any crate), tractorLockMs 24, boostSpeed 25, boostRechargeMs 26,
-boostDurationMs 27, agility 28 (steering nozzle), lockTimeMs 29 (scanner), showClassAAsteroids 30, radarShowsCargo 31,
+boostDurationMs 27, agility 28 (steering nozzle), lockTimeMs 29 (scanner), showClassAAsteroids 30, radarShowsCargo 31 (1 first cargo entry, 2 whole hold), scanShip 140
+(scanner: the hull on the lock plate), scanHitpoints 141 / scanWeapons 142 (scanner: hitpoints / guns on a new lock; every
+ship lock fires the trigger "on scanned", %victim% the ship's name),
 drillSpeed 32, miningYield 33, cabins 34, cloakDurationMs 35, cloakChargeMs 36, energyCells 38 (per cloak), fireRateFactor 39,
 damageFactor 40 (weapon mods %), emergencyMs 41, timeExtenderMs 42, timeExtenderCooldownMs 43, collectorSpeed 49,
 collectorMagnitude 50, collectorRange 51, gammaShielding 52, beamRange 53, beamStrength 54, beamTargets 55, miningBeam 100 (a
@@ -370,6 +376,11 @@ every mounted item, never below -90 %; an item's freeBoostFactor beats the ship'
 the ship flown, the mod campaign, a new-game option that is on, the player's option. Touch, tilt and VR always fly the
 original. The original has no acceleration (the throttle is at once); its top speed bonus scales the boost too.
 
+**Flight rules**: every number the player's ship moves by (top speed, turn ramp / decay, strafe, dodge, level-out, free
+flight's acceleration, braking, dampeners, boost, auto-roll; FlightRules' fields, the guide's "Flight rules" table): a mod's
+`flight.json` `{ "baseSpeed": 3, "freeTurnRateDeg": 160 }` for every ship, a ship's `"flight": { "rules": { ... } }` for one
+(wins over flight.json). Unknown names warn, values out of range are clamped. NPC ships fly by their own AI.
+
 ## gameoptions.json
 
 Cards in Start new game's **Game options** panel, each a switch saved with the game; content asks for it with `option(...)`.
@@ -509,7 +520,8 @@ originals (name, techLevel, looks, music...).
   one of the game's lines (`voices/MSG_MISSION_24_NO_EQUIPMENT_INSTALLED.ogg`) replaces that line everywhere, the story
   included, in every language or (in `voices/<language>/`) one.
 - `music/<name>.ogg`: a game track's name (`Space_Terraner`, `Station_Vossk`, `Space_Battle_Full`, `Space_NoCombat_Void`
-  (main menu)...) replaces it; any other name is a new track for systems/stations (`spaceMusic`, `stationMusic`, `music`) and
+  (main menu)...) replaces it; any other name is a new track for systems/stations (`spaceMusic`, `stationMusic`, `battleMusic`; a station's `music`, `spaceMusic`,
+  `battleMusic` beat its system's) and
   missions.
 - `sounds/<name>.ogg`: replaces the game sound with that file name (from the game's Assets/Audio folders); any other name is
   a new sound the missions' Sound step / Play Sound's Mod sound / `/sound <name>` play.
@@ -602,6 +614,85 @@ save; a mission started while docked isn't in that docking's auto-save. Mission 
 (launching from its station counts). You can't write the file; describe the graph as an ordered list of nodes with their settings and wires for the
 user to build, using the exact node, option and port names (and option choices) from `events.md`.
 
+## Scripts (Lua)
+
+For what the files and missions can't express (a rule, a reaction to what happens in the game, a change computed at run
+time) a mod may carry Lua 5.2 scripts in `scripts/`. Prefer JSON and missions where they do the job: a script mod asks the
+player's permission before it runs (scripts can change anything in the game, saves included), and says "Scripts" in the Mods
+screen. `scripting.md` is the reference: the `game` table, the events, the hook classes with what each is for, the members
+of the main classes and every class name. Don't guess member names: take them from it (or tell the user to run
+`print(game.describe("Class"))` in the Mod Builder's Scripts tab and paste the result; `game.describe(x, true)` lists the
+private members too).
+
+- Files: every `.lua` directly in `scripts/` runs when the mod starts, `main.lua` first, the others by name. Files in
+  subfolders are modules: `local util = require("lib.util")` runs `scripts/lib/util.lua` once and gives what it returns.
+  `require("other_mod:lib.util")` for a dependency's. One Lua state per mod.
+- They start in the main menu and run through every scene; they start again when the active mods change. So the top of a
+  file only sets up (`game.on`, `game.hook`); state that must last goes into `game.saved` (a table stored in the save file:
+  numbers, texts, booleans, tables), read inside handlers. `game.config` is the same outside the saves (the mod's settings).
+- `game.on(event, fn)`: `update(dt)`, `lateUpdate(dt)`, `scene(name)`, `space(level)`, `station(level)`, `database(db)`,
+  `shipDestroyed(ship, byPlayer)`, `playerDestroyed()`, `trade(item, amount, price, station)` (+ bought, - sold),
+  `missionAccepted(mission)`, `missionSucceeded(mission, pay)`, `missionFailed(mission)`, `storyStep(step, previous)`,
+  `chat(from, text, own)`, `gameLoaded()`, `saving()`, `stop()`. `game.after(seconds, fn)`, `game.every(seconds, fn)`,
+  `game.off(handle)`, `game.emit(event, ...)` between mods in one game.
+- Sequences: `game.wait(seconds)` and `game.waitUntil(function() return condition end)` pause the function they are in
+  (any handler, timer or `game.run(function() ... end)`), which goes on from that line later: write a mission's flow as
+  straight code. Not inside a hook or a command.
+- `game.message(text)` (on screen), `game.log(...)` / `print(...)` (the console and log), `game.command(line)` (any chat /
+  event command of events.md, as the server; single player or the host only), `game.addCommand(name, function(args, who)
+  return "answer" end)` (a command of the mod's own: `/name` in chat, a mission's Command node, `game.command`),
+  `game.multiplayer()` ("none" / "host" / "client"), `game.scene()`, `game.space()` / `game.station()` / `game.player()`
+  (the level, the player's ship; nil when not there).
+- The game's C# classes are globals by their names (`Session`, `Database`, `Settings`, `Standing`, `GameHooks` ...), and so
+  are Unity's scene classes (`Vector3`, `Quaternion`, `Mathf`, `GameObject` ...); `import("Full.Name")` where two share a
+  name. Statics and fields with a dot (`Session.Credits`), an object's methods with a colon (`db:Item(5)`),
+  `Class.__new(...)` constructs. Exact capitals. Structs are copies: assign `transform.position` whole.
+- C# lists and dictionaries are objects, not Lua tables: `list.Count`, `game.get(list, 0)` (from 0), `game.set(dict, key,
+  value)`, `game.table(list)` for a Lua copy. Arrays arrive as Lua tables (from 1). A Lua function works wherever the game
+  takes a delegate.
+- Private members: `game.field(x, "name")`, `game.setField(x, "name", value)`, `game.call(x, "Method", ...)` (its result,
+  then its out values); generic methods: `game.generic(x, "Method", { "Class" }, ...)`. They can change with a game update.
+- Data changes go in the `database` event only (the tables are loaded again whenever a game starts or loads):
+  `game.on("database", function(db) local i = db:Item(5) i.maxPrice = i.maxPrice * 2 end)`. New items / ships / systems
+  stay in the JSON files.
+- `game.hook("GameHooks", "Member", function(original, ...) return original(...) end)` replaces one of the game's hook
+  delegates (GameHooks, SpaceHooks, UiHooks, NetSession; listed in scripting.md; out values are returned after the result);
+  `game.listen(target, "Event", fn)` adds to a C# event. Both are undone when the scripts stop.
+- The mod's own files: `game.readText(path)`, `game.readJson(path)`, `game.files(folder)`, `game.texture(path)`,
+  `game.sound(path, function(clip) end)`. Content keys to this game's numbers: `game.item("id" or "mod:id")`, `game.ship`,
+  `game.system`, `game.station` (commands take the keys themselves).
+- `game.behaviour(gameObject, { update = function(self, dt) end, destroyed = ... })`: a component written in Lua (also
+  lateUpdate, fixedUpdate, enabled, disabled, triggerEnter, triggerExit, collisionEnter; `self.gameObject`,
+  `self.transform`). `game.uiEvent(element, "ClickEvent", fn)` for UI Toolkit events.
+- Not there: `io`, `debug`, `os` beyond the clock, any .NET class (`System.*`), files other than the mod's, network; the
+  game's own file and network classes; game methods that take a path, file name or address. A script can't rewrite a game
+  function that isn't behind a delegate, nor define a C# class.
+- Errors never stop the game: they show under the mod in the Mods screen as "Script: file:(line,col): message". A call
+  that runs too long is stopped. Keep `update` handlers light.
+- Multiplayer: the scripts run in every player's game (same files). Guard what only the world's owner may do with
+  `if game.multiplayer() ~= "client" then ... end`. `game.send("name", ...)` goes to every player's scripts through the
+  host, `game.onMessage("name", function(sender, ...) end)` hears it (sender 0 = the host, `game.myId()` this player):
+  numbers, texts, booleans. Never trust another player's values; decide on the host.
+
+```lua
+-- scripts/main.lua: a bounty for every pirate the player destroys, counted in the save
+game.on("shipDestroyed", function(ship, byPlayer)
+    if not byPlayer or ship.Race ~= Standing.Pirate then return end
+    game.saved.kills = (game.saved.kills or 0) + 1
+    Session.Credits = Session.Credits + 250
+    game.message("Pirate bounty: +250 $")
+end)
+
+-- a wave after every launch, written as a sequence
+game.on("space", function(level)
+    if game.multiplayer() == "client" then return end
+    game.wait(5)
+    game.command("spawn @a Phantom pirate 2")
+    game.waitUntil(function() return #game.find("NpcShip") == 0 end)
+    game.message("All clear")
+end)
+```
+
 ## Balancing (the originals, Android economy)
 
 | Price band (credits) | Armor | Cargo t | Handling | Primary slots | Equipment slots | Examples |
@@ -652,4 +743,6 @@ ships.json entry for the weak GoF3D ship (no better than the worst originals):
 - Stat names from the list above; numbers are integers (except chances, colours, sizes).
 - Conditions use only the words above; option keys match gameoptions.json ids (`mod_id:option_id`).
 - Every file path named exists in the mod; images: card art 290 x 448 (or x2), icons 180 x 88, preview 16:9, portraits 4:5.
+- Scripts: member names come from scripting.md (or game.describe); data changes sit in the `database` event; lasting
+  state is in `game.saved`; the mod's description says what its scripts do.
 - Prices and stats sit in the intended balance band.

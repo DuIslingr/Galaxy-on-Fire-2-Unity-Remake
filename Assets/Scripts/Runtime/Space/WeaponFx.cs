@@ -30,6 +30,9 @@ namespace GoF2Remake.Flight
         [System.NonSerialized] public TrailLook trail;
         /// <summary>Remake mods (items.json fx "rite", ModWeapons): a Rite's particles and sounds; null = none.</summary>
         [System.NonSerialized] public RiteLook rite;
+        /// <summary>Remake mods (a modder's wish, 2026-10-18): the mod gave "impact" itself (ModWeapons), so it also shows
+        /// where a missile hits and where a bomb goes off, in place of the game's burst / explosion (GunRig.ShowBlast).</summary>
+        [System.NonSerialized] public bool modImpact;
         [Tooltip("The Liberator's engine loop (1116) while it is steered.")]
         public AudioClip engineLoop;
         [Tooltip("1116's other layer (EngineDLC_06): plays while its Vertical parameter is 0.336..0.996.")]
