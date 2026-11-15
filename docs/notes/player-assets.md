@@ -55,8 +55,17 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
     (307), 0x0d (2), 0x24 (1). `aei.py` reads only the RGBA8 and ETC1 types: PVRTC 2 / 4 bpp needs a decoder.
   - FSB5 codecs: MPEG (4,121 samples: voices, music), IMA ADPCM (291: effects), PCM16 (4). No Vorbis (no setup-header
     rebuilding); MP3 needs a managed decoder (or Unity's own where the platform has one), IMA ADPCM is a few lines.
-- **Android HD** (2.0.16): the APK holds the code only (7.7 MB); the content is the OBB (`47947_GOF2CONTENT_ETC`,
-  `assets/data/...`, ETC1 textures `3d/textures/low/etc`). Not on the build machine at the moment (2026-11-15).
+- **Android HD 2.0.16** (`net.fishlabs.gof2hdallandroid2012`; checked from the user's XAPK, 2026-11-15): the APK holds the
+  code only; the content is the OBB `main.47947006.net.fishlabs.gof2hdallandroid2012.obb`, a zip (2,466 entries) of
+  `47947_GOF2CONTENT_ETC/assets/...`: 1,145 .aei, 1,127 .aem, 51 .bin, 11 .lang, 17 FSB5 banks + .fev, the shaders.
+  - AEI types: 0x01 (684) and 0x03 (258) RGBA8, 0x81 cubemap strips (23), 0x42 ETC1 with mips (180): all read by `aei.py`.
+  - FSB5: the same codecs as iOS (MPEG, IMA ADPCM, PCM16).
+  - An XAPK is a zip holding the APK and `Android/obb/<package>/main.*.obb`: the converter takes the XAPK, the OBB or a
+    folder holding either.
+- **What each copy has** (against the project's 22 banks, 2026-11-15): Android has no German voices (`VOICE_deu`,
+  `DLC_VOICE_deu`, `DLC2_VOICE_deu`, `GENERIC_deu`, `LOUNGE_deu`) and no Chinese text; iOS has no Arabic text (`ar.lang`)
+  but both Chinese tables (`zs`, `zt`). Every other bank has the same samples in both. The converter takes either or both
+  (layered); without German voices the game falls back to the English ones.
 
 ## Plan
 
