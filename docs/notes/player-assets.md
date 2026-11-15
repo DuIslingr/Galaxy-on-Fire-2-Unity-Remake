@@ -229,6 +229,14 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   `ship_ring_open_*` markers (2026-10-17 / 21: common pack), `HullIconBuilder`'s rendered hull icons (rendered models). The race emblems (`GoF2Races`, KiritoJPK 2026-10-13, added
   by hand) aren't crops of any atlas (searched both copies' 11 atlases for each, within 2 / 255: none): resized or edited,
   so common-pack material.
+- **Skies** (2026-11-15): OriginalSkies (GoF2.Space): `Sky("stars_N" / "nebula_N")` renders SkyboxBaker's layers (the
+  original's sky meshes and textures, GoF2/Unlit stars or GoF2/Additive nebula, seen from inside) into a cube render
+  texture with Camera.RenderToCubemap (2048 faces, 1024 on phones; ~0.5 s a sky; nothing without a GPU device), once per
+  run; `Reflection(name)` makes a Cubemap of the original's own 6-face strip (128 px faces; Resources/GoF2Reflections are
+  4x upscales of them: an optional upgrade). OrbitBuilder's skies and SkyReflection read through them. **To check in
+  game:** a face read back from the render texture came out flipped against the baked strip for some faces, which a
+  readback can do on its own (the APIs' cube face row order), so the orientation of both (and FromStrip's face order) is
+  to be confirmed by looking at an orbit and a hull's reflection.
 
 ## Plan
 

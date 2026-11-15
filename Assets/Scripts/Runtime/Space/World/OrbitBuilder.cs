@@ -56,9 +56,9 @@ namespace GoF2Remake.World
             if (template == null) { Debug.LogWarning("OrbitBuilder: run GoF2 > Build > Space Skies"); return null; }
             var sky = new Material(template) { name = "SpaceSky (runtime)" };
             int stars = layout.systemIndex >= 0 ? layout.systemIndex % 3 : 2;   // alien/void: stars_002
-            sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{stars:000}"));
+            sky.SetTexture("_Stars", GoF2Remake.Visuals.OriginalSkies.Sky($"stars_{stars:000}"));
             int nebula = nebulaOverride >= 0 ? nebulaOverride : layout.systemTexture;   // the prologue's belt: nebula 3
-            sky.SetTexture("_Nebula", Resources.Load<Cubemap>($"GoF2Sky/nebula_{nebula:000}"));
+            sky.SetTexture("_Nebula", GoF2Remake.Visuals.OriginalSkies.Sky($"nebula_{nebula:000}"));
             var rotation = SkyRotation(layout);
             // Remake mods: a system's own sky (systems.json "skybox": panorama / cube-strip images, the star layer, a turn).
             var mod = layout.systemIndex >= 0 && nebulaOverride < 0 ? Modding.ModWorld.SkyOf(layout.systemIndex) : null;
@@ -73,7 +73,7 @@ namespace GoF2Remake.World
                 else if (mod.starsLayer >= 0)
                 {
                     baseStars = mod.starsLayer;
-                    sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{baseStars:000}"));
+                    sky.SetTexture("_Stars", GoF2Remake.Visuals.OriginalSkies.Sky($"stars_{baseStars:000}"));
                 }
                 if (mod.starsLayer == -2) baseStars = -1;
                 sky.SetFloat("_NebulaGain", mod.nebulaBrightness);

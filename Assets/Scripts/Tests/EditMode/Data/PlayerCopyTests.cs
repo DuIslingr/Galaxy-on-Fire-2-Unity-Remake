@@ -111,6 +111,21 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheSkiesComeFromTheConvertedCopy()
+        {
+            // a nebula and a star field rendered from the copy's sky meshes and textures (OriginalSkies.Sky)
+            var nebula = GoF2Remake.Visuals.OriginalSkies.Sky("nebula_003");
+            Assert.IsNotNull(nebula, "nebula_003");
+            Assert.AreEqual(UnityEngine.Rendering.TextureDimension.Cube, nebula.dimension);
+            Assert.IsNotNull(GoF2Remake.Visuals.OriginalSkies.Sky("stars_000"));
+            Assert.IsNotNull(GoF2Remake.Visuals.OriginalSkies.Sky("nebula_018"), "a Supernova sky");
+            // a reflection: the original's own cubemap strip
+            var refl = GoF2Remake.Visuals.OriginalSkies.Reflection("cubemap_skybox_003");
+            Assert.IsNotNull(refl);
+            Assert.AreEqual(128, refl.width);
+        }
+
+        [Test]
         public void TheTextComesFromTheConvertedCopy()
         {
             Assert.IsNotNull(GameContent.LanguageText("en"));
