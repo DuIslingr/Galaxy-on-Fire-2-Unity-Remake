@@ -48,6 +48,29 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheAssembledObjectsComeFromTheConvertedCopy()
+        {
+            // Every assembly of assemblies.json built from the converted copy (OriginalAssemblies), as AssembledObject.LoadPrefab
+            // gives it in a build without the originals. Those whose models the remake remodelled come from the common pack
+            // (not installed here): listed, not failed, as long as most build.
+            var db = Database.Load();
+            var failed = new System.Collections.Generic.List<string>();
+            int built = 0, renderers = 0;
+            foreach (var e in db.Assemblies)
+            {
+                if (e.pack == GoF2Remake.Modding.ModShips.Pack) continue;
+                var t = GoF2Remake.Visuals.OriginalAssemblies.Template(e);
+                if (t == null) { failed.Add(e.name); continue; }
+                built++;
+                int r = t.GetComponentsInChildren<UnityEngine.Renderer>(true).Length;
+                if (r == 0) failed.Add(e.name + " (no renderers)");
+                renderers += r;
+            }
+            UnityEngine.Debug.Log($"PlayerCopyTests: {built} assemblies built ({renderers} renderers); not built: {string.Join(", ", failed)}");
+            Assert.Greater(built, db.Assemblies.Count * 9 / 10, "nearly every assembly builds from the copy; not built: " + string.Join(", ", failed));
+        }
+
+        [Test]
         public void TheTextComesFromTheConvertedCopy()
         {
             Assert.IsNotNull(GameContent.LanguageText("en"));

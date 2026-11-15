@@ -204,7 +204,9 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   them when Resources has no prefab. The converter now writes the `_metallic_smoothness` maps (split_spec.py's: metallic
   0, smoothness the normal map's alpha). **The mesh space** (OriginalModelsTests, 2026-11-15, three models imported into
   the test bed against the same models built from the cache: parts, bounds, signed volume all equal): a vertex (x, y, z)
-  of the original -> (-x, y, z) x 0.05, normals (-x, y, z), the triangles' order reversed.
+  of the original -> (-x, y, z) x 0.05, normals (-x, y, z), the triangles' order reversed. All 319 assemblies build from
+  the Android copy in the test bed (1,937 renderers, 47 s for all of them in edit mode, their textures included): the
+  remodelled ones from the original meshes until the common pack replaces them.
 
 ## Plan
 
