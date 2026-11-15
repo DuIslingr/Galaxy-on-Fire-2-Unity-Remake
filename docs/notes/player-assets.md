@@ -207,6 +207,17 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   of the original -> (-x, y, z) x 0.05, normals (-x, y, z), the triangles' order reversed. All 319 assemblies build from
   the Android copy in the test bed (1,937 renderers, 47 s for all of them in edit mode, their textures included): the
   remodelled ones from the original meshes until the common pack replaces them.
+- **Sounds** (2026-11-15): OriginalAudio (GoF2.Game): a cache sound as an AudioClip on the spot: WAV read as it is, MP3 by
+  **NLayer 3.0.1** (`Assets/Plugins/NLayer`, MIT, the user's choice over background preloading; matches ffmpeg on all 2,078
+  Android MP3s: equal lengths, no dropped frames), over 30 s streamed (a PCM reader on the MP3). **OriginalRefs**: the own
+  assets' references to originals, recorded by `Reference/tools/player_assets/original_refs.py` in
+  `Resources/GoF2Content/original_refs.json` (field paths -> the original's project path; 4,314 in StoryAssets, the combat,
+  event, star map, menu, Supernova and weapon tables, the language table, the Station / MainMenu scenes' components), filled
+  when a table loads (`OriginalRefs.Load` in place of Resources.Load) or a scene opens (sceneLoaded, by class and GameObject
+  name); only empty fields, so a build with the originals is unchanged. Lists of more than 64 entries (the story's voices,
+  the Mod Builder's audio index) are filled entry by entry when asked (`OriginalRefs.Entry`, StoryAssets.Voice,
+  GameAudioIndex.Clip): all at once took ~20 s. Not yet: the derived images some tables hold (SkyLayerAssets,
+  ShipShadows, ModAssets' materials, the story's portrait parts) and the build profiles' app icons.
 
 ## Plan
 

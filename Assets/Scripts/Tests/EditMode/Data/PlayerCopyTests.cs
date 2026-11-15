@@ -6,6 +6,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using GoF2Remake.Data;
 using NUnit.Framework;
 
@@ -68,6 +69,30 @@ namespace GoF2Remake.Tests
             }
             UnityEngine.Debug.Log($"PlayerCopyTests: {built} assemblies built ({renderers} renderers); not built: {string.Join(", ", failed)}");
             Assert.Greater(built, db.Assemblies.Count * 9 / 10, "nearly every assembly builds from the copy; not built: " + string.Join(", ", failed));
+        }
+
+        [Test]
+        public void TheSoundsComeFromTheConvertedCopy()
+        {
+            // the story table's voice lines refilled from the copy (OriginalRefs), decoded from its MP3 (NLayer)
+            // (a line at a time, when it is asked for: OriginalRefs.Entry)
+            var story = StoryAssets.Load();
+            Assert.IsNotNull(story);
+            var names = story.VoiceNames().Take(25).ToList();
+            Assert.AreEqual(25, names.Count);
+            foreach (var n in names)
+            {
+                var line = story.OriginalVoice(n, false);
+                Assert.IsNotNull(line, n);
+                Assert.Greater(line.samples, 1000, n);
+            }
+            // an effect from its WAV (IMA ADPCM in the bank)
+            var fx = OriginalAudio.Get("Audio/SFX_GENERAL/Button_Push_v06.ogg");
+            Assert.IsNotNull(fx); Assert.Greater(fx.samples, 100);
+            // a music track: longer than OriginalAudio.StreamSeconds, so streamed
+            var music = OriginalAudio.Get("Audio/MUSIC/Space_Battle_Medium.ogg");
+            Assert.IsNotNull(music);
+            Assert.Greater(music.length, OriginalAudio.StreamSeconds);
         }
 
         [Test]
