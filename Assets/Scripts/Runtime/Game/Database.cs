@@ -1247,21 +1247,21 @@ namespace GoF2Remake.Data
 
         static T Read<T>(string folder, string file) where T : new()
         {
-            var ta = Resources.Load<TextAsset>(folder + "/" + file);
-            if (ta == null)
+            var text = GoF2Remake.Data.GameContent.Text(folder + "/" + file);   // (the player's converted copy, else Resources)
+            if (text == null)
             {
                 Debug.LogWarning("Database: missing Resources/" + folder + "/" + file + ".json");
                 return new T();
             }
-            return JsonUtility.FromJson<Wrapper<T>>("{\"list\":" + ta.text + "}").list;
+            return JsonUtility.FromJson<Wrapper<T>>("{\"list\":" + text + "}").list;
         }
 
         [System.Serializable] class AssemblyFile { public List<AssemblyData> entries; }
 
         static List<AssemblyData> ReadAssemblies(string folder)
         {
-            var ta = Resources.Load<TextAsset>(folder + "/assemblies");
-            return ta != null ? JsonUtility.FromJson<AssemblyFile>(ta.text).entries : new List<AssemblyData>();
+            var text = GoF2Remake.Data.GameContent.Text(folder + "/assemblies");
+            return text != null ? JsonUtility.FromJson<AssemblyFile>(text).entries : new List<AssemblyData>();
         }
 
         public AssemblyData AssemblyByName(string name)
