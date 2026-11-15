@@ -55,6 +55,7 @@ This file holds only what every task needs. Everything about one area of the gam
 | [mod-builder-mcp.md](docs/notes/mod-builder-mcp.md) | The builder's MCP server for AI assistants |
 | [vr.md](docs/notes/vr.md) | OpenXR VR mode, rig, panels, cockpit, controls |
 | [flight-model.md](docs/notes/flight-model.md) | Recovered flight constants, chase camera, bank, dodge, field offsets |
+| [player-assets.md](docs/notes/player-assets.md) | Shipping without the original's assets: the inventory, the player's copy, the in-game conversion |
 | [open-items.md](docs/notes/open-items.md) | Open issues and the suggested order of work |
 
 ## Environment
