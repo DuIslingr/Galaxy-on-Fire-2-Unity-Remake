@@ -1,24 +1,32 @@
-// GoF2/NebulaCloud: the local nebula clouds (World.NebulaClouds; Options > Graphics "Nebula clouds"). Remake, 2026-11-14, the
-// user: EVERSPACE 2's sky methods in the base game. As ES2's local nebulae draw their pieces (M_Nebula_Local_Parent, read from
-// its compiled shader): each piece a flat sprite at a random turn, its light a radial falloff times one channel of a tiled
-// greyscale mask (its own scale and offset from the piece's random values), at two octaves, the smaller of the two; faded
-// where the sprite is seen edge-on (its Fresnel fade) and near the camera; brighter toward the sun (forward scattering, ^32).
-// The mask is the remake's own (Resources/GoF2SkyLayers/cloud_masks.png, Reference/tools/sky/nebula_clouds.py), the colours
-// the orbit's own sky's. Added (not ES2's): a piece past the level's far plane (15 km) is drawn at 95 % of it, in its own
-// direction, so the clouds reach past what the camera draws. Premultiplied: light added, a little of what is behind covered
-// (ES2's are translucent), so they show against a bright sky too; the pieces aren't sorted (alike in colour, their order hardly
-// shows).
+// GoF2/NebulaCloud: the local nebula clouds (World.NebulaClouds: Options > Graphics "Nebula clouds", and the "Skies" styles
+// EVERSPACE 2 style / Combined). Remake, 2026-11-14, the user: EVERSPACE 2's sky methods in the base game, "a closer
+// approximation" from its files. As ES2's local nebulae draw their pieces (M_Nebula_Local_Parent, its compiled shader and its
+// parameters' defaults from its CachedExpressionData): each piece a flat sprite at a random turn; the mask's channel at uv x 0.3
+// x its scale x (0.25 + 0.75 x random.x), offset by random.zw, and at twice that, the smaller of the two; its colour the
+// cloud's own where dense, the system colour at its thin edges (1 - radial x mask through Schlick's bias ColorBias 0.1 and the
+// contrast curve ColorContrast 4); its opacity the mask through Bias 0.05, ^Exponent 2, Contrast 1, x Density, faded edge-on
+// (FresnelFadeMin 0.3) and near the camera; toward the sun its colour turns to the sun's (^32). ES2 lights them by Brightness
+// 10000 against its stars' 10 under its auto exposure; here _Intensity 70 (the crushed opacity's cores just reach white).
+// Added: the radial falloff squared (linear, a piece's round edge showed once its light saturated); a piece past the level's
+// far plane (15 km) drawn at 95 % of it in its own direction (the distant clouds keep their size on the sky); premultiplied
+// (light added, some of what is behind covered), the pieces unsorted.
 // Vertex data: uv the sprite's corner, uv1 its random values, normal its facing, colour its tint (a: its mask channel / 2).
 Shader "GoF2/NebulaCloud"
 {
     Properties
     {
         [NoScaleOffset] _Masks ("Cloud masks (r g b)", 2D) = "black" {}
-        _Intensity ("Intensity", Float) = 0.2
-        _Absorb ("Covers what is behind", Float) = 0.5
+        _Intensity ("Intensity", Float) = 70
+        _Absorb ("Covers what is behind", Float) = 2
         _Tiling ("Mask tiling", Float) = 2.5
-        _Exponent ("Density exponent", Float) = 2.2
-        _FresnelMin ("Edge-on fade", Float) = 0.1
+        _Exponent ("Exponent", Float) = 2
+        _Bias ("Bias", Float) = 0.05
+        _Contrast ("Contrast", Float) = 1
+        _ColorBias ("Colour bias", Float) = 0.1
+        _ColorContrast ("Colour contrast", Float) = 4
+        _Density ("Density", Float) = 1
+        _SysColor ("System colour (thin edges)", Color) = (1, 1, 1, 1)
+        _FresnelMin ("Edge-on fade", Float) = 0.3
         _NearFade ("Near fade (m)", Float) = 400
         _SunScatter ("Toward the sun", Float) = 1.5
         _SunDir ("Toward the sun (world)", Vector) = (0, 0, 1, 0)
@@ -41,8 +49,8 @@ Shader "GoF2/NebulaCloud"
 
             TEXTURE2D(_Masks); SAMPLER(sampler_Masks);
             CBUFFER_START(UnityPerMaterial)
-                float _Intensity, _Absorb, _Tiling, _Exponent, _FresnelMin, _NearFade, _SunScatter;
-                float4 _SunDir, _SunColor;
+                float _Intensity, _Absorb, _Tiling, _Exponent, _Bias, _Contrast, _ColorBias, _ColorContrast, _Density, _FresnelMin, _NearFade, _SunScatter;
+                float4 _SunDir, _SunColor, _SysColor;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float4 rnd : TEXCOORD1; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -73,24 +81,37 @@ Shader "GoF2/NebulaCloud"
 
             half Channel(half3 t, half c) { return c < 0.25 ? t.r : c < 0.75 ? t.g : t.b; }
 
+            // M_Nebula_Local_Parent's curves: Schlick's bias (its preshader passes 1 / bias - 2) and its two-sided contrast curve
+            float Bias(float x, float b) { return x / ((1.0 - x) * (1.0 / max(b, 1e-4) - 2.0) + 1.0); }
+            float Contrast(float x, float c)
+            {
+                float lo = x <= 0 ? 0 : pow(saturate(2.0 * x), c) * 0.5;
+                float up = 1.0 - pow(max(1.0 - saturate(2.0 * (x - 0.5)), 1e-6), c);
+                return lerp(lo, up * 0.5 + 0.5, saturate(up * 500.0));
+            }
+
             half4 frag(Varyings i) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 float radial = max(1.0 - 2.0 * length(i.uv - 0.5), 0.0);
                 if (radial <= 0) return 0;
-                // ES2: the mask at uv x 0.3 x its scale x (0.25 + 0.75 x random.x), offset by random.zw, and again finer (ES2's x 2; x 1.6
-                // here, its grain read as dust), the smaller
+                // ES2: the mask's channel at uv x 0.3 x its scale x (0.25 + 0.75 x random.x), offset by random.zw, and twice that, the smaller
                 float2 t = i.uv * 0.3 * _Tiling * (0.25 + 0.75 * i.rnd.x) + i.rnd.zw;
                 half ch = i.color.a;
-                half m = min(Channel(SAMPLE_TEXTURE2D(_Masks, sampler_Masks, t).rgb, ch), Channel(SAMPLE_TEXTURE2D(_Masks, sampler_Masks, t * 1.6 + i.rnd.y).rgb, ch));
-                half dens = saturate(radial * m * 2.0);
-                dens = dens <= 0 ? 0 : pow(dens, _Exponent);
+                half m = min(Channel(SAMPLE_TEXTURE2D(_Masks, sampler_Masks, t).rgb, ch), Channel(SAMPLE_TEXTURE2D(_Masks, sampler_Masks, t * 2.0 + i.rnd.y).rgb, ch));
+                // its colour: the cloud's own where it is dense, the system's at its thin edges (ColorBias, ColorContrast)
+                float tone = Contrast(Bias(1.0 - radial * m, _ColorBias), _ColorContrast);
+                half3 col = lerp(i.color.rgb, _SysColor.rgb, tone);
+                // its opacity: the mask through Bias, ^Exponent, Contrast, x Density, faded round its edge
+                // (the radial falloff squared: linear, a piece's round edge showed once its light saturated)
+                float dens = Contrast(pow(max(Bias(m, _Bias), 0.0), _Exponent), _Contrast) * radial * radial * _Density;
                 float facing = abs(dot(normalize(i.normalWS), i.view.xyz));
-                dens *= saturate((facing - _FresnelMin) / max(1.0 - _FresnelMin, 1e-3));   // edge-on: gone
+                dens *= saturate((facing - _FresnelMin) / max(1.0 - _FresnelMin, 1e-3));   // edge-on: gone (FresnelFadeMin)
                 dens *= saturate((i.view.w - _NearFade) / max(_NearFade, 1.0));          // at the camera: gone
+                // forward scattering toward the sun (^32), toward its colour
                 float toSun = saturate((dot(i.view.xyz, _SunDir.xyz) + 1.0) * 0.5);
-                half3 col = i.color.rgb * (1.0 + _SunScatter * pow(toSun, 32.0) * _SunColor.rgb);
-                return half4(col * dens * _Intensity, saturate(dens * _Absorb));   // (premultiplied: it covers a little of what is behind)
+                col = lerp(col, _SunColor.rgb * max(max(col.r, col.g), col.b), pow(toSun, 32.0) * _SunScatter * 0.5);
+                return half4(col * dens * _Intensity, saturate(dens * _Absorb));   // (premultiplied: it covers some of what is behind)
             }
             ENDHLSL
         }

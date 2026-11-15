@@ -38,10 +38,11 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   detail; the user: "4 options. chorus enhanced on its own which is only a slight improvement whereas es2 is es2 styled then
   chorus and es2 combined should be the best of both worlds"): **Original**; **Enhanced** (below: the upscaled layers and
   sharp stars, and Chorus's way with a painted sky: its brightest part again as a sharper image patch); **EVERSPACE 2
-  style** (no painted nebula: ES2's clustered three-layer star field, a tinted greyscale mask on each bright region, falling
-  off round it and brighter toward the sun, a sky-wide one under the fuller skies, an added band along the nebulae's plane);
-  **Combined** (Enhanced, the ES2 layers over it, fainter: a faint clustered star field behind GoF2's stars, mask detail and
-  glow on the regions, the band). `World.GoF2SkyLayers.Build` makes each a layered sky (mods-world.md "Layered skies") with
+  style** (as ES2 builds a location, "Nebula clouds" below: the sky sphere only ES2's clustered three-layer star field and,
+  under the fuller skies, a faint sky-wide nebula; each bright region a distant 3D local nebula, local ones round the orbit;
+  no painted nebula); **Combined** (Enhanced, ES2's faint star field behind GoF2's stars, ES2's local nebulae round the
+  orbit). A first pass drew ES2 style as tinted masks and a band on the sky (fog walls: the user asked whether ES2 really
+  looks so; it doesn't, its nebulae are 3D clouds). `World.GoF2SkyLayers.Build` makes each a layered sky (mods-world.md "Layered skies") with
   `"base"` (the game's nebula under the layers, its stars over them: `SpaceSkyCore` `Sky()` draws BaseNebula, ChorusSky with
   its star mask last, then BaseStars) except ES2 style; the layers need "Live mod skies" (else Enhanced's layers and stars
   alone). The remake's own assets (`Reference/tools/sky/sky_layers.py`, `Resources/GoF2SkyLayers`, named "gof2:<name>" by any
@@ -73,22 +74,24 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   material copies the sky's) draw the other sky's stars too. Needs 32-bit float textures (`SkyStars.Supported`), else
   the original skies. Tests `SkyStarsTests`.
 - **Nebula clouds** (remake, 2026-11-14, the user: EVERSPACE 2's sky methods in the base game, "this shouldnt require es2s
-  files"; Options > Graphics "Nebula clouds", `Settings.NebulaClouds`, off by default: the original has none):
-  `World.NebulaClouds` (spawned by `SpaceLevel` after the sky layers, not between the systems) puts 0-3 clouds of gas round
-  the orbit (`CountFor` the orbit's nebula sky's coverage), placed as EVERSPACE 2 places its local nebulae
-  (BP_Skybox_Nebula_Local's construction script: of 101 random points in a sphere of the radius, those under 0.3 x radius
-  x r^2 off its plane each a flat sprite at a random turn, 1-3 x its piece size, its own random values and one of three
-  mask channels). ES2's are ~20 km across with their middles a few km out (221 in its location levels, most levels two,
-  density 1, their own colours); GoF2's far plane is 15 km, so here 6-14 km with pieces 0.18 x radius x 1-3, and a piece
-  past the far plane is drawn at 95 % of it in its own direction (`GoF2/NebulaCloud`'s vertex shader). Seeded by the station:
-  the same each visit. The look (`Resources/GoF2SkyLayers/NebulaCloud.shader`, after M_Nebula_Local_Parent): radial falloff
-  x the mask channel at two octaves (the smaller), ^2.2, faded edge-on (Fresnel) and within 400 m of the camera, brighter
-  toward the sun (^32), premultiplied (added light, half of it covering what is behind, so they show on bright skies; the
-  pieces aren't sorted). The remake's own assets (`Reference/tools/sky/nebula_clouds.py`): `cloud_masks.png` (tileable
-  spectral noise: billowy clumps, ridged lanes, stretched wisps; no detail under 10 px) and `nebula_clouds.json` (each GoF2
-  nebula sky's coverage, brightness and three main colours, k-means of its bright pixels); a cloud takes one of them, the
-  less common as likely (in the sky's main colour it vanished against it). In still shots they show on the darker skies
-  (007, 008) and hardly on the full ones (011, 016); their part is the parallax in flight. Tests `NebulaCloudsTests`.
+  files", then "a closer approximation" from ES2's decomp and shader dump): `World.NebulaClouds` (spawned by `SpaceLevel`
+  after the sky layers, not between the systems), drawn by `GoF2/NebulaCloud` (its header: M_Nebula_Local_Parent's formula
+  and defaults). How ES2 builds a location (read from its files): its sky level (Map_Skybox_S0XX) holds only the stars sphere
+  (M_Skybox_Stars: Brightness 10, noise Param 2), a matte and in some sectors a sky-wide nebula (BP_Skybox_Nebula_Global,
+  Intensity 0.2); `BP_EnvironmentGenerator.ProcessSpaceObjects` makes each nebula of the sector's map a
+  `BP_Skybox_Nebula_Local` at its direction and distance (x SpaceObjectDistanceScale 2000) with its Radius, Seed, Color,
+  UseSystemColor and Density, plus a volumetric fog field inside one ((1 - d / r)^0.5 x 0.05); a local nebula's construction
+  script makes of 101 random points in its sphere those under HalfHeight 0.3 x radius x r^2 off its plane each a flat piece
+  (SM_Skybox_Nebula_Local: a 5 km plane) at a random turn, scaled 1-3 x radius / 10 km, with random values and a mask channel.
+  Here: near clouds (`NearClouds`: the option, or the styles ES2 style / Combined) 0-3 by the orbit's nebula sky's coverage,
+  6-14 km (the far plane is 15 km) a few km out, seeded by the station; and in ES2 style (`RegionClouds`) each of the sky's
+  bright regions (GoF2SkyLayers' layout) a distant cloud in its direction (the sky's turn), 45 km out, as wide on the sky as
+  the region, its own colour; the material's system colour the sky's main colour. Pieces 0.25-0.75 x radius half-wide
+  (ES2's). The remake's own masks (`Reference/tools/sky/nebula_clouds.py`: tileable spectral noise, each channel's mean
+  brought to ES2's masks' ~0.5, which its crushing opacity needs) and `nebula_clouds.json` (each sky's coverage, brightness
+  and three main colours); a mod's `textures/cloud_masks.png` replaces them (`ModTextures.SkyLayer`: the ES2 mod gives ES2's
+  T_Skybox_Nebula_001 / 002 / 005). Compared in Unity renders, nebulae 005 / 007 / 008 / 016: with ES2's masks they read as
+  ES2's do; the remake's come close. Tests `NebulaCloudsTests`.
 - **SRP Batcher** (2026-10-22): every shader the scenes draw is compatible, `GoF2/SpaceSky` too (its per-material values in
   `UnityPerMaterial`). A renderer with a MaterialPropertyBlock falls out of it: `PartAnimation.ownMaterials` (GunRig: the
   projectiles, muzzle flashes, impacts) writes their fades into a copy of the part's material made once instead (a fleet

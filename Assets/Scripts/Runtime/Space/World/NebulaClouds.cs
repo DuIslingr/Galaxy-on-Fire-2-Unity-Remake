@@ -21,7 +21,7 @@ namespace GoF2Remake.World
         public const int Candidates = 101;          // ES2: 0..100 (51 on consoles)
         public const float HalfHeight = 0.3f;       // ES2's default
         public const float MinRadius = 6000f, MaxRadius = 14000f;   // m
-        public const float PieceShare = 0.18f;       // a piece's size per (1-3 x) the cloud's radius
+        public const float PieceShare = 0.25f;     // a piece's half-size per (1-3 x) the radius: ES2's 5 km planes at 1-3 x radius / 10 km
 
         [System.Serializable] public sealed class Rgbw { public float r, g, b, weight; }
         [System.Serializable] public sealed class Sky { public float coverage, brightness; public Rgbw[] colors; }
@@ -69,25 +69,38 @@ namespace GoF2Remake.World
 
         static float Next(System.Random rng) => (float)rng.NextDouble();
 
-        /// <summary>The orbit's clouds (null: the option off, the space between the systems, or a sky too bare for any).</summary>
+        /// <summary>Whether an orbit has near clouds: the option, or the sky styles that are EVERSPACE 2's (ES2 style and
+        /// Combined: its locations have their local nebulae round them).</summary>
+        public static bool NearClouds => Settings.NebulaClouds || Settings.SkyStyle == Settings.SkyEs2 || Settings.SkyStyle == Settings.SkyCombined;
+
+        /// <summary>Whether its sky's bright regions are distant clouds: ES2 style (with its layers drawn, Live mod skies), as
+        /// ES2 draws a sector's nebulae from a location (BP_EnvironmentGenerator.ProcessSpaceObjects: each a local nebula at its
+        /// direction and scaled distance; the sky sphere has only the stars and a faint sky-wide nebula).</summary>
+        public static bool RegionClouds => Settings.SkyStyle == Settings.SkyEs2 && Settings.LiveSkies;
+
+        /// <summary>Distant clouds' distance (m): far past the far plane (15 km), so they barely move as the ship does; drawn at
+        /// the far plane in their own direction, so their size on the sky is kept.</summary>
+        public const float RegionDistance = 45000f;
+
+        /// <summary>The orbit's clouds (null: none: off, the space between the systems, or a sky too bare for any).</summary>
         public static NebulaClouds Spawn(OrbitLayout layout, Transform parent = null)
         {
-            if (!Settings.NebulaClouds || layout == null || layout.interstellar) return null;
+            if (layout == null || layout.interstellar) return null;
             var sky = Of(layout.systemTexture);
             if (sky == null || sky.colors == null || sky.colors.Length == 0) return null;
-            int count = CountFor(sky.coverage);
-            if (count == 0) return null;
+            int near = NearClouds ? CountFor(sky.coverage) : 0;
+            var regions = RegionClouds ? GoF2SkyLayers.Of(layout.systemTexture) : null;
+            if (near == 0 && (regions?.regions == null || regions.regions.Length == 0)) return null;
             var shader = Resources.Load<Shader>("GoF2SkyLayers/NebulaCloud");
-            var masks = Resources.Load<Texture2D>("GoF2SkyLayers/cloud_masks");
+            var masks = Modding.ModTextures.SkyLayer("cloud_masks") ?? Resources.Load<Texture2D>("GoF2SkyLayers/cloud_masks");   // (a mod's textures/cloud_masks: the ES2 mod's, ES2's own)
             if (shader == null || masks == null) return null;
 
             var go = new GameObject("NebulaClouds");
             go.transform.SetParent(parent, false);
             var clouds = go.AddComponent<NebulaClouds>();
             var rng = new System.Random(layout.stationIndex * 7919 + layout.systemTexture * 104729 + 17);
-            var vertices = new List<Vector3>(); var normals = new List<Vector3>(); var uvs = new List<Vector2>();
-            var randoms = new List<Vector4>(); var colors = new List<Color>(); var tris = new List<int>();
-            for (int c = 0; c < count; c++)
+            var mesh = new Builder();
+            for (int c = 0; c < near; c++)
             {
                 float radius = Mathf.Lerp(MinRadius, MaxRadius, Next(rng));
                 // its middle a few km out (ES2's median 3.6 km for 20 km clouds), its plane at a random turn
@@ -96,6 +109,52 @@ namespace GoF2Remake.World
                 var plane = Quaternion.Euler(Mathf.Lerp(-30f, 30f, Next(rng)), Next(rng) * 360f, Mathf.Lerp(-30f, 30f, Next(rng)));
                 var tint = Pick(sky.colors, Next(rng));
                 float strength = Mathf.Lerp(0.6f, 1.2f, Next(rng)) * Mathf.Clamp(sky.brightness * 3f, 0.4f, 1.5f);
+                mesh.Cloud(rng, centre, plane, radius, new Color(tint.r * strength, tint.g * strength, tint.b * strength));
+            }
+            if (regions?.regions != null)
+            {
+                // the sky's bright regions as distant local nebulae: in their direction (the sky's turn: the baked cube's frame
+                // to the world), as wide on the sky as the region, its plane facing the orbit, its own colour
+                var turn = OrbitBuilder.SkyRotation(layout);
+                foreach (var r in regions.regions)
+                {
+                    if (r.dir == null || r.dir.Length < 3) continue;
+                    var dir = (turn * new Vector3(r.dir[0], r.dir[1], r.dir[2])).normalized;
+                    float radius = RegionDistance * Mathf.Tan(Mathf.Clamp(r.radius, 4f, 40f) * Mathf.Deg2Rad);
+                    float strength = Mathf.Clamp(r.brightness * 4f, 0.3f, 2f);
+                    var col = r.color != null && r.color.Length >= 3 ? new Color(r.color[0] * strength, r.color[1] * strength, r.color[2] * strength) : Color.white * strength;
+                    mesh.Cloud(rng, dir * RegionDistance, Quaternion.LookRotation(dir), radius, col);
+                }
+            }
+            var built = mesh.Mesh();
+            var look = new Material(shader) { name = "NebulaClouds" };
+            look.SetTexture("_Masks", masks);
+            var sun = OrbitLayout.DirToUnity(layout.lightDirection).normalized;
+            look.SetVector("_SunDir", new Vector4(sun.x, sun.y, sun.z, 0f));
+            look.SetColor("_SunColor", layout.sunColor.maxColorComponent > 0f ? layout.sunColor : Color.white);
+            // the "system colour" ES2's local nebulae turn to at their thin edges: the sky's main colour
+            var main = GoF2SkyLayers.Of(layout.systemTexture)?.main;
+            look.SetColor("_SysColor", main != null && main.Length >= 3 ? new Color(main[0], main[1], main[2]) * Mathf.Clamp(sky.brightness * 3f, 0.3f, 1.5f) : Color.gray);
+            go.AddComponent<MeshFilter>().sharedMesh = built;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = look;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            clouds.mesh = built; clouds.look = look;
+            return clouds;
+        }
+
+        /// <summary>The clouds' sprites as one mesh.</summary>
+        sealed class Builder
+        {
+            readonly List<Vector3> vertices = new(), normals = new();
+            readonly List<Vector2> uvs = new();
+            readonly List<Vector4> randoms = new();
+            readonly List<Color> colors = new();
+            readonly List<int> tris = new();
+
+            public void Cloud(System.Random rng, Vector3 centre, Quaternion plane, float radius, Color tint)
+            {
                 foreach (var piece in Pieces(rng, radius))
                 {
                     var at = centre + plane * piece.position;
@@ -104,27 +163,20 @@ namespace GoF2Remake.World
                     int b = vertices.Count;
                     vertices.Add(at - right - up); vertices.Add(at + right - up); vertices.Add(at + right + up); vertices.Add(at - right + up);
                     uvs.Add(new Vector2(0, 0)); uvs.Add(new Vector2(1, 0)); uvs.Add(new Vector2(1, 1)); uvs.Add(new Vector2(0, 1));
-                    var col = new Color(tint.r * strength, tint.g * strength, tint.b * strength, piece.channel * 0.5f);
+                    var col = new Color(tint.r, tint.g, tint.b, piece.channel * 0.5f);
                     for (int k = 0; k < 4; k++) { normals.Add(n); randoms.Add(piece.random); colors.Add(col); }
                     tris.Add(b); tris.Add(b + 2); tris.Add(b + 1); tris.Add(b); tris.Add(b + 3); tris.Add(b + 2);
                 }
             }
-            var mesh = new Mesh { name = "NebulaClouds", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
-            mesh.SetVertices(vertices); mesh.SetNormals(normals); mesh.SetUVs(0, uvs); mesh.SetUVs(1, randoms); mesh.SetColors(colors);
-            mesh.SetTriangles(tris, 0);
-            mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1e6f);   // (always drawn: the far pieces are pulled inside the far plane)
-            var look = new Material(shader) { name = "NebulaClouds" };
-            look.SetTexture("_Masks", masks);
-            var sun = OrbitLayout.DirToUnity(layout.lightDirection).normalized;
-            look.SetVector("_SunDir", new Vector4(sun.x, sun.y, sun.z, 0f));
-            look.SetColor("_SunColor", layout.sunColor.maxColorComponent > 0f ? layout.sunColor : Color.white);
-            go.AddComponent<MeshFilter>().sharedMesh = mesh;
-            var renderer = go.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = look;
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-            clouds.mesh = mesh; clouds.look = look;
-            return clouds;
+
+            public Mesh Mesh()
+            {
+                var mesh = new Mesh { name = "NebulaClouds", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+                mesh.SetVertices(vertices); mesh.SetNormals(normals); mesh.SetUVs(0, uvs); mesh.SetUVs(1, randoms); mesh.SetColors(colors);
+                mesh.SetTriangles(tris, 0);
+                mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1e6f);   // (always drawn: the far pieces are pulled inside the far plane)
+                return mesh;
+            }
         }
 
         /// <summary>A cloud's colour: one of its sky's main colours, the less common ones as likely as the first (a cloud in

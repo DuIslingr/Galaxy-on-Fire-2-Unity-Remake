@@ -53,6 +53,11 @@ def masks():
     wisp = norm(spectral(rng, 3.2, stretch=3.0) + 0.4 * spectral(rng, 3.4))
     wisp = wisp ** 2.0
     img = np.stack([norm(billow), norm(ridge), norm(wisp)], -1)
+    # each channel's mean brought to EVERSPACE 2's local nebula masks' (T_Skybox_Nebula_001 / 002 / 005: 0.43 - 0.57): its
+    # material crushes the mask (Bias 0.05, ^2), so a darker mask shows only its few brightest specks
+    for c in range(3):
+        m = img[..., c].mean()
+        img[..., c] = img[..., c] ** (np.log(0.5) / np.log(max(m, 1e-3)))
     return np.round(img * 255).astype(np.uint8)
 
 

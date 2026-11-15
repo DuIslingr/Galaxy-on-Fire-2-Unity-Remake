@@ -47,7 +47,7 @@ namespace GoF2Remake.Tests
             {
                 Assert.LessOrEqual(p.position.magnitude, radius * 1.0001f);
                 Assert.Less(Mathf.Abs(p.position.z), NebulaClouds.HalfHeight * radius, "ES2: under HalfHeight x radius x r^2");
-                Assert.That(p.size, Is.InRange(radius * NebulaClouds.PieceShare, 3f * radius * NebulaClouds.PieceShare));
+                Assert.That(p.size, Is.InRange(radius * NebulaClouds.PieceShare, 3f * radius * NebulaClouds.PieceShare), "ES2: 1-3 x its piece size");
                 Assert.That(p.channel, Is.InRange(0, 2));
             }
             var again = NebulaClouds.Pieces(new System.Random(5), radius);
@@ -79,6 +79,37 @@ namespace GoF2Remake.Tests
                 Settings.NebulaClouds = false;
                 if (a != null) Object.DestroyImmediate(a.gameObject);
                 if (b != null) Object.DestroyImmediate(b.gameObject);
+            }
+        }
+
+        [Test]
+        public void Es2StyleDrawsTheSkysNebulaeAsDistantClouds()
+        {
+            var db = Database.Load();
+            var st = db.Stations.First(s => db.Systems.First(y => y.index == s.system).textureIndex == 7);
+            var layout = OrbitLayout.Build(db, st.index);
+            int style = Settings.SkyStyle; bool live = Settings.LiveSkies;
+            NebulaClouds plain = null, es2 = null;
+            try
+            {
+                Settings.NebulaClouds = false; Settings.LiveSkies = true;
+                Settings.SkyStyle = Settings.SkyOriginal;
+                Assert.IsNull(NebulaClouds.Spawn(layout), "Original without the option: none");
+                Settings.SkyStyle = Settings.SkyCombined;
+                plain = NebulaClouds.Spawn(layout);
+                Assert.IsNotNull(plain, "Combined: ES2's local nebulae round the orbit");
+                Settings.SkyStyle = Settings.SkyEs2;
+                es2 = NebulaClouds.Spawn(layout);
+                // the same local nebulae first (the same seed), then ES2 style's distant ones
+                Assert.Greater(es2.GetComponent<MeshFilter>().sharedMesh.vertexCount, plain.GetComponent<MeshFilter>().sharedMesh.vertexCount,
+                    "ES2 style: the sky's bright regions as distant clouds too (Combined's painted sky has them)");
+                Assert.Greater(es2.GetComponent<MeshFilter>().sharedMesh.vertices.Max(v => v.magnitude), NebulaClouds.RegionDistance * 0.8f);
+            }
+            finally
+            {
+                Settings.SkyStyle = style; Settings.LiveSkies = live;
+                if (plain != null) Object.DestroyImmediate(plain.gameObject);
+                if (es2 != null) Object.DestroyImmediate(es2.gameObject);
             }
         }
 

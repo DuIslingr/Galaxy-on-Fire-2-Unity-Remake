@@ -71,12 +71,14 @@ namespace GoF2Remake.Tests
             Assert.AreEqual("gof2:star_mask", es2.stars);
             Assert.Greater(es2.starsNoiseScale, 0f, "ES2's clustered stars");
             Assert.IsFalse(es2.layers.Any(l => l.kind == ModWorld.ChorusLayer.Image), "no patch");
-            Assert.IsTrue(es2.layers.Any(l => l.kind == ModWorld.ChorusLayer.Mask && l.falloff > 0f), "tinted masks on the regions");
+            Assert.LessOrEqual(es2.layers.Count, 1, "ES2's sky sphere: the stars and at most a faint sky-wide nebula (its nebulae are 3D clouds)");
+            Assert.IsTrue(es2.layers.All(l => l.kind == ModWorld.ChorusLayer.Mask && l.falloff == 0f));
+            Assert.AreEqual(0, GoF2SkyLayers.Build(13, Settings.SkyEs2).layers.Count, "a bare sky: no sky-wide nebula");
 
             var both = GoF2SkyLayers.Build(16, Settings.SkyCombined);
             Assert.IsTrue(both.keepBase);
-            Assert.AreEqual(ModWorld.ChorusLayer.Image, both.layers[0].kind, "the patch first, the ES2 layers over it");
-            Assert.IsTrue(both.layers.Any(l => l.kind == ModWorld.ChorusLayer.Mask));
+            Assert.AreEqual(ModWorld.ChorusLayer.Image, both.layers[0].kind, "the painted sky's patch");
+            Assert.AreEqual("gof2:star_mask", both.stars, "ES2's star field behind GoF2's stars");
             Assert.Less(both.starsBrightness, es2.starsBrightness, "only a faint star field behind GoF2's own stars");
             Assert.LessOrEqual(both.layers.Count, ModWorld.ChorusSky.MaxLayers);
         }

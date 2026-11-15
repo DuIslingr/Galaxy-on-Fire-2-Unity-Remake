@@ -6,11 +6,12 @@
 // colour, brightness), the plane its nebulae lie in, its main colour and coverage, its patch. The images are the remake's own
 // ("gof2:" names: star_mask, nebula_masks, patch_0XX), nothing of EVERSPACE 2's or Chorus's.
 //   Enhanced: Chorus's way: the brightest part again as a sharper image patch over the (upscaled) painted sky.
-//   EVERSPACE 2 style: no painted nebula: ES2's clustered three-layer star field, a tinted greyscale mask on each region (its
-//     colour, falling off round it, brighter toward the sun), a sky-wide one under the fuller skies, an additive band along
-//     the nebulae's plane.
-//   Combined: Enhanced, with the EVERSPACE 2 layers over it, fainter (a faint clustered star field behind GoF2's own stars,
-//     mask detail and glow on the regions, the band).
+//   EVERSPACE 2 style: as ES2 builds a location (its sky levels and BP_EnvironmentGenerator, read from its files): the sky
+//     sphere only its clustered three-layer star field and, under the fuller skies, a faint sky-wide nebula; the nebulae are
+//     3D local nebulae (World.NebulaClouds): each bright region a distant one in its direction, as wide on the sky, local
+//     ones round the orbit.
+//   Combined: Enhanced (the painted sky and its patch), ES2's faint star field behind GoF2's own stars, ES2's local nebulae
+//     round the orbit.
 using System.Collections.Generic;
 using GoF2Remake.Data;
 using GoF2Remake.Modding;
@@ -91,48 +92,22 @@ namespace GoF2Remake.World
 
             if (es2)
             {
-                // ES2's star field: its three layers (r + g / 2 + b / 4), tiled 2 x 1 round the sky, clustered by a noise ^2.5;
-                // behind GoF2's own stars, only its faint ones
+                // ES2's star field (M_Skybox_Stars: its three layers r + g / 2 + b / 4, tiled 2 x 1 round its sky sphere, thinned by
+                // a noise at its Param 2, ^2.5); behind GoF2's own stars, only its faint ones
                 c.stars = "gof2:star_mask";
                 c.starsTiling = 2f; c.starsTilingV = 1f;
                 c.starsChannels = alone ? new Vector3(1f, 0.5f, 0.25f) : new Vector3(0.1f, 0.3f, 0.45f);
                 c.starsBrightness = alone ? 1.3f : 0.5f;
-                c.starsNoiseScale = 2.5f; c.starsNoiseExponent = 2.5f;
-                // the band along the nebulae's plane (ES2's gradient, folded), added
-                if (sky.planarity > 0.3f && sky.bandNormal != null)
-                {
-                    var n = V(sky.bandNormal);
-                    layers.Add(new ModWorld.ChorusLayer
-                    {
-                        kind = ModWorld.ChorusLayer.Gradient, up = new Vector3(n.z, n.x, n.y).normalized, absolute = true, additive = true,
-                        min = 0.55f, max = 1f, bias = 0.35f, power = 1.5f,
-                        color = C(sky.main, sky.brightness * (alone ? 0.6f : 0.25f)), opacity = 1f,
-                    });
-                }
-                // a sky-wide mask under the fuller skies (ES2's sky-wide nebula), its main colour
-                if (alone && sky.coverage > 0.5f)
+                c.starsNoiseScale = 2f; c.starsNoiseExponent = 2.5f;
+                // ES2's sky sphere has nothing else but, in some sectors, a sky-wide nebula (BP_Skybox_Nebula_Global, Intensity
+                // 0.2): under the fuller GoF2 skies, its main colour. The nebulae themselves are 3D clouds (World.NebulaClouds:
+                // the bright regions far off, local ones near), as ES2 places a sector's nebulae round a location.
+                if (alone && sky.coverage > 0.3f)
                     layers.Add(new ModWorld.ChorusLayer
                     {
                         kind = ModWorld.ChorusLayer.Mask, image = "gof2:nebula_masks", channel = 2, scale = 2f, tiling = new Vector2(2f, 2f),
-                        color = Vivid(C(sky.main, sky.brightness * 0.6f), 1.8f), exponent = 2f, sunScatter = 1f,
+                        color = Vivid(C(sky.main, sky.brightness * 0.35f), 1.4f), exponent = 1.6f, sunScatter = 1f,
                     });
-            }
-            if (es2 && sky.regions != null)
-            {
-                int k = 0;
-                foreach (var r in sky.regions)
-                {
-                    if (layers.Count >= ModWorld.ChorusSky.MaxLayers) break;
-                    Toward(V(r.dir), out float h, out float e);
-                    layers.Add(new ModWorld.ChorusLayer
-                    {
-                        kind = ModWorld.ChorusLayer.Mask, image = "gof2:nebula_masks", channel = k % 3, heading = h, elevation = e, scale = 2f,
-                        tiling = new Vector2(3f, 3f), offset = new Vector2(k * 0.37f, k * 0.23f),   // (the mask is 2:1 and the patch square: u:v = 1:1 keeps its shapes)
-                        falloff = Mathf.Clamp(r.radius * (alone ? 1.2f : 1f), 6f, 60f),
-                        color = Vivid(C(r.color, r.brightness * (alone ? 1.4f : 0.35f)), alone ? 1.8f : 1.3f), exponent = alone ? 2.2f : 2.4f, sunScatter = 1.5f,
-                    });
-                    k++;
-                }
             }
             foreach (var l in layers) if (c.layers.Count < ModWorld.ChorusSky.MaxLayers) c.layers.Add(l);
             return c;
