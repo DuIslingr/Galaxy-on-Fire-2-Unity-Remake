@@ -187,6 +187,16 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   1,470 asset files, 53 MB. **Don't run a plain `git lfs pull` there:** git-lfs writes every LFS file into the working
   tree, the sparse ones too; remove them and `git sparse-checkout reapply` if it happens (or pull with `--include`).
 
+## Content layer so far
+
+- **GameContent** (`Scripts/Runtime/Core/GameContent.cs`, 2026-11-15): the converted cache (`GamePaths.Data/Original`, its
+  `_manifest.tsv` marks it installed) first, Resources as the fallback: `Text` / `Bytes` (a table by its Resources path),
+  `LanguageText` (text_<code>.json). The data tables (Database, CollisionVolume, Agent, GenericVoice, NewsTicker,
+  SpacePoints, StepSummaries, StoryTable, GameLods, the Mod Builder's voice list) and Localization's tables read through it
+  (Localization takes the cache's language without a table asset). `PlayerCopyTests` (EditMode, ignored without a
+  converted copy: `$GOF2_ORIGINAL_CACHE` or the tools' cache_android) pass in the test bed: the database and the text from
+  the player's Android copy with no original in the project.
+
 ## Plan
 
 1. Inventory and this note (done 2026-11-15); the importers, the converter, the packs (done 2026-11-15).
