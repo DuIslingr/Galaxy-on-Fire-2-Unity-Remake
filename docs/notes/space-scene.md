@@ -87,7 +87,15 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   6-14 km (the far plane is 15 km) a few km out, seeded by the station; and in ES2 style (`RegionClouds`) each of the sky's
   bright regions (GoF2SkyLayers' layout) a distant cloud in its direction (the sky's turn), 45 km out, as wide on the sky as
   the region, its own colour; the material's system colour the sky's main colour. Pieces 0.25-0.75 x radius half-wide
-  (ES2's). The remake's own masks (`Reference/tools/sky/nebula_clouds.py`: tileable spectral noise, each channel's mean
+  (ES2's). Light (2026-11-15, "fix the gaps"): ES2 lights its crushed opacity (a piece's mean 2.4e-4 with the remake's
+  masks, 3.7e-4 with ES2's, measured) by Brightness 10000 under its auto exposure; here each cloud's light (its vertex
+  colour, float) is set so its mean over its disc is its target, the region's own brightness (near clouds half the sky's),
+  counting its pieces' overlap and their seen share at a random turn after the edge-on fade (0.268): ES2's exposure, per
+  cloud. Colours: the regions' / the sky's main colours saturated 1.6x (GoF2's are pale averages, ES2's nebula colours
+  vivid). A piece fades within its own size of the camera (km-wide pieces filled the view as discs). ES2's fog inside a
+  nebula: where the first near cloud's middle lies within its radius and the system has no fog of its own, the scene's fog
+  in its colour, linear, fully hazed at 3 x its radius / (1 - d / r)^0.5 (6-40 km). The remake's own masks
+  (`Reference/tools/sky/nebula_clouds.py`: tileable spectral noise, each channel's mean
   brought to ES2's masks' ~0.5, which its crushing opacity needs) and `nebula_clouds.json` (each sky's coverage, brightness
   and three main colours); a mod's `textures/cloud_masks.png` replaces them (`ModTextures.SkyLayer`: the ES2 mod gives ES2's
   T_Skybox_Nebula_001 / 002 / 005). Compared in Unity renders, nebulae 005 / 007 / 008 / 016: with ES2's masks they read as

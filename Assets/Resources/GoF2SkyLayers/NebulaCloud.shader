@@ -6,8 +6,10 @@
 // cloud's own where dense, the system colour at its thin edges (1 - radial x mask through Schlick's bias ColorBias 0.1 and the
 // contrast curve ColorContrast 4); its opacity the mask through Bias 0.05, ^Exponent 2, Contrast 1, x Density, faded edge-on
 // (FresnelFadeMin 0.3) and near the camera; toward the sun its colour turns to the sun's (^32). ES2 lights them by Brightness
-// 10000 against its stars' 10 under its auto exposure; here _Intensity 70 (the crushed opacity's cores just reach white).
-// Added: the radial falloff squared (linear, a piece's round edge showed once its light saturated); a piece past the level's
+// 10000 against its stars' 10 under its auto exposure; here each cloud's light (its vertex colour) is set so its mean over
+// its disc is its target (World.NebulaClouds.PieceMeanOpacity): ES2's exposure, per cloud.
+// Added: the radial falloff squared (linear, a piece's round edge showed once its light saturated); a piece fades within its
+// own size of the camera (a piece km wide filled the view as a disc); a piece past the level's
 // far plane (15 km) drawn at 95 % of it in its own direction (the distant clouds keep their size on the sky); premultiplied
 // (light added, some of what is behind covered), the pieces unsorted.
 // Vertex data: uv the sprite's corner, uv1 its random values, normal its facing, colour its tint (a: its mask channel / 2).
@@ -16,8 +18,8 @@ Shader "GoF2/NebulaCloud"
     Properties
     {
         [NoScaleOffset] _Masks ("Cloud masks (r g b)", 2D) = "black" {}
-        _Intensity ("Intensity", Float) = 70
-        _Absorb ("Covers what is behind", Float) = 2
+        _Intensity ("Intensity", Float) = 1
+        _Absorb ("Covers what is behind", Float) = 1
         _Tiling ("Mask tiling", Float) = 2.5
         _Exponent ("Exponent", Float) = 2
         _Bias ("Bias", Float) = 0.05
@@ -53,11 +55,11 @@ Shader "GoF2/NebulaCloud"
                 float4 _SunDir, _SunColor, _SysColor;
             CBUFFER_END
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float4 rnd : TEXCOORD1; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float4 rnd : TEXCOORD1; float2 size : TEXCOORD2; float4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
             {
                 float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float4 rnd : TEXCOORD1; float3 normalWS : TEXCOORD2;
-                float4 view : TEXCOORD3; half4 color : COLOR; UNITY_VERTEX_OUTPUT_STEREO
+                float4 view : TEXCOORD3; float size : TEXCOORD4; float4 color : COLOR; UNITY_VERTEX_OUTPUT_STEREO
             };
 
             Varyings vert(Attributes i)
@@ -76,6 +78,7 @@ Shader "GoF2/NebulaCloud"
                 o.normalWS = TransformObjectToWorldNormal(i.normalOS);
                 o.view = float4(v / max(dist, 1e-3), dist);
                 o.color = i.color;
+                o.size = i.size.x;
                 return o;
             }
 
@@ -101,13 +104,16 @@ Shader "GoF2/NebulaCloud"
                 half m = min(Channel(SAMPLE_TEXTURE2D(_Masks, sampler_Masks, t).rgb, ch), Channel(SAMPLE_TEXTURE2D(_Masks, sampler_Masks, t * 2.0 + i.rnd.y).rgb, ch));
                 // its colour: the cloud's own where it is dense, the system's at its thin edges (ColorBias, ColorContrast)
                 float tone = Contrast(Bias(1.0 - radial * m, _ColorBias), _ColorContrast);
-                half3 col = lerp(i.color.rgb, _SysColor.rgb, tone);
+                // (the vertex colour carries the cloud's light, set per cloud: World.NebulaClouds; the system colour scaled to it)
+                float light = max(max(i.color.r, i.color.g), max(i.color.b, 1e-6));
+                float3 col = lerp(i.color.rgb, _SysColor.rgb * light, tone);
                 // its opacity: the mask through Bias, ^Exponent, Contrast, x Density, faded round its edge
                 // (the radial falloff squared: linear, a piece's round edge showed once its light saturated)
                 float dens = Contrast(pow(max(Bias(m, _Bias), 0.0), _Exponent), _Contrast) * radial * radial * _Density;
                 float facing = abs(dot(normalize(i.normalWS), i.view.xyz));
                 dens *= saturate((facing - _FresnelMin) / max(1.0 - _FresnelMin, 1e-3));   // edge-on: gone (FresnelFadeMin)
-                dens *= saturate((i.view.w - _NearFade) / max(_NearFade, 1.0));          // at the camera: gone
+                // near the camera: gone within its own size (a piece km wide filled the view as a disc), and within _NearFade
+                dens *= saturate((i.view.w - 0.6 * i.size) / max(0.8 * i.size, 1.0)) * saturate((i.view.w - _NearFade) / max(_NearFade, 1.0));
                 // forward scattering toward the sun (^32), toward its colour
                 float toSun = saturate((dot(i.view.xyz, _SunDir.xyz) + 1.0) * 0.5);
                 col = lerp(col, _SunColor.rgb * max(max(col.r, col.g), col.b), pow(toSun, 32.0) * _SunScatter * 0.5);

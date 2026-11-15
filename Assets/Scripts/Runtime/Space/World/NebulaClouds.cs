@@ -21,6 +21,14 @@ namespace GoF2Remake.World
         public const int Candidates = 101;          // ES2: 0..100 (51 on consoles)
         public const float HalfHeight = 0.3f;       // ES2's default
         public const float MinRadius = 6000f, MaxRadius = 14000f;   // m
+        /// <summary>GoF2/NebulaCloud's mean opacity over a piece (its radial falloff squared, ES2's curves on the mask): 2.4e-4 with the
+        /// remake's masks, 3.7e-4 with ES2's (measured over 60 pieces each). ES2 brings its crushed opacity back to a glow with
+        /// Brightness 10000 under its auto exposure; here each cloud's light is set so its mean over its disc is its target
+        /// (the sky region it stands for, or its sky's brightness): ES2's exposure, done per cloud.</summary>
+        public const float PieceMeanOpacity = 3e-4f;
+        /// <summary>A piece's mean share of its area seen, at a random turn, after the edge-on fade (FresnelFadeMin 0.3):
+        /// the integral of f x saturate((f - 0.3) / 0.7) over f in 0..1.</summary>
+        public const float SeenShare = 0.268f;
         public const float PieceShare = 0.25f;     // a piece's half-size per (1-3 x) the radius: ES2's 5 km planes at 1-3 x radius / 10 km
 
         [System.Serializable] public sealed class Rgbw { public float r, g, b, weight; }
@@ -100,6 +108,7 @@ namespace GoF2Remake.World
             var clouds = go.AddComponent<NebulaClouds>();
             var rng = new System.Random(layout.stationIndex * 7919 + layout.systemTexture * 104729 + 17);
             var mesh = new Builder();
+            (Vector3 centre, float radius, Color color)? fogCloud = null;
             for (int c = 0; c < near; c++)
             {
                 float radius = Mathf.Lerp(MinRadius, MaxRadius, Next(rng));
@@ -108,8 +117,9 @@ namespace GoF2Remake.World
                 var centre = dir * radius * Mathf.Lerp(0.15f, 0.6f, Next(rng));
                 var plane = Quaternion.Euler(Mathf.Lerp(-30f, 30f, Next(rng)), Next(rng) * 360f, Mathf.Lerp(-30f, 30f, Next(rng)));
                 var tint = Pick(sky.colors, Next(rng));
-                float strength = Mathf.Lerp(0.6f, 1.2f, Next(rng)) * Mathf.Clamp(sky.brightness * 3f, 0.4f, 1.5f);
-                mesh.Cloud(rng, centre, plane, radius, new Color(tint.r * strength, tint.g * strength, tint.b * strength));
+                float target = Mathf.Lerp(0.6f, 1.2f, Next(rng)) * Mathf.Clamp(sky.brightness, 0.05f, 0.6f) * 0.5f;
+                mesh.Cloud(rng, centre, plane, radius, Vivid(new Color(tint.r, tint.g, tint.b), 1.6f), target);
+                if (c == 0) fogCloud = (centre, radius, Vivid(new Color(tint.r, tint.g, tint.b), 1.6f) * Mathf.Clamp(sky.brightness, 0.05f, 0.6f));
             }
             if (regions?.regions != null)
             {
@@ -121,9 +131,9 @@ namespace GoF2Remake.World
                     if (r.dir == null || r.dir.Length < 3) continue;
                     var dir = (turn * new Vector3(r.dir[0], r.dir[1], r.dir[2])).normalized;
                     float radius = RegionDistance * Mathf.Tan(Mathf.Clamp(r.radius, 4f, 40f) * Mathf.Deg2Rad);
-                    float strength = Mathf.Clamp(r.brightness * 4f, 0.3f, 2f);
-                    var col = r.color != null && r.color.Length >= 3 ? new Color(r.color[0] * strength, r.color[1] * strength, r.color[2] * strength) : Color.white * strength;
-                    mesh.Cloud(rng, dir * RegionDistance, Quaternion.LookRotation(dir), radius, col);
+                    var col = r.color != null && r.color.Length >= 3 ? new Color(r.color[0], r.color[1], r.color[2]) : Color.white;
+                    // its light: the region's own (the painted sky's brightness there), ES2's colours vivid
+                    mesh.Cloud(rng, dir * RegionDistance, Quaternion.LookRotation(dir), radius, Vivid(col, 1.6f), Mathf.Clamp(r.brightness, 0.02f, 1f));
                 }
             }
             var built = mesh.Mesh();
@@ -134,7 +144,22 @@ namespace GoF2Remake.World
             look.SetColor("_SunColor", layout.sunColor.maxColorComponent > 0f ? layout.sunColor : Color.white);
             // the "system colour" ES2's local nebulae turn to at their thin edges: the sky's main colour
             var main = GoF2SkyLayers.Of(layout.systemTexture)?.main;
-            look.SetColor("_SysColor", main != null && main.Length >= 3 ? new Color(main[0], main[1], main[2]) * Mathf.Clamp(sky.brightness * 3f, 0.3f, 1.5f) : Color.gray);
+            look.SetColor("_SysColor", main != null && main.Length >= 3 ? Vivid(new Color(main[0], main[1], main[2]), 1.6f) : Color.gray);
+            // ES2's fog inside a nebula (BP_EnvironmentGenerator: a volumetric fog field where the location lies within a
+            // nebula's radius, its density (1 - d / r)^0.5 x 0.05): here the scene's fog, where the system has none of its own
+            if (fogCloud is { } f && !layout.fog)
+            {
+                float inside = Mathf.Sqrt(1f - Mathf.Clamp01(f.centre.magnitude / f.radius));
+                if (inside > 0.05f)
+                {
+                    GoF2Remake.World.SpaceHooks.SceneFog(true);
+                    RenderSettings.fogMode = FogMode.Linear;
+                    RenderSettings.fogStartDistance = 0f;
+                    RenderSettings.fogEndDistance = FogEnd(f.radius, inside);
+                    RenderSettings.fogColor = f.color;
+                    clouds.fog = true;
+                }
+            }
             go.AddComponent<MeshFilter>().sharedMesh = built;
             var renderer = go.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = look;
@@ -148,14 +173,21 @@ namespace GoF2Remake.World
         sealed class Builder
         {
             readonly List<Vector3> vertices = new(), normals = new();
-            readonly List<Vector2> uvs = new();
+            readonly List<Vector2> uvs = new(), sizes = new();
             readonly List<Vector4> randoms = new();
             readonly List<Color> colors = new();
             readonly List<int> tris = new();
 
-            public void Cloud(System.Random rng, Vector3 centre, Quaternion plane, float radius, Color tint)
+            /// <summary>One cloud, its light set so its mean over its disc is 'target' (linear).</summary>
+            public void Cloud(System.Random rng, Vector3 centre, Quaternion plane, float radius, Color hue, float target)
             {
-                foreach (var piece in Pieces(rng, radius))
+                var pieces = Pieces(rng, radius);
+                float seen = 0f;
+                foreach (var piece in pieces) seen += 4f * piece.size * piece.size * SeenShare;
+                float overlap = seen / (Mathf.PI * radius * radius);
+                float light = target / Mathf.Max(PieceMeanOpacity * overlap, 1e-6f);
+                var tint = hue * light;
+                foreach (var piece in pieces)
                 {
                     var at = centre + plane * piece.position;
                     var turn = plane * piece.turn;
@@ -164,7 +196,7 @@ namespace GoF2Remake.World
                     vertices.Add(at - right - up); vertices.Add(at + right - up); vertices.Add(at + right + up); vertices.Add(at - right + up);
                     uvs.Add(new Vector2(0, 0)); uvs.Add(new Vector2(1, 0)); uvs.Add(new Vector2(1, 1)); uvs.Add(new Vector2(0, 1));
                     var col = new Color(tint.r, tint.g, tint.b, piece.channel * 0.5f);
-                    for (int k = 0; k < 4; k++) { normals.Add(n); randoms.Add(piece.random); colors.Add(col); }
+                    for (int k = 0; k < 4; k++) { normals.Add(n); randoms.Add(piece.random); colors.Add(col); sizes.Add(new Vector2(piece.size, 0f)); }
                     tris.Add(b); tris.Add(b + 2); tris.Add(b + 1); tris.Add(b); tris.Add(b + 3); tris.Add(b + 2);
                 }
             }
@@ -172,7 +204,7 @@ namespace GoF2Remake.World
             public Mesh Mesh()
             {
                 var mesh = new Mesh { name = "NebulaClouds", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
-                mesh.SetVertices(vertices); mesh.SetNormals(normals); mesh.SetUVs(0, uvs); mesh.SetUVs(1, randoms); mesh.SetColors(colors);
+                mesh.SetVertices(vertices); mesh.SetNormals(normals); mesh.SetUVs(0, uvs); mesh.SetUVs(1, randoms); mesh.SetUVs(2, sizes); mesh.SetColors(colors);
                 mesh.SetTriangles(tris, 0);
                 mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1e6f);   // (always drawn: the far pieces are pulled inside the far plane)
                 return mesh;
@@ -190,8 +222,20 @@ namespace GoF2Remake.World
             return colors[colors.Length - 1];
         }
 
+        /// <summary>The fog inside a cloud: fully hazed at 3 x its radius at its middle, thinner toward its edge (ES2's
+        /// (1 - d / r)^0.5), 6-40 km.</summary>
+        public static float FogEnd(float radius, float inside) => Mathf.Clamp(radius * 3f / Mathf.Max(inside, 0.05f), 6000f, 40000f);
+
+        static Color Vivid(Color c, float amount)
+        {
+            float l = 0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b;
+            return new Color(Mathf.Max(0f, l + (c.r - l) * amount), Mathf.Max(0f, l + (c.g - l) * amount), Mathf.Max(0f, l + (c.b - l) * amount), 1f);
+        }
+
         Mesh mesh;
         Material look;
+        /// <summary>Whether it hazed the scene (ES2's fog inside a nebula); the next orbit's sky sets its own fog.</summary>
+        public bool fog;
 
         void OnDestroy()
         {
