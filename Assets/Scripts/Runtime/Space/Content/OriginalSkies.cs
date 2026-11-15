@@ -3,11 +3,12 @@
 // originals, made from the player's converted copy when Resources has none:
 //   Sky("stars_000" / "nebula_005")  what SkyboxBaker.BakeSpaceSkies baked into Resources/GoF2Sky: the original's sky meshes
 //                                    with their textures (GoF2/Unlit stars, GoF2/Additive nebula, seen from inside) rendered
-//                                    into a cube (Camera.RenderToCubemap), once per run
+//                                    as the baker renders them, compressed and kept on disk (rendered once, ever)
 //   Reflection("cubemap_skybox_003") the original's own cubemap strip (AEI type 0x81, 6 faces stacked, the converter's
 //                                    Textures/<pack>/cubemaps/<name>.png) as a Cubemap: Resources/GoF2Reflections holds 4x
 //                                    upscales of the same (an optional upgrade, see the packs)
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using GoF2Remake.Data;
@@ -49,20 +50,37 @@ namespace GoF2Remake.Visuals
             return ($"Models/supernova/skyboxes/sn_skybox_{t:000}.fbx", "GoF2/Additive", $"Textures/supernova/skyboxes/sn_skybox_{t:000}.png");
         }
 
-        /// <summary>The layer rendered into a cube render texture (sRGB, mipmapped), as SkyboxBaker.BakeCube's camera saw it:
-        /// at the mesh's centre, 90 degrees, black behind; on a layer of its own far from anything.</summary>
+        static readonly Vector3[] FaceForward = { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
+        static readonly Vector3[] FaceUp = { Vector3.up, Vector3.up, Vector3.back, Vector3.forward, Vector3.up, Vector3.up };
+
+        /// <summary>A sky layer as a compressed Cubemap: from the GPU cache (GameContent.GpuCache), else rendered as
+        /// SkyboxBaker.BakeCube renders it (a camera per face, 90 degrees, black behind, the faces read back into a 6:1
+        /// strip), made a cubemap as Unity's import makes one of that strip (FromStrip's faces), each face compressed with its
+        /// mipmaps (ModTextureEncoder) and stored. Null without a GPU or the layer's model / texture.</summary>
         static Texture Render(string name)
         {
             var layer = LayerOf(name);
             // (no GPU: a server or a -nographics batch run renders nothing)
             if (layer == null || !GameContent.Installed || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;
-            var (model, shaderName, texture) = layer.Value;
-            var go = OriginalModels.Build(model);
-            var shader = Shader.Find(shaderName);
-            var tex = OriginalTextures.Get(texture);
+            string cacheFile = Path.Combine(GameContent.GpuCache, "skies", $"{name}_{FaceSize}_{SystemInfo.graphicsDeviceType}.sky");
+            var cached = ReadCube(cacheFile, name);
+            if (cached != null) return cached;
+            var strip = RenderStrip(layer.Value);
+            if (strip == null) return null;
+            var cube = CompressedCube(strip, name, cacheFile);
+            OriginalAssemblies.Gone(strip);
+            return cube;
+        }
+
+        /// <summary>SkyboxBaker.BakeCube's strip: six 90-degree renders of the layer seen from its centre, read back.</summary>
+        static Texture2D RenderStrip((string model, string shader, string texture) layer)
+        {
+            var go = OriginalModels.Build(layer.model);
+            var shader = Shader.Find(layer.shader);
+            var tex = OriginalTextures.Get(layer.texture);
             if (go == null || shader == null || tex == null) { if (go != null) OriginalAssemblies.Gone(go); return null; }
             const int Layer = 31;
-            var origin = new Vector3(0f, -1e6f, 0f);
+            var origin = Vector3.zero;   // on a layer of its own: only this camera sees it
             go.transform.position = origin;
             var mat = new Material(shader);
             mat.SetTexture("_MainTex", tex);
@@ -75,25 +93,130 @@ namespace GoF2Remake.Visuals
             }
             var anim = go.GetComponent<PartAnimation>();
             if (anim != null) anim.enabled = false;
+            int s = FaceSize;
+            var rt = new RenderTexture(s, s, 24, RenderTextureFormat.ARGB32);
+            var strip = new Texture2D(s * 6, s, TextureFormat.RGB24, false);
             var camGo = new GameObject("Sky render camera");
             var cam = camGo.AddComponent<Camera>();
-            cam.transform.position = origin;
+            cam.enabled = false;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Color.black;
             cam.cullingMask = 1 << Layer;
+            cam.fieldOfView = 90f;
+            cam.aspect = 1f;
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 1000f;
-            cam.enabled = false;
-            var rt = new RenderTexture(new RenderTextureDescriptor(FaceSize, FaceSize, RenderTextureFormat.ARGB32, 24)
+            cam.targetTexture = rt;
+            var data = camGo.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            data.renderPostProcessing = false;
+            camGo.transform.position = origin;
+            var prev = RenderTexture.active;
+            for (int f = 0; f < 6; f++)
             {
-                dimension = TextureDimension.Cube, sRGB = true, useMipMap = true, autoGenerateMips = true,
-            }) { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear };
-            rt.Create();
-            cam.RenderToCubemap(rt);
+                camGo.transform.rotation = Quaternion.LookRotation(FaceForward[f], FaceUp[f]);
+                cam.Render();
+                RenderTexture.active = rt;
+                strip.ReadPixels(new Rect(0, 0, s, s), f * s, 0);
+            }
+            RenderTexture.active = prev;
+            strip.Apply();
+            cam.targetTexture = null;
+            go.SetActive(false);   // (Destroy waits for the frame's end: no other camera draws it meanwhile)
+            rt.Release();
+            OriginalAssemblies.Gone(rt);
             OriginalAssemblies.Gone(camGo);
             OriginalAssemblies.Gone(go);
             OriginalAssemblies.Gone(mat);
-            return rt;
+            return strip;
+        }
+
+        const int SkyMagic = 0x31594B53;   // "SKY1"
+
+        /// <summary>The strip as a compressed cubemap (DXT1 / ETC2 faces with mipmaps, copied into the cube on the GPU),
+        /// stored in 'cacheFile'; uncompressed where the GPU can't copy between textures or reads neither format.</summary>
+        static Texture CompressedCube(Texture2D strip, string name, string cacheFile)
+        {
+            bool dxt = SystemInfo.SupportsTextureFormat(TextureFormat.DXT1);
+            bool etc = !dxt && SystemInfo.SupportsTextureFormat(TextureFormat.ETC2_RGB);
+            if ((!dxt && !etc) || SystemInfo.copyTextureSupport == CopyTextureSupport.None || FaceSize % 4 != 0)
+                return FromStrip(strip, name);
+            var target = etc ? Modding.ModTextureEncoder.Target.Etc2 : Modding.ModTextureEncoder.Target.Dxt;
+            var faces = new byte[6][];
+            Cubemap cube = null;
+            for (int i = 0; i < 6; i++)
+            {
+                // the face in a cubemap face's row order (FromStrip's), as a texture whose raw rows are in that order: the GPU
+                // copy below moves rows as they are
+                var face = new Texture2D(FaceSize, FaceSize, TextureFormat.RGBA32, false, false);
+                face.SetPixels(Face(strip, i, true));
+                face.Apply(false, false);
+                var work = Modding.ModTextureEncoder.Start(face, false, Modding.ModTextureEncoder.Remap.None, 1f, 1f, target);
+                OriginalAssemblies.Gone(face);
+                if (work == null) { if (cube != null) OriginalAssemblies.Gone(cube); return FromStrip(strip, name); }
+                var t = work.Upload(name);
+                faces[i] = work.Data.ToArray();
+                work.Dispose();
+                cube ??= NewCube(name, t.format, t.mipmapCount);
+                Graphics.CopyTexture(t, 0, cube, i);
+                OriginalAssemblies.Gone(t);
+            }
+            WriteCube(cacheFile, cube.format, cube.mipmapCount, faces);
+            return cube;
+        }
+
+        static Cubemap NewCube(string name, TextureFormat format, int mips)
+        {
+            var gf = UnityEngine.Experimental.Rendering.GraphicsFormatUtility.GetGraphicsFormat(format, true);
+            var cube = new Cubemap(FaceSize, gf, UnityEngine.Experimental.Rendering.TextureCreationFlags.MipChain, mips)
+                { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear };
+            cube.Apply(false, true);   // GPU only: the faces are copied in
+            return cube;
+        }
+
+        static void WriteCube(string file, TextureFormat format, int mips, byte[][] faces)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(file));
+                string tmp = file + ".tmp";
+                using (var w = new BinaryWriter(File.Create(tmp)))
+                {
+                    w.Write(SkyMagic); w.Write(OriginalConverter.FormatVersion); w.Write(FaceSize); w.Write((int)format); w.Write(mips);
+                    foreach (var f in faces) { w.Write(f.Length); w.Write(f); }
+                }
+                if (File.Exists(file)) File.Delete(file);
+                File.Move(tmp, file);
+            }
+            catch (IOException e) { Debug.LogWarning($"OriginalSkies: {file}: {e.Message}"); }
+        }
+
+        static Cubemap ReadCube(string file, string name)
+        {
+            if (!File.Exists(file) || SystemInfo.copyTextureSupport == CopyTextureSupport.None) return null;
+            try
+            {
+                using var r = new BinaryReader(File.OpenRead(file));
+                if (r.ReadInt32() != SkyMagic || r.ReadInt32() != OriginalConverter.FormatVersion || r.ReadInt32() != FaceSize) return null;
+                var format = (TextureFormat)r.ReadInt32();
+                int mips = r.ReadInt32();
+                if (!SystemInfo.SupportsTextureFormat(format)) return null;
+                var cube = NewCube(name, format, mips);
+                for (int i = 0; i < 6; i++)
+                {
+                    var bytes = r.ReadBytes(r.ReadInt32());
+                    var t = new Texture2D(FaceSize, FaceSize, format, mips, false);
+                    t.LoadRawTextureData(bytes);
+                    t.Apply(false, true);
+                    Graphics.CopyTexture(t, 0, cube, i);
+                    OriginalAssemblies.Gone(t);
+                }
+                return cube;
+            }
+            catch (Exception e) when (e is IOException || e is EndOfStreamException || e is UnityException || e is ArgumentException)
+            {
+                Debug.LogWarning($"OriginalSkies: {file}: {e.Message}");
+                return null;
+            }
         }
 
         /// <summary>A reflection cubemap by its GoF2Reflections name: Resources' (the 4x upscales), else the original's own
@@ -106,31 +229,44 @@ namespace GoF2Remake.Visuals
             string path = null;
             foreach (var pack in new[] { "main", "valkyrie", "supernova" })
                 if ((path = GameContent.CachePath($"Textures/{pack}/cubemaps/{name}.png")) != null) break;
-            if (path != null) c = FromStrip(File.ReadAllBytes(path), name);
+            if (path != null) c = FromStrip(File.ReadAllBytes(path), name);   // (sRGB colour, mipmapped)
             made["refl:" + name] = c;
             return c;
         }
 
-        /// <summary>A vertical strip of six faces (+X, -X, +Y, -Y, +Z, -Z from the top, as Unity's cubemap import reads a 1:6
-        /// image) as a Cubemap.</summary>
-        public static Cubemap FromStrip(byte[] png, string name)
+        static readonly CubemapFace[] Faces =
+            { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY, CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ };
+
+        /// <summary>A strip of six faces (+X, -X, +Y, -Y, +Z, -Z: left to right in a 6:1 image, top to bottom in a 1:6 one, as
+        /// Unity's cubemap import reads them) as a Cubemap the way that import makes it (CubeStripTests).</summary>
+        public static Cubemap FromStrip(byte[] png, string name, bool linear = false, bool mipmaps = true)
         {
-            var strip = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            if (!strip.LoadImage(png, false) || strip.height != strip.width * 6) { OriginalAssemblies.Gone(strip); return null; }
-            int s = strip.width;
-            var cube = new Cubemap(s, TextureFormat.RGBA32, true) { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear };
-            var faces = new[] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY, CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ };
-            for (int i = 0; i < 6; i++)
-            {
-                // a Texture2D's rows run bottom up, a cubemap face's top down: face i is the strip's i-th square from the top
-                var px = strip.GetPixels(0, (5 - i) * s, s, s);
-                var flipped = new Color[px.Length];
-                for (int y = 0; y < s; y++) System.Array.Copy(px, y * s, flipped, (s - 1 - y) * s, s);
-                cube.SetPixels(flipped, faces[i]);
-            }
-            cube.Apply(true, true);
+            var strip = new Texture2D(2, 2, TextureFormat.RGBA32, false, linear);
+            if (!strip.LoadImage(png, false)) { OriginalAssemblies.Gone(strip); return null; }
+            var cube = FromStrip(strip, name, linear, mipmaps);
             OriginalAssemblies.Gone(strip);
             return cube;
+        }
+
+        public static Cubemap FromStrip(Texture2D strip, string name, bool linear = false, bool mipmaps = true)
+        {
+            bool horizontal = strip.width == strip.height * 6;
+            if (!horizontal && strip.height != strip.width * 6) return null;
+            int s = horizontal ? strip.height : strip.width;
+            var cube = new Cubemap(s, TextureFormat.RGBA32, mipmaps) { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear };
+            for (int i = 0; i < 6; i++) cube.SetPixels(Face(strip, i, horizontal), Faces[i]);
+            cube.Apply(mipmaps, false);
+            return cube;
+        }
+
+        /// <summary>Face i of the strip in a cubemap face's pixel order (rows from the top: a Texture2D's from the bottom).</summary>
+        static Color[] Face(Texture2D strip, int i, bool horizontal)
+        {
+            int s = horizontal ? strip.height : strip.width;
+            var px = horizontal ? strip.GetPixels(i * s, 0, s, s) : strip.GetPixels(0, (5 - i) * s, s, s);
+            var o = new Color[px.Length];
+            for (int y = 0; y < s; y++) System.Array.Copy(px, y * s, o, (s - 1 - y) * s, s);
+            return o;
         }
     }
 }

@@ -22,6 +22,14 @@ namespace GoF2Remake.Data
 {
     public sealed class OriginalConverter
     {
+        /// <summary>The cache's format: raised whenever the conversion makes something differently (an importer fixed, a file
+        /// added), so a cache made by an older game counts as stale (GameContent.Stale) and is converted again; the GPU caches
+        /// made from it (OriginalTextures, OriginalSkies) are keyed by it too.</summary>
+        public const int FormatVersion = 1;
+
+        /// <summary>The manifest's first line.</summary>
+        public static string ManifestHeader => "# gof2 original cache v" + FormatVersion;
+
         /// <summary>One converted file: its cache path, the package and entry it came from, the source format.</summary>
         public struct Item { public string Path, Package, Entry, Format; }
 
@@ -51,7 +59,7 @@ namespace GoF2Remake.Data
         {
             foreach (var p in packages) Package(p);
             Finish();
-            var m = new StringBuilder("path\tpackage\tentry\tformat\n");
+            var m = new StringBuilder(ManifestHeader + "\npath\tpackage\tentry\tformat\n");
             foreach (var it in Items) m.Append(it.Path).Append('\t').Append(it.Package).Append('\t').Append(it.Entry).Append('\t').Append(it.Format).Append('\n');
             Directory.CreateDirectory(root);
             File.WriteAllText(Path.Combine(root, "_manifest.tsv"), m.ToString());

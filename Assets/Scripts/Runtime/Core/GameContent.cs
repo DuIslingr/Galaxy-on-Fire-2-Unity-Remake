@@ -25,8 +25,33 @@ namespace GoF2Remake.Data
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { root = null; installed = null; }
 
-        /// <summary>Whether a converted copy is there (its manifest, which the converter writes last).</summary>
-        public static bool Installed => installed ??= File.Exists(Path.Combine(Root, "_manifest.tsv"));
+        /// <summary>Whether a converted copy of this converter's format is there (its manifest, which the converter writes
+        /// last, starting with OriginalConverter.ManifestHeader).</summary>
+        public static bool Installed => installed ??= FirstLine(Path.Combine(Root, "_manifest.tsv")) == OriginalConverter.ManifestHeader;
+
+        /// <summary>A converted copy is there but made by an older game (another format): convert it again.</summary>
+        public static bool Stale
+        {
+            get
+            {
+                string first = FirstLine(Path.Combine(Root, "_manifest.tsv"));
+                return first != null && first != OriginalConverter.ManifestHeader;
+            }
+        }
+
+        /// <summary>The folder the GPU-ready caches made from the converted copy go to (dropped with it).</summary>
+        public static string GpuCache => Path.Combine(Root, "_gpu", "v" + OriginalConverter.FormatVersion);
+
+        static string FirstLine(string path)
+        {
+            try
+            {
+                if (!File.Exists(path)) return null;
+                using var r = new StreamReader(path);
+                return r.ReadLine();
+            }
+            catch (IOException) { return null; }
+        }
 
         /// <summary>Forget what was found (after a conversion or a pack installed).</summary>
         public static void Refresh() => installed = null;

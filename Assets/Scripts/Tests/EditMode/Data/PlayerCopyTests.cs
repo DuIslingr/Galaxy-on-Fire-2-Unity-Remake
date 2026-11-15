@@ -110,6 +110,56 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(TextureWrapMode.Repeat, OriginalTextures.Image("GoF2Hud/strip_red").wrapMode);
         }
 
+        static void Forget(Type t) =>
+            t.GetMethod("ResetStatics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, null);
+
+        [Test]
+        public void TheGpuCacheIsMadeOnceAndReadAfter()
+        {
+            // the first use decodes, compresses (and renders, for a sky) and stores; a later run reads the stored data back
+            if (Directory.Exists(GameContent.GpuCache)) Directory.Delete(GameContent.GpuCache, true);
+            Forget(typeof(OriginalTextures));
+            Forget(typeof(GoF2Remake.Visuals.OriginalSkies));
+            const string Tex = "Textures/main/ships/battleship_terran_diffuse.png";
+            var first = OriginalTextures.Get(Tex);
+            Assert.IsNotNull(first, Tex);
+            Assert.AreEqual(1, Directory.GetFiles(Path.Combine(GameContent.GpuCache, "textures"), "*.tex").Length, "one stored texture");
+            Forget(typeof(OriginalTextures));
+            var again = OriginalTextures.Get(Tex);
+            Assert.AreNotSame(first, again);
+            Assert.AreEqual((first.format, first.width, first.height, first.mipmapCount), (again.format, again.width, again.height, again.mipmapCount));
+
+            if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) return;   // (no GPU: no sky)
+            var t0 = DateTime.Now;
+            var sky = GoF2Remake.Visuals.OriginalSkies.Sky("nebula_003");
+            double rendered = (DateTime.Now - t0).TotalMilliseconds;
+            Assert.IsNotNull(sky);
+            Assert.AreEqual(1, Directory.GetFiles(Path.Combine(GameContent.GpuCache, "skies"), "nebula_003_*.sky").Length, "the sky stored");
+            Forget(typeof(GoF2Remake.Visuals.OriginalSkies));
+            t0 = DateTime.Now;
+            var read = GoF2Remake.Visuals.OriginalSkies.Sky("nebula_003");
+            double loaded = (DateTime.Now - t0).TotalMilliseconds;
+            Assert.IsNotNull(read);
+            Assert.AreNotSame(sky, read);
+            Assert.AreEqual((sky.graphicsFormat, sky.width, sky.mipmapCount), (read.graphicsFormat, read.width, read.mipmapCount));
+            TestContext.WriteLine($"nebula_003: rendered {rendered:0} ms, read back {loaded:0} ms ({sky.graphicsFormat}, {sky.mipmapCount} mips)");
+        }
+
+        [Test]
+        public void ACopyConvertedByAnotherVersionIsConvertedAgain()
+        {
+            string dir = Path.Combine(GamePaths.Data, "old_cache");
+            Directory.CreateDirectory(dir);
+            File.WriteAllText(Path.Combine(dir, "_manifest.tsv"), "path\tpackage\tentry\tformat\n");   // (before the stamp)
+            GameContent.Root = dir;
+            Assert.IsFalse(GameContent.Installed);
+            Assert.IsTrue(GameContent.Stale);
+            File.WriteAllText(Path.Combine(dir, "_manifest.tsv"), OriginalConverter.ManifestHeader + "\npath\tpackage\tentry\tformat\n");
+            GameContent.Refresh();
+            Assert.IsTrue(GameContent.Installed);
+            Assert.IsFalse(GameContent.Stale);
+        }
+
         [Test]
         public void TheSkiesComeFromTheConvertedCopy()
         {

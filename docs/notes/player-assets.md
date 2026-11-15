@@ -230,13 +230,26 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   by hand) aren't crops of any atlas (searched both copies' 11 atlases for each, within 2 / 255: none): resized or edited,
   so common-pack material.
 - **Skies** (2026-11-15): OriginalSkies (GoF2.Space): `Sky("stars_N" / "nebula_N")` renders SkyboxBaker's layers (the
-  original's sky meshes and textures, GoF2/Unlit stars or GoF2/Additive nebula, seen from inside) into a cube render
-  texture with Camera.RenderToCubemap (2048 faces, 1024 on phones; ~0.5 s a sky; nothing without a GPU device), once per
-  run; `Reflection(name)` makes a Cubemap of the original's own 6-face strip (128 px faces; Resources/GoF2Reflections are
-  4x upscales of them: an optional upgrade). OrbitBuilder's skies and SkyReflection read through them. **To check in
-  game:** a face read back from the render texture came out flipped against the baked strip for some faces, which a
-  readback can do on its own (the APIs' cube face row order), so the orientation of both (and FromStrip's face order) is
-  to be confirmed by looking at an orbit and a hull's reflection.
+  original's sky meshes and textures, GoF2/Unlit stars or GoF2/Additive nebula, seen from inside) exactly as
+  `SkyboxBaker.BakeCube` does (a camera per face, 90 degrees, black behind, read back into a 6:1 strip; 2048 faces, 1024
+  on phones; nothing without a GPU device): against the editor's baked strips the same layout and orientation, colours
+  within ~1 / 255 on average (the source texture's compression). The strip becomes a cubemap as Unity's import makes one
+  (`FromStrip`: +X, -X, +Y, -Y, +Z, -Z left to right, or top to bottom in a 1:6 strip, each face's rows from the top;
+  `CubeStripTests` compare it face by face with a cubemap the importer made of the same strip), each face DXT1 / ETC2
+  with mipmaps (ModTextureEncoder), copied into the cube on the GPU and stored (below). `Reflection(name)` makes a Cubemap
+  of the original's own 6-face strip (128 px faces; Resources/GoF2Reflections are 4x upscales of them: an optional
+  upgrade). OrbitBuilder's skies and SkyReflection read through them.
+- **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
+  - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is
+    `# gof2 original cache v<N>`. `GameContent.Installed` only for this version's stamp; `GameContent.Stale` for a
+    manifest of another (or none): the first-start screen offers the conversion again. Raise FormatVersion whenever the
+    converter's output changes.
+  - **The GPU cache** (`GameContent.GpuCache` = `<cache>/_gpu/v<N>`, dropped with a new FormatVersion): textures as the
+    GPU takes them (`textures/<hash>.tex`, ModTextureCache's GXT1: DXT on desktop, ETC2 on phones, with mipmaps; the hash
+    of the path, the source PNG's size and time, and the variant: normal map, linear), the rendered skies
+    (`skies/<name>_<face>_<device>.sky`: six compressed faces). Measured in the test bed: the 319 assemblies 23 s cold,
+    1.5 s from the cache; a sky rendered 1.2 s, read back 7 ms. Size: what the GPU holds (a 2048 px DXT5 with mipmaps
+    5.6 MB; 399 textures 1.5 GB, a sky 17 MB), next to the 2.3 GB of PNGs (kept: another device or format re-encodes).
 
 ## Plan
 
