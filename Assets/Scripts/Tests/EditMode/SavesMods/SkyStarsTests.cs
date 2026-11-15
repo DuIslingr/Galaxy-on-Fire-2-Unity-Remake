@@ -1,6 +1,6 @@
 // SkyStarsTests.cs
-// Feature: docs/notes/space-scene.md "Enhanced skies": Options > Graphics "Enhanced skies" (Settings.EnhancedSkies, off by
-// default) puts Resources/GoF2SkyHd on the game's own sky layers (OrbitBuilder.Enhance): the point stars and specks as star
+// Feature: docs/notes/space-scene.md "Enhanced skies' layers and stars": Options > Graphics "Skies" Enhanced / Combined (Settings.EnhancedSkies) on
+// (Original by default) puts Resources/GoF2SkyHd on the game's own sky layers (OrbitBuilder.Enhance): the point stars and specks as star
 // lists drawn sharp by GoF2/SpaceSky (World.SkyStars, SpaceSkyCore.hlsl StarPoints) over what stays of the layers (the
 // nebulae upscaled by Real-ESRGAN, Reference/tools/sky/enhance_skies.py).
 
@@ -83,14 +83,17 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
-        public void EnhancedSkiesAreOffByDefault()
+        public void TheSkiesAreOriginalByDefault()
         {
-            Settings.Reset(new[] { "enhancedSkies" });
-            Assert.IsFalse(Settings.EnhancedSkies, "the upscale invents detail: the original skies unless the player asks");
-            Settings.EnhancedSkies = true;
-            Assert.IsTrue(Settings.EnhancedSkies);
-            CollectionAssert.Contains(Settings.GraphicsKeys, "enhancedSkies", "reset with the Graphics tab");
-            Settings.EnhancedSkies = false;
+            Settings.Reset(new[] { "skyStyle" });
+            Assert.AreEqual(Settings.SkyOriginal, Settings.SkyStyle, "the enhanced looks invent detail: the original skies unless the player asks");
+            Assert.IsFalse(Settings.EnhancedSkies);
+            Settings.SkyStyle = Settings.SkyCombined;
+            Assert.IsTrue(Settings.EnhancedSkies, "Combined has Enhanced's layers and stars");
+            Settings.SkyStyle = Settings.SkyEs2;
+            Assert.IsFalse(Settings.EnhancedSkies, "EVERSPACE 2 style draws no painted nebula");
+            CollectionAssert.Contains(Settings.GraphicsKeys, "skyStyle", "reset with the Graphics tab");
+            Settings.SkyStyle = Settings.SkyOriginal;
         }
 
         [Test]

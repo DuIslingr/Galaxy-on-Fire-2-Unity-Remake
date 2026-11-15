@@ -188,7 +188,7 @@ half ChorusStarMask(float3 v)   // the star mask toward v: the sky sphere's UV (
 half3 ChorusLayer(TEXTURE2D_PARAM(map, s), float3 d, float4 a, float4 b, float4 c, float4 e, float4 f, half3 under)
 {
     if (e.x > 1.5)   // ES2's gradient: a = its axis, offset; b = min, max, Schlick's (1 / bias - 2), power; c = colour, opacity;
-    {                // e.y Absolute, e.z Invert. Read along the view (-d, the sphere's outward normal, as ES2's sky sphere).
+    {                // e.y Absolute, e.z Invert, e.w added instead. Read along the view (-d, the sphere's outward normal, as ES2's sky sphere).
         float g = saturate((dot(-d, a.xyz) + 1.0) * 0.5 + a.w);
         g = lerp(g, 1.0 - abs(2.0 * g - 1.0), e.y);
         g = lerp(g, 1.0 - g, e.z);
@@ -196,6 +196,7 @@ half3 ChorusLayer(TEXTURE2D_PARAM(map, s), float3 d, float4 a, float4 b, float4 
         g = g * g * (3.0 - 2.0 * g);
         g = g / ((1.0 - g) * b.z + 1.0);
         g = g <= 0 ? 0 : min(pow(g, b.w), 1.0);
+        if (e.w > 0.5) return under + (half3)c.rgb * (g * c.w);   // (added: a glowing band)
         return lerp(under, (half3)c.rgb, g * c.w);
     }
     // heading: about the sphere's axis, as Chorus's RotateAboutAxis nodes in its own order
@@ -238,7 +239,17 @@ half3 ChorusLayer(TEXTURE2D_PARAM(map, s), float3 d, float4 a, float4 b, float4 
     return under + col;
 }
 
-half3 ChorusSky(float3 w, half3 base)
+half3 ChorusStars(float3 v)   // the star mask through its curve
+{
+    float m = ChorusStarMask(v);
+    float3 curve = lerp(_ChorusCurve0.rgb, _ChorusCurve1.rgb, saturate((m - _ChorusCurve0.w) / max(_ChorusCurve1.w - _ChorusCurve0.w, 1e-5)));
+    float3 stars = pow(max(curve, 1e-6), _ChorusMisc.x) * step(1e-6, curve);
+    return dot(stars * _ChorusStars.w, 1.0);   // (the sphere's vertex colours: none, white)
+}
+
+// 'base': what lies under it all (the combined sky: the game's nebula layer); 'starsLast': its star mask over the layers
+// instead of under them (Chorus's order is stars, then its images over them; over a painted sky the patches would cover them).
+half3 ChorusSky(float3 w, half3 base, bool starsLast)
 {
     float3 v = normalize(float3(w.z, w.x, w.y));   // Unreal's axes
     float3 d = -v;   // the sphere's inward normal: what the gradient and the layers read
@@ -249,13 +260,7 @@ half3 ChorusSky(float3 w, half3 base)
         g = g <= 0 ? 0 : pow(g, _ChorusGradA.w);
         c += lerp(_ChorusGradA.rgb, _ChorusGradB.rgb, min(g, 1.0)) * g * _ChorusGradB.w;
     }
-    if (_ChorusStars.w > 0)
-    {
-        float m = ChorusStarMask(v);
-        float3 curve = lerp(_ChorusCurve0.rgb, _ChorusCurve1.rgb, saturate((m - _ChorusCurve0.w) / max(_ChorusCurve1.w - _ChorusCurve0.w, 1e-5)));
-        float3 stars = pow(max(curve, 1e-6), _ChorusMisc.x) * step(1e-6, curve);
-        c += dot(stars * _ChorusStars.w, 1.0);   // (the sphere's vertex colours: none, white)
-    }
+    if (_ChorusStars.w > 0 && !starsLast) c += ChorusStars(v);
     int n = (int)_ChorusMisc.z;
     if (n > 0) c = ChorusLayer(TEXTURE2D_ARGS(_ChorusLayer1, sampler_ChorusLayer1), d, _ChorusL1A, _ChorusL1B, _ChorusL1C, _ChorusL1D, _ChorusL1E, c);
     if (n > 1) c = ChorusLayer(TEXTURE2D_ARGS(_ChorusLayer2, sampler_ChorusLayer2), d, _ChorusL2A, _ChorusL2B, _ChorusL2C, _ChorusL2D, _ChorusL2E, c);
@@ -263,11 +268,25 @@ half3 ChorusSky(float3 w, half3 base)
     if (n > 3) c = ChorusLayer(TEXTURE2D_ARGS(_ChorusLayer4, sampler_ChorusLayer4), d, _ChorusL4A, _ChorusL4B, _ChorusL4C, _ChorusL4D, _ChorusL4E, c);
     if (n > 4) c = ChorusLayer(TEXTURE2D_ARGS(_ChorusLayer5, sampler_ChorusLayer5), d, _ChorusL5A, _ChorusL5B, _ChorusL5C, _ChorusL5D, _ChorusL5E, c);
     if (n > 5) c = ChorusLayer(TEXTURE2D_ARGS(_ChorusLayer6, sampler_ChorusLayer6), d, _ChorusL6A, _ChorusL6B, _ChorusL6C, _ChorusL6D, _ChorusL6E, c);
+    if (_ChorusStars.w > 0 && starsLast) c += ChorusStars(v);
     return max(c, 0) * _ChorusMisc.y;
 }
 
-// The game's two layers (or a mod's images) and the Enhanced skies' stars toward the sky direction d.
-half3 BaseSky(float3 d)
+// The game's nebula layer (or a mod's image) toward the sky direction d.
+half3 BaseNebula(float3 d)
+{
+    #if defined(_NEBULA_PANORAMA)
+        const int nebulaMode = 1;
+    #elif defined(_NEBULA_STRIP)
+        const int nebulaMode = 2;
+    #else
+        const int nebulaMode = 0;
+    #endif
+    return Layer(TEXTURECUBE_ARGS(_Nebula, sampler_Nebula), TEXTURE2D_ARGS(_NebulaMap, sampler_NebulaMap), _NebulaMap_TexelSize, d, nebulaMode) * _NebulaGain;
+}
+
+// The game's star layer (or a mod's image) and the Enhanced skies' stars toward the sky direction d.
+half3 BaseStars(float3 d)
 {
     #if defined(_STARS_PANORAMA)
         const int starsMode = 1;
@@ -276,15 +295,7 @@ half3 BaseSky(float3 d)
     #else
         const int starsMode = 0;
     #endif
-    #if defined(_NEBULA_PANORAMA)
-        const int nebulaMode = 1;
-    #elif defined(_NEBULA_STRIP)
-        const int nebulaMode = 2;
-    #else
-        const int nebulaMode = 0;
-    #endif
-    half3 c = Layer(TEXTURECUBE_ARGS(_Stars, sampler_Stars), TEXTURE2D_ARGS(_StarsMap, sampler_StarsMap), _StarsMap_TexelSize, d, starsMode) * _StarsGain
-            + Layer(TEXTURECUBE_ARGS(_Nebula, sampler_Nebula), TEXTURE2D_ARGS(_NebulaMap, sampler_NebulaMap), _NebulaMap_TexelSize, d, nebulaMode) * _NebulaGain;
+    half3 c = Layer(TEXTURECUBE_ARGS(_Stars, sampler_Stars), TEXTURE2D_ARGS(_StarsMap, sampler_StarsMap), _StarsMap_TexelSize, d, starsMode) * _StarsGain;
     if (_StarGrid.x > 0) c += StarPoints(TEXTURE2D_ARGS(_StarIndex, sampler_StarIndex), TEXTURE2D_ARGS(_StarData, sampler_StarData), _StarGrid, d, _StarsGain, _NebulaGain);
     return c;
 }
@@ -294,11 +305,15 @@ half3 Sky(float3 world)
 {
     float3 d = mul((float3x3)_SkyRotation, world);
     #if defined(_CHORUS_SKY)
-    half3 base = 0;
-    if (_ChorusStarsB.w > 0.5) base = BaseSky(d);   // (a branch, not a select: the layers under only where asked)
-    half3 c = ChorusSky(d, base);
+    // "base" (the combined sky: GoF2's Enhanced skies, a mod's sky over its images): the nebula layer under the layers, the
+    // star layer over them all; else the layered sky alone (Chorus's)
+    bool combined = _ChorusStarsB.w > 0.5;
+    half3 under = 0;
+    if (combined) under = BaseNebula(d);   // (a branch, not a select: the layers under only where asked)
+    half3 c = ChorusSky(d, under, combined);
+    if (combined) c += BaseStars(d);
     #else
-    half3 c = BaseSky(d);
+    half3 c = BaseNebula(d) + BaseStars(d);
     #endif
     if (_SkyBlend > 0.001)
     {

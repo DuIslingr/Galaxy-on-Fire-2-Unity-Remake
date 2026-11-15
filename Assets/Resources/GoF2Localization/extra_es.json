@@ -3389,8 +3389,12 @@
  "hudDrift": "DERRAPE",
  "ctlTravelBoost": "Impulso de viaje sí / no",
  "hudTravelBoost": "IMPULSO DE VIAJE",
- "enhancedSkies": "Cielos mejorados",
- "enhancedSkiesHelp": "Los cielos del juego con estrellas nítidas a cualquier resolución y nebulosas ampliadas por un modelo de IA (Real-ESRGAN), que inventa detalles finos que el arte original no tiene. Desactivado: los cielos originales. Desde la próxima órbita.",
  "nebulaClouds": "Nubes de nebulosa",
- "nebulaCloudsHelp": "Nubes de gas alrededor de las órbitas, con los colores de la nebulosa de su sistema, que atraviesas y dejas atrás. No están en el original. Desde la próxima órbita."
+ "nebulaCloudsHelp": "Nubes de gas alrededor de las órbitas, con los colores de la nebulosa de su sistema, que atraviesas y dejas atrás. No están en el original. Desde la próxima órbita.",
+ "skyStyle": "Cielos",
+ "skyStyleHelp": "Mejorado: estrellas nítidas a cualquier resolución y nebulosas ampliadas por un modelo de IA (Real-ESRGAN), una ligera mejora. Estilo EVERSPACE 2: los cielos reconstruidos con capas de nebulosa teñidas, estrellas agrupadas y una banda luminosa. Combinado: ambos. Los aspectos mejorados inventan detalles que el arte original no tiene. Desde la próxima órbita.",
+ "skyOriginal": "Original",
+ "skyEnhanced": "Mejorado",
+ "skyEs2": "Estilo EVERSPACE 2",
+ "skyCombined": "Combinado"
 }

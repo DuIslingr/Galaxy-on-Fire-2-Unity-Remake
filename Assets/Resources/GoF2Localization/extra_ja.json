@@ -3389,8 +3389,12 @@
  "hudDrift": "ドリフト",
  "ctlTravelBoost": "巡航ブースト オン / オフ",
  "hudTravelBoost": "巡航ブースト",
- "enhancedSkies": "強化された星空",
- "enhancedSkiesHelp": "星をどの解像度でもシャープに描き、星雲を AI モデル（Real-ESRGAN）でアップスケールしたゲームの星空。元のアートにはない細部が作り出されます。オフ：元の星空。次の軌道から。",
  "nebulaClouds": "星雲の雲",
- "nebulaCloudsHelp": "軌道のまわりに、その星系の星雲の色をしたガスの雲が漂い、その中や横を飛び抜けます。オリジナルにはありません。次の軌道から。"
+ "nebulaCloudsHelp": "軌道のまわりに、その星系の星雲の色をしたガスの雲が漂い、その中や横を飛び抜けます。オリジナルにはありません。次の軌道から。",
+ "skyStyle": "星空",
+ "skyStyleHelp": "強化：どの解像度でもシャープな星と、AI モデル（Real-ESRGAN）でアップスケールした星雲。わずかな改善です。EVERSPACE 2 風：色付きの星雲レイヤー、群れた星、光る帯で星空を作り直します。組み合わせ：両方。強化された見た目には元のアートにない細部が作られます。次の軌道から。",
+ "skyOriginal": "オリジナル",
+ "skyEnhanced": "強化",
+ "skyEs2": "EVERSPACE 2 風",
+ "skyCombined": "組み合わせ"
 }

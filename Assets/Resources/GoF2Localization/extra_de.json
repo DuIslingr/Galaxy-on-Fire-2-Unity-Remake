@@ -3389,8 +3389,12 @@
  "hudDrift": "DRIFTEN",
  "ctlTravelBoost": "Reiseboost an / aus",
  "hudTravelBoost": "REISEBOOST",
- "enhancedSkies": "Verbesserte Himmel",
- "enhancedSkiesHelp": "Die Himmel des Spiels mit Sternen, die bei jeder Auflösung scharf gezeichnet werden, und Nebeln, die von einem KI-Modell (Real-ESRGAN) hochskaliert wurden, das feine Details erfindet, die die Originalgrafik nicht hat. Aus: die originalen Himmel. Ab dem nächsten Orbit.",
  "nebulaClouds": "Nebelwolken",
- "nebulaCloudsHelp": "Gaswolken um die Orbits in den Farben des Nebels ihres Systems, durch die und an denen du vorbeifliegst. Nicht im Original. Ab dem nächsten Orbit."
+ "nebulaCloudsHelp": "Gaswolken um die Orbits in den Farben des Nebels ihres Systems, durch die und an denen du vorbeifliegst. Nicht im Original. Ab dem nächsten Orbit.",
+ "skyStyle": "Himmel",
+ "skyStyleHelp": "Verbessert: scharfe Sterne bei jeder Auflösung und Nebel, von einem KI-Modell (Real-ESRGAN) hochskaliert, eine leichte Verbesserung. EVERSPACE-2-Stil: die Himmel neu aufgebaut aus getönten Nebelschichten, gehäuften Sternen und einem leuchtenden Band. Kombiniert: beides. Die verbesserten Ansichten erfinden Details, die die Originalgrafik nicht hat. Ab dem nächsten Orbit.",
+ "skyOriginal": "Original",
+ "skyEnhanced": "Verbessert",
+ "skyEs2": "EVERSPACE-2-Stil",
+ "skyCombined": "Kombiniert"
 }

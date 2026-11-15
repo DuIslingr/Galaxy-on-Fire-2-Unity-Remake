@@ -607,7 +607,7 @@ namespace GoF2Remake.Modding
             Database.Load();
             var sky = skyboxes.Values.Concat(orbits.Values.Select(o => o.skybox).Where(b => b != null))
                 .SelectMany(s => new[] { s.nebula, s.stars, s.chorus?.stars }.Concat(s.chorus?.layers.Select(l => l.image) ?? Enumerable.Empty<string>()))
-                .Where(n => n != null);
+                .Where(n => n != null && !n.StartsWith("gof2:", StringComparison.OrdinalIgnoreCase));   // (the game's own: Resources)
             return planetTextures.Values.Concat(sunTextures.Values).Concat(mapTextures.Values).Concat(sky).Distinct().ToList();
         }
         public static Skybox SkyOf(int system) => skyboxes.TryGetValue(system, out var s) ? s : null;
@@ -661,7 +661,7 @@ namespace GoF2Remake.Modding
         static readonly HashSet<string> ChorusLayerFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "type", "image", "heading", "elevation", "scale", "rotation", "emissive", "exponent", "opacity",
               "color", "intensity", "channel", "tiling", "offset", "falloff", "sunScatter",
-              "up", "min", "max", "bias", "power", "absolute", "invert" };
+              "up", "min", "max", "bias", "power", "absolute", "invert", "additive" };
 
         /// <summary>skybox "chorus", the layered sky: { "gradient": { "up", "bias", "gamma", "colorA", "colorB", "opacity" }, "stars": {
         /// "image", "tiling": t | [u, v], "offset": [u, v], "brightness", "exponent", "curve": [[time, r, g, b], [time, r, g, b]],
@@ -755,6 +755,7 @@ namespace GoF2Remake.Modding
                         power = Mathf.Max(0f, ModJson.Float(lo, "power", 1f, SystemsFile)),
                         absolute = ModJson.Bool(lo, "absolute", false, SystemsFile),
                         invert = ModJson.Bool(lo, "invert", false, SystemsFile),
+                        additive = ModJson.Bool(lo, "additive", false, SystemsFile),
                     };
                     if (kind != ModWorld.ChorusLayer.Gradient)
                     {
@@ -793,6 +794,7 @@ namespace GoF2Remake.Modding
         static string Image(ModInfo mod, string path, string where)
         {
             if (path == null) return null;
+            if (path.StartsWith("gof2:", StringComparison.OrdinalIgnoreCase)) return path;   // the game's own (Resources/GoF2SkyLayers)
             if (!mod.Source.Exists(path)) throw new ModJsonException($"{where}: the image {path} isn't in the mod");
             return BackdropName(mod, path);
         }

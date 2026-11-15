@@ -3389,8 +3389,12 @@
  "hudDrift": "DRIFTEN",
  "ctlTravelBoost": "Reisboost aan / uit",
  "hudTravelBoost": "REISBOOST",
- "enhancedSkies": "Verbeterde luchten",
- "enhancedSkiesHelp": "De luchten van het spel met sterren die op elke resolutie scherp getekend worden en nevels die door een AI-model (Real-ESRGAN) zijn opgeschaald, dat fijne details verzint die de originele afbeeldingen niet hebben. Uit: de originele luchten. Vanaf de volgende baan.",
  "nebulaClouds": "Nevelwolken",
- "nebulaCloudsHelp": "Gaswolken rond de banen, in de kleuren van de nevel van hun stelsel, waar je doorheen en langs vliegt. Niet in het origineel. Vanaf de volgende baan."
+ "nebulaCloudsHelp": "Gaswolken rond de banen, in de kleuren van de nevel van hun stelsel, waar je doorheen en langs vliegt. Niet in het origineel. Vanaf de volgende baan.",
+ "skyStyle": "Luchten",
+ "skyStyleHelp": "Verbeterd: sterren die op elke resolutie scherp zijn en nevels die door een AI-model (Real-ESRGAN) zijn opgeschaald, een kleine verbetering. EVERSPACE 2-stijl: de luchten opnieuw opgebouwd uit gekleurde nevellagen, gegroepeerde sterren en een gloeiende band. Gecombineerd: allebei. De verbeterde weergaven verzinnen details die de originele afbeeldingen niet hebben. Vanaf de volgende baan.",
+ "skyOriginal": "Origineel",
+ "skyEnhanced": "Verbeterd",
+ "skyEs2": "EVERSPACE 2-stijl",
+ "skyCombined": "Gecombineerd"
 }

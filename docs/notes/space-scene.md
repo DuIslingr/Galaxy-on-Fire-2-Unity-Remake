@@ -34,8 +34,27 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   the hangar is shown its race's own (`SkyReflection.SetHangar(HangarIndex)`, `Resources/GoF2Reflections/cubemap_hangar_terran
   / vossk / nivelian / midorian`, glossy convolution; the Supernova systems too), the Valkyrie hangars (7 / 8) a black one
   (no reflection, the rim stays), a mod's own hangar and the lounge the system's.
-- **Enhanced skies** (remake, 2026-11-14, the user's request to rebuild GoF2's skies "the same way Chorus does"; Options >
-  Graphics "Enhanced skies", `Settings.EnhancedSkies`, off by default: the upscale invents detail): `OrbitBuilder.Enhance`
+- **Skies** (remake, 2026-11-14; Options > Graphics "Skies", `Settings.SkyStyle`, Original by default: the others invent
+  detail; the user: "4 options. chorus enhanced on its own which is only a slight improvement whereas es2 is es2 styled then
+  chorus and es2 combined should be the best of both worlds"): **Original**; **Enhanced** (below: the upscaled layers and
+  sharp stars, and Chorus's way with a painted sky: its brightest part again as a sharper image patch); **EVERSPACE 2
+  style** (no painted nebula: ES2's clustered three-layer star field, a tinted greyscale mask on each bright region, falling
+  off round it and brighter toward the sun, a sky-wide one under the fuller skies, an added band along the nebulae's plane);
+  **Combined** (Enhanced, the ES2 layers over it, fainter: a faint clustered star field behind GoF2's stars, mask detail and
+  glow on the regions, the band). `World.GoF2SkyLayers.Build` makes each a layered sky (mods-world.md "Layered skies") with
+  `"base"` (the game's nebula under the layers, its stars over them: `SpaceSkyCore` `Sky()` draws BaseNebula, ChorusSky with
+  its star mask last, then BaseStars) except ES2 style; the layers need "Live mod skies" (else Enhanced's layers and stars
+  alone). The remake's own assets (`Reference/tools/sky/sky_layers.py`, `Resources/GoF2SkyLayers`, named "gof2:<name>" by any
+  sky's layers, mods' too): `star_mask.png` (tileable 4096, three gaussian star layers: 1800 bright, 7000 middle, 32000 faint),
+  `nebula_masks.png` (tileable 2048 x 1024, domain-warped spectral noise: billows, laned filaments, haze), `patch_0XX.png`
+  (each sky's brightest region from GoF2SkyHd's nebula upscaled 4x again from its 1024 shrink, sampled into the patch's own
+  projection, ChorusLayer's mapping inverted; 1536 px over at most 40 deg, feathered alpha) and `layered_skies.json` (per sky:
+  up to four bright regions by peak-finding on a smoothed panorama, their size, colour and brightness; the band's normal, the
+  bright directions' least spread axis, and how flat they lie; main colour, coverage; the patch's heading / elevation).
+  `GoF2SkyLayers.Toward`: a layer centred on a cube-frame direction w: heading atan2(w.x, w.y), elevation asin(w.z) / (pi / 2).
+  Tests `GoF2SkyLayersTests`.
+- **Enhanced skies' layers and stars** (remake, 2026-11-14, the user's request to rebuild GoF2's skies "the same way Chorus
+  does"; "Skies" Enhanced and Combined, `Settings.EnhancedSkies`): `OrbitBuilder.Enhance`
   puts `Resources/GoF2SkyHd` on the game's own layers of a sky (not a mod's images, not a Chorus sky): its stars_00X /
   nebula_0XX cubemaps (the same 2048 faces) and their star lists drawn by `GoF2/SpaceSky` (`World.SkyStars`, `SpaceSkyCore`
   `StarPoints`). `Reference/tools/sky/enhance_skies.py` makes them from `GoF2Sky`: every point star of the stars layers

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enhanced GoF2 skies (Options > Graphics "Enhanced skies", Settings.EnhancedSkies; 2026-11-14, the user's request).
+"""Enhanced GoF2 skies (Options > Graphics "Skies" Enhanced / Combined, Settings.EnhancedSkies; 2026-11-14, the user's request).
 
 Makes Assets/Resources/GoF2SkyHd from the baked base skies in Assets/Resources/GoF2Sky (SkyboxBaker's 6:1 strips, 2048 per
 face, Unity's horizontal-strip order +X -X +Y -Y +Z -Z):

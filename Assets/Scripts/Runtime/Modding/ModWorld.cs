@@ -592,6 +592,8 @@ namespace GoF2Remake.Modding
             public Vector3 up = new Vector3(0f, 0f, 1f);
             public float gradientOffset, min, max = 1f, bias = 0.5f, power = 1f;
             public bool absolute, invert;
+            /// <summary>Gradient: added to what is under it (a glowing band) instead of laid over it.</summary>
+            public bool additive;
         }
 
         static readonly Dictionary<int, Skybox> skyboxes = new Dictionary<int, Skybox>();

@@ -88,9 +88,17 @@ namespace GoF2Remake.World
             // turns it, so it lines up with the orbit's sun).
             if (layout.modSkyRotation.HasValue) rotation = Quaternion.Euler(layout.modSkyRotation.Value);
             // The shader maps world directions into the baked cube: the inverse of the sky's Unity rotation.
+            // Options > Graphics "Skies" (Settings.SkyStyle) on the game's own layers (not a mod's images, not a Chorus sky):
+            // Enhanced / Combined swap in GoF2SkyHd's layers and the sharp stars; every style but Original draws its layers
+            // (GoF2SkyLayers) where the layered sky is drawn (Live mod skies)
+            if (!sky.IsKeywordEnabled("_CHORUS_SKY") && Settings.SkyStyle != Settings.SkyOriginal)
+            {
+                if (Settings.EnhancedSkies) Enhance(sky, baseStars, baseNebula);
+                if (baseNebula >= 0 && Settings.LiveSkies && GoF2SkyLayers.Build(baseNebula, Settings.SkyStyle) is Modding.ModWorld.ChorusSky layered)
+                    SetChorusSky(sky, layered);
+            }
             sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(rotation)));
             if (sky.IsKeywordEnabled("_CHORUS_SKY")) SetChorusSun(sky, rotation, layout);
-            if (Settings.EnhancedSkies && !sky.IsKeywordEnabled("_CHORUS_SKY")) Enhance(sky, baseStars, baseNebula);
             return sky;
         }
 
@@ -120,7 +128,11 @@ namespace GoF2Remake.World
         {
             Texture2D Image(string name)
             {
-                var t = name != null ? Modding.ModBackdrop.Texture(name) : null;
+                // "gof2:<name>": the game's own layer images (Resources/GoF2SkyLayers: star_mask, nebula_masks, patch_0XX)
+                // (a mod's textures/<name> replaces it: ModTextures.SkyLayer)
+                var t = name == null ? null : name.StartsWith("gof2:")
+                    ? Modding.ModTextures.SkyLayer(name.Substring(5)) ?? Resources.Load<Texture2D>("GoF2SkyLayers/" + name.Substring(5))
+                    : Modding.ModBackdrop.Texture(name);
                 if (t != null) t.wrapMode = TextureWrapMode.Repeat;
                 return t;
             }
@@ -148,7 +160,7 @@ namespace GoF2Remake.World
                     sky.SetVector($"_ChorusL{n}A", new Vector4(l.up.x, l.up.y, l.up.z, l.gradientOffset));
                     sky.SetVector($"_ChorusL{n}B", new Vector4(l.min, l.max, 1f / Mathf.Max(l.bias, 1e-4f) - 2f, l.power));
                     sky.SetVector($"_ChorusL{n}C", new Vector4(l.color.r, l.color.g, l.color.b, l.opacity));
-                    sky.SetVector($"_ChorusL{n}D", new Vector4(2f, l.absolute ? 1f : 0f, l.invert ? 1f : 0f, 0f));
+                    sky.SetVector($"_ChorusL{n}D", new Vector4(2f, l.absolute ? 1f : 0f, l.invert ? 1f : 0f, l.additive ? 1f : 0f));
                     sky.SetVector($"_ChorusL{n}E", Vector4.zero);
                     continue;
                 }
@@ -168,7 +180,10 @@ namespace GoF2Remake.World
                     sky.SetVector($"_ChorusL{n}B", new Vector4(scale, Mathf.Cos(r), Mathf.Sin(r), l.intensity));
                     sky.SetVector($"_ChorusL{n}C", new Vector4(l.color.r, l.color.g, l.color.b, l.exponent));
                     sky.SetVector($"_ChorusL{n}D", new Vector4(1f, map != null ? l.channel : 4f, l.falloff * Mathf.Deg2Rad, l.sunScatter));
-                    sky.SetVector($"_ChorusL{n}E", new Vector4(l.tiling.x, l.tiling.y, l.offset.x, l.offset.y));
+                    // its tiling is for a 2:1 image (the game's nebula_masks): another shape (ES2's square masks) tiles v by its
+                    // aspect, so its shapes keep theirs
+                    float aspect = map != null ? map.width / (float)Mathf.Max(1, map.height) : 2f;
+                    sky.SetVector($"_ChorusL{n}E", new Vector4(l.tiling.x, l.tiling.y * aspect / 2f, l.offset.x, l.offset.y));
                 }
             }
             sky.SetVector("_ChorusMisc", new Vector4(c.starsExponent, c.emissive, n, 0f));

@@ -178,11 +178,18 @@ namespace GoF2Remake.Data
             set => SetBool("liveSkies", value);
         }
 
-        /// <summary>Remake (2026-11-14, the user's request): the game's own skies enhanced (OrbitBuilder.Enhance): their point stars
-        /// and specks drawn sharp at any resolution (World.SkyStars) over the nebulae upscaled 4x by Real-ESRGAN's anime model
-        /// (Reference/tools/sky/enhance_skies.py). Off by default: the upscale invents fine detail the original art doesn't
-        /// have. From the next orbit.</summary>
-        public static bool EnhancedSkies { get => GetBool("enhancedSkies", false); set => SetBool("enhancedSkies", value); }
+        /// <summary>Remake (2026-11-14, the user: "4 options. chorus enhanced on its own which is only a slight improvement whereas
+        /// es2 is es2 styled then chorus and es2 combined should be the best of both worlds"): how the game's own skies are drawn
+        /// (OrbitBuilder.MakeSky, World.GoF2SkyLayers). Original; Enhanced (Chorus's way: the point stars sharp at any
+        /// resolution, the nebulae upscaled by Real-ESRGAN's anime model, the brightest part again as a sharper image patch);
+        /// EVERSPACE 2 style (rebuilt from tinted greyscale masks where the nebulae are, clustered stars, a band along their
+        /// plane, brighter toward the sun; no painted nebula); Combined (Enhanced with the EVERSPACE 2 layers over it). The
+        /// layers need "Live mod skies" (Low: Enhanced's stars and nebulae only). Original by default: the rest invent detail
+        /// the original art doesn't have. From the next orbit.</summary>
+        public static int SkyStyle { get => Mathf.Clamp(Mathf.RoundToInt(Get("skyStyle", 0f)), 0, 3); set => Set("skyStyle", Mathf.Clamp(value, 0, 3)); }
+        public const int SkyOriginal = 0, SkyEnhanced = 1, SkyEs2 = 2, SkyCombined = 3;
+        /// <summary>Enhanced and Combined: GoF2SkyHd's upscaled layers and sharp stars (OrbitBuilder.Enhance).</summary>
+        public static bool EnhancedSkies => SkyStyle == SkyEnhanced || SkyStyle == SkyCombined;
 
         /// <summary>Remake (2026-11-14, the user: EVERSPACE 2's sky methods in the base game): clouds of gas round the orbit in its
         /// sky's colours, flown through with parallax (World.NebulaClouds, as ES2's local nebulae). Off by default: the original
@@ -913,7 +920,7 @@ namespace GoF2Remake.Data
         public static readonly string[] GraphicsKeys =
         {
             "displayMode", "resolutionWidth", "resolutionHeight", "frameRate", "quality", "fireSmoke", "fog", "detailDistance", "textureFiltering", "renderScale", "upscaler", "upscalerQuality",
-            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "enhancedSkies", "nebulaClouds", "npcPlayerEngines", "rebuiltPlanets", "fov",
+            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "skyStyle", "nebulaClouds", "npcPlayerEngines", "rebuiltPlanets", "fov",
             "cameraShake", "originalChaseCamera", "es2FreeFlightCamera", "originalUi", "uiWidth", "uiMargin", "showFps", "fpsPosition", "gameCursor",
         };
         public static readonly string[] ControlsKeys =

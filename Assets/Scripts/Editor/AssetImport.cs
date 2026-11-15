@@ -56,10 +56,12 @@ namespace GoF2Remake.EditorTools
             if (assetPath.StartsWith(ItemIconBuilder.OutDir + "/")) { ShopIcon((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/GoF2SkyLayers/"))
             {
-                // the layered skies' masks (Reference/tools/sky/nebula_clouds.py): data, not colour; tiled
+                // the layered skies' masks (Reference/tools/sky/nebula_clouds.py, sky_layers.py): data, not colour; tiled. The
+                // patches (patch_0XX) are colour (read as data, their colours came out brighter than the sky round them)
                 var mi = (TextureImporter)assetImporter;
-                mi.sRGBTexture = false;
-                mi.wrapMode = TextureWrapMode.Repeat;
+                bool patch = name.StartsWith("patch_");
+                mi.sRGBTexture = patch;
+                mi.wrapMode = patch ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
                 mi.mipmapEnabled = true;
                 mi.textureCompression = TextureImporterCompression.CompressedHQ;
                 return;
