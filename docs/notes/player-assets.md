@@ -51,9 +51,9 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
 | original | `Localization/text_*`, `GoF2_strings.csv` | 15 | `.lang` files (the remake's own translations nl / hi / zh / ar...: see below) |
 | original | `Resources/GoF2Data/` | 53 | `.bin` files and the resource table (per file to sort out: some tables are the remake's) |
 | original | `Shaders_Original_GLSL/` | 23 | the app's shader source; reference only, nothing converts it |
-| derived | `Resources/Assembled/`, `Prefabs/`, `Materials/`, `GoF2Weapons/item_*` | 2,030 | built at run time from the converted meshes, textures and `assemblies.json` / `resources.json` |
-| derived | `Resources/GoF2SkyHd`, `GoF2SkyLayers`, `GoF2Planets3D`, `GoF2Reflections` | 257 | made on the player's machine (SkyHd: the optional step) |
-| own | everything else (scripts, shaders, settings, fonts, `GoF2Mods`, `GoF2Localization` extras...) | ~1,400 | ships |
+| derived | `Resources/Assembled/`, `Prefabs/`, `Materials/` | 1,950 | built at run time from the converted meshes, textures and `assemblies.json` / `resources.json` |
+| derived | `Resources/GoF2SkyHd`, `GoF2SkyLayers/patch_*`, `GoF2Planets3D`, `GoF2Reflections` | 254 | made on the player's machine (SkyHd and its patches: the optional step; Planets3D: distributed separately, below) |
+| own | everything else (scripts, shaders, settings, fonts, `GoF2Mods`, `GoF2Localization` extras, the `GoF2Weapons/item_*` fx tables: their references refilled...) | ~1,550 | ships |
 
 **Hard references** (an own asset pointing at an original or derived one by GUID; these can't stay): 19 files.
 - Sound tables: `GoF2Story/StoryAssets` (4,307 clips), `GoF2ModBuilder/GameAudioIndex` (330), `GoF2Combat/CombatAssets`
@@ -256,6 +256,19 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
     prefab references until the game's first scene (not the test runner's InitTestScene): a holder made before it is in
     another Entities World, and every model parented under it logged "A transform hierarchy holds entities of more than
     one Entities World" (Unity 7's entity-backed transforms), which failed the play-mode tests.
+- **Weapon fx, hangar shadows, sky masks, 3D planets** (2026-11-15):
+  - `Resources/GoF2Weapons/item_*` (WeaponBuilder's fx tables from `weapon_fx.json`: projectile / muzzle / impact
+    prefabs, shot and explosion sounds) are the remake's own: they ship with their references emptied, and `WeaponFx.Load`
+    goes through `OriginalRefs.Load` (their 383 references in `original_refs.json`: sounds, `Prefabs/`, `Resources/
+    Assembled/`, all made by OriginalContent). Reclassified in inventory.py / inventory.json and checked out in the test bed.
+  - The hangar ships' shadow maps (`GoF2Station/ShipShadows`): the game's ships built from the copy have readable meshes,
+    so `ShipShadowBaker` bakes them as it bakes the mods' ships, kept in `GameContent.GpuCache/shadows` (baked once).
+  - `GoF2SkyLayers/star_mask`, `nebula_masks`, `cloud_masks` are seeded noise (sky_layers.py, nebula_clouds.py): own, they
+    ship. The `patch_*` come from the Real-ESRGAN skies: with the optional desktop step.
+  - `GoF2Planets3D` (the 3D planets' maps): rebuilt from the planet pngs by tools that aren't in the repository
+    (planet_rebuild, 2026-11-10), so the game can't make them: set aside to be distributed separately (the user's rule for
+    what the player's copy doesn't provide). Without them `RebuiltPlanets.Has` is false and the planets are the flat
+    images (OriginalBackdrop), as with the option off.
 - **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
   - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is
     `# gof2 original cache v<N>`. `GameContent.Installed` only for this version's stamp; `GameContent.Stale` for a

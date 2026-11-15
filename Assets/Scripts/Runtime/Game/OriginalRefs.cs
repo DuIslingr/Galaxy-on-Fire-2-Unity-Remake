@@ -149,7 +149,15 @@ namespace GoF2Remake.Data
         static object Resolve(Type type, string asset)
         {
             if (typeof(AudioClip).IsAssignableFrom(type)) return OriginalAudio.Get(asset);
-            if (typeof(Texture).IsAssignableFrom(type) && asset.StartsWith("Textures/")) return OriginalTextures.Get(asset);
+            if (typeof(Texture).IsAssignableFrom(type))
+            {
+                // the interface images the converter cut (Resources/GoF2Hud, GoF2Icons) and the story's portrait parts (imported
+                // as sprites: no mipmaps, clamped) as interface images; the rest as the game's textures
+                if (asset.StartsWith("Resources/GoF2Hud/") || asset.StartsWith("Resources/GoF2Icons/"))
+                    return OriginalTextures.Image(asset.Substring("Resources/".Length, asset.Length - "Resources/".Length - 4));
+                if (asset.StartsWith("Textures/textures/") && asset.EndsWith("_ipad_large.png")) return OriginalTextures.UiImage(asset);
+                if (asset.StartsWith("Textures/")) return OriginalTextures.Get(asset);
+            }
             if (typeof(TextAsset).IsAssignableFrom(type) && asset.StartsWith("Localization/text_"))
             {
                 string code = asset.Substring("Localization/text_".Length).Replace(".json", "");

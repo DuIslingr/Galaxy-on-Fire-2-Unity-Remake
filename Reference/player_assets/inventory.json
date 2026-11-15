@@ -4,10 +4,10 @@
    "files": 8884
   },
   "derived": {
-   "files": 2255
+   "files": 2172
   },
   "own": {
-   "files": 1471
+   "files": 1554
   }
  },
  "folders": {
@@ -20,9 +20,9 @@
   },
   "Assets/Resources/GoF2SkyLayers/": {
    "kind": "derived",
-   "what": "layered skies: patches, masks, cloud masks from the skies",
+   "what": "layered skies: the patches from the upscaled skies (the masks are seeded noise: own)",
    "source": "sky/sky_layers.py, nebula_clouds.py",
-   "files": 22,
+   "files": 19,
    "bytes_here": 2899
   },
   "Assets/Resources/GoF2Planets3D/": {
@@ -61,9 +61,9 @@
    "bytes_here": 1708700
   },
   "Assets/Resources/GoF2Weapons/item_": {
-   "kind": "derived",
-   "what": "weapon assets pointing at the game's meshes, textures, sounds",
-   "source": "built at run time",
+   "kind": "own",
+   "what": "weapon fx tables (from weapon_fx.json) pointing at the game's prefabs and sounds",
+   "source": "ship; references refilled (OriginalRefs)",
    "files": 80,
    "bytes_here": 85186
   },
@@ -5281,6 +5281,456 @@
    "Assets/Audio/SFX_STATION_HANGAR/Button_Info_v01.ogg",
    "Assets/Audio/SFX_STATION_HANGAR/Button_to_ship_v01.ogg",
    "Assets/Audio/SFX_STATION_HANGAR/Station_Atmo_Hangar3.ogg"
+  ],
+  "Assets/Resources/GoF2Weapons/item_000.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Nirai_Impulse_EX1_V01.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_000_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_000_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_001.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Nirai_Impulse_EX2_V01.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_000_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_001_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_002.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Nirai_Charged_Impulse_v01.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_000_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_002_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_003.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Vskorr_v01.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_003_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_004.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Shkoom_v02.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_004_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_005.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Berger_Focus_I_v01.ogg",
+   "Assets/Prefabs/main/fx/impact_002_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_002_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_005_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_006.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Berger_Focus_2.ogg",
+   "Assets/Prefabs/main/fx/impact_002_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_002_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_006_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_007.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Berger_Focus_Retribution_v01.ogg",
+   "Assets/Prefabs/main/fx/impact_003_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_003_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_007_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_008.asset": [
+   "Assets/Audio/SFX_SPACE/Laser_Berger_Focus_Converge_v01.ogg",
+   "Assets/Prefabs/main/fx/impact_003_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_003_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_008_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_009.asset": [
+   "Assets/Audio/SFX_SPACE/Beam_M6_Wolv_v1.ogg",
+   "Assets/Audio/SFX_SPACE/Beam_M6_Wolv_v2.ogg",
+   "Assets/Audio/SFX_SPACE/Beam_M6_Wolv_v3.ogg",
+   "Assets/Audio/SFX_SPACE/Beam_M6_Wolv_v4.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_000_anim_add.prefab",
+   "Assets/Resources/Assembled/main/fx/projectile_009_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_010.asset": [
+   "Assets/Audio/SFX_SPACE/Beam_M6_Coug_v1.ogg",
+   "Assets/Audio/SFX_SPACE/Beam_M6_Coug_v2.ogg",
+   "Assets/Audio/SFX_SPACE/Beam_M6_Coug_v3.ogg",
+   "Assets/Prefabs/main/fx/impact_003_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_003_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_010_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_011.asset": [
+   "Assets/Audio/SFX_SPACE/Beam_M6_Wolv_v1.ogg",
+   "Assets/Audio/SFX_SPACE/Beam_M6_Wolv_v2.ogg",
+   "Assets/Audio/SFX_SPACE/Beam_M6_Wolv_v3.ogg",
+   "Assets/Audio/SFX_SPACE/Beam_M6_Wolv_v4.ogg",
+   "Assets/Prefabs/main/fx/impact_002_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_002_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_011_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_012.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_Nsaan_01.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_012_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_013.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_Kbooskk_01.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_013_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_014.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_Shgaal_01.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_014_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_015.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_Hnookk_01.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_015_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_016.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_EMP_Luna_V01.ogg",
+   "Assets/Prefabs/main/fx/impact_004_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_004_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_016_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_017.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_EMP_Sol_V01.ogg",
+   "Assets/Prefabs/main/fx/impact_004_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_004_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_017_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_018.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_EMP_Dia_V01.ogg",
+   "Assets/Prefabs/main/fx/impact_004_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_004_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_018_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_019.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_Gram_01.ogg",
+   "Assets/Prefabs/main/fx/impact_005_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_005_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_019_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_020.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_Ridil_01.ogg",
+   "Assets/Prefabs/main/fx/impact_005_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_005_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_020_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_021.asset": [
+   "Assets/Audio/SFX_SPACE/Blaster_Tyrfing.ogg",
+   "Assets/Prefabs/main/fx/impact_005_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_005_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_021_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_022.asset": [
+   "Assets/Audio/SFX_SPACE/Canon_Microgun_MK1_02.ogg",
+   "Assets/Prefabs/main/fx/impact_006_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_006_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_022_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_023.asset": [
+   "Assets/Audio/SFX_SPACE/Canon_Microgun_MK2_02b.ogg",
+   "Assets/Prefabs/main/fx/impact_006_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_006_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_023_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_024.asset": [
+   "Assets/Audio/SFX_SPACE/Canon_Microgun_64MJ_02.ogg",
+   "Assets/Prefabs/main/fx/impact_006_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_007_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_024_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_025.asset": [
+   "Assets/Audio/SFX_SPACE/Canon_Microgun_128MJ_02b.ogg",
+   "Assets/Prefabs/main/fx/impact_006_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_007_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_025_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_026.asset": [
+   "Assets/Audio/SFX_SPACE/Canon_Scram_02.ogg",
+   "Assets/Prefabs/main/fx/impact_006_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_008_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_026_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_027.asset": [
+   "Assets/Audio/SFX_SPACE/Canon_Massdriver_02.ogg",
+   "Assets/Prefabs/main/fx/impact_006_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_008_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_027_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_028.asset": [
+   "Assets/Audio/SFX_SPACE/Thermalfusion_Thermic_O5_v2c.ogg",
+   "Assets/Prefabs/main/fx/impact_006_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_006_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_028_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_029.asset": [
+   "Assets/Audio/SFX_SPACE/Thermalfusion_Thermic_ReHeat_v2b.ogg",
+   "Assets/Prefabs/main/fx/impact_005_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_005_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_029_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_030.asset": [
+   "Assets/Audio/SFX_SPACE/Thermalfusion_Thermic_MaxHeat_v3.ogg",
+   "Assets/Prefabs/main/fx/impact_002_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_002_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_030_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_031.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_Gliissk_01.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_032.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missle_JetRocket_01.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_033.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_Amour_01.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_034.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_EMP_MK1_02.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_035.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_EMP_MK2_01.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_036.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_Edo_01.ogg",
+   "Assets/Audio/SFX_SPACE/Launch_Missile_Edo_02.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_emp.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_037.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_IntelliJet_01.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_emp.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_038.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_Skoonn_01.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_emp.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_039.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_Mamba.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_emp.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_040.asset": [
+   "Assets/Audio/SFX_SPACE/Launch_Missile_Dephase_01.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_emp.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_041.asset": [
+   "Assets/Audio/SFX_SPACE/Explosion_EMP_GL1_01.ogg",
+   "Assets/Audio/SFX_SPACE/Launch_Missile_EMP_GL1.ogg",
+   "Assets/Resources/Assembled/main/misc/bomb_emp_a.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_042.asset": [
+   "Assets/Audio/SFX_SPACE/Explosion_EMP_GL2.ogg",
+   "Assets/Audio/SFX_SPACE/Launch_Missile_EMP_GL2.ogg",
+   "Assets/Resources/Assembled/main/misc/bomb_emp_a.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_043.asset": [
+   "Assets/Audio/SFX_SPACE/Explosion_EMP_GLDX_01.ogg",
+   "Assets/Audio/SFX_SPACE/Launch_Missile_EMP_GLDX_02.ogg",
+   "Assets/Resources/Assembled/main/misc/bomb_emp_a.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_044.asset": [
+   "Assets/Audio/SFX_SPACE/Explosion_Bomb_AMR_Tormentor_01.ogg",
+   "Assets/Audio/SFX_SPACE/Rocket_Launch_AMR_Tormentor_01.ogg",
+   "Assets/Resources/Assembled/main/misc/bomb_explosive_a.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_045.asset": [
+   "Assets/Audio/SFX_SPACE/Explosion_Bomb_AMR_Oppressor_02.ogg",
+   "Assets/Audio/SFX_SPACE/Rocket_Launch_AMR_Oppressor_01.ogg",
+   "Assets/Audio/SFX_SPACE/Rocket_Launch_AMR_Oppressor_02.ogg",
+   "Assets/Resources/Assembled/main/misc/bomb_explosive_a.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_046.asset": [
+   "Assets/Audio/SFX_SPACE/Explosion_Bomb_AMR_Exctinctor_02.ogg",
+   "Assets/Audio/SFX_SPACE/Rocket_Launch_AMR_Extinction_01.ogg",
+   "Assets/Resources/Assembled/main/misc/bomb_explosive_b.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_047.asset": [
+   "Assets/Audio/SFX_SPACE/Turret_Hammerhead_MK1.ogg",
+   "Assets/Prefabs/main/fx/impact_003_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_003_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_016_anim_add.prefab",
+   "Assets/Resources/Assembled/main/turrets/turret_001_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_048.asset": [
+   "Assets/Audio/SFX_SPACE/Turret_Hammerhead_MK2_b.ogg",
+   "Assets/Prefabs/main/fx/impact_005_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_005_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_021_anim_add.prefab",
+   "Assets/Resources/Assembled/main/turrets/turret_002_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_049.asset": [
+   "Assets/Audio/SFX_SPACE/Turret_Hammerhead_Lksaar_01.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_013_anim_add.prefab",
+   "Assets/Resources/Assembled/main/turrets/turret_003_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_060.asset": [
+   "Assets/Audio/DLC_SFX/AMR_Claymor_02.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_02.ogg",
+   "Assets/Resources/Assembled/valkyrie/misc/v_mine_001.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_061.asset": [
+   "Assets/Audio/DLC_SFX/Neetha_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_02.ogg",
+   "Assets/Resources/Assembled/valkyrie/misc/v_mine_003.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_062.asset": [
+   "Assets/Audio/DLC_SFX/Ksannk_04.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_02.ogg",
+   "Assets/Resources/Assembled/valkyrie/misc/v_mine_002.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_176.asset": [
+   "Assets/Audio/DLC_SFX/Nirai50_02.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_02.ogg",
+   "Assets/Prefabs/main/fx/muzzle_flash_006_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_projectile_176_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_177.asset": [
+   "Assets/Audio/DLC_SFX/Berger_Flak_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_02.ogg",
+   "Assets/Prefabs/main/fx/muzzle_flash_003_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_projectile_177_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_178.asset": [
+   "Assets/Audio/DLC_SFX/Icarus_Heavy_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_01.ogg",
+   "Assets/Audio/SFX_SPACE/Garbage_Explosion_02.ogg",
+   "Assets/Prefabs/main/fx/muzzle_flash_002_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_projectile_178_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_179.asset": [
+   "Assets/Audio/DLC_SFX/AMR_Liberator_Engine_02.ogg",
+   "Assets/Audio/DLC_SFX/EngineDLC_06.ogg",
+   "Assets/Audio/DLC_SFX/Liberator_Launch.ogg",
+   "Assets/Audio/SFX_SPACE/Explosion_Bomb_AMR_Exctinctor_02.ogg",
+   "Assets/Resources/Assembled/valkyrie/misc/v_guided_missile_anim.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_180.asset": [
+   "Assets/Audio/DLC_SFX/Berger_AGT_01_Loop.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_muzzle_flash_009_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_projectile_180_anim_add.prefab",
+   "Assets/Resources/Assembled/valkyrie/turrets/v_autoturret_001_anim_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_181.asset": [
+   "Assets/Audio/DLC_SFX/Skuld_AT_XR_01_Loop.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_muzzle_flash_010_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_projectile_181_anim_add.prefab",
+   "Assets/Resources/Assembled/valkyrie/turrets/v_autoturret_002_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_182.asset": [
+   "Assets/Audio/DLC_SFX/Turret_HH_AT_Archimedes_03_Loop.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_006_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_023_anim_add.prefab",
+   "Assets/Resources/Assembled/valkyrie/turrets/v_autoturret_003_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_183.asset": [
+   "Assets/Audio/DLC_SFX/Laser_Disruptor_03.ogg",
+   "Assets/Prefabs/main/fx/impact_003_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_003_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_projectile_183_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_193.asset": [
+   "Assets/Audio/DLC_SFX/Sunfire_01.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_000_anim_add.prefab",
+   "Assets/Prefabs/valkyrie/fx/v_projectile_193_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_197.asset": [
+   "Assets/Audio/DLC2_SFX/Plasma_Rocket_Explosion.ogg",
+   "Assets/Audio/SFX_SPACE/Launch_Missile_EMP_GLDX_02.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_198.asset": [
+   "Assets/Resources/Assembled/supernova/turrets/sn_plasma_collector_001_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_199.asset": [
+   "Assets/Resources/Assembled/supernova/turrets/sn_plasma_collector_002_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_200.asset": [
+   "Assets/Resources/Assembled/supernova/turrets/sn_plasma_collector_003_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_211.asset": [
+   "Assets/Audio/DLC2_SFX/SentryGun_SG400_02.ogg",
+   "Assets/Resources/Assembled/supernova/turrets/sn_sentry_gun_001.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_212.asset": [
+   "Assets/Audio/DLC2_SFX/SentryGun_SG400_02.ogg",
+   "Assets/Resources/Assembled/supernova/turrets/sn_sentry_gun_002.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_213.asset": [
+   "Assets/Audio/DLC2_SFX/SentryGun_SG400_02.ogg",
+   "Assets/Resources/Assembled/supernova/turrets/sn_sentry_gun_003.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_214.asset": [
+   "Assets/Audio/DLC2_SFX/Launch_02.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_215.asset": [
+   "Assets/Audio/DLC2_SFX/Launch_02.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_216.asset": [
+   "Assets/Audio/DLC2_SFX/Launch_02.ogg",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_221.asset": [
+   "Assets/Audio/DLC2_SFX/Plasma_Rocket_Explosion.ogg",
+   "Assets/Audio/SFX_SPACE/Launch_Missile_EMP_GLDX_02.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Resources/Assembled/main/misc/rocket_explosive.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_224.asset": [
+   "Assets/Audio/DLC2_SFX/Turret_Matador_TS_01.ogg",
+   "Assets/Prefabs/main/fx/impact_000_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_005_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_020_anim_add.prefab",
+   "Assets/Resources/Assembled/supernova/turrets/sn_turret_004_ship_mounted.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_226.asset": [
+   "Assets/Audio/DLC2_SFX/Shockblast_01.ogg"
+  ],
+  "Assets/Resources/GoF2Weapons/item_228.asset": [
+   "Assets/Audio/DLC2_SFX/M6_A4_RACOON_02.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/supernova/fx/sn_projectile_228_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_229.asset": [
+   "Assets/Audio/DLC2_SFX/DarkMatterLaser_04.ogg",
+   "Assets/Prefabs/main/fx/impact_001_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_001_anim_add.prefab",
+   "Assets/Prefabs/supernova/fx/sn_projectile_229_anim_alpha.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_230.asset": [
+   "Assets/Audio/DLC2_SFX/Canon_Massdriver_MD12.ogg",
+   "Assets/Prefabs/main/fx/impact_006_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_008_anim_add.prefab",
+   "Assets/Prefabs/main/fx/projectile_027_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_231.asset": [
+   "Assets/Audio/DLC2_SFX/Blaster_Mimung_2.ogg",
+   "Assets/Prefabs/main/fx/impact_002_lookat_anim_add.prefab",
+   "Assets/Prefabs/main/fx/muzzle_flash_002_anim_add.prefab",
+   "Assets/Prefabs/supernova/fx/sn_projectile_231_anim_add.prefab"
+  ],
+  "Assets/Resources/GoF2Weapons/item_232.asset": [
+   "Assets/Audio/DLC2_SFX/Fireworks.ogg",
+   "Assets/Audio/DLC2_SFX/Launch.ogg",
+   "Assets/Prefabs/supernova/misc/sn_fireworks_rocket.prefab"
   ],
   "Assets/Scenes/MainMenu.unity": [
    "Assets/Audio/GENERIC_deu/de_TERRANFEMALE_MISSION_RADIO_BACK_FOR_REWARD.ogg",

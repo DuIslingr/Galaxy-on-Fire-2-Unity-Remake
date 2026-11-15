@@ -22,7 +22,7 @@ RULES = [
     ("Assets/Resources/Assembled/", DERIVED, "assembled prefabs (meshes + materials per assemblies.json)", "built at run time from assemblies.json"),
     ("Assets/Prefabs/", DERIVED, "per-mesh prefabs of the converted models", "built at run time"),
     ("Assets/Materials/", DERIVED, "materials of the game's resource table (textures + shader kind)", "built at run time"),
-    ("Assets/Resources/GoF2Weapons/item_", DERIVED, "weapon assets pointing at the game's meshes, textures, sounds", "built at run time"),
+    ("Assets/Resources/GoF2Weapons/item_", OWN, "weapon fx tables (from weapon_fx.json) pointing at the game's prefabs and sounds", "ship; references refilled (OriginalRefs)"),
     # ---- originals: converted from the player's copy
     ("Assets/Textures/", ORIGINAL, "textures", "AEI (data/textures, data/assets/*/3d/textures)"),
     ("Assets/Models/", ORIGINAL, "meshes (+ .gof2mesh.json animation sidecars)", "AEM (data/meshes, data/assets/*/3d/meshes)"),
@@ -66,6 +66,9 @@ OWN_EXT = (".cs", ".shader", ".hlsl", ".cginc", ".uss", ".uxml", ".tss", ".shade
 OWN_FILES = {
     # computed layout data (numbers only): ships like the fact tables (the user, 2026-11-15)
     "Assets/Resources/GoF2SkyLayers/layered_skies.json", "Assets/Resources/GoF2SkyLayers/nebula_clouds.json",
+    # seeded noise only (sky_layers.py star_mask / nebula_masks, nebula_clouds.py masks): nothing of the original's
+    "Assets/Resources/GoF2SkyLayers/star_mask.png", "Assets/Resources/GoF2SkyLayers/nebula_masks.png",
+    "Assets/Resources/GoF2SkyLayers/cloud_masks.png",
     # the template materials and ScriptableObjects scenes and code point at (their texture slots filled at run time)
     "Assets/Resources/GoF2Sky/SpaceSky.mat", "Assets/Resources/GoF2Backdrop/SkyLayerAssets.asset",
 }

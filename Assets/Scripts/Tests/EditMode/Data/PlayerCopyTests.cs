@@ -125,6 +125,22 @@ namespace GoF2Remake.Tests
             Assert.IsEmpty(missing, "not made: " + string.Join(", ", missing));
             TestContext.WriteLine($"{paths.Count} materials and prefabs made");
 
+            // a weapon's fx table (the remake's own, shipped without its references): prefabs and sounds from the copy
+            var fx = GoF2Remake.Flight.WeaponFx.Load(0);
+            Assert.IsNotNull(fx, "WeaponFx item_000");
+            Assert.IsNotNull(fx.projectile, "its projectile");
+            Assert.IsNotNull(fx.impact, "its impact");
+            Assert.IsNotNull(fx.Shot, "its shot");
+
+            // the story's portraits: their parts (sprites) and the frame the converter cut
+            var story = OriginalRefs.Load<StoryAssets>("GoF2Story/StoryAssets");
+            Assert.IsNotNull(story);
+            Assert.IsNotNull(story.portraitFrame, "the portrait frame");
+            Assert.IsNotNull(story.portraitBackground, "the portrait background");
+            for (int i = 0; i < story.partNames.Count; i++)
+                Assert.IsNotNull(story.Part(story.partNames[i]).tex, "portrait part " + story.partNames[i]);
+            Assert.AreEqual(1, story.Part(story.partNames[0]).tex.mipmapCount, "a part as a sprite: no mipmaps");
+
             // the backdrop as SpaceSceneBuilder made it
             var sun = GoF2Remake.Visuals.OriginalBackdrop.Get("sun_004");
             Assert.IsNotNull(sun, "sun_004");

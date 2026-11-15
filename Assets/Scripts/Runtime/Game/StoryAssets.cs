@@ -64,7 +64,7 @@ namespace GoF2Remake.Data
         public VisualTreeAsset endingUxml;
 
         Dictionary<string, int> eng, deu;   // a line's name -> its index in voiceClipsEng / Deu
-        Dictionary<string, (Texture2D tex, int height)> parts;
+        Dictionary<string, int> partIndex;
 
         static StoryAssets instance;
         public static StoryAssets Load() => instance != null ? instance : instance = GoF2Remake.Data.OriginalRefs.Load<StoryAssets>("GoF2Story/StoryAssets");
@@ -139,13 +139,15 @@ namespace GoF2Remake.Data
 
         public (Texture2D tex, int height) Part(string key)
         {
-            if (parts == null)
+            if (partIndex == null)
             {
-                parts = new Dictionary<string, (Texture2D, int)>();
-                for (int i = 0; i < partNames.Count && i < partTextures.Count; i++)
-                    parts[partNames[i]] = (partTextures[i], i < partHeights.Count ? partHeights[i] : partTextures[i] != null ? partTextures[i].height : 0);
+                partIndex = new Dictionary<string, int>();
+                for (int i = 0; i < partNames.Count && i < partTextures.Count; i++) partIndex[partNames[i]] = i;
             }
-            return parts.TryGetValue(key, out var t) ? t : (null, 0);
+            if (!partIndex.TryGetValue(key, out int at)) return (null, 0);
+            // (the converted copy's part when the build has none: OriginalRefs fills this long list entry by entry)
+            var tex = GoF2Remake.Data.OriginalRefs.Entry(this, nameof(partTextures), partTextures, at);
+            return (tex, at < partHeights.Count ? partHeights[at] : tex != null ? tex.height : 0);
         }
 
         static Dictionary<string, T> Map<T>(List<string> names, List<T> values)

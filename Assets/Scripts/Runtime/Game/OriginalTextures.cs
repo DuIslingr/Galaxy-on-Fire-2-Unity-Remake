@@ -133,6 +133,23 @@ namespace GoF2Remake.Data
             return t;
         }
 
+        /// <summary>A texture of the converted copy by its project path ("Textures/textures/3_1_0_ipad_large.png") set up as the
+        /// importer sets up a sprite: no mipmaps, clamped, bilinear, uncompressed. Null when the copy hasn't it.</summary>
+        public static Texture2D UiImage(string projectPath)
+        {
+            if (string.IsNullOrEmpty(projectPath)) return null;
+            if (images.TryGetValue(projectPath, out var t)) return t;
+            var path = GameContent.CachePath(projectPath);
+            if (path != null)
+            {
+                t = new Texture2D(2, 2, TextureFormat.RGBA32, false) { name = Path.GetFileNameWithoutExtension(projectPath) };
+                if (t.LoadImage(File.ReadAllBytes(path), true)) { t.wrapMode = TextureWrapMode.Clamp; t.filterMode = FilterMode.Bilinear; }
+                else { Gone(t); t = null; }
+            }
+            if (t != null || GameContent.Installed) images[projectPath] = t;
+            return t;
+        }
+
         static void Gone(UnityEngine.Object o)
         {
             if (Application.isPlaying) UnityEngine.Object.Destroy(o); else UnityEngine.Object.DestroyImmediate(o);
