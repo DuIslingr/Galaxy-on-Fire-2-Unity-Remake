@@ -326,8 +326,23 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
     HD skies (`OriginalSkies.Hd`: the 6:1 strip made a compressed cubemap once, in the GPU cache) and sky patches, SkyStars'
     star lists (GameContent.Bytes). Checked in a Linux build without the originals: the pack written at start, 26 3D
     planets, the HD skies and star lists, no lost shaders, the renders right.
-  - **The common and gap packs** follow once their sounds and models have a format the copy reads (the project's are .ogg
-    and .fbx, the converted copy's .mp3 / .wav and .aem; the remodelled hulls are FBX only).
+  - **The common and gap packs** (2026-11-15): `make_packs.py --project <full project> --edition android=<cache>
+    --edition ios=<cache> --edition macos=<cache>` writes `gof2_common` (order 0), `gof2_gap_<edition>` (order 1) and
+    `gof2_hd` (order 2). Each asset in the converted copy's format: textures and data tables the project's (and the Default
+    Economy overlays `economy_default` / `weapons_hd_default`, which no copy makes); a sound or model another edition's
+    conversion has exactly as the project has it, that edition's converted file (Android's German voices from the Apple
+    copies as .mp3; the Apple editions' meshes from Android as .aem + sidecar); the remake's own remodels (13: the
+    remodelled hangars, the Deep Science ship and hangar, sn_station_113's addition, the Supernova wreck, a Vossk bar bot)
+    as .aem written by `PackModelExporter` (Editor, batch `-executeMethod
+    GoF2Remake.EditorTools.PackModelExporter.ExportListed`, `$GOF2_PACK_MODELS` a list of sidecars, `$GOF2_PACK_OUT`) from
+    Unity's import of the project's FBX (OriginalModels.Map inverted, the parts as the sidecar has them; each file read back
+    with the runtime's AemMesh + BuildMesh and compared with the FBX: all 13 the same to 0 m), with the project's sidecar;
+    the text tables the project's, every language, in the common pack. Sizes: common 51 files, 30 MB; gap Android 2,121,
+    215 MB; iOS 454, 94 MB; macOS 444, 123 MB; HD 759, 2.3 GB. **Checked:** each edition's converted copy with the common
+    pack and its gap pack is the project's everywhere but the "lower" assets (packs.py on the packed copies: required 0,
+    the text exact), and every "lower" asset is in the HD pack; PlayerCopyTests pass on the packed macOS copy.
+  - **packs.py's comparison** no longer counts what the game reads the same: Blender's `.001` suffixes on the FBX-made
+    parents' names, an all-zero bounding sphere / pivot against none, infinities in keyframes (inf - inf is NaN).
   - **Development builds:** `$GOF2_DATA` points `GamePaths.Data` elsewhere (PlayerAssetsCheck with its own Packs folder).
 - **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
   - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is

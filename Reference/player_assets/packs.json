@@ -7,32 +7,28 @@
  "totals": {
   "android": {
    "lower": 369,
-   "differs": 88,
+   "differs": 80,
    "missing": 2047,
-   "exact": 4204
+   "exact": 4212
   },
   "ios": {
    "lower": 399,
-   "differs": 265,
+   "differs": 260,
    "missing": 36,
-   "exact": 6008
+   "exact": 6013
   },
   "macos": {
-   "exact": 6273,
+   "exact": 6278,
    "lower": 145,
    "missing": 50,
-   "differs": 240
+   "differs": 235
   }
  },
  "common_pack": {
   "required": {
-   "count": 30,
+   "count": 21,
    "assets": [
-    "Models/main/bars/bar_vossk.gof2mesh.json",
-    "Models/main/bars/bar_vossk_anim_add.gof2mesh.json",
-    "Models/main/bars/bar_vossk_bot_a_anim_alpha.gof2mesh.json",
     "Models/main/bars/bar_vossk_bot_b_anim_alpha.gof2mesh.json",
-    "Models/main/bars/bar_vossk_bot_c_anim_alpha.gof2mesh.json",
     "Models/main/hangars/hangar_nivelian.gof2mesh.json",
     "Models/main/hangars/hangar_nivelian_add.gof2mesh.json",
     "Models/main/hangars/hangar_nivelian_alt_alpha_add.gof2mesh.json",
@@ -41,11 +37,6 @@
     "Models/main/hangars/hangar_terran_bot_d_anim_add.gof2mesh.json",
     "Models/main/hangars/hangar_vossk.gof2mesh.json",
     "Models/main/hangars/hangar_vossk_anim_add.gof2mesh.json",
-    "Models/main/misc/plane.gof2mesh.json",
-    "Models/meshes/box.gof2mesh.json",
-    "Models/meshes/col_sphere.gof2mesh.json",
-    "Models/supernova/ships/sn_cargo_001_midorian_wrecked.gof2mesh.json",
-    "Models/supernova/ships/sn_ship_047_most_wanted_engine_add.gof2mesh.json",
     "Models/supernova/stations/sn_station_113_midorian_add.gof2mesh.json",
     "Models/valkyrie/hangars/v_hangar_deep_science_anim_add.gof2mesh.json",
     "Models/valkyrie/ships/v_ship_037_deep_science.gof2mesh.json",
@@ -205,7 +196,7 @@
  },
  "gap_packs": {
   "android": {
-   "count": 2105,
+   "count": 2106,
    "assets": [
     "Audio/DLC2_VOICE_deu/DE_BLUEPRINT_RECOVERED_0.ogg",
     "Audio/DLC2_VOICE_deu/DE_BLUEPRINT_RECOVERED_1.ogg",
@@ -2263,6 +2254,7 @@
     "Models/main/hangars/hangar_midorian_x5_shadow_alpha.gof2mesh.json",
     "Models/main/hangars/hangar_midorian_x6.gof2mesh.json",
     "Models/main/hangars/hangar_midorian_x6_shadow_alpha.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_047_most_wanted_engine_add.gof2mesh.json",
     "Models/valkyrie/hangars/v_hangar_battlestation_add.gof2mesh.json",
     "Textures/main/bars/bar_visitor_glow_midorian.png",
     "Textures/main/bars/bar_visitor_glow_nivelian.png",
@@ -2315,8 +2307,12 @@
    ]
   },
   "ios": {
-   "count": 271,
+   "count": 275,
    "assets": [
+    "Models/main/bars/bar_vossk.gof2mesh.json",
+    "Models/main/bars/bar_vossk_anim_add.gof2mesh.json",
+    "Models/main/bars/bar_vossk_bot_a_anim_alpha.gof2mesh.json",
+    "Models/main/bars/bar_vossk_bot_c_anim_alpha.gof2mesh.json",
     "Models/main/hangars/hangar_midorian_add.gof2mesh.json",
     "Models/main/hangars/hangar_midorian_alpha.gof2mesh.json",
     "Models/main/hangars/hangar_nivelian_alpha.gof2mesh.json",
@@ -2591,8 +2587,12 @@
    ]
   },
   "macos": {
-   "count": 260,
+   "count": 264,
    "assets": [
+    "Models/main/bars/bar_vossk.gof2mesh.json",
+    "Models/main/bars/bar_vossk_anim_add.gof2mesh.json",
+    "Models/main/bars/bar_vossk_bot_a_anim_alpha.gof2mesh.json",
+    "Models/main/bars/bar_vossk_bot_c_anim_alpha.gof2mesh.json",
     "Models/main/hangars/hangar_midorian_add.gof2mesh.json",
     "Models/main/hangars/hangar_midorian_alpha.gof2mesh.json",
     "Models/main/hangars/hangar_nivelian_alpha.gof2mesh.json",
@@ -9842,10 +9842,6 @@
    ]
   },
   "Models/main/bars/bar_vossk.gof2mesh.json": {
-   "android": [
-    "differs",
-    "sidecar"
-   ],
    "ios": [
     "differs",
     "sidecar"
@@ -9856,10 +9852,6 @@
    ]
   },
   "Models/main/bars/bar_vossk_anim_add.gof2mesh.json": {
-   "android": [
-    "differs",
-    "sidecar"
-   ],
    "ios": [
     "differs",
     "sidecar"
@@ -9870,10 +9862,6 @@
    ]
   },
   "Models/main/bars/bar_vossk_bot_a_anim_alpha.gof2mesh.json": {
-   "android": [
-    "differs",
-    "sidecar"
-   ],
    "ios": [
     "differs",
     "sidecar"
@@ -9898,10 +9886,6 @@
    ]
   },
   "Models/main/bars/bar_vossk_bot_c_anim_alpha.gof2mesh.json": {
-   "android": [
-    "differs",
-    "sidecar"
-   ],
    "ios": [
     "differs",
     "sidecar"
@@ -10672,20 +10656,6 @@
    ]
   },
   "Models/main/misc/asteroid_void_lod_3.gof2mesh.json": {
-   "ios": [
-    "differs",
-    "sidecar"
-   ],
-   "macos": [
-    "differs",
-    "sidecar"
-   ]
-  },
-  "Models/main/misc/plane.gof2mesh.json": {
-   "android": [
-    "differs",
-    "sidecar"
-   ],
    "ios": [
     "differs",
     "sidecar"
@@ -11545,34 +11515,6 @@
     "sidecar"
    ]
   },
-  "Models/meshes/box.gof2mesh.json": {
-   "android": [
-    "differs",
-    "sidecar"
-   ],
-   "ios": [
-    "differs",
-    "sidecar"
-   ],
-   "macos": [
-    "differs",
-    "sidecar"
-   ]
-  },
-  "Models/meshes/col_sphere.gof2mesh.json": {
-   "android": [
-    "differs",
-    "sidecar"
-   ],
-   "ios": [
-    "differs",
-    "sidecar"
-   ],
-   "macos": [
-    "differs",
-    "sidecar"
-   ]
-  },
   "Models/supernova/misc/sn_asteroid_magma_lod_1.gof2mesh.json": {
    "ios": [
     "differs",
@@ -11634,20 +11576,6 @@
    ]
   },
   "Models/supernova/ships/sn_battleship_vossk_lod_2.gof2mesh.json": {
-   "ios": [
-    "differs",
-    "sidecar"
-   ],
-   "macos": [
-    "differs",
-    "sidecar"
-   ]
-  },
-  "Models/supernova/ships/sn_cargo_001_midorian_wrecked.gof2mesh.json": {
-   "android": [
-    "differs",
-    "sidecar"
-   ],
    "ios": [
     "differs",
     "sidecar"
@@ -11719,14 +11647,6 @@
   },
   "Models/supernova/ships/sn_ship_047_most_wanted_engine_add.gof2mesh.json": {
    "android": [
-    "differs",
-    "sidecar"
-   ],
-   "ios": [
-    "differs",
-    "sidecar"
-   ],
-   "macos": [
     "differs",
     "sidecar"
    ]

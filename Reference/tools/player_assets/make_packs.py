@@ -7,8 +7,14 @@
 #       ones; with each normal map its metallic / smoothness map, which the converter would otherwise make from the
 #       edition's lower one), the Real-ESRGAN skies and their star lists (GoF2SkyHd), the sky patches made from them
 #       (GoF2SkyLayers/patch_*) and the 3D planets (GoF2Planets3D, from the planet_rebuild tools).
-# (The common and gap packs follow once their sounds and models have a format the copy can read: the project's are
-# .ogg and .fbx, the converted copy's .mp3 / .wav and .aem.)
+# common (order 0) and gap_<edition> (order 1): what packs.json says each needs, in the converted copy's formats:
+#       textures and data tables the project's (plus the Default Economy overlays, economy_default / weapons_hd_default,
+#       which no copy makes); a sound or model another edition's conversion has exactly as the project has it, that
+#       edition's converted file (the German voices for Android from the iOS / macOS copies as .mp3, Android's meshes for
+#       the Apple editions as .aem + sidecar: --edition name=<its converted cache>); the remake's own remodels (no edition
+#       has them) the .aem PackModelExporter wrote from the project's FBX (--models) with the project's sidecar; the text
+#       tables the project's, every language, in the common pack (the remake's fixes; an edition's own wording and the
+#       strings it lacks).
 import argparse, datetime, glob, json, os, zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -32,6 +38,33 @@ def hd_files(project, packs):
     return out
 
 
+def needed(project, packs, assets, eds, caches, models):
+    """(pack path, source file) for a pack's assets."""
+    A = os.path.join(project, "Assets")
+    det = packs["details"]
+    out = []
+    for a in assets:
+        exact = [e for e in eds if e not in det.get(a, {}) and e in caches]
+        if a.startswith("Audio/"):
+            stem = a[:-4]
+            src = next(((stem + ext, os.path.join(caches[e], stem + ext)) for e in exact for ext in (".mp3", ".wav")
+                        if os.path.exists(os.path.join(caches[e], stem + ext))), None)
+            if src is None: raise SystemExit(f"{a}: no edition has it as the project has it")
+            out.append(src)
+        elif a.startswith("Models/") and a.endswith(".gof2mesh.json"):
+            stem = a[:-len(".gof2mesh.json")]
+            e = next((e for e in exact if os.path.exists(os.path.join(caches[e], stem + ".aem"))), None)
+            if e is not None:
+                out += [(stem + ".aem", os.path.join(caches[e], stem + ".aem")), (a, os.path.join(caches[e], a))]
+            else:
+                aem = os.path.join(models, stem + ".aem")
+                if not os.path.exists(aem): raise SystemExit(f"{a}: the remake's own model, not exported (PackModelExporter)")
+                out += [(stem + ".aem", aem), (a, os.path.join(A, a))]
+        else:
+            out.append((a, os.path.join(A, a)))
+    return out
+
+
 def write(path, manifest, files):
     tmp = path + ".tmp"
     total = 0
@@ -49,14 +82,34 @@ def main():
     ap.add_argument("--project", required=True)
     ap.add_argument("--out", default=os.path.expanduser("~/GOF2UnityRemakeMods/packs"))
     ap.add_argument("--version", type=int, default=int(datetime.date.today().strftime("%Y%m%d")))
+    ap.add_argument("--edition", action="append", default=[], help="name=its converted cache (for the files it has exactly)")
+    ap.add_argument("--models", default=os.path.expanduser("~/GOF2UnityRemakeMods/packs/stage_models"))
+    ap.add_argument("--only", help="hd, common or gap_<edition>")
     a = ap.parse_args()
+    caches = dict(e.split("=", 1) for e in a.edition)
     packs = json.load(open(os.path.join(ROOT, "Reference", "player_assets", "packs.json")))
     os.makedirs(a.out, exist_ok=True)
-    files = hd_files(a.project, packs)
-    missing = [r for r, s in files if not os.path.exists(s)]
-    if missing: raise SystemExit(f"missing in the project: {missing[:5]}")
-    write(os.path.join(a.out, "gof2_hd.gof2pack"),
-          {"name": "hd", "title": "HD pack", "version": a.version, "order": 2, "edition": ""}, files)
+    eds = packs["editions"]
+    A = os.path.join(a.project, "Assets")
+    plans = []
+    if a.only in (None, "common"):
+        files = needed(a.project, packs, packs["common_pack"]["required"]["assets"], eds, caches, a.models)
+        for t in ("economy_default.json", "weapons_hd_default.json"):
+            files.append((f"Resources/GoF2Data/{t}", os.path.join(A, "Resources", "GoF2Data", t)))
+        for f in sorted(os.listdir(os.path.join(A, "Localization"))):
+            if f.startswith("text_") and f.endswith(".json"): files.append((f"Localization/{f}", os.path.join(A, "Localization", f)))
+        plans.append(("gof2_common.gof2pack", {"name": "common", "title": "Common pack", "order": 0, "edition": ""}, files))
+    for e in eds:
+        if a.only in (None, "gap_" + e):
+            files = needed(a.project, packs, packs["gap_packs"][e]["assets"], eds, caches, a.models)
+            plans.append((f"gof2_gap_{e}.gof2pack", {"name": "gap_" + e, "title": f"{e} gap pack", "order": 1, "edition": e}, files))
+    if a.only in (None, "hd"):
+        plans.append(("gof2_hd.gof2pack", {"name": "hd", "title": "HD pack", "order": 2, "edition": ""}, hd_files(a.project, packs)))
+    for name, manifest, files in plans:
+        missing = [r for r, s in files if not os.path.exists(s)]
+        if missing: raise SystemExit(f"{name}: missing {missing[:5]}")
+        manifest["version"] = a.version
+        write(os.path.join(a.out, name), manifest, sorted(set(files)))
 
 
 if __name__ == "__main__":

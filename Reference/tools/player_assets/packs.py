@@ -52,16 +52,28 @@ def same_json(a, b):
     import math
     if isinstance(a, float) or isinstance(b, float):
         if a is None or b is None: return a is None and b is None
+        if a == b: return True   # (infinities too: inf - inf is nan)
         return (math.isnan(a) and math.isnan(b)) or abs(a - b) <= 1e-6 * max(1.0, abs(a))
     if isinstance(a, dict): return isinstance(b, dict) and a.keys() == b.keys() and all(same_json(a[k], b[k]) for k in a)
     if isinstance(a, list): return isinstance(b, list) and len(a) == len(b) and all(same_json(x, y) for x, y in zip(a, b))
     return a == b
 
 
+def norm_sidecar(m):
+    """What the game reads the same either way: Blender's '.001' suffixes on the FBX-made parents' names (the converter's
+    are the file's own), and an all-zero bounding sphere / pivot written as None by the converter."""
+    import re
+    m.pop("source", None)
+    for p in m.get("parts", []):
+        if isinstance(p.get("parent"), str): p["parent"] = re.sub(r"\.\d{3}$", "", p["parent"])
+        for k in ("bsphere", "pivot"):
+            if isinstance(p.get(k), list) and not any(p[k]): p[k] = None
+    return m
+
+
 def cmp_mesh(project_sidecar, cache_sidecar):
     if not os.path.exists(cache_sidecar): return "missing", None
-    a, b = json.load(open(project_sidecar)), json.load(open(cache_sidecar))
-    a.pop("source", None); b.pop("source", None)
+    a, b = norm_sidecar(json.load(open(project_sidecar))), norm_sidecar(json.load(open(cache_sidecar)))
     return ("exact", None) if same_json(a, b) else ("differs", "sidecar")
 
 
