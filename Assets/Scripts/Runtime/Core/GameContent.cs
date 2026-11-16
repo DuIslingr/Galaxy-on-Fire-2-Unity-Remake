@@ -22,17 +22,15 @@ namespace GoF2Remake.Data
         static string root;
 
         /// <summary>The Editor and development builds: $GOF2_ORIGINAL_CACHE names a converted copy to run from (the test bed's
-        /// Play mode and its play-mode tests, whose sandboxed data folder has none).</summary>
+        /// Play mode and its play-mode tests, whose sandboxed data folder has none; PlayerAssetsCheck in a build). A runtime
+        /// check: Unity 7 no longer defines DEVELOPMENT_BUILD for scripts.</summary>
         static string DevCache
         {
             get
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (!Application.isEditor && !Debug.isDebugBuild) return null;
                 string d = System.Environment.GetEnvironmentVariable("GOF2_ORIGINAL_CACHE");
                 return string.IsNullOrEmpty(d) ? null : d;
-#else
-                return null;
-#endif
             }
         }
         static bool? installed;

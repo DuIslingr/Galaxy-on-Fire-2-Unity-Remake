@@ -269,6 +269,23 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
     (planet_rebuild, 2026-11-10), so the game can't make them: set aside to be distributed separately (the user's rule for
     what the player's copy doesn't provide). Without them `RebuiltPlanets.Has` is false and the planets are the flat
     images (OriginalBackdrop), as with the option off.
+- **Builds without the originals** (2026-11-15): a checkout without the original and derived assets (the test bed's
+  sparse checkout) is exactly what such a build ships; building from it needs only:
+  - **The runtime materials' shader variants:** a player build keeps the variants some material in it uses, and no
+    material of the build uses URP/Lit with a normal map, transparent with emission, GoF2/Hull's bicubic variant...
+    `Resources/GoF2Content/ShaderTemplates` holds one template material per shader and keyword set the content layer
+    makes (`OriginalContent.EveryMaterial`: the resource table's, the backdrop's, the sky layers', the galaxy map's sun,
+    the skies' plain GoF2/Unlit / Additive and Skybox/Cubemap; 14 from the Android copy), each texture slot that had an
+    image given a 4 x 4 placeholder of its own (URP's material check drops `_NORMALMAP` / `_METALLICSPECGLOSSMAP` from a
+    material saved without the texture). **GoF2 > Build > Runtime Shader Templates** (`RuntimeShaderTemplates`, needs a
+    converted copy; batch: `-executeMethod GoF2Remake.EditorTools.RuntimeShaderTemplates.BuildAndQuit` with
+    `$GOF2_ORIGINAL_CACHE`) writes them; `PlayerCopyTests.EveryRuntimeMaterialHasItsShaderTemplate` fails when the content
+    layer makes a variant without one.
+  - **A build to check:** `PlayerAssetsBuild.LinuxDevelopment` (batch: `-buildTarget Linux64 -executeMethod
+    GoF2Remake.EditorTools.PlayerAssetsBuild.LinuxDevelopment`, `$GOF2_BUILD_OUT`) makes a Linux development build of the
+    checkout; run as `gamescope --backend headless -- GoF2Remake.x86_64 -gof2check <folder>` (a desktop session would show its window) with `$GOF2_ORIGINAL_CACHE`, `PlayerAssetsCheck`
+    (development builds only: `Debug.isDebugBuild`, Unity 7 defines no DEVELOPMENT_BUILD for scripts; so does `$GOF2_ORIGINAL_CACHE`) waits for the menu, flies three orbits and docks a station, renders each view into
+    `<folder>/<name>.png`, counts the renderers whose material lost its shader and writes `<folder>/report.txt`.
 - **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
   - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is
     `# gof2 original cache v<N>`. `GameContent.Installed` only for this version's stamp; `GameContent.Stale` for a

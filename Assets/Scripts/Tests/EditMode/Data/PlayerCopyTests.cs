@@ -157,6 +157,19 @@ namespace GoF2Remake.Tests
             Assert.Greater(GoF2Remake.Visuals.OriginalBackdrop.TextureNames().Count, 60, "the Mod Builder's list of planets and suns");
         }
 
+        [Test]
+        public void EveryRuntimeMaterialHasItsShaderTemplate()
+        {
+            // a build without the originals keeps only the variants some material in it uses (RuntimeShaderTemplates)
+            var templates = Resources.LoadAll<Material>(GoF2Remake.Visuals.OriginalContent.TemplateFolder)
+                                     .Select(GoF2Remake.Visuals.OriginalContent.VariantKey).ToHashSet();
+            Assert.IsNotEmpty(templates, "the templates (GoF2 > Build > Runtime Shader Templates)");
+            var missing = GoF2Remake.Visuals.OriginalContent.EveryMaterial().Select(GoF2Remake.Visuals.OriginalContent.VariantKey)
+                                    .Where(k => k != null && !templates.Contains(k)).Distinct().ToList();
+            Assert.IsEmpty(missing, "no template (run GoF2 > Build > Runtime Shader Templates): " + string.Join("; ", missing));
+            TestContext.WriteLine($"{templates.Count} templates");
+        }
+
         static void Forget(Type t) =>
             t.GetMethod("ResetStatics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, null);
 
