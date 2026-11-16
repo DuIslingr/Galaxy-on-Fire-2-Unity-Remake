@@ -8,6 +8,8 @@
 // scene had such renderers or didn't load). Development builds and the Editor only (Debug.isDebugBuild: Unity 7 defines no
 // DEVELOPMENT_BUILD for scripts); nothing without the argument. A desktop session would show the player's window: run it
 // in a headless compositor (gamescope --backend headless -- ./GoF2Remake.x86_64 -gof2check <folder>).
+// -gof2fps <seconds> adds a frame-rate sample of each view (uncapped, no vsync; its average, median and 1 % low fps) at the
+// window's size (-screen-width / -screen-height / -screen-fullscreen 1 with gamescope's -W / -H).
 
 using System;
 using System.Collections;
@@ -26,6 +28,7 @@ namespace GoF2Remake
         string folder;
         readonly StringBuilder report = new StringBuilder();
         int bad;
+        float fpsSeconds;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Begin()
@@ -37,6 +40,8 @@ namespace GoF2Remake
             DontDestroyOnLoad(go);
             var c = go.AddComponent<PlayerAssetsCheck>();
             c.folder = Path.GetFullPath(args[i + 1]);
+            int f = Array.IndexOf(args, "-gof2fps");
+            if (f >= 0 && f + 1 < args.Length) float.TryParse(args[f + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out c.fpsSeconds);
             Directory.CreateDirectory(c.folder);
             c.StartCoroutine(c.Run());
         }
@@ -74,6 +79,7 @@ namespace GoF2Remake
                  $"title logo {(title != null ? title.width + "x" + title.height : "not loaded")}; still placeholders without a source: {still.Count} {string.Join(" ", still.Take(8))}");
             Shot("menu");
             Line("  content: " + ContentTimings.Report(reset: true));
+            yield return Fps("menu");
             yield return PanelShot("menu_ui");
             Settings.OriginalUi = true;   // (the Original interface style: its pieces are UiImageSlots' placeholders)
             yield return new WaitForSecondsRealtime(2f);
@@ -104,6 +110,7 @@ namespace GoF2Remake
                 yield return new WaitForSecondsRealtime(6f);
                 Shot($"orbit_{station:000}");
                 Line("  content: " + ContentTimings.Report(reset: true));
+                yield return Fps($"orbit_{station:000}");
             }
             Session.ResetNewGame();
             Session.FreePlay = true;
@@ -114,6 +121,7 @@ namespace GoF2Remake
             yield return new WaitForSecondsRealtime(6f);
             Shot("station");
             Line("  content: " + ContentTimings.Report(reset: true));
+            yield return Fps("station");
             Line(bad == 0 ? "OK" : $"FAILED: {bad} problem(s)");
             File.WriteAllText(Path.Combine(folder, "report.txt"), report.ToString());
             Application.Quit(bad == 0 ? 0 : 1);
@@ -139,6 +147,30 @@ namespace GoF2Remake
             settings.targetTexture = before;
             File.WriteAllBytes(Path.Combine(folder, name + ".png"), t.EncodeToPNG());
             Destroy(t); rt.Release(); Destroy(rt);
+        }
+
+        /// <summary>-gof2fps: the frame rate over fpsSeconds of the view as it is (after a second to settle), uncapped.</summary>
+        IEnumerator Fps(string name)
+        {
+            if (fpsSeconds <= 0f) yield break;
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = -1;
+            yield return new WaitForSecondsRealtime(1f);
+            var ms = new System.Collections.Generic.List<double>(4096);
+            double start = Time.realtimeSinceStartupAsDouble, last = start;
+            while (last - start < fpsSeconds)
+            {
+                yield return null;
+                double now = Time.realtimeSinceStartupAsDouble;
+                ms.Add((now - last) * 1000.0);
+                last = now;
+            }
+            ms.Sort();
+            double median = ms[ms.Count / 2], p99 = ms[Math.Min(ms.Count - 1, (int)(ms.Count * 0.99))];
+            Line($"  fps {name}: {Screen.width}x{Screen.height}, {ms.Count / (last - start):0} average, {1000.0 / median:0} median, " +
+                 $"{1000.0 / p99:0} 1% low ({ms.Count} frames, worst {ms[ms.Count - 1]:0.0} ms); {SystemInfo.graphicsDeviceType}, " +
+                 $"quality {QualitySettings.names[QualitySettings.GetQualityLevel()]}, MSAA {QualitySettings.antiAliasing}");
+            Bootstrap.ApplyFrameRate();
         }
 
         IEnumerator Wait(Func<bool> done, float seconds, string what)

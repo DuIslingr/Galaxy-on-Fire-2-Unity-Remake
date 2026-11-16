@@ -294,7 +294,7 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
     GoF2Remake.EditorTools.PlayerAssetsBuild.LinuxDevelopment`, `$GOF2_BUILD_OUT`) makes a Linux development build of the
     checkout; run as `gamescope --backend headless -- GoF2Remake.x86_64 -gof2check <folder>` (a desktop session would show its window) with `$GOF2_ORIGINAL_CACHE`, `PlayerAssetsCheck`
     (development builds only: `Debug.isDebugBuild`, Unity 7 defines no DEVELOPMENT_BUILD for scripts; so does `$GOF2_ORIGINAL_CACHE`) waits for the menu, flies three orbits and docks a station, renders each view into
-    `<folder>/<name>.png`, counts the renderers whose material lost its shader and writes `<folder>/report.txt`.
+    `<folder>/<name>.png`, counts the renderers whose material lost its shader and writes `<folder>/report.txt`. `-gof2fps <seconds>` adds a frame-rate sample of each view (uncapped; average, median, 1 % low) at the window's size: e.g. `gamescope --backend headless -W 3840 -H 2160 -r 500 -- ./GoF2Remake.x86_64 -force-vulkan -screen-fullscreen 1 -screen-width 3840 -screen-height 2160 -gof2check <folder> -gof2fps 15` (headless gamescope hosts Vulkan; without `-force-vulkan` the player took OpenGL there). 2026-11-16, HD on, RX 7900 XTX: 1440p 1170–1430 fps average, 4K 640–940.
 - **The macOS copy** (2026-11-15, the user's "Galaxy on Fire 2 Full HD.zip", the Mac App Store app zipped): converted
   in-game like the others (`X.app/Contents/Resources/` is its data root: `DataPath` strips it, so its `.bin` tables are read).
   - **DXT textures:** its `data/assets/<pack>/3d/textures/high/dx5` (and a smaller `low/dx5` set the converter skips) are
