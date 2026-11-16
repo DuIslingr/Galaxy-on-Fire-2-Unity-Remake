@@ -361,6 +361,19 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   to the project's; the project's FISHLABS logo is a larger version (1561 x 1741) than the atlas' 266 x 303 the cut gives.
   `logo_gof2_remake.png` (the title logo, also the HUD's) stays the remake's own for now: #67's redraw of the game's logo
   with "REMAKE" under it (the user's call).
+- **Stylesheet images** (2026-11-15): 58 images the USS name by path (`url("project://database/...")`) are the
+  original's or cut from it: the Original interface style's pieces (`UI/Original/og_*`), the flight HUD's crosshairs
+  (`UI/Flight/Images/crosshair*`: cut from gof2_interface_iphone4, now classified derived), the plasma gun's
+  (`GoF2Hud/plasma_crosshair*`), the campaign cards. Code can't swap them (their states, :hover / :focus / the `_on`
+  images, live in the stylesheets), so `stripped_checkout.py` keeps each one's .meta (GUID) and writes a 4 x 4
+  transparent placeholder of its own at its path (skip-worktree, `sparse.expectFilesOutsideOfPatterns`, so git never
+  sees it as a change), and `UiImageSlots` (App) loads the real pixels into each placeholder texture after every scene
+  load (LoadImage into the asset texture: every state then draws it): exact atlas rectangles of the converted copy
+  (found by matching the project's images against the Android copy's atlases: og_check / _on, og_footer, og_header,
+  og_panel_bg, og_title_plate and the crosshairs, all 0 / 255 off), the converter's GoF2Hud images, the cards
+  (`MenuImage`), and the common pack's `Resources/GoF2UiSlots/<name>.png` for the 44 og_* the remake processed (3-slices
+  put together, the amber `_on` states recoloured). `PlayerAssetsBuild` re-imports every stylesheet first: imported
+  while the images were missing, they kept no reference. Checked in the Linux build: og_button filled at 304 x 70.
 - **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
   - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is
     `# gof2 original cache v<N>`. `GameContent.Installed` only for this version's stamp; `GameContent.Stale` for a

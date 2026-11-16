@@ -14,7 +14,8 @@
 #       the Apple editions as .aem + sidecar: --edition name=<its converted cache>); the remake's own remodels (no edition
 #       has them) the .aem PackModelExporter wrote from the project's FBX (--models) with the project's sidecar; the text
 #       tables the project's, every language, in the common pack (the remake's fixes; an edition's own wording and the
-#       strings it lacks).
+#       strings it lacks); the Original interface style's processed pieces the stylesheets name (UiImageSlots.FromPack)
+#       as Resources/GoF2UiSlots/<name>.png.
 import argparse, datetime, glob, json, os, zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -96,6 +97,14 @@ def main():
         files = needed(a.project, packs, packs["common_pack"]["required"]["assets"], eds, caches, a.models)
         for t in ("economy_default.json", "weapons_hd_default.json"):
             files.append((f"Resources/GoF2Data/{t}", os.path.join(A, "Resources", "GoF2Data", t)))
+        # the stylesheets' images the copy can't give exactly (the Original style's processed pieces: UiImageSlots.FromPack)
+        cs = open(os.path.join(ROOT, "Assets", "Scripts", "Runtime", "App", "UI", "UiImageSlots.cs"), encoding="utf-8").read()
+        block = cs[cs.index("FromPack ="):]
+        block = block[block.index("{") + 1:block.index("};")]
+        import re as _re
+        for name in _re.findall(r'"([^"]+)"', block):
+            src = os.path.join(A, "UI", "Original", name + ".png")
+            files.append((f"Resources/GoF2UiSlots/{name}.png", src))
         for f in sorted(os.listdir(os.path.join(A, "Localization"))):
             if f.startswith("text_") and f.endswith(".json"): files.append((f"Localization/{f}", os.path.join(A, "Localization", f)))
         plans.append(("gof2_common.gof2pack", {"name": "common", "title": "Common pack", "order": 0, "edition": ""}, files))

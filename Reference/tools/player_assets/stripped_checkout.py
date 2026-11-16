@@ -8,7 +8,7 @@
 #   python3 Reference/tools/player_assets/stripped_checkout.py apply [<dir>]       an existing checkout's rules rewritten
 # Run from a checkout of the repository. Never `git lfs pull` in such a checkout without --include: git-lfs writes every
 # LFS file, the left-out ones too (apply removes them again).
-import collections, os, subprocess, sys
+import collections, os, re, struct, subprocess, sys, zlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import inventory
@@ -16,14 +16,30 @@ import inventory
 KEEP = ("own",)
 
 
-def left_out(files):
+def slots(files, root="."):
+    """Left-out images a stylesheet / layout names by path (url("project://database/...")): their .meta stays and a 4 x 4
+    placeholder of the remake's own takes the image's place, so the reference holds; the game fills it from the player's
+    copy (UiImageSlots)."""
+    found = set()
+    for f in files:
+        if not f.endswith((".uss", ".uxml", ".tss")): continue
+        path = os.path.join(root, f)
+        if not os.path.exists(path): continue
+        for m in re.finditer(r'url\("project://database/([^"?#]+)', open(path, encoding="utf-8", errors="replace").read()):
+            p = m.group(1).replace("%20", " ")
+            if p in files and inventory.classify(p)[0] not in KEEP: found.add(p)
+    return found
+
+
+def left_out(files, root="."):
     """The tracked files to leave out (assets and their .meta) and the folders left out whole."""
     out = set()
     assets = [f for f in files if not f.endswith(".meta")]
     for f in assets:
         if inventory.classify(f)[0] not in KEEP: out.add(f)
+    keep_meta = {p + ".meta" for p in slots(files, root)}
     for f in files:
-        if f.endswith(".meta") and f[:-5] in out: out.add(f)
+        if f.endswith(".meta") and f[:-5] in out and f not in keep_meta: out.add(f)
     # folders whose every tracked file is left out go as a whole (with their own .meta)
     under = collections.defaultdict(list)
     for f in files:
@@ -40,8 +56,8 @@ def left_out(files):
     return out, top
 
 
-def patterns(files):
-    out, top = left_out(files)
+def patterns(files, root="."):
+    out, top = left_out(files, root)
     esc = lambda p: p.replace(" ", "\\ ")   # (gitignore rules: spaces escaped)
     lines = ["/*"]
     lines += [f"!/{esc(d)}/" for d in sorted(top)]
@@ -53,8 +69,15 @@ def git(*args, cwd=None, env=None):
     return subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True, text=True).stdout
 
 
+def placeholder_png():
+    """A 4 x 4 transparent PNG."""
+    raw = b"".join(b"\x00" + b"\x00" * 16 for _ in range(4))
+    chunk = lambda t, d: struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 4, 4, 8, 6, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+
+
 def lfs_pull_kept(cwd, files):
-    out, top = left_out(files)
+    out, top = left_out(files, cwd)
     lfs = [p for p in git("lfs", "ls-files", "-n", cwd=cwd).split("\n") if p]
     kept = [p for p in lfs if p not in out and not any(p.startswith(d + "/") for d in top)]
     for i in range(0, len(kept), 200):
@@ -66,15 +89,22 @@ def lfs_pull_kept(cwd, files):
 
 def apply(cwd):
     files = [f for f in git("ls-files", "Assets", cwd=cwd).split("\n") if f]
-    rules = patterns(files)
+    rules = patterns(files, cwd)
     path = git("rev-parse", "--git-path", "info/sparse-checkout", cwd=cwd).strip()
     path = path if os.path.isabs(path) else os.path.join(cwd, path)
     git("config", "core.sparseCheckout", "true", cwd=cwd)
     git("config", "core.sparseCheckoutCone", "false", cwd=cwd)
+    # (the placeholders sit at left-out paths: without this git clears their skip-worktree bit and calls them changed,
+    # one `git add -A` from committing a placeholder over the real image)
+    git("config", "--worktree", "sparse.expectFilesOutsideOfPatterns", "true", cwd=cwd)
     open(path, "w").write("\n".join(rules) + "\n")
     git("sparse-checkout", "reapply", cwd=cwd, env={**os.environ, "GIT_LFS_SKIP_SMUDGE": "1"})
     n = lfs_pull_kept(cwd, files)
-    print(f"{cwd}: {len(rules) - 1} rules, {n} LFS files kept")
+    placeholders = slots(files, cwd)
+    for p in placeholders:
+        open(os.path.join(cwd, p), "wb").write(placeholder_png())
+    if placeholders: git("update-index", "--skip-worktree", *sorted(placeholders), cwd=cwd)   # (left out, as git should see them)
+    print(f"{cwd}: {len(rules) - 1} rules, {n} LFS files kept, {len(placeholders)} stylesheet images as placeholders")
 
 
 def main():
@@ -92,7 +122,7 @@ def main():
         path = git("rev-parse", "--git-path", "info/sparse-checkout", cwd=d).strip()
         path = path if os.path.isabs(path) else os.path.join(d, path)
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        open(path, "w").write("\n".join(patterns(files)) + "\n")
+        open(path, "w").write("\n".join(patterns(files, d)) + "\n")
         subprocess.run(["git", "checkout", "--detach", rev], cwd=d, check=True, env=env)
         apply(d)
     elif cmd == "apply":

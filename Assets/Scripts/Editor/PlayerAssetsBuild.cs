@@ -28,6 +28,10 @@ namespace GoF2Remake.EditorTools
                 target = BuildTarget.StandaloneLinux64,
                 options = BuildOptions.Development,
             };
+            // The stylesheets again: imported while their images were left out (stripped_checkout's placeholders came after),
+            // they kept no reference, and UiImageSlots had no texture to fill.
+            foreach (var guid in AssetDatabase.FindAssets("t:StyleSheet", new[] { "Assets" }).Concat(AssetDatabase.FindAssets("t:ThemeStyleSheet", new[] { "Assets" })))
+                AssetDatabase.ImportAsset(AssetDatabase.GUIDToAssetPath(guid), ImportAssetOptions.ForceUpdate);
             // (BuildVersionStamp puts the version back after the build in a delayCall, which an exit right after never runs)
             string version = PlayerSettings.bundleVersion;
             var report = BuildPipeline.BuildPlayer(options);

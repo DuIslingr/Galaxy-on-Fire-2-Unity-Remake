@@ -187,7 +187,7 @@ namespace GoF2Remake.Data
                 if (!src.LoadImage(File.ReadAllBytes(file), false) || x + w > src.width || y + h > src.height) return null;
                 t = new Texture2D(w, h, TextureFormat.RGBA32, false) { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
                 t.SetPixels(src.GetPixels(x, src.height - y - h, w, h));
-                t.Apply(false, true);
+                t.Apply(false, false);   // (readable: UiImageSlots encodes it)
                 return crops[key] = t;
             }
             finally { Gone(src); }

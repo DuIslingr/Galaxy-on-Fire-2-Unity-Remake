@@ -4,10 +4,10 @@
    "files": 8884
   },
   "derived": {
-   "files": 2180
+   "files": 2182
   },
   "own": {
-   "files": 1546
+   "files": 1544
   }
  },
  "folders": {
@@ -282,6 +282,13 @@
    "what": "the game's logo (#67's redraw of the atlas' cut)",
    "source": "cut from gof2_logos_1440 at run time",
    "files": 1,
+   "bytes_here": 0
+  },
+  "Assets/UI/Flight/Images/crosshair": {
+   "kind": "derived",
+   "what": "the HUD's crosshairs",
+   "source": "cut from gof2_interface_iphone4 at run time (UiImageSlots)",
+   "files": 2,
    "bytes_here": 0
   }
  },
