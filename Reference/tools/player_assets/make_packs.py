@@ -6,7 +6,8 @@
 # hd    the HD pack (order 2): the HD textures (every edition's optional list from packs.json and the common optional
 #       ones; with each normal map its metallic / smoothness map, which the converter would otherwise make from the
 #       edition's lower one), the Real-ESRGAN skies and their star lists (GoF2SkyHd), the sky patches made from them
-#       (GoF2SkyLayers/patch_*) and the 3D planets (GoF2Planets3D, from the planet_rebuild tools).
+#       (GoF2SkyLayers/patch_*), the 3D planets (GoF2Planets3D, from the planet_rebuild tools) and the large FISHLABS logo
+#       (Resources/GoF2UiSlots: without the pack, the atlas' own cut from the copy).
 # common (order 0) and gap_<edition> (order 1): what packs.json says each needs, in the converted copy's formats:
 #       textures and data tables the project's (plus the Default Economy overlays, economy_default / weapons_hd_default,
 #       which no copy makes); a sound or model another edition's conversion has exactly as the project has it, that
@@ -32,6 +33,8 @@ def hd_files(project, packs):
             m = t.replace("_normal_specular.png", "_metallic_smoothness.png")
             if os.path.exists(os.path.join(A, m)): files.add(m)
     out = [(t, os.path.join(A, t)) for t in sorted(files)]
+    # the large FISHLABS logo (the copy's is the atlas' 266 x 303), for the splash (UiImageSlots)
+    out += [("Resources/GoF2UiSlots/logo_fishlabs.png", os.path.join(A, "UI", "MainMenu", "Images", "logo_fishlabs.png"))]
     for pattern in ("Resources/GoF2SkyHd/*.png", "Resources/GoF2SkyHd/*.bytes", "Resources/GoF2SkyLayers/patch_*.png",
                     "Resources/GoF2Planets3D/*/*.png", "Resources/GoF2Planets3D/*/*.json"):
         for f in sorted(glob.glob(os.path.join(A, pattern))):

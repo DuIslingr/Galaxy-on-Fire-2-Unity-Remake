@@ -52,7 +52,9 @@ namespace GoF2Remake
             int filled = UI.UiImageSlots.Fill();
             var button = Resources.FindObjectsOfTypeAll<Texture2D>().FirstOrDefault(t => t.name == "og_button");
             var still = Resources.FindObjectsOfTypeAll<Texture2D>().Where(t => t.width <= 4 && t.height <= 4 && UI.UiImageSlots.ImageOf(t.name) == null && (t.name.StartsWith("og_") || t.name.StartsWith("card_") || t.name.Contains("crosshair"))).Select(t => t.name).ToList();
-            Line($"stylesheet images (UiImageSlots): {filled} placeholders filled now; og_button {(button != null ? button.width + "x" + button.height : "not loaded")}; still placeholders without a source: {still.Count} {string.Join(" ", still.Take(8))}");
+            var title = Resources.FindObjectsOfTypeAll<Texture2D>().FirstOrDefault(t => t.name == "logo_gof2_remake");
+            Line($"stylesheet images (UiImageSlots): {filled} placeholders filled now; og_button {(button != null ? button.width + "x" + button.height : "not loaded")}; " +
+                 $"title logo {(title != null ? title.width + "x" + title.height : "not loaded")}; still placeholders without a source: {still.Count} {string.Join(" ", still.Take(8))}");
             Shot("menu");
             yield return PanelShot("menu_ui");
             Settings.OriginalUi = true;   // (the Original interface style: its pieces are UiImageSlots' placeholders)
@@ -141,8 +143,9 @@ namespace GoF2Remake
                 Destroy(rt);
             }
             if (broken.Count > 0) bad++;
+            var cross = Resources.FindObjectsOfTypeAll<Texture2D>().FirstOrDefault(t => t.name == "crosshair");
             Line($"{name}: scene {SceneManager.GetActiveScene().name}, {renderers.Length} renderers, {broken.Count} with a lost shader" +
-                 (broken.Count > 0 ? " (" + string.Join(", ", broken.Take(12)) + ")" : "") + $", {empty} without a material, camera {(cam != null ? "yes" : "none")}");
+                 (broken.Count > 0 ? " (" + string.Join(", ", broken.Take(12)) + ")" : "") + $", {empty} without a material, camera {(cam != null ? "yes" : "none")}" + (cross != null ? $", crosshair {cross.width}x{cross.height}" : ""));
         }
 
         void Line(string s)

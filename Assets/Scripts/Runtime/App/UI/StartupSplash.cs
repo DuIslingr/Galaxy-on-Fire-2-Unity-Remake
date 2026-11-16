@@ -167,7 +167,7 @@ namespace GoF2Remake.UI
                 for (int i = 0; i < logos.Length; i++)
                 {
                     // (the FISHLABS logo, an original's image: a build without the originals cuts it from the player's copy)
-                    var tex = logos[i] != null ? logos[i] : i == 0 ? GoF2Remake.Data.OriginalTextures.MenuImage("logo_fishlabs") : null;
+                    var tex = logos[i] != null ? logos[i] : i == 0 ? CopysFishlabsLogo() : null;
                     if (tex != null) yield return Show(tex);
                 }
             }
@@ -175,6 +175,15 @@ namespace GoF2Remake.UI
             while (!menuLoad.isDone) yield return null;
             yield return null;   // the menu's first frame under the black panel
             Destroy(gameObject);
+        }
+
+        /// <summary>The FISHLABS logo of a build without the originals: the HD pack's large one, else the copy's atlas cut.</summary>
+        static Texture2D CopysFishlabsLogo()
+        {
+            var png = UiImageSlots.ImageOf("logo_fishlabs");
+            if (png == null) return null;
+            var t = new Texture2D(2, 2, TextureFormat.RGBA32, false) { name = "logo_fishlabs" };
+            return t.LoadImage(png, true) ? t : null;
         }
 
         void Update()

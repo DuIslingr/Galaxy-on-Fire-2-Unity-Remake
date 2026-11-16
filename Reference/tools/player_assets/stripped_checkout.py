@@ -88,6 +88,11 @@ def lfs_pull_kept(cwd, files):
 
 
 def apply(cwd):
+    # (.meta files an earlier run switched to a texture import: back as committed, before the rules are worked out again)
+    edited = [l[2:] for l in git("ls-files", "-v", "Assets", cwd=cwd).split("\n") if l.startswith("h ") and l.endswith(".meta")]
+    if edited:
+        git("update-index", "--no-assume-unchanged", *edited, cwd=cwd)
+        git("checkout", "--", *edited, cwd=cwd)
     files = [f for f in git("ls-files", "Assets", cwd=cwd).split("\n") if f]
     rules = patterns(files, cwd)
     path = git("rev-parse", "--git-path", "info/sparse-checkout", cwd=cwd).strip()
@@ -99,11 +104,28 @@ def apply(cwd):
     git("config", "--worktree", "sparse.expectFilesOutsideOfPatterns", "true", cwd=cwd)
     open(path, "w").write("\n".join(rules) + "\n")
     git("sparse-checkout", "reapply", cwd=cwd, env={**os.environ, "GIT_LFS_SKIP_SMUDGE": "1"})
+    # (a former placeholder whose file is kept now: the committed file back, its LFS content fetched below)
+    stale = [f for f in git("diff", "--name-only", cwd=cwd).split("\n")
+             if f and os.path.exists(os.path.join(cwd, f)) and open(os.path.join(cwd, f), "rb").read() == placeholder_png()]
+    if stale: subprocess.run(["git", "checkout", "--", *stale], cwd=cwd, check=True, env={**os.environ, "GIT_LFS_SKIP_SMUDGE": "1"})
     n = lfs_pull_kept(cwd, files)
     placeholders = slots(files, cwd)
     for p in placeholders:
         open(os.path.join(cwd, p), "wb").write(placeholder_png())
     if placeholders: git("update-index", "--skip-worktree", *sorted(placeholders), cwd=cwd)   # (left out, as git should see them)
+    # A placeholder imported as a sprite keeps its 4 x 4 rectangle whatever its texture becomes (the title logo, the
+    # crosshairs showed nothing): imported as a plain texture here, its GUID kept, git told to look away.
+    resprited = []
+    for p in sorted(placeholders):
+        meta = os.path.join(cwd, p + ".meta")
+        if not os.path.exists(meta): continue
+        text = open(meta, encoding="utf-8").read()
+        new = re.sub(r"^(\s*)textureType: 8$", r"\1textureType: 0", text, flags=re.M)
+        new = re.sub(r"^(\s*)spriteMode: [12]$", r"\1spriteMode: 0", new, flags=re.M)
+        if new != text:
+            open(meta, "w", encoding="utf-8").write(new)
+            resprited.append(p + ".meta")
+    if resprited: git("update-index", "--assume-unchanged", *resprited, cwd=cwd)
     print(f"{cwd}: {len(rules) - 1} rules, {n} LFS files kept, {len(placeholders)} stylesheet images as placeholders")
 
 

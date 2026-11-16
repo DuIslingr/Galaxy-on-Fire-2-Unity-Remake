@@ -6,7 +6,8 @@
 // each placeholder texture with the real image once the player's copy is converted (after every scene load: Unity may
 // unload and reload the assets), so every state the stylesheets give (hover, focus, pressed) draws it:
 //   an exact rectangle of an atlas of the converted copy (found by matching the project's images: Crops), the HUD images
-//   the converter cut (GoF2Hud), else the common pack's copy of the remake's processed pieces (Resources/GoF2UiSlots).
+//   the converter cut (GoF2Hud), the menu's cuts (MenuImage), and a pack's copy before all of them (Resources/GoF2UiSlots:
+//   the common pack's processed pieces; the HD pack's large FISHLABS logo).
 
 using System.Collections.Generic;
 using System.IO;
@@ -87,15 +88,37 @@ namespace GoF2Remake.UI
         static bool hooked;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => hooked = false;
+        static void ResetStatics() { hooked = false; filtered.Clear(); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Hook()
         {
             if (hooked) return;
             hooked = true;
-            SceneManager.sceneLoaded += (_, __) => Fill();
+            SceneManager.sceneLoaded += (_, __) => { KeepOutOfAtlas(); Fill(); };
         }
+
+        static readonly HashSet<UnityEngine.UIElements.PanelSettings> filtered = new HashSet<UnityEngine.UIElements.PanelSettings>();
+
+        /// <summary>UI Toolkit copies small textures into its dynamic atlas the first time it draws them: a placeholder drawn
+        /// before it was filled stayed 4 x 4 and clear there, whatever the texture became (the title logo and the Original
+        /// style's pieces didn't show). The slots' textures stay out of every panel's atlas.</summary>
+        static void KeepOutOfAtlas()
+        {
+            if (OriginalSetup.BuiltIn) return;
+            foreach (var ps in Resources.FindObjectsOfTypeAll<UnityEngine.UIElements.PanelSettings>())
+            {
+                if (ps == null || !filtered.Add(ps)) continue;
+                var settings = ps.dynamicAtlasSettings;
+                var before = settings.customFilter;
+                settings.customFilter = (UnityEngine.UIElements.DynamicAtlasCustomFilter)((Texture2D t, ref UnityEngine.UIElements.DynamicAtlasFilters f) =>
+                    !IsSlot(t) && (before == null || before(t, ref f)));
+                ps.dynamicAtlasSettings = settings;
+            }
+        }
+
+        static bool IsSlot(Texture2D t) => t != null && (Crops.ContainsKey(t.name) || Hud.Contains(t.name) || t.name.StartsWith("og_")
+                                                         || t.name.StartsWith("card_") || t.name.StartsWith("logo_") || t.name.Contains("crosshair"));
 
         /// <summary>Every placeholder texture loaded now (4 x 4, one of the slots' names) given its image; how many.</summary>
         public static int Fill()
@@ -115,16 +138,17 @@ namespace GoF2Remake.UI
         /// <summary>The PNG bytes of a slot's image (null: not a slot, or the copy hasn't it).</summary>
         public static byte[] ImageOf(string name)
         {
-            var menu = OriginalTextures.MenuImage(name);   // (the campaign cards, the FISHLABS logo)
+            // a pack's own copy first (the common pack's processed pieces; the HD pack's large FISHLABS logo over the copy's cut)
+            var packed = GameContent.CachePath($"Resources/GoF2UiSlots/{name}.png");
+            if (packed != null) return File.ReadAllBytes(packed);
+            var menu = OriginalTextures.MenuImage(name);   // (the cards, the FISHLABS logo)
             if (menu != null) return menu.EncodeToPNG();
             if (Crops.TryGetValue(name, out var c))
             {
                 var t = OriginalTextures.Crop(c.atlas, c.x, c.y, c.w, c.h, name);
                 return t != null ? t.EncodeToPNG() : null;
             }
-            string rel = Hud.Contains(name) ? $"Resources/GoF2Hud/{name}.png"
-                       : System.Array.IndexOf(FromPack, name) >= 0 ? $"Resources/GoF2UiSlots/{name}.png" : null;
-            var file = rel != null ? GameContent.CachePath(rel) : null;
+            var file = Hud.Contains(name) ? GameContent.CachePath($"Resources/GoF2Hud/{name}.png") : null;
             return file != null ? File.ReadAllBytes(file) : null;
         }
     }
