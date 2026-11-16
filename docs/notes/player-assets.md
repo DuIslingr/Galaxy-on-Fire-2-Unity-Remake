@@ -183,7 +183,8 @@ that make Resources folders from them. Each builder becomes a run-time step over
 Testing it needs a Unity project without the originals: this branch's worktree with the original and derived folders
 left out (sparse checkout) is exactly a shipped build's content, a fast import, and the cache supplies the rest.
 - **The test bed** (2026-11-15): a worktree (`git worktree add`, `GIT_LFS_SKIP_SMUDGE=1`) with a non-cone sparse checkout
-  made from the inventory (every original / derived file and its .meta left out: 17 whole folders, 427 single files);
+  made from the inventory (every original / derived file and its .meta left out; `stripped_checkout.py` makes and
+  updates it);
   1,470 asset files, 53 MB. **Don't run a plain `git lfs pull` there:** git-lfs writes every LFS file into the working
   tree, the sparse ones too; remove them and `git sparse-checkout reapply` if it happens (or pull with `--include`).
 
@@ -281,6 +282,13 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
     converted copy; batch: `-executeMethod GoF2Remake.EditorTools.RuntimeShaderTemplates.BuildAndQuit` with
     `$GOF2_ORIGINAL_CACHE`) writes them; `PlayerCopyTests.EveryRuntimeMaterialHasItsShaderTemplate` fails when the content
     layer makes a variant without one.
+  - **The checkout to build from:** `Reference/tools/player_assets/stripped_checkout.py create <dir> [rev]` makes a
+    worktree without every file inventory.py calls original or derived (a non-cone sparse checkout: whole folders where
+    nothing else is in them, single files with their .meta otherwise; 722 rules) and fetches only the LFS files kept (126,
+    ~60 MB of assets); `apply [<dir>]` rewrites an existing one's rules after the inventory changed (and removes what a
+    stray full `git lfs pull` wrote); `patterns` prints them. Its rules are the test bed's exactly. Release builds made in
+    such a checkout (the usual GoF2 > Build menu items, Runtime Shader Templates current) ship without the originals;
+    CI needs no LFS originals for them either.
   - **A build to check:** `PlayerAssetsBuild.LinuxDevelopment` (batch: `-buildTarget Linux64 -executeMethod
     GoF2Remake.EditorTools.PlayerAssetsBuild.LinuxDevelopment`, `$GOF2_BUILD_OUT`) makes a Linux development build of the
     checkout; run as `gamescope --backend headless -- GoF2Remake.x86_64 -gof2check <folder>` (a desktop session would show its window) with `$GOF2_ORIGINAL_CACHE`, `PlayerAssetsCheck`
