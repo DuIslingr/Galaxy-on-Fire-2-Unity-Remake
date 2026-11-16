@@ -209,6 +209,22 @@ namespace GoF2Remake.UI
             list.Add(Toggle("npcPlayerEngines", OptionPage.Graphics, () => X("npcPlayerEngines", "Other ships' engines like yours"),
                 () => Settings.NpcPlayerEngines, v => Settings.NpcPlayerEngines = v));
             // Remake: the planets as the rebuilt 3D spheres (World.RebuiltPlanets); on by default.
+            // Remake (docs/notes/player-assets.md "Packs"): a build without the originals takes the separately distributed packs
+            // (the HD pack: HD textures, skies, 3D planets) from here too, not only on the first start's setup screen
+            list.Add(new OptionDef
+            {
+                id = "addPack", page = OptionPage.Graphics, kind = OptionKind.Button, menuOnly = true,
+                label = () => X("addPack", "Add a pack…"),
+                description = () =>
+                {
+                    if (OriginalPacks.LastAdded != null) return OriginalPacks.LastAdded;
+                    var kept = OriginalPacks.Kept(OriginalPacks.Folder);
+                    return kept.Count == 0 ? X("addPackHelp", "A pack brings what your copy of the game lacks, or the HD textures, skies and 3D planets.")
+                                           : string.Format(X("addPackKept", "Packs: {0}"), string.Join(", ", kept.ConvertAll(k => k.title ?? k.name)));
+                },
+                visible = () => Modding.ModImport.Available && !OriginalSetup.BuiltIn,
+                action = () => OriginalPacks.Add(X("addPack", "Add a pack…"), _ => OptionControl.RefreshShown()),
+            });
             var rebuiltPlanets = Toggle("rebuiltPlanets", OptionPage.Graphics, () => X("rebuiltPlanets", "3D planets"),
                 () => Settings.RebuiltPlanets, v => Settings.RebuiltPlanets = v);
             rebuiltPlanets.description = () => X("rebuiltPlanetsHelp", "The planets in orbit, on the star map and in slipstream are lit 3D spheres rebuilt from the original planet images. Off: the original flat images. From the next orbit or star map view.");

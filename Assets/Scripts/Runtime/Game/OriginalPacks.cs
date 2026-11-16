@@ -23,6 +23,9 @@ namespace GoF2Remake.Data
         public const string ManifestName = "gof2pack.json";
         public const string Extension = ".gof2pack";
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => LastAdded = null;
+
         [Serializable]
         public sealed class Info
         {
@@ -96,6 +99,39 @@ namespace GoF2Remake.Data
             if (move) File.Move(info.file, to); else File.Copy(info.file, to);
             info.file = to;
             return to;
+        }
+
+        /// <summary>The last Add's outcome for the options row: what was added, or why not (null: nothing yet).</summary>
+        public static string LastAdded { get; private set; }
+
+        /// <summary>Options > Graphics "Add a pack…": the system's file picker, the picked pack kept (written over the copy at
+        /// the next start, StartupSplash); 'done' with the outcome line.</summary>
+        public static async void Add(string title, Action<string> done)
+        {
+            string line;
+            try
+            {
+                var poll = Modding.ModImport.Pick(title, "Galaxy on Fire 2 packs", new[] { Extension.TrimStart('.'), "zip" },
+                                                  copyIn: Application.isMobilePlatform);
+                Modding.ModImport.Picked picked;
+                while ((picked = poll()) == null) await Awaitable.NextFrameAsync();
+                if (picked.cancelled) { done?.Invoke(null); return; }
+                if (picked.error != null) line = picked.error;
+                else
+                {
+                    var info = Read(picked.path);
+                    if (info == null) line = Localization.Extra("packNotPack", "That isn't a Galaxy on Fire 2 pack (no gof2pack.json in it).");
+                    else
+                    {
+                        bool copy = picked.path.StartsWith(Application.temporaryCachePath, StringComparison.Ordinal);
+                        Keep(info, Folder, move: copy);
+                        line = string.Format(Localization.Extra("packAdded", "{0} added: it is installed at the next start."), info.title ?? info.name);
+                    }
+                }
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException) { line = e.Message; }
+            LastAdded = line;
+            done?.Invoke(line);
         }
 
         /// <summary>Writes the pack's files over the converted copy at 'root' and records it (a worker thread may call it).</summary>

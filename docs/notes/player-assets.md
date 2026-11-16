@@ -379,8 +379,14 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
     backdrop. The conversion writes ~4 GB into the play-mode sandbox (`Path.GetTempPath()`): run with `TMPDIR` on a disk.
   - **The Editor / development builds:** `$GOF2_ORIGINAL_CACHE` points `GameContent.Root` at a converted copy (the test
     bed's Play mode and play-mode tests).
-  - **Not yet:** the dedicated server has no screen (it needs a converted copy in its data folder: a `-convert <package>`
-    switch to come); a VR headset shows the splash's panel on the monitor only; the setup texts are in English
+  - **The dedicated server** (2026-11-15): no screen, so `-convert <package>` (repeatable), `-pack <file.gof2pack>`
+    (repeatable) and `-convertonly` (DedicatedServer.PrepareContent, before Boot's settings: the conversion on its worker
+    thread, its phases logged by tenths); without a converted copy it says what to run and quits (SERVER.md). Checked
+    with the Linux development build as `-server`: no copy, the message; `-convert` the XAPK with `-pack` the common pack,
+    converted (36 s) and the pack written; then it booted and listened.
+  - **Options > Graphics "Add a pack…"** (main menu, builds without the originals): the file picker, the pack kept and
+    written at the next start (`OriginalPacks.Add`); the row lists the kept packs.
+  - **Not yet:** a VR headset shows the splash's panel on the monitor only; the setup texts are in English
     (`setup.*` keys of `Localization.Extra`, which loads with a text table: there is none before the conversion).
 
 ## Plan
