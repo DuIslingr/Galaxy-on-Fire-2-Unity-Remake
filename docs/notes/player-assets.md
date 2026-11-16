@@ -47,13 +47,13 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
 | original | `Audio/` | 4,417 | FSB banks: all 22 banks' sample counts equal the folders' file counts |
 | original | `Skyboxes/`, `Resources/GoF2Sky`, `GoF2Backdrop`, `GoF2Station` | 198 | AEI (cubemap strips, sun / planet images) |
 | original | `Resources/GoF2Icons`, `GoF2Hud`, `GoF2Races`, `UI/Original`, `Sprite Assets/gof2_text_icons.png` | 672 | regions of the interface AEI atlases (AEI region tables) |
-| original | `UI/AppIcon`, `UI/MainMenu/card_*` | ~25 | the app's logo / key art: to be replaced by the remake's own, not converted |
+| original | `UI/MainMenu/card_*` | ~9 | the app's logo / key art: to be replaced by the remake's own, not converted |
 | original | `Localization/text_*`, `GoF2_strings.csv` | 15 | `.lang` files (the remake's own translations nl / hi / zh / ar...: see below) |
 | original | `Resources/GoF2Data/` | 53 | `.bin` files and the resource table (per file to sort out: some tables are the remake's) |
 | original | `Shaders_Original_GLSL/` | 23 | the app's shader source; reference only, nothing converts it |
 | derived | `Resources/Assembled/`, `Prefabs/`, `Materials/` | 1,950 | built at run time from the converted meshes, textures and `assemblies.json` / `resources.json` |
 | derived | `Resources/GoF2SkyHd`, `GoF2SkyLayers/patch_*`, `GoF2Planets3D`, `GoF2Reflections` | 254 | made on the player's machine (SkyHd and its patches: the optional step; Planets3D: distributed separately, below) |
-| own | everything else (scripts, shaders, settings, fonts, `GoF2Mods`, `GoF2Localization` extras, the `GoF2Weapons/item_*` fx tables: their references refilled...) | ~1,550 | ships |
+| own | everything else (scripts, shaders, settings, fonts, the app icon (`UI/AppIcon`), `GoF2Mods`, `GoF2Localization` extras, the `GoF2Weapons/item_*` fx tables: their references refilled...) | ~1,550 | ships |
 
 **Hard references** (an own asset pointing at an original or derived one by GUID; these can't stay): 19 files.
 - Sound tables: `GoF2Story/StoryAssets` (4,307 clips), `GoF2ModBuilder/GameAudioIndex` (330), `GoF2Combat/CombatAssets`
@@ -61,7 +61,8 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
   `GoF2Music/MenuTheme`; the Station (69 clips) and MainMenu (31) scenes. All name lookups: the content layer serves a clip
   by its bank and name.
 - `GoF2LanguageTables` (the 14 text tables), `GoF2Mods/ModAssets` (3 materials), the Space scene's `SpaceSky.mat`.
-- The six build profiles' app icons (`UI/AppIcon`): the remake needs its own icon.
+- The six build profiles' app icons (`UI/AppIcon`): the remake's own icon art (icon_source.png, made 2026-10-05, every
+  platform's icons built from it by MainMenuBuilder.BuildAppIcons) ships, the user's call 2026-11-15 (like the title logo).
 
 **`Resources.Load`:** 161 calls in 102 files; those loading originals go through the content layer.
 
@@ -218,7 +219,7 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   name); only empty fields, so a build with the originals is unchanged. Lists of more than 64 entries (the story's voices,
   the Mod Builder's audio index) are filled entry by entry when asked (`OriginalRefs.Entry`, StoryAssets.Voice,
   GameAudioIndex.Clip): all at once took ~20 s. Materials and prefabs: see "Materials, prefabs and the backdrop". Not
-  yet: ShipShadows, the story's portrait parts and the build profiles' app icons.
+  yet: ShipShadows and the story's portrait parts (the build profiles' app icons are the remake's own: they ship).
 - **Interface images** (2026-11-15): DerivedImages (GoF2.Core, plain C#): the HUD images (HudImageBuilder's table, moved
   here and shared with the builder) and the shop's item / ship icons and bare ship frame (ItemIconBuilder's; the rects in
   `ItemIconTable.cs`, generated from `Reference/research/item_icons.json` by `Reference/tools/player_assets/item_icon_table.py`),

@@ -36,7 +36,7 @@ RULES = [
     ("Assets/Resources/GoF2Races/", ORIGINAL, "race and faction emblems", "regions of the interface AEI atlases"),
     ("Assets/Resources/Sprite Assets/gof2_text_icons.png", ORIGINAL, "inline text icons' atlas", "regions of the interface AEI atlases"),
     ("Assets/UI/Original/", ORIGINAL, "the original interface style's images", "regions of the interface AEI atlases"),
-    ("Assets/UI/AppIcon/", ORIGINAL, "app icon, logo, splash", "the app's icon images (replace with the remake's own)"),
+    # (Assets/UI/AppIcon: the remake's icon art, made 2026-10-05; ships, the user's call 2026-11-15: OWN by the fallthrough)
     ("Assets/UI/MainMenu/Images/card_", DERIVED, "main menu campaign cards (key art)", "cut from gof2_campaign_select_ipad_large at run time (OriginalTextures.MenuImage)"),
     ("Assets/UI/MainMenu/Images/logo_fishlabs.png", DERIVED, "the FISHLABS logo of the startup splash", "cut from gof2_logos_1440 at run time"),
     ("Assets/UI/Fonts/Klavika", ORIGINAL, "Klavika, the original HD versions' interface typeface: a commercial font (Process Type Foundry) the project has no licence to ship", "not in the player's copy (its text is glyph images); players who own it import it (Options > Accessibility)"),

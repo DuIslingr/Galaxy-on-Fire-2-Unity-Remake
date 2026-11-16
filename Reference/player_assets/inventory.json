@@ -1,13 +1,13 @@
 {
  "summary": {
   "original": {
-   "files": 8892
+   "files": 8876
   },
   "derived": {
    "files": 2182
   },
   "own": {
-   "files": 1536
+   "files": 1552
   }
  },
  "folders": {
@@ -152,9 +152,9 @@
    "bytes_here": 6438
   },
   "Assets/UI/AppIcon/": {
-   "kind": "original",
-   "what": "app icon, logo, splash",
-   "source": "the app's icon images (replace with the remake's own)",
+   "kind": "own",
+   "what": "the remake's app icon, its tiles and splash (icon_source.png, MainMenuBuilder.BuildAppIcons)",
+   "source": "ships (the user's call, 2026-11-15)",
    "files": 16,
    "bytes_here": 2088
   },
