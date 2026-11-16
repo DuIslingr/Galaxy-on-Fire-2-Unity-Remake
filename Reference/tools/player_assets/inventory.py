@@ -34,7 +34,7 @@ RULES = [
     ("Assets/Resources/GoF2Icons/", ORIGINAL, "item, ship and station icons", "regions of the interface AEI atlases"),
     ("Assets/Resources/GoF2Hud/", ORIGINAL, "HUD images", "regions of the interface AEI atlases"),
     ("Assets/Resources/GoF2Races/", ORIGINAL, "race and faction emblems", "regions of the interface AEI atlases"),
-    ("Assets/Resources/Sprite Assets/gof2_text_icons", ORIGINAL, "inline text icons", "regions of the interface AEI atlases"),
+    ("Assets/Resources/Sprite Assets/gof2_text_icons.png", ORIGINAL, "inline text icons' atlas", "regions of the interface AEI atlases"),
     ("Assets/UI/Original/", ORIGINAL, "the original interface style's images", "regions of the interface AEI atlases"),
     ("Assets/UI/AppIcon/", ORIGINAL, "app icon, logo, splash", "the app's icon images (replace with the remake's own)"),
     ("Assets/UI/MainMenu/Images/card_", DERIVED, "main menu campaign cards (key art)", "cut from gof2_campaign_select_ipad_large at run time (OriginalTextures.MenuImage)"),
@@ -68,6 +68,8 @@ ASSET_TEXT = (".unity", ".prefab", ".asset", ".mat", ".controller", ".anim", ".u
 # Inside the original / derived folders: the remake's own work, which ships whatever folder it sits in.
 OWN_EXT = (".cs", ".shader", ".hlsl", ".cginc", ".uss", ".uxml", ".tss", ".shadergraph", ".compute")
 OWN_FILES = {
+    # the inline text icons' sprite table (names and cells only; its atlas is a placeholder the game draws: TextIcons)
+    "Assets/Resources/Sprite Assets/gof2_text_icons.asset",
     # computed layout data (numbers only): ships like the fact tables (the user, 2026-11-15)
     "Assets/Resources/GoF2SkyLayers/layered_skies.json", "Assets/Resources/GoF2SkyLayers/nebula_clouds.json",
     # seeded noise only (sky_layers.py star_mask / nebula_masks, nebula_clouds.py masks): nothing of the original's

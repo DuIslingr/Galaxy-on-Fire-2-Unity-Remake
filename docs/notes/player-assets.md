@@ -46,7 +46,7 @@ Per folder, by path rule, checked against the iOS 1.1.19 app (2026-11-15):
 | original | `Models/` (.fbx + .gof2mesh.json) | 2,255 | AEM; 1,124 of 1,127 meshes named as in the app |
 | original | `Audio/` | 4,417 | FSB banks: all 22 banks' sample counts equal the folders' file counts |
 | original | `Skyboxes/`, `Resources/GoF2Sky`, `GoF2Backdrop`, `GoF2Station` | 198 | AEI (cubemap strips, sun / planet images) |
-| original | `Resources/GoF2Icons`, `GoF2Hud`, `GoF2Races`, `UI/Original`, `Sprite Assets/gof2_text_icons` | 672 | regions of the interface AEI atlases (AEI region tables) |
+| original | `Resources/GoF2Icons`, `GoF2Hud`, `GoF2Races`, `UI/Original`, `Sprite Assets/gof2_text_icons.png` | 672 | regions of the interface AEI atlases (AEI region tables) |
 | original | `UI/AppIcon`, `UI/MainMenu/card_*` | ~25 | the app's logo / key art: to be replaced by the remake's own, not converted |
 | original | `Localization/text_*`, `GoF2_strings.csv` | 15 | `.lang` files (the remake's own translations nl / hi / zh / ar...: see below) |
 | original | `Resources/GoF2Data/` | 53 | `.bin` files and the resource table (per file to sort out: some tables are the remake's) |
@@ -175,7 +175,7 @@ that make Resources folders from them. Each builder becomes a run-time step over
 | --- | --- | --- |
 | Materials And Prefabs (`PrefabBuilder`) | `Materials/`, `Prefabs/` (a material per game material, a prefab per mesh, from resources.json) | meshes from the cache's .aem in the FBX import's space, materials by shading kind |
 | Assembled Prefabs (`AssemblyBuilder`) | `Resources/Assembled/` (319) from assemblies.json | templates built on first use, as ModShips.Template does for mods |
-| HUD Images, Item Icons, Hull Icons, Text Icons | `GoF2Hud`, `GoF2Icons`, `GoF2Races`, `Sprite Assets/gof2_text_icons` | cut from the interface atlases (AEI regions) after the conversion |
+| HUD Images, Item Icons, Hull Icons, Text Icons | `GoF2Hud`, `GoF2Icons`, `GoF2Races`, `Sprite Assets/gof2_text_icons` | cut from the interface atlases (AEI regions) after the conversion; the text icons' atlas drawn into its placeholder ("Text icons") |
 | Space Skies, Sky Layers, the skyboxes | `GoF2Sky`, `GoF2Backdrop` sky materials, `Skyboxes/` | cubemaps from the cubemap strips |
 | Combat / Star Map / Event Audio, the story's | `CombatAssets`, `StarMapAssets`, `EventAudio`, `StoryAssets` (4,307 clips)... | clips by bank and name from the cache |
 | Hangar Shadows, reflections, 3D planets, generated LODs | `GoF2Station/ShipShadows`, `GoF2Reflections`, `GoF2Planets3D`, `generated_lods` | made after the conversion (cheap) |
@@ -361,6 +361,12 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   to the project's; the project's FISHLABS logo is a larger version (1561 x 1741) than the atlas' 266 x 303 the cut gives.
   `logo_gof2_remake.png` (the title logo, also the photo mode's) is #67's redraw of the game's logo with "REMAKE" under it:
   it ships with the build (the user's call, 2026-11-15, after a moment in the HD pack).
+- **Text icons** (2026-11-15): the dialogue's inline `<sprite>` icons (race emblems, gate, coin, every shop icon) come
+  from `Resources/Sprite Assets/gof2_text_icons`. Its sprite table (`.asset`: names and 64 px cells) is the remake's own
+  and ships; its atlas (`.png`, cut from the HUD and shop icons) is a placeholder in a build without the originals
+  (`stripped_checkout.py` ASSET_SLOTS), which UiImageSlots draws from the copy's `GoF2Hud` / `GoF2Icons` cuts by the
+  table's cells (`TextIcons.Compose`, the drawing code the editor's Build Text Icons uses too; the coin and the heart
+  are drawn). Found by the stripped bed's edit-mode run (`TextRevealTests.EveryIconTheTextUsesIsInTheSpriteAsset`).
 - **Stylesheet images** (2026-11-15): 58 images the USS name by path (`url("project://database/...")`) are the
   original's or cut from it: the Original interface style's pieces (`UI/Original/og_*`), the flight HUD's crosshairs
   (`UI/Flight/Images/crosshair*`: cut from gof2_interface_iphone4, now classified derived), the plasma gun's

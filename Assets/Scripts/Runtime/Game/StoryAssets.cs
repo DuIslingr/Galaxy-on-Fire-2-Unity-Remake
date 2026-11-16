@@ -103,6 +103,15 @@ namespace GoF2Remake.Data
             return Find(eng, name, out _) || Find(deu, name, out _);
         }
 
+        /// <summary>Whether the game has its own English recording of the line (the build's or the converted copy's), without
+        /// loading the clip.</summary>
+        public bool HasEnglishVoice(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            Maps();
+            return Find(eng, name, out int e) && GoF2Remake.Data.OriginalRefs.Has(this, nameof(voiceClipsEng), voiceClipsEng, e);
+        }
+
         void Maps()
         {
             eng ??= Index(voiceNamesEng, voiceClipsEng.Count);

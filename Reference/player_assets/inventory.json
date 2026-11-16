@@ -137,12 +137,12 @@
    "files": 20,
    "bytes_here": 2598
   },
-  "Assets/Resources/Sprite Assets/gof2_text_icons": {
+  "Assets/Resources/Sprite Assets/gof2_text_icons.png": {
    "kind": "original",
-   "what": "inline text icons",
+   "what": "inline text icons' atlas",
    "source": "regions of the interface AEI atlases",
-   "files": 2,
-   "bytes_here": 136586
+   "files": 1,
+   "bytes_here": 132
   },
   "Assets/UI/Original/": {
    "kind": "original",

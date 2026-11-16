@@ -115,6 +115,10 @@ namespace GoF2Remake.Data
 
         /// <summary>Entry 'i' of a long list ('field' of 'target'), filled from the converted copy the first time it is asked
         /// for when it is empty.</summary>
+        /// <summary>Whether Entry has an asset for list[i]: the build's own, or the converted copy's (not loaded yet).</summary>
+        public static bool Has<T>(UnityEngine.Object target, string field, IList<T> list, int i) where T : UnityEngine.Object =>
+            list != null && i >= 0 && i < list.Count && (list[i] != null || lazy.ContainsKey((target, $"{field}[{i}]")));
+
         public static T Entry<T>(UnityEngine.Object target, string field, IList<T> list, int i) where T : UnityEngine.Object
         {
             if (list == null || i < 0 || i >= list.Count) return null;

@@ -313,6 +313,9 @@ namespace GoF2Remake.Visuals
             GameContent.Refreshed += ResetStatics;   // (a new copy converted)
         }
 
+        /// <summary>True when the converted copy has the assembly (what Template builds).</summary>
+        public static bool Has(string name) => GameContent.Installed && Entry(name) != null;
+
         static OriginalAsmEntry Entry(string name)
         {
             if (byName == null)
@@ -404,8 +407,9 @@ namespace GoF2Remake.Visuals
         {
             if (string.IsNullOrEmpty(model) || !GameContent.Installed) return null;
             if (explosions.TryGetValue(model, out var t) && t != null) return t;
+            var parent = Holder;
             t = OriginalModels.Build(model);
-            if (t != null) t.transform.SetParent(Holder, false);
+            if (t != null) t.transform.SetParent(parent, false);
             return explosions[model] = t;
         }
 
@@ -417,12 +421,20 @@ namespace GoF2Remake.Visuals
         {
             get
             {
+                // Edit mode (the tests): a holder of its own for each template, made right before it. One kept holder ended up
+                // in another Entities World than the models a later test made, even in the same scene ("A transform hierarchy
+                // holds entities of more than one Entities World").
+                if (!Application.isPlaying)
+                {
+                    var own = new GameObject("Game model") { hideFlags = HideFlags.DontSave };   // (never saved into a scene)
+                    own.SetActive(false);
+                    return own.transform;
+                }
                 if (holder == null)
                 {
                     holder = new GameObject("Game models");
                     holder.SetActive(false);
-                    if (Application.isPlaying) UnityEngine.Object.DontDestroyOnLoad(holder);
-                    else holder.hideFlags = HideFlags.DontSave;   // (edit mode: never saved into a scene)
+                    UnityEngine.Object.DontDestroyOnLoad(holder);
                 }
                 return holder.transform;
             }

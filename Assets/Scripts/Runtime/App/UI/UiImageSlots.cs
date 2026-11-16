@@ -7,7 +7,8 @@
 // unload and reload the assets), so every state the stylesheets give (hover, focus, pressed) draws it:
 //   an exact rectangle of an atlas of the converted copy (found by matching the project's images: Crops), the HUD images
 //   the converter cut (GoF2Hud), the menu's cuts (MenuImage), and a pack's copy before all of them (Resources/GoF2UiSlots:
-//   the common pack's processed pieces; the HD pack's large FISHLABS logo).
+//   the common pack's processed pieces; the HD pack's large FISHLABS logo). Also the inline text icons' atlas (TextIcons:
+//   the sprite asset is the remake's own, its atlas a placeholder), drawn from the copy's HUD and shop icons.
 
 using System.Collections.Generic;
 using System.IO;
@@ -88,7 +89,7 @@ namespace GoF2Remake.UI
         static bool hooked;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { hooked = false; filtered.Clear(); }
+        static void ResetStatics() { hooked = false; filtered.Clear(); textIcons = null; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Hook()
@@ -117,13 +118,15 @@ namespace GoF2Remake.UI
             }
         }
 
-        static bool IsSlot(Texture2D t) => t != null && (Crops.ContainsKey(t.name) || Hud.Contains(t.name) || t.name.StartsWith("og_")
+        static bool IsSlot(Texture2D t) => t != null && (t.name == TextIcons.AssetName || Crops.ContainsKey(t.name) || Hud.Contains(t.name) || t.name.StartsWith("og_")
                                                          || t.name.StartsWith("card_") || t.name.StartsWith("logo_") || t.name.Contains("crosshair"));
 
         /// <summary>Every placeholder texture loaded now (4 x 4, one of the slots' names) given its image; how many.</summary>
         public static int Fill()
         {
             if (OriginalSetup.BuiltIn || !GameContent.Installed) return 0;
+            // (loaded now, so its atlas is among the textures below before a text first asks for an icon)
+            textIcons = Resources.Load<UnityEngine.TextCore.Text.SpriteAsset>("Sprite Assets/" + TextIcons.AssetName);
             int n = 0;
             foreach (var t in Resources.FindObjectsOfTypeAll<Texture2D>())
             {
@@ -135,9 +138,12 @@ namespace GoF2Remake.UI
             return n;
         }
 
+        static UnityEngine.TextCore.Text.SpriteAsset textIcons;
+
         /// <summary>The PNG bytes of a slot's image (null: not a slot, or the copy hasn't it).</summary>
         public static byte[] ImageOf(string name)
         {
+            if (name == TextIcons.AssetName) return TextIconsAtlas();
             // a pack's own copy first (the common pack's processed pieces; the HD pack's large FISHLABS logo over the copy's cut)
             var packed = GameContent.CachePath($"Resources/GoF2UiSlots/{name}.png");
             if (packed != null) return File.ReadAllBytes(packed);
@@ -150,6 +156,25 @@ namespace GoF2Remake.UI
             }
             var file = Hud.Contains(name) ? GameContent.CachePath($"Resources/GoF2Hud/{name}.png") : null;
             return file != null ? File.ReadAllBytes(file) : null;
+        }
+
+        /// <summary>The text icons' atlas drawn from the converted copy's HUD and shop icons (the cells of the build's sprite
+        /// asset), as PNG; null without the asset.</summary>
+        static byte[] TextIconsAtlas()
+        {
+            var asset = textIcons != null ? textIcons : Resources.Load<UnityEngine.TextCore.Text.SpriteAsset>("Sprite Assets/" + TextIcons.AssetName);
+            if (asset == null) return null;
+            var atlas = TextIcons.Compose(asset, rel =>
+            {
+                var file = GameContent.CachePath($"Resources/{rel}.png");
+                if (file == null) return null;
+                var t = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                return t.LoadImage(File.ReadAllBytes(file), false) ? t : null;   // (readable: Compose samples it)
+            });
+            if (atlas == null) return null;
+            var png = atlas.EncodeToPNG();
+            if (Application.isPlaying) Object.Destroy(atlas); else Object.DestroyImmediate(atlas);
+            return png;
         }
     }
 }

@@ -16,11 +16,16 @@ import inventory
 KEEP = ("own",)
 
 
+# Left-out images a kept asset references that the game fills the same way (UiImageSlots): the text icons' atlas, which
+# the kept sprite asset and its material point at.
+ASSET_SLOTS = {"Assets/Resources/Sprite Assets/gof2_text_icons.png"}
+
+
 def slots(files, root="."):
     """Left-out images a stylesheet / layout names by path (url("project://database/...")): their .meta stays and a 4 x 4
     placeholder of the remake's own takes the image's place, so the reference holds; the game fills it from the player's
     copy (UiImageSlots)."""
-    found = set()
+    found = {p for p in ASSET_SLOTS if p in files}
     for f in files:
         if not f.endswith((".uss", ".uxml", ".tss")): continue
         path = os.path.join(root, f)

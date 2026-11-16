@@ -36,6 +36,31 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheTextIconsAtlasIsDrawnFromTheConvertedCopy()
+        {
+            // the build's sprite table (the remake's own) and its atlas drawn from the copy's HUD and shop icons (UiImageSlots)
+            var asset = Resources.Load<UnityEngine.TextCore.Text.SpriteAsset>("Sprite Assets/" + UI.TextIcons.AssetName);
+            Assert.IsNotNull(asset, "Resources/Sprite Assets/gof2_text_icons");
+            var png = UI.UiImageSlots.ImageOf(UI.TextIcons.AssetName);
+            Assert.IsNotNull(png);
+            var atlas = new Texture2D(2, 2);
+            Assert.IsTrue(atlas.LoadImage(png));
+            Assert.AreEqual(UI.TextIcons.Cell * UI.TextIcons.Columns, atlas.width);
+            int filled = 0;
+            foreach (var c in asset.spriteCharacterTable)
+            {
+                var r = c.glyph.glyphRect;
+                var px = atlas.GetPixels(r.x, r.y, r.width, r.height);
+                bool any = false;
+                foreach (var p in px) if (p.a > 0.5f) { any = true; break; }
+                if (any) filled++;
+                else Assert.Fail(c.name + ": an empty cell");
+            }
+            Assert.Greater(filled, 300, "the HUD icons and every shop icon");
+            UnityEngine.Object.DestroyImmediate(atlas);
+        }
+
+        [Test]
         public void TheDatabaseComesFromTheConvertedCopy()
         {
             Assert.IsTrue(GameContent.Installed);
