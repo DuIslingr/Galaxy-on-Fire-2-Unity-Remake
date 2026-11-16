@@ -24,6 +24,8 @@ namespace GoF2Remake.Tests
         {
             if (OriginalSetup.BuiltIn) Assert.Ignore("this project has the original's content built in");
             GameContent.Root = Path.Combine(Sandbox, "Original");
+            GameContent.HdRoot = Path.Combine(Sandbox, "HD");
+            int asked = PlayerPrefs.GetInt(OriginalSetup.HdAskedPref, 0);
             try
             {
                 Assert.IsTrue(OriginalSetup.Needed);
@@ -50,6 +52,8 @@ namespace GoF2Remake.Tests
                 t0 = Time.realtimeSinceStartup;
                 while (!view.Continue() && Time.realtimeSinceStartup - t0 < 5f) yield return null;
                 Assert.IsTrue(Time.realtimeSinceStartup - t0 < 5f, "the result shown, Continue pressed");
+                // the HD question once (docs/notes/player-assets.md "HD resources"): not now
+                if (view.AskingHd) Assert.IsTrue(view.NotNow());
                 t0 = Time.realtimeSinceStartup;
                 while (UnityEngine.Object.FindAnyObjectByType<MainMenu>() == null && Time.realtimeSinceStartup - t0 < 60f) yield return null;
                 Assert.IsNotNull(UnityEngine.Object.FindAnyObjectByType<MainMenu>(), "the menu after the conversion");
@@ -61,6 +65,8 @@ namespace GoF2Remake.Tests
                 // (the splash outlives its scene: gone with the test, the screen with it)
                 foreach (var s in UnityEngine.Object.FindObjectsByType<StartupSplash>(FindObjectsInactive.Include)) UnityEngine.Object.Destroy(s.gameObject);
                 GameContent.Root = null;
+                GameContent.HdRoot = null;
+                PlayerPrefs.SetInt(OriginalSetup.HdAskedPref, asked);
                 GameContent.Refresh();
             }
         }

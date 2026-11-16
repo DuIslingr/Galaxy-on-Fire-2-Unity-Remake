@@ -223,8 +223,36 @@ namespace GoF2Remake.UI
                                            : string.Format(X("addPackKept", "Packs: {0}"), string.Join(", ", kept.ConvertAll(k => k.title ?? k.name)));
                 },
                 visible = () => Modding.ModImport.Available && !OriginalSetup.BuiltIn,
-                action = () => OriginalPacks.Add(X("addPack", "Add a pack…"), _ => OptionControl.RefreshShown()),
+                action = () =>
+                {
+                    var row = OptionControl.Pressing?.Root;
+                    OriginalPacks.Add(X("addPack", "Add a pack…"), (_, hd) =>
+                    {
+                        if (hd != null) HdWindow.Show(row, hd);   // (the HD pack: installed by the HD window, not kept)
+                        OptionControl.RefreshShown();
+                    });
+                },
             });
+            // Remake (docs/notes/player-assets.md "HD resources", the user's request 2026-11-15): the HD pack supplied, kept in
+            // a folder of its own and used over the copy's files (switchable), or written over the copy for space.
+            list.Add(new OptionDef
+            {
+                id = "hdResourcesWindow", page = OptionPage.Graphics, kind = OptionKind.Button, menuOnly = true,
+                label = () => X("hdResourcesWindow", "HD resources…"),
+                description = () => GameContent.HdInstalled
+                    ? X("hdResourcesApart", "Installed in a folder of their own, beside your copy: replace the originals with them (for space) or remove them.")
+                    : OriginalPacks.HdInCopy(GameContent.Root)
+                        ? X("hdResourcesInCopy", "Written over your converted copy (converting it again removes them). Supply a newer HD pack here.")
+                        : X("hdResourcesNone", "Not installed: the separately distributed HD pack brings higher-resolution textures, the upscaled skies and the 3D planets."),
+                visible = () => !OriginalSetup.BuiltIn && GameContent.Installed,
+                action = () => HdWindow.Show(OptionControl.Pressing?.Root),
+            });
+            var useHd = Toggle("hdResources", OptionPage.Graphics, () => X("hdResources", "Use the HD resources"),
+                () => Settings.HdResources, v => Settings.HdResources = v);
+            useHd.description = () => X("hdResourcesHelp", "Off: your copy's own textures and skies (the HD folder stays). From the next start.");
+            useHd.visible = () => !OriginalSetup.BuiltIn && GameContent.HdInstalled;
+            useHd.menuOnly = true;
+            list.Add(useHd);
             var rebuiltPlanets = Toggle("rebuiltPlanets", OptionPage.Graphics, () => X("rebuiltPlanets", "3D planets"),
                 () => Settings.RebuiltPlanets, v => Settings.RebuiltPlanets = v);
             rebuiltPlanets.description = () => X("rebuiltPlanetsHelp", "The planets in orbit, on the star map and in slipstream are lit 3D spheres rebuilt from the original planet images. Off: the original flat images. From the next orbit or star map view.");

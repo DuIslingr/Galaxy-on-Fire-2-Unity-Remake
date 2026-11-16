@@ -218,6 +218,9 @@ namespace GoF2Remake.Data
         /// (World.RebuiltPlanets) in orbit, on the star map and between the systems; off: the original's flat images. On by
         /// default; from the next orbit or star map view.</summary>
         public static bool RebuiltPlanets { get => GetBool("rebuiltPlanets", true); set => SetBool("rebuiltPlanets", value); }
+        /// <summary>Remake (docs/notes/player-assets.md "HD resources"): the HD folder's files are read before the copy's
+        /// (GameContent.HdActive reads this key itself, "gof2.hdResources": from the next start); on by default.</summary>
+        public static bool HdResources { get => GetBool("hdResources", true); set => SetBool("hdResources", value); }
         /// <summary>Remake: the hangar view's depth of field on the player's ship (StationLevel); off by default on phones.</summary>
         public static bool HangarDepthOfField { get => GetBool("hangarDof", Default("hangarDof", 0f) > 0.5f); set => SetBool("hangarDof", value); }   // off by default (2026-10)
 
@@ -978,7 +981,7 @@ namespace GoF2Remake.Data
         public static readonly string[] GraphicsKeys =
         {
             "displayMode", "resolutionWidth", "resolutionHeight", "frameRate", "quality", "fireSmoke", "fog", "detailDistance", "textureFiltering", "renderScale", "upscaler", "upscalerQuality",
-            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "bloomStrength", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "skyStyle", "nebulaClouds", "npcPlayerEngines", "rebuiltPlanets", "fov",
+            "msaa", "postAa", "textureQuality", "brightness", "bloom", "bloomStyle", "bloomStrength", "hangarShadows", "lods", "hangarDof", "hangarRobots", "barRobots", "lensFlare", "liveSkies", "skyStyle", "nebulaClouds", "npcPlayerEngines", "rebuiltPlanets", "hdResources", "fov",
             "cameraShake", "originalChaseCamera", "es2FreeFlightCamera", "originalUi", "uiWidth", "uiMargin", "showFps", "fpsPosition", "gameCursor",
         };
         public static readonly string[] ControlsKeys =

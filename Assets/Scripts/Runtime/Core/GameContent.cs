@@ -3,6 +3,10 @@
 // of Galaxy on Fire 2, converted into a cache (OriginalConverter, the separate packs layered over it), in the project's own
 // layout below GamePaths.Data/Original; while a build still carries the originals (the Editor, builds before the switch),
 // Resources is the fallback. Every reader of an original goes through here, so the two sources stay one path.
+// The HD resources (the HD pack: HD textures, upscaled skies, 3D planets) live in a folder of their own (GamePaths.Data/HD)
+// and are read before the copy's files while they are on (Options > Graphics "HD resources"); a player short of space has
+// them written over the copy instead (OriginalPacks.InstallHd), and then there is no folder (docs/notes/player-assets.md
+// "HD resources").
 
 using System;
 using System.IO;
@@ -35,8 +39,38 @@ namespace GoF2Remake.Data
         }
         static bool? installed;
 
+        /// <summary>The HD resources' own folder (GamePaths.Data/HD), or the folder set for tests ($GOF2_HD_CACHE in the
+        /// Editor and development builds, like DevCache).</summary>
+        public static string HdRoot
+        {
+            get
+            {
+                if (hdRoot != null) return hdRoot;
+                if (Application.isEditor || Debug.isDebugBuild)
+                {
+                    string d = System.Environment.GetEnvironmentVariable("GOF2_HD_CACHE");
+                    if (!string.IsNullOrEmpty(d)) return d;
+                }
+                return Path.Combine(GamePaths.Data, "HD");
+            }
+            set { hdRoot = value; hdActive = null; }
+        }
+        static string hdRoot;
+
+        /// <summary>The PlayerPrefs key of Options > Graphics "Use the HD resources" (Settings.HdResources' storage: a float,
+        /// 1 on, the default; 0 off).</summary>
+        public const string HdPref = "gof2.hdResources";
+
+        /// <summary>The HD folder is there (its _packs.tsv, written once its files are).</summary>
+        public static bool HdInstalled => File.Exists(Path.Combine(HdRoot, "_packs.tsv"));
+
+        /// <summary>The HD folder's files are read before the copy's: installed and on. Read once (a change of the option
+        /// counts from the next start, or the next Refresh).</summary>
+        public static bool HdActive => hdActive ??= HdInstalled && PlayerPrefs.GetFloat(HdPref, 1f) > 0.5f;
+        static bool? hdActive;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { root = null; installed = null; }
+        static void ResetStatics() { root = null; installed = null; hdRoot = null; hdActive = null; }
 
         /// <summary>Whether a converted copy of this converter's format is there (its manifest, which the converter writes
         /// last, starting with OriginalConverter.ManifestHeader).</summary>
@@ -71,6 +105,7 @@ namespace GoF2Remake.Data
         public static void Refresh()
         {
             installed = null;
+            hdActive = null;
             Refreshed?.Invoke();
         }
 
@@ -78,10 +113,16 @@ namespace GoF2Remake.Data
         /// subscribe as they reset their statics (never cleared here: their order is undefined).</summary>
         public static event System.Action Refreshed;
 
-        /// <summary>A file of the cache by its path there ("Resources/GoF2Data/items.json"), null when it has none.</summary>
+        /// <summary>A file of the cache by its path there ("Resources/GoF2Data/items.json"): the HD folder's while it is on,
+        /// else the copy's; null when neither has it.</summary>
         public static string CachePath(string rel)
         {
             if (!Installed) return null;
+            if (HdActive)
+            {
+                string h = Path.Combine(HdRoot, rel);
+                if (File.Exists(h)) return h;
+            }
             string p = Path.Combine(Root, rel);
             return File.Exists(p) ? p : null;
         }

@@ -44,8 +44,25 @@ namespace GoF2Remake
         IEnumerator Run()
         {
             Line($"GoF2 player assets check {Application.version} {SystemInfo.graphicsDeviceType}; copy installed: {GameContent.Installed} ({GameContent.Root}); setup needed: {OriginalSetup.Needed}");
-            yield return Wait(() => SceneManager.GetActiveScene().name == "MainMenu", 600f, "the main menu");   // (packs may install first)
+            // (packs may install first; the HD question, once: shot, then "Not now" without keeping the answer)
+            int asked = PlayerPrefs.GetInt(OriginalSetup.HdAskedPref, 0);
+            float until = Time.realtimeSinceStartup + 600f;
+            while (SceneManager.GetActiveScene().name != "MainMenu" && Time.realtimeSinceStartup < until)
+            {
+                var setup = UI.OriginalSetupView.Current;
+                if (setup != null && setup.AskingHd)
+                {
+                    yield return new WaitForSecondsRealtime(1f);
+                    yield return PanelShot("hd_question");
+                    setup.NotNow();
+                    PlayerPrefs.SetInt(OriginalSetup.HdAskedPref, asked);
+                    Line("HD question shown on the splash (answered \"Not now\" for the check)");
+                }
+                yield return null;
+            }
+            yield return Wait(() => SceneManager.GetActiveScene().name == "MainMenu", 1f, "the main menu");
             var keys = Enumerable.Range(0, 27).Select(k => k.ToString("000")).Where(World.RebuiltPlanets.Has).ToList();
+            Line($"HD resources: {(GameContent.HdInstalled ? "own folder " + GameContent.HdRoot + (GameContent.HdActive ? ", on" : ", off") : OriginalPacks.HdInCopy(GameContent.Root) ? "in the copy" : "none")}");
             Line($"packs applied: {string.Join(", ", OriginalPacks.Applied(GameContent.Root).Keys)}; 3D planets: {keys.Count} ({string.Join(" ", keys)}); " +
                  $"HD sky stars_000: {(Visuals.OriginalSkies.Hd("stars_000") != null ? "yes" : "no")}, star list: {World.SkyStars.List("stars_000").Length}");
             yield return new WaitForSecondsRealtime(8f);
@@ -61,6 +78,18 @@ namespace GoF2Remake
             yield return new WaitForSecondsRealtime(2f);
             yield return PanelShot("menu_ui_original");
             Settings.OriginalUi = false;
+            // the HD window over the menu (Options > Graphics "HD resources…")
+            var menuRoot = FindAnyObjectByType<UI.MainMenu>()?.Root;
+            if (menuRoot != null && UI.HdWindow.Show(menuRoot))
+            {
+                yield return new WaitForSecondsRealtime(1f);
+                yield return PanelShot("menu_hd_window");
+                UI.OriginalSetupView.Current?.Close();
+                yield return new WaitForSecondsRealtime(0.5f);
+                Line($"HD window over the menu: {(UI.HdWindow.Open ? "still open" : "opened and closed")}");
+                PlayerPrefs.SetInt(OriginalSetup.HdAskedPref, asked);
+            }
+            else Line("HD window over the menu: couldn't open");
             foreach (int station in new[] { 0, 27, 101 })
             {
                 Session.ResetNewGame();

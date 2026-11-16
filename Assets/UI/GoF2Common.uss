@@ -2612,3 +2612,34 @@
     width: 0;
     background-color: var(--gof-cyan);
 }
+
+/* the setup card as a window over a screen (UI.HdWindow: Options > Graphics "HD resources") */
+.original-setup-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* (over a screen: the card opaque, the screen behind not showing through it) */
+.original-setup-overlay > .original-setup {
+    background-color: rgb(5, 11, 19);
+}
+
+/* a choice of the card: its title and what it means, its button at the right */
+.original-setup-choice {
+    flex-direction: row;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom-width: 1px;
+    border-color: var(--gof-line);
+}
+
+.original-setup-choice > .gof-button {
+    margin-left: 16px;
+    flex-shrink: 0;
+}

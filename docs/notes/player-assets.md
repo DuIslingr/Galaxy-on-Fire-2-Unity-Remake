@@ -334,6 +334,27 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
     HD skies (`OriginalSkies.Hd`: the 6:1 strip made a compressed cubemap once, in the GPU cache) and sky patches, SkyStars'
     star lists (GameContent.Bytes). Checked in a Linux build without the originals: the pack written at start, 26 3D
     planets, the HD skies and star lists, no lost shaders, the renders right.
+  - **HD resources** (the user's request 2026-11-15: "a window prompt asking if the user wants to supply them", in "a
+    seperate folder from the original games assets", "an override unless the user turns them off", or replacing the
+    originals "to conserve space"): the HD pack isn't written over the copy like the others.
+    - **The question:** after the first conversion (and at a start with a copy but no HD resources, until answered) the
+      setup window asks whether the player wants to supply the HD pack (`OriginalSetup.HdPromptDue`, PlayerPrefs
+      `hdAsked`): "Choose the HD pack…" or "Not now". Options > Graphics "HD resources…" opens the same window over the
+      options (`HdWindow`), and "Add a pack…" given the HD pack goes there too. An HD pack picked on the first-start
+      screen waits for the conversion, then the same choice.
+    - **Two ways to install it** (the window shows what each takes, `OriginalPacks.HdSpace`): *Keep the originals too*:
+      into `GamePaths.Data/HD` (`GameContent.HdRoot`, its own `_packs.tsv`), made as `HD.new` and swapped in; the content
+      layer reads it before the copy (`GameContent.CachePath`) while Options > Graphics "Use the HD resources"
+      (`Settings.HdResources`, PlayerPrefs `gof2.hdResources`, default on, reset by the Graphics tab's defaults) is on, from the next start
+      (`HdActive` is read once; a rendered sky's GPU cache file carries `_hd`). It outlives a conversion of the copy.
+      *Replace the originals*: written over the copy (`_packs.tsv` records it): the space of the originals it replaces
+      saved, no way to turn it off but converting the copy again (which then asks again: `Job.HdLost`). PlayerPrefs
+      `hdMode` remembers the choice for a kept HD pack (the server's `-pack`).
+    - **Later:** with the HD folder installed, the window offers to move it over the copy (`OriginalSetup.MergeHd`: the
+      files moved, the originals' space freed) or to remove it. The pack file itself is never kept (2.3 GB): a phone
+      picker's copy is deleted after the install, the player's own file left where it is.
+    - Tests: `OriginalSetupTests.TheHdResourcesLiveApartAndOverrideTheCopyUntilTurnedOffOrMerged`; FirstStartTests
+      answers the question with "Not now".
   - **The common and gap packs** (2026-11-15): `make_packs.py --project <full project> --edition android=<cache>
     --edition ios=<cache> --edition macos=<cache>` writes `gof2_common` (order 0), `gof2_gap_<edition>` (order 1) and
     `gof2_hd` (order 2). Each asset in the converted copy's format: textures and data tables the project's (and the Default

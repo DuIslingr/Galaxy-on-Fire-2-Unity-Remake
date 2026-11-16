@@ -5,6 +5,9 @@
 // dialogs), it is converted with its progress shown, then what came
 // out (files per kind, what couldn't be read) and on to the logos and the menu. A copy made by an older game (GameContent
 // .Stale) gets the same screen with its own title. Built in code into the splash's panel (GoF2Common.uss .original-setup*).
+// Then, once (OriginalSetup.HdPromptDue), the HD resources: does the player want to supply the HD pack, and is it kept in a
+// folder of its own (switchable) or written over the copy (less space)? The same window over Options (HdWindow) supplies,
+// merges or removes them later (docs/notes/player-assets.md "HD resources").
 
 using System;
 using System.Collections;
@@ -32,6 +35,7 @@ namespace GoF2Remake.UI
         readonly VisualElement root, card;
         readonly List<string> chosen = new List<string>();
         Func<ModImport.Picked> picking;
+        Action<ModImport.Picked> onPicked;
         OriginalSetup.Job job;
         bool done;
         string pickError;
@@ -47,18 +51,40 @@ namespace GoF2Remake.UI
             root.Add(card);
         }
 
-        /// <summary>Until a copy is installed (or the player quits); 'packsOnly': the copy is installed and kept packs wait
-        /// to be written into it (one added since): their progress, then on.</summary>
-        public IEnumerator Run(bool packsOnly = false)
+        /// <summary>What the window starts with.</summary>
+        public enum Start
+        {
+            /// <summary>Choosing the player's copy (then the HD question, once).</summary>
+            Copy,
+            /// <summary>The copy is installed and kept packs wait to be written into it (one added since): their progress.</summary>
+            Packs,
+            /// <summary>The HD resources: supply them, or (installed in their own folder) merge them into the copy or remove them.</summary>
+            Hd,
+        }
+
+        /// <summary>Until a copy is installed (or the player quits); 'packsOnly': Start.Packs.</summary>
+        public IEnumerator Run(bool packsOnly = false) => Run(packsOnly ? Start.Packs : Start.Copy);
+
+        /// <summary>Until the window's work is done; 'hdPack' (Start.Hd): an HD pack picked already (Options' "Add a pack…"),
+        /// straight to how it is installed; 'window': over a screen (HdWindow), its way out "Close" (else "Not now").</summary>
+        public IEnumerator Run(Start start, OriginalPacks.Info hdPack = null, bool window = false)
         {
             Current = this;
-            if (packsOnly) StartPacks(); else Choose();
+            closeOnly = window;
+            if (start == Start.Packs) StartPacks();
+            else if (start == Start.Hd)
+            {
+                if (hdPack != null) HdHow(hdPack);
+                else if (GameContent.HdInstalled) HdManage();
+                else AskHd();
+            }
+            else Choose();
             while (!done)
             {
                 if (picking != null)
                 {
                     var r = picking();
-                    if (r != null) { picking = null; Picked(r); }
+                    if (r != null) { picking = null; (onPicked ?? Picked)(r); onPicked = null; }
                 }
                 if (job != null)
                 {
@@ -100,6 +126,11 @@ namespace GoF2Remake.UI
                     Row(pk.file, T("remove", "Remove"), () => { try { File.Delete(keep.file); } catch (IOException) { } Choose(); }, pk.title ?? pk.name);
                 }
             }
+            if (pendingHd != null)
+            {
+                Heading(T("hdPending", "HD pack (installed after the conversion)"));
+                Row(pendingHd.file, T("remove", "Remove"), () => { pendingHd = null; Choose(); }, pendingHd.title ?? pendingHd.name);
+            }
             if (pickError != null) Problem(pickError);
             if (chosen.Count > 0)
                 Hint(T("hint", "Several files: a later one's files replace an earlier one's (the iOS copy, then Android's for its " +
@@ -116,6 +147,7 @@ namespace GoF2Remake.UI
         void StartPick()
         {
             pickError = null;
+            onPicked = Picked;
             picking = ModImport.Pick(T("pickTitle", "Your copy of Galaxy on Fire 2 HD"), "Galaxy on Fire 2 HD", OriginalSetup.Extensions,
                                      copyIn: Application.isMobilePlatform);
             Choose();
@@ -141,7 +173,8 @@ namespace GoF2Remake.UI
                     catch (IOException e) { pickError = e.Message; path = null; }
                 }
                 var pack = path != null ? OriginalPacks.Read(path) : null;
-                if (pack != null)
+                if (pack != null && OriginalPacks.IsHd(pack)) pendingHd = pack;   // (installed after the conversion: HdHow)
+                else if (pack != null)
                 {
                     // a pack (gof2pack.json inside): kept to be written over the copy once it is converted (moved when it is a
                     // picker's copy anyway)
@@ -165,7 +198,22 @@ namespace GoF2Remake.UI
         public bool Continue()
         {
             if (!succeeded) return false;
-            done = true;
+            succeeded = false;
+            AfterCopy();
+            return true;
+        }
+
+        /// <summary>Closes the window whatever is on show (tests, the build's self-check).</summary>
+        public void Close() => done = true;
+
+        /// <summary>The HD question is on show (tests).</summary>
+        public bool AskingHd { get; private set; }
+
+        /// <summary>The HD question's "Not now" (tests): false while it isn't on show.</summary>
+        public bool NotNow()
+        {
+            if (!AskingHd) return false;
+            DeclineHd();
             return true;
         }
 
@@ -180,15 +228,20 @@ namespace GoF2Remake.UI
         void Convert()
         {
             if (chosen.Count == 0 || job != null) return;
+            back = Choose;
             ShowProgress(OriginalSetup.Convert(chosen), T("converting", "Converting your copy"),
                          T("convertingText", "This happens once. The game starts as soon as it is done."));
         }
 
-        bool packsOnly;
+        bool packsOnly, hdJob, closeOnly;
+        OriginalPacks.Info pendingHd;
+        string hdDoneTitle, hdDoneText;
+        Action back;
 
         void StartPacks()
         {
             packsOnly = true;
+            back = Choose;
             ShowProgress(OriginalSetup.ApplyPacks(), T("installingPacks", "Installing packs"),
                          T("installingPacksText", "Writing the new packs over your converted copy."));
         }
@@ -218,6 +271,8 @@ namespace GoF2Remake.UI
             phase.text = p.StartsWith("read ") ? string.Format(T("reading", "Reading {0}"), p.Substring(5))
                        : p.StartsWith("pack ") ? string.Format(T("installingPack", "Installing {0}"), p.Substring(5))
                        : p == "tables" ? T("tables", "Making the text, the data tables and the interface images")
+                       : p == "merge" ? T("hdMerging", "Moving the HD resources into your copy")
+                       : p == "remove" ? T("hdRemoving", "Removing the HD resources")
                        : p == "swap" || p == "done" ? T("finishing", "Finishing")
                        : T("starting", "Starting");
             float f = job.Total > 0 ? Mathf.Clamp01(job.Done / (float)job.Total) : p == "tables" || p == "swap" ? 1f : 0f;
@@ -237,12 +292,22 @@ namespace GoF2Remake.UI
                 Title(T("failed", "That didn't work"));
                 Text(string.Format(T("failedText", "Nothing was installed: {0}"), j.Error));
                 var b = Buttons();
-                Button(b, T("back", "Back"), Choose, primary: true).Focus();
-                Button(b, T("quit", "Quit"), Quit);
+                Button(b, T("back", "Back"), back ?? Choose, primary: true).Focus();
+                if (hdJob) Button(b, T("close", "Close"), () => done = true);
+                else Button(b, T("quit", "Quit"), Quit);
+                hdJob = false;
+                return;
+            }
+            if (hdJob)
+            {
+                hdJob = false;
+                Title(hdDoneTitle);
+                if (!string.IsNullOrEmpty(hdDoneText)) Text(hdDoneText);
+                Button(Buttons(), T("continue", "Continue"), () => done = true, primary: true).Focus();
                 return;
             }
             succeeded = true;
-            if (packsOnly) { done = true; return; }   // (packs written: straight on)
+            if (packsOnly) { succeeded = false; AfterCopy(); return; }   // (packs written: straight on)
             Title(T("done", "Your copy is ready"));
             string Kind(string k, string english) => j.Counts.TryGetValue(k, out var n) ? $"{n:N0} {T("kind." + k, english)}" : null;
             var kinds = new[] { Kind("Models", "models"), Kind("Textures", "textures"), Kind("Audio", "sounds"),
@@ -254,7 +319,166 @@ namespace GoF2Remake.UI
                 foreach (var p in j.Problems.Take(8)) Problem(p);
             }
             var buttons = Buttons();
-            Button(buttons, T("continue", "Continue"), () => done = true, primary: true).Focus();
+            Button(buttons, T("continue", "Continue"), () => Continue(), primary: true).Focus();
+        }
+
+        // ---- the HD resources
+
+        /// <summary>After the copy (or its packs): the HD question once, else on.</summary>
+        void AfterCopy()
+        {
+            if (pendingHd != null && GameContent.Installed) { var p = pendingHd; pendingHd = null; HdHow(p); }
+            else if (OriginalSetup.HdPromptDue) AskHd();
+            else done = true;
+        }
+
+        static string Size(long bytes) => bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):0.0} GB" : $"{Math.Max(0, bytes) / 1048576.0:N0} MB";
+
+        void AskHd()
+        {
+            card.Clear();
+            AskingHd = true;
+            Title(T("hdTitle", "HD resources"));
+            Text(T("hdText", "The HD pack brings higher-resolution textures, the upscaled skies and the 3D planets. It isn't part of " +
+                             "your copy of the game: it is distributed separately (about 2.3 GB). Do you want to supply it?"));
+            Hint(T("hdLater", "You can supply it later too, in Options > Graphics."));
+            if (pickError != null) Problem(pickError);
+            var buttons = Buttons();
+            var pick = Button(buttons, T("hdPick", "Choose the HD pack…"), StartPickHd, primary: true);
+            pick.SetEnabled(picking == null && ModImport.Available);
+            Button(buttons, closeOnly ? T("close", "Close") : T("hdNotNow", "Not now"), DeclineHd);
+            pick.Focus();
+        }
+
+        void DeclineHd()
+        {
+            AskingHd = false;
+            PlayerPrefs.SetInt(OriginalSetup.HdAskedPref, 1);
+            PlayerPrefs.Save();
+            done = true;
+        }
+
+        void StartPickHd()
+        {
+            pickError = null;
+            onPicked = PickedHd;
+            picking = ModImport.Pick(T("hdPickTitle", "The HD pack"), "Galaxy on Fire 2 packs",
+                                     new[] { OriginalPacks.Extension.TrimStart('.'), "zip" }, copyIn: Application.isMobilePlatform);
+            AskHd();
+        }
+
+        void PickedHd(ModImport.Picked r)
+        {
+            if (r.error != null) pickError = r.error;
+            else if (!r.cancelled && r.path != null)
+            {
+                var info = OriginalPacks.Read(r.path);
+                if (info == null) pickError = Localization.Extra("packNotPack", "That isn't a Galaxy on Fire 2 pack (no gof2pack.json in it).");
+                else if (!OriginalPacks.IsHd(info))
+                    pickError = string.Format(T("hdNotHd", "That is the {0}, not the HD pack (Options > Graphics, Add a pack… takes it)."), info.title ?? info.name);
+                else { HdHow(info); return; }
+                if (OriginalSetup.IsImportCopy(r.path) || r.path.StartsWith(Application.temporaryCachePath, StringComparison.Ordinal))
+                    try { File.Delete(r.path); } catch (IOException) { }
+            }
+            AskHd();
+        }
+
+        /// <summary>The HD pack picked: kept beside the originals (switchable) or written over them (less space).</summary>
+        void HdHow(OriginalPacks.Info pack)
+        {
+            card.Clear();
+            AskingHd = false;
+            Title(T("hdHowTitle", "How should the HD resources be installed?"));
+            long alongside = pack.bytes, over = pack.bytes;
+            try { (alongside, over) = OriginalPacks.HdSpace(pack, GameContent.Root); }
+            catch (Exception e) when (e is IOException || e is InvalidDataException || e is UnauthorizedAccessException) { Problem(e.Message); }
+            Choice(T("hdAlongside", "Keep the originals too"),
+                   string.Format(T("hdAlongsideText", "In a folder of their own, used instead of your copy's files. Options > Graphics " +
+                                                      "can turn them off again. Takes {0}."), Size(alongside)),
+                   T("hdInstall", "Install"), () => InstallHd(pack, false), primary: true);
+            Choice(T("hdOver", "Replace the originals"),
+                   string.Format(T("hdOverText", "Written over your converted copy: takes {0}, {1} less. Turning them off then " +
+                                                 "means converting your copy again."), Size(over), Size(alongside - over)),
+                   T("hdReplace", "Replace"), () => InstallHd(pack, true));
+            var buttons = Buttons();
+            Button(buttons, T("back", "Back"), AskHd);
+            Button(buttons, closeOnly ? T("close", "Close") : T("hdNotNow", "Not now"), DeclineHd);
+        }
+
+        void InstallHd(OriginalPacks.Info pack, bool over)
+        {
+            if (job != null) return;
+            PlayerPrefs.SetInt(OriginalPacks.HdModePref, over ? 1 : 0);
+            PlayerPrefs.SetInt(OriginalSetup.HdAskedPref, 1);
+            PlayerPrefs.Save();
+            hdJob = true;
+            back = AskHd;
+            hdDoneTitle = T("hdDone", "The HD resources are installed");
+            hdDoneText = over ? T("hdDoneOver", "They are part of your converted copy now.")
+                              : T("hdDoneAlongside", "Options > Graphics, \"Use the HD resources\" turns them off and on (from the next start).");
+            ShowProgress(OriginalSetup.InstallHd(pack, over), T("hdInstalling", "Installing the HD resources"),
+                         over ? T("hdInstallingOver", "Writing them over your converted copy.")
+                              : T("hdInstallingAlongside", "Into a folder of their own beside your converted copy."));
+        }
+
+        /// <summary>Installed in their own folder: written over the copy (space), removed, or kept.</summary>
+        void HdManage()
+        {
+            card.Clear();
+            Title(T("hdTitle", "HD resources"));
+            long size = 0, frees = 0;
+            try
+            {
+                string hd = Path.GetFullPath(GameContent.HdRoot).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                foreach (var f in Directory.GetFiles(hd, "*", SearchOption.AllDirectories))
+                {
+                    long n = new FileInfo(f).Length;
+                    size += n;
+                    var orig = new FileInfo(Path.Combine(GameContent.Root, f.Substring(hd.Length)));
+                    if (orig.Exists) frees += orig.Length;
+                }
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException) { Problem(e.Message); }
+            Text(string.Format(T("hdInstalledText", "Installed in a folder of their own ({0}), used instead of your copy's files while " +
+                                                    "\"Use the HD resources\" is on."), Size(size)));
+            Choice(T("hdMerge", "Replace the originals"),
+                   string.Format(T("hdMergeText", "Moves them over your converted copy and frees {0}. Turning them off then means " +
+                                                  "converting your copy again."), Size(frees)),
+                   T("hdReplace", "Replace"), () => RunHdJob(OriginalSetup.MergeHd(), 1));
+            Choice(T("hdRemove", "Remove the HD resources"),
+                   string.Format(T("hdRemoveText", "Frees {0}. You can supply them again later."), Size(size)),
+                   T("hdRemoveButton", "Remove"), () => RunHdJob(OriginalSetup.RemoveHd(), 0));
+            Button(Buttons(), T("close", "Close"), () => done = true, primary: true).Focus();
+        }
+
+        void RunHdJob(OriginalSetup.Job j, int mode)
+        {
+            if (job != null) return;
+            PlayerPrefs.SetInt(OriginalPacks.HdModePref, mode);
+            PlayerPrefs.Save();
+            hdJob = true;
+            back = HdManage;
+            hdDoneTitle = mode == 1 ? T("hdMerged", "The HD resources are part of your copy now") : T("hdRemoved", "The HD resources are removed");
+            hdDoneText = null;
+            ShowProgress(j, T("hdTitle", "HD resources"), "");
+        }
+
+        /// <summary>One way to go: its title and what it means, its button at the right.</summary>
+        void Choice(string title, string detail, string button, Action onClick, bool primary = false)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("original-setup-choice");
+            var text = new VisualElement { style = { flexGrow = 1, flexShrink = 1 } };
+            var name = new Label(title);
+            name.AddToClassList("original-setup-file");
+            text.Add(name);
+            var d = new Label(detail);
+            d.AddToClassList("original-setup-file-detail");
+            text.Add(d);
+            row.Add(text);
+            var b = Button(row, button, onClick, primary);
+            card.Add(row);
+            if (primary) b.Focus();
         }
 
         static void Quit()

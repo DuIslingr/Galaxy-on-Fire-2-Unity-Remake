@@ -89,6 +89,68 @@ namespace GoF2Remake.Tests
             Assert.IsFalse(File.Exists(Path.Combine(GamePaths.Data, "outside.txt")));
         }
 
+        [Test]
+        public void TheHdResourcesLiveApartAndOverrideTheCopyUntilTurnedOffOrMerged()
+        {
+            // docs/notes/player-assets.md "HD resources": a folder of their own read before the copy while on; written over
+            // the copy (MergeHd, or InstallHd 'over') frees the originals' space and leaves no folder
+            string root = Path.Combine(GamePaths.Data, "Original"), hd = Path.Combine(GamePaths.Data, "HD");
+            Directory.CreateDirectory(Path.Combine(root, "Textures/main"));
+            File.WriteAllText(Path.Combine(root, "_manifest.tsv"), OriginalConverter.ManifestHeader + "\n");
+            File.WriteAllText(Path.Combine(root, "Textures/main/a.png"), "original");
+            File.WriteAllText(Path.Combine(root, "Textures/main/b.png"), "original b");
+            var pack = OriginalPacks.Read(Pack("hd", 5, ("Textures/main/a.png", "hd a!"), ("Resources/GoF2SkyHd/stars_000.png", "sky")));
+            Assert.IsTrue(OriginalPacks.IsHd(pack));
+            bool pref = Settings.HdResources;
+            GameContent.Root = root;
+            GameContent.HdRoot = hd;
+            try
+            {
+                var (alongside, over) = OriginalPacks.HdSpace(pack, root);
+                Assert.AreEqual(5 + 3, alongside, "its files");
+                Assert.AreEqual(5 + 3 - "original".Length, over, "less the original it replaces");
+
+                OriginalPacks.InstallHd(pack, false, root, hd, null);
+                Assert.AreEqual("original", File.ReadAllText(Path.Combine(root, "Textures/main/a.png")), "the copy untouched");
+                Assert.IsFalse(Directory.Exists(hd + ".new"));
+                Settings.HdResources = true;
+                GameContent.Refresh();
+                Assert.IsTrue(GameContent.HdInstalled && GameContent.HdActive);
+                Assert.AreEqual("hd a!", File.ReadAllText(GameContent.CachePath("Textures/main/a.png")), "the HD file first");
+                Assert.AreEqual("original b", File.ReadAllText(GameContent.CachePath("Textures/main/b.png")), "the copy's where HD has none");
+                Assert.IsNotNull(GameContent.CachePath("Resources/GoF2SkyHd/stars_000.png"));
+                Assert.IsFalse(OriginalPacks.HdInCopy(root));
+
+                Settings.HdResources = false;
+                GameContent.Refresh();
+                Assert.IsFalse(GameContent.HdActive, "turned off");
+                Assert.AreEqual("original", File.ReadAllText(GameContent.CachePath("Textures/main/a.png")));
+                Assert.IsNull(GameContent.CachePath("Resources/GoF2SkyHd/stars_000.png"));
+
+                OriginalPacks.MergeHd(root, hd, null);
+                GameContent.Refresh();
+                Assert.IsFalse(Directory.Exists(hd), "merged: no folder");
+                Assert.IsTrue(OriginalPacks.HdInCopy(root));
+                Assert.AreEqual("hd a!", File.ReadAllText(GameContent.CachePath("Textures/main/a.png")), "the copy's own now");
+
+                // a newer pack written over the copy straight away; an old HD folder goes with it
+                Directory.CreateDirectory(hd);
+                File.WriteAllText(Path.Combine(hd, "_packs.tsv"), "hd\t5");
+                var newer = OriginalPacks.Read(Pack("hd", 6, ("Textures/main/a.png", "hd6")));
+                OriginalPacks.InstallHd(newer, true, root, hd, null);
+                Assert.IsFalse(Directory.Exists(hd));
+                Assert.AreEqual("hd6", File.ReadAllText(Path.Combine(root, "Textures/main/a.png")));
+                Assert.AreEqual(6, OriginalPacks.Applied(root)["hd"]);
+            }
+            finally
+            {
+                Settings.HdResources = pref;
+                GameContent.Root = null;
+                GameContent.HdRoot = null;
+                GameContent.Refresh();
+            }
+        }
+
         [TestCase(CompressionLevel.NoCompression)]
         [TestCase(CompressionLevel.Optimal)]   // (a compressed OBB: through a temporary file)
         public void SomethingElseInstallsNothing(CompressionLevel level)

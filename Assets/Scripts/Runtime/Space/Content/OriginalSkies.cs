@@ -96,7 +96,8 @@ namespace GoF2Remake.Visuals
             var layers = LayersOf(name);
             // (no GPU: a server or a -nographics batch run renders nothing)
             if (layers == null || !GameContent.Installed || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;
-            string cacheFile = Path.Combine(GameContent.GpuCache, "skies", $"{name}_{FaceSize}_{SystemInfo.graphicsDeviceType}.sky");
+            // (rendered from the HD folder's textures while it is on: a sky of its own)
+            string cacheFile = Path.Combine(GameContent.GpuCache, "skies", $"{name}_{FaceSize}{(GameContent.HdActive ? "_hd" : "")}_{SystemInfo.graphicsDeviceType}.sky");
             var cached = ReadCube(cacheFile, name, FaceSize);
             if (cached != null) return cached;
             var strip = RenderStrip(layers);

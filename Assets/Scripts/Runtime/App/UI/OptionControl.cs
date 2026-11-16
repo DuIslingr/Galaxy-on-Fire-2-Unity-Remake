@@ -50,6 +50,18 @@ namespace GoF2Remake.UI
         /// <summary>The player changed the value through this row.</summary>
         public event Action Changed;
 
+        /// <summary>The button row whose action is running (null outside it): an action that opens a window over its panel
+        /// (HdWindow) finds the panel through it.</summary>
+        public static OptionControl Pressing { get; private set; }
+
+        void Press()
+        {
+            Pressing = this;
+            try { def.action?.Invoke(); }
+            finally { Pressing = null; }
+            Changed?.Invoke();
+        }
+
         /// <summary>Every row on show reads its setting again: a change that finishes later than its row's press (the
         /// interface font's import, after the file picker).</summary>
         public static void RefreshShown() => refreshShown?.Invoke();
@@ -89,7 +101,7 @@ namespace GoF2Remake.UI
                     Field = binding;
                     break;
                 case OptionKind.Button:
-                    button = new Button(() => { d.action?.Invoke(); Changed?.Invoke(); });
+                    button = new Button(Press);
                     button.AddToClassList("option-button");
                     Field = button;
                     break;
@@ -267,7 +279,7 @@ namespace GoF2Remake.UI
             if (!Enabled) return;
             if (slider != null) { if (InputMode.Current != InputKind.Gamepad) BeginEdit(null); }
             else if (toggle != null) toggle.value = !toggle.value;
-            else if (button != null) { def.action?.Invoke(); Changed?.Invoke(); }
+            else if (button != null) Press();
             else if (binding != null) binding.Activate();
         }
     
