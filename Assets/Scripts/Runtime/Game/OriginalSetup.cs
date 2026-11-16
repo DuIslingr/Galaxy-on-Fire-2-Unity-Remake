@@ -76,12 +76,13 @@ namespace GoF2Remake.Data
             string work = final + ".new";
             var list = packages.ToList();
             var copies = list.Where(IsImportCopy).ToList();   // (temporaryCachePath: main thread only)
-            var thread = new Thread(() => Run(job, list, copies, final, work)) { IsBackground = true, Name = "GoF2 conversion", Priority = System.Threading.ThreadPriority.BelowNormal };
+            string packs = OriginalPacks.Folder;
+            var thread = new Thread(() => Run(job, list, copies, final, work, packs)) { IsBackground = true, Name = "GoF2 conversion", Priority = System.Threading.ThreadPriority.BelowNormal };
             thread.Start();
             return job;
         }
 
-        static void Run(Job job, List<string> packages, List<string> copies, string final, string work)
+        static void Run(Job job, List<string> packages, List<string> copies, string final, string work, string packs)
         {
             var t0 = DateTime.UtcNow;
             try
@@ -102,6 +103,12 @@ namespace GoF2Remake.Data
                 if (c.Items.Count == 0 || missing != null)
                     throw new InvalidDataException(c.Items.Count == 0 ? "nothing of Galaxy on Fire 2 HD was found in it"
                                                                       : "it has no " + missing + " (an incomplete copy, or another game)");
+                // the kept packs over it (what the copy doesn't provide), before it replaces the old copy
+                foreach (var p in OriginalPacks.Kept(packs))
+                {
+                    job.phase = "pack " + (p.title ?? p.name); job.done = job.total = 0;
+                    OriginalPacks.Apply(p, work, (d, t, e) => { job.total = t; job.done = d; job.entry = e; });
+                }
                 job.phase = "swap";
                 if (Directory.Exists(final)) Directory.Delete(final, true);
                 Directory.Move(work, final);
@@ -121,6 +128,38 @@ namespace GoF2Remake.Data
                 job.Seconds = (float)(DateTime.UtcNow - t0).TotalSeconds;
                 job.finished = true;
             }
+        }
+
+        /// <summary>Packs kept but not yet written into the installed copy (a pack added since: the next start writes it).</summary>
+        public static bool PacksPending => GameContent.Installed && OriginalPacks.Pending(OriginalPacks.Folder, GameContent.Root).Count > 0;
+
+        /// <summary>Writes the pending packs into the installed copy on a worker thread; Finish once the job has finished.</summary>
+        public static Job ApplyPacks()
+        {
+            var job = new Job();
+            var pending = OriginalPacks.Pending(OriginalPacks.Folder, GameContent.Root);
+            string root = GameContent.Root;
+            var thread = new Thread(() =>
+            {
+                var t0 = DateTime.UtcNow;
+                try
+                {
+                    foreach (var p in pending)
+                    {
+                        job.phase = "pack " + (p.title ?? p.name); job.done = job.total = 0;
+                        OriginalPacks.Apply(p, root, (d, t, e) => { job.total = t; job.done = d; job.entry = e; });
+                        job.Files += p.files;
+                    }
+                    job.phase = "done";
+                }
+                catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is InvalidDataException || e is NotSupportedException)
+                {
+                    job.Error = e.Message;
+                }
+                finally { job.Seconds = (float)(DateTime.UtcNow - t0).TotalSeconds; job.finished = true; }
+            }) { IsBackground = true, Name = "GoF2 packs", Priority = System.Threading.ThreadPriority.BelowNormal };
+            thread.Start();
+            return job;
         }
 
         /// <summary>Where a picked package's copy is kept until the conversion (a phone's picker copies it; main thread).</summary>

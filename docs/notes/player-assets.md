@@ -307,6 +307,28 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   - **Packs with three editions:** common required 30 (with macOS only what no edition has), optional 137; gap
     Android 2105, iOS 271, macOS 260; optional HD Android 249, iOS 268, macOS 14. packs.py now compares the
     data tables too (`items.json` is in the common pack: the remake's three text fixes in its names).
+- **Packs** (2026-11-15): what the player's copy doesn't provide, distributed separately, never on GitHub.
+  - **Format:** a zip (`.gof2pack`) of files at their converted copy's paths ("Textures/main/x.png", "Resources/
+    GoF2Planets3D/009/albedo.png") and `gof2pack.json` (name, title, version, order: common 0, gap 1, HD 2; files, bytes).
+    `OriginalPacks`: a picked pack (the setup screen tells it from a copy by its manifest) is kept in `GamePaths.Data/
+    Packs` (an older version of it replaced) and its files written over the converted copy, recorded in the copy's
+    `_packs.tsv`; a conversion writes every kept pack again (before the copy is swapped in), and a pack kept since (put in
+    the Packs folder) is written at the next start (StartupSplash: the setup screen's progress, then straight on). Paths
+    outside the copy are refused.
+  - **The HD pack** (the user's choice 2026-11-15, for the 3D planets: "add them to the hd pack"):
+    `Reference/tools/player_assets/make_packs.py --project <the full project>` writes `gof2_hd.gof2pack` (to
+    `~/GOF2UnityRemakeMods/packs` by default): the HD textures (every edition's optional list in packs.json and the common
+    optional ones, each normal map with its metallic / smoothness map), the Real-ESRGAN skies and their star lists
+    (GoF2SkyHd: in the pack rather than a desktop step), the sky patches made from them (GoF2SkyLayers/patch_*) and the 3D
+    planets (GoF2Planets3D, made by the planet_rebuild tools in ~/Downloads/planet_rebuild/pfit, the user's own): 759
+    files, 2.3 GB. Loaded from the copy where the build has none: RebuiltPlanets (planet.json via GameContent.Text, the
+    maps via `OriginalTextures.Data`: linear, uncompressed as their importer's BC7 / DXT1 choice demanded), OrbitBuilder's
+    HD skies (`OriginalSkies.Hd`: the 6:1 strip made a compressed cubemap once, in the GPU cache) and sky patches, SkyStars'
+    star lists (GameContent.Bytes). Checked in a Linux build without the originals: the pack written at start, 26 3D
+    planets, the HD skies and star lists, no lost shaders, the renders right.
+  - **The common and gap packs** follow once their sounds and models have a format the copy reads (the project's are .ogg
+    and .fbx, the converted copy's .mp3 / .wav and .aem; the remodelled hulls are FBX only).
+  - **Development builds:** `$GOF2_DATA` points `GamePaths.Data` elsewhere (PlayerAssetsCheck with its own Packs folder).
 - **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
   - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is
     `# gof2 original cache v<N>`. `GameContent.Installed` only for this version's stamp; `GameContent.Stale` for a

@@ -22,6 +22,7 @@ namespace GoF2Remake.Data
         {
             loaded.Clear();
             images.Clear();
+            data.Clear();
             GameContent.Refreshed -= ResetStatics;
             GameContent.Refreshed += ResetStatics;   // (a new copy converted)
         }
@@ -148,6 +149,24 @@ namespace GoF2Remake.Data
             }
             if (t != null || GameContent.Installed) images[projectPath] = t;
             return t;
+        }
+
+        static readonly Dictionary<string, Texture2D> data = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>A PNG of the converted copy (or an installed pack) by its path there ("Resources/GoF2Planets3D/009/albedo.png")
+        /// as its importer set it up: colour space, mipmaps, wrap per axis, filter; uncompressed (the 3D planets' maps tinted
+        /// green as DXT1, their importer chose BC7). Null when the copy hasn't it.</summary>
+        public static Texture2D Data(string path, bool linear, bool mipmaps, TextureWrapMode wrapU, TextureWrapMode wrapV, FilterMode filter = FilterMode.Bilinear)
+        {
+            if (string.IsNullOrEmpty(path)) return null;
+            if (data.TryGetValue(path, out var t) && t != null) return t;
+            var file = GameContent.CachePath(path);
+            if (file == null) return null;
+            t = new Texture2D(2, 2, TextureFormat.RGBA32, mipmaps, linear) { name = Path.GetFileNameWithoutExtension(path) };
+            if (!t.LoadImage(File.ReadAllBytes(file), true)) { Gone(t); return null; }
+            t.wrapModeU = wrapU; t.wrapModeV = wrapV; t.filterMode = filter;
+            if (mipmaps) t.anisoLevel = 4;
+            return data[path] = t;
         }
 
         static void Gone(UnityEngine.Object o)

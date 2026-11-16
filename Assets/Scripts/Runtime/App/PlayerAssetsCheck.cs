@@ -44,7 +44,10 @@ namespace GoF2Remake
         IEnumerator Run()
         {
             Line($"GoF2 player assets check {Application.version} {SystemInfo.graphicsDeviceType}; copy installed: {GameContent.Installed} ({GameContent.Root}); setup needed: {OriginalSetup.Needed}");
-            yield return Wait(() => SceneManager.GetActiveScene().name == "MainMenu", 120f, "the main menu");
+            yield return Wait(() => SceneManager.GetActiveScene().name == "MainMenu", 600f, "the main menu");   // (packs may install first)
+            var keys = Enumerable.Range(0, 27).Select(k => k.ToString("000")).Where(World.RebuiltPlanets.Has).ToList();
+            Line($"packs applied: {string.Join(", ", OriginalPacks.Applied(GameContent.Root).Keys)}; 3D planets: {keys.Count} ({string.Join(" ", keys)}); " +
+                 $"HD sky stars_000: {(Visuals.OriginalSkies.Hd("stars_000") != null ? "yes" : "no")}, star list: {World.SkyStars.List("stars_000").Length}");
             yield return new WaitForSecondsRealtime(8f);
             Shot("menu");
             foreach (int station in new[] { 0, 27, 101 })

@@ -47,11 +47,12 @@ namespace GoF2Remake.UI
             root.Add(card);
         }
 
-        /// <summary>Until a copy is installed (or the player quits).</summary>
-        public IEnumerator Run()
+        /// <summary>Until a copy is installed (or the player quits); 'packsOnly': the copy is installed and kept packs wait
+        /// to be written into it (one added since): their progress, then on.</summary>
+        public IEnumerator Run(bool packsOnly = false)
         {
             Current = this;
-            Choose();
+            if (packsOnly) StartPacks(); else Choose();
             while (!done)
             {
                 if (picking != null)
@@ -88,6 +89,16 @@ namespace GoF2Remake.UI
                 Heading(T("chosen", "To convert"));
                 foreach (var p in chosen.ToList())
                     Row(p, T("remove", "Remove"), () => { chosen.Remove(p); Choose(); });
+            }
+            var packs = OriginalPacks.Kept(OriginalPacks.Folder);
+            if (packs.Count > 0)
+            {
+                Heading(T("packs", "Packs (written over the converted copy)"));
+                foreach (var pk in packs)
+                {
+                    var keep = pk;
+                    Row(pk.file, T("remove", "Remove"), () => { try { File.Delete(keep.file); } catch (IOException) { } Choose(); }, pk.title ?? pk.name);
+                }
             }
             if (pickError != null) Problem(pickError);
             if (chosen.Count > 0)
@@ -129,7 +140,15 @@ namespace GoF2Remake.UI
                     }
                     catch (IOException e) { pickError = e.Message; path = null; }
                 }
-                if (path != null && !chosen.Contains(path)) chosen.Add(path);
+                var pack = path != null ? OriginalPacks.Read(path) : null;
+                if (pack != null)
+                {
+                    // a pack (gof2pack.json inside): kept to be written over the copy once it is converted (moved when it is a
+                    // picker's copy anyway)
+                    try { OriginalPacks.Keep(pack, OriginalPacks.Folder, OriginalSetup.IsImportCopy(path)); }
+                    catch (IOException e) { pickError = e.Message; }
+                }
+                else if (path != null && !chosen.Contains(path)) chosen.Add(path);
             }
             Choose();
         }
@@ -161,11 +180,26 @@ namespace GoF2Remake.UI
         void Convert()
         {
             if (chosen.Count == 0 || job != null) return;
-            job = OriginalSetup.Convert(chosen);
+            ShowProgress(OriginalSetup.Convert(chosen), T("converting", "Converting your copy"),
+                         T("convertingText", "This happens once. The game starts as soon as it is done."));
+        }
+
+        bool packsOnly;
+
+        void StartPacks()
+        {
+            packsOnly = true;
+            ShowProgress(OriginalSetup.ApplyPacks(), T("installingPacks", "Installing packs"),
+                         T("installingPacksText", "Writing the new packs over your converted copy."));
+        }
+
+        void ShowProgress(OriginalSetup.Job j, string title, string text)
+        {
+            job = j;
             started = Time.realtimeSinceStartup;
             card.Clear();
-            Title(T("converting", "Converting your copy"));
-            Text(T("convertingText", "This happens once. The game starts as soon as it is done."));
+            Title(title);
+            Text(text);
             var bar = new VisualElement();
             bar.AddToClassList("original-setup-bar");
             fill = new VisualElement();
@@ -182,6 +216,7 @@ namespace GoF2Remake.UI
         {
             string p = job.Phase;
             phase.text = p.StartsWith("read ") ? string.Format(T("reading", "Reading {0}"), p.Substring(5))
+                       : p.StartsWith("pack ") ? string.Format(T("installingPack", "Installing {0}"), p.Substring(5))
                        : p == "tables" ? T("tables", "Making the text, the data tables and the interface images")
                        : p == "swap" || p == "done" ? T("finishing", "Finishing")
                        : T("starting", "Starting");
@@ -207,6 +242,7 @@ namespace GoF2Remake.UI
                 return;
             }
             succeeded = true;
+            if (packsOnly) { done = true; return; }   // (packs written: straight on)
             Title(T("done", "Your copy is ready"));
             string Kind(string k, string english) => j.Counts.TryGetValue(k, out var n) ? $"{n:N0} {T("kind." + k, english)}" : null;
             var kinds = new[] { Kind("Models", "models"), Kind("Textures", "textures"), Kind("Audio", "sounds"),
@@ -246,12 +282,12 @@ namespace GoF2Remake.UI
             return l;
         }
 
-        void Row(string path, string action, Action onClick)
+        void Row(string path, string action, Action onClick, string title = null)
         {
             var row = new VisualElement();
             row.AddToClassList("original-setup-row");
             var text = new VisualElement { style = { flexGrow = 1, flexShrink = 1 } };
-            var name = new Label(Path.GetFileName(path));
+            var name = new Label(title ?? Path.GetFileName(path));
             name.AddToClassList("original-setup-file");
             text.Add(name);
             string size = "";

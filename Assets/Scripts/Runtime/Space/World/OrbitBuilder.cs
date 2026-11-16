@@ -109,8 +109,8 @@ namespace GoF2Remake.World
         public static void Enhance(Material sky, int stars, int nebula)
         {
             if ((stars < 0 && nebula < 0) || !SkyStars.Supported) return;
-            var starsCube = stars >= 0 ? Resources.Load<Cubemap>($"GoF2SkyHd/stars_{stars:000}") : null;
-            var nebulaCube = nebula >= 0 ? Resources.Load<Cubemap>($"GoF2SkyHd/nebula_{nebula:000}") : null;
+            var starsCube = stars >= 0 ? Visuals.OriginalSkies.Hd($"stars_{stars:000}") : null;   // (the build's, else the HD pack's)
+            var nebulaCube = nebula >= 0 ? Visuals.OriginalSkies.Hd($"nebula_{nebula:000}") : null;
             if (starsCube == null) stars = -1;
             if (nebulaCube == null) nebula = -1;
             var grid = SkyStars.Grid(stars, nebula);
@@ -131,7 +131,8 @@ namespace GoF2Remake.World
                 // "gof2:<name>": the game's own layer images (Resources/GoF2SkyLayers: star_mask, nebula_masks, patch_0XX)
                 // (a mod's textures/<name> replaces it: ModTextures.SkyLayer)
                 var t = name == null ? null : name.StartsWith("gof2:")
-                    ? Modding.ModTextures.SkyLayer(name.Substring(5)) ?? Resources.Load<Texture2D>("GoF2SkyLayers/" + name.Substring(5))
+                    ? Modding.ModTextures.SkyLayer(name.Substring(5)) ?? (Resources.Load<Texture2D>("GoF2SkyLayers/" + name.Substring(5))
+                       ?? Data.OriginalTextures.Data($"Resources/GoF2SkyLayers/{name.Substring(5)}.png", false, true, TextureWrapMode.Clamp, TextureWrapMode.Clamp))
                     : Modding.ModBackdrop.Texture(name);
                 if (t != null) t.wrapMode = TextureWrapMode.Repeat;
                 return t;
@@ -702,12 +703,12 @@ namespace GoF2Remake.World
         {
             var stars = new GameObject("SpaceDust").AddComponent<SpaceDust>();
             stars.transform.SetParent(parent, false);
-            stars.Build(Resources.Load<Material>($"{Backdrop.MaterialFolder}/space_particle"), 500, 20f, 60f, Color.white, 10000f, 5000f, 2000f);
+            stars.Build(Visuals.OriginalBackdrop.Get("space_particle"), 500, 20f, 60f, Color.white, 10000f, 5000f, 2000f);
             if (layout.interstellar) return null;
             var fog = new GameObject("SpaceFog").AddComponent<SpaceDust>();
             fog.transform.SetParent(parent, false);
             string fogTex = layout.systemTexture == 12 ? "v_fog_ice" : "fog";
-            fog.Build(Resources.Load<Material>($"{Backdrop.MaterialFolder}/{fogTex}"), 15, 10000f, 10000f, layout.dustFogTint, 10000f, 5000f, 1000f);
+            fog.Build(Visuals.OriginalBackdrop.Get(fogTex), 15, 10000f, 10000f, layout.dustFogTint, 10000f, 5000f, 1000f);
             return fog;
         }
 

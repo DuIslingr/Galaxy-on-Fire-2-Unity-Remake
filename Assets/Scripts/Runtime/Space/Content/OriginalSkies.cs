@@ -97,7 +97,7 @@ namespace GoF2Remake.Visuals
             // (no GPU: a server or a -nographics batch run renders nothing)
             if (layers == null || !GameContent.Installed || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;
             string cacheFile = Path.Combine(GameContent.GpuCache, "skies", $"{name}_{FaceSize}_{SystemInfo.graphicsDeviceType}.sky");
-            var cached = ReadCube(cacheFile, name);
+            var cached = ReadCube(cacheFile, name, FaceSize);
             if (cached != null) return cached;
             var strip = RenderStrip(layers);
             if (strip == null) return null;
@@ -176,9 +176,10 @@ namespace GoF2Remake.Visuals
         /// stored in 'cacheFile'; uncompressed where the GPU can't copy between textures or reads neither format.</summary>
         static Texture CompressedCube(Texture2D strip, string name, string cacheFile)
         {
+            int size = strip.height;   // (a 6:1 strip: the rendered skies' FaceSize, the HD pack's 2048)
             bool dxt = SystemInfo.SupportsTextureFormat(TextureFormat.DXT1);
             bool etc = !dxt && SystemInfo.SupportsTextureFormat(TextureFormat.ETC2_RGB);
-            if ((!dxt && !etc) || SystemInfo.copyTextureSupport == CopyTextureSupport.None || FaceSize % 4 != 0)
+            if ((!dxt && !etc) || SystemInfo.copyTextureSupport == CopyTextureSupport.None || size % 4 != 0)
                 return FromStrip(strip, name);
             var target = etc ? Modding.ModTextureEncoder.Target.Etc2 : Modding.ModTextureEncoder.Target.Dxt;
             var faces = new byte[6][];
@@ -187,7 +188,7 @@ namespace GoF2Remake.Visuals
             {
                 // the face in a cubemap face's row order (FromStrip's), as a texture whose raw rows are in that order: the GPU
                 // copy below moves rows as they are
-                var face = new Texture2D(FaceSize, FaceSize, TextureFormat.RGBA32, false, false);
+                var face = new Texture2D(size, size, TextureFormat.RGBA32, false, false);
                 face.SetPixels(Face(strip, i, true));
                 face.Apply(false, false);
                 var work = Modding.ModTextureEncoder.Start(face, false, Modding.ModTextureEncoder.Remap.None, 1f, 1f, target);
@@ -196,24 +197,24 @@ namespace GoF2Remake.Visuals
                 var t = work.Upload(name);
                 faces[i] = work.Data.ToArray();
                 work.Dispose();
-                cube ??= NewCube(name, t.format, t.mipmapCount);
+                cube ??= NewCube(name, t.format, t.mipmapCount, size);
                 Graphics.CopyTexture(t, 0, cube, i);
                 OriginalAssemblies.Gone(t);
             }
-            WriteCube(cacheFile, cube.format, cube.mipmapCount, faces);
+            WriteCube(cacheFile, cube.format, cube.mipmapCount, size, faces);
             return cube;
         }
 
-        static Cubemap NewCube(string name, TextureFormat format, int mips)
+        static Cubemap NewCube(string name, TextureFormat format, int mips, int size)
         {
             var gf = UnityEngine.Experimental.Rendering.GraphicsFormatUtility.GetGraphicsFormat(format, true);
-            var cube = new Cubemap(FaceSize, gf, UnityEngine.Experimental.Rendering.TextureCreationFlags.MipChain, mips)
+            var cube = new Cubemap(size, gf, UnityEngine.Experimental.Rendering.TextureCreationFlags.MipChain, mips)
                 { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear };
             cube.Apply(false, true);   // GPU only: the faces are copied in
             return cube;
         }
 
-        static void WriteCube(string file, TextureFormat format, int mips, byte[][] faces)
+        static void WriteCube(string file, TextureFormat format, int mips, int size, byte[][] faces)
         {
             try
             {
@@ -221,7 +222,7 @@ namespace GoF2Remake.Visuals
                 string tmp = file + ".tmp";
                 using (var w = new BinaryWriter(File.Create(tmp)))
                 {
-                    w.Write(SkyMagic); w.Write(OriginalConverter.FormatVersion); w.Write(FaceSize); w.Write((int)format); w.Write(mips);
+                    w.Write(SkyMagic); w.Write(OriginalConverter.FormatVersion); w.Write(size); w.Write((int)format); w.Write(mips);
                     foreach (var f in faces) { w.Write(f.Length); w.Write(f); }
                 }
                 if (File.Exists(file)) File.Delete(file);
@@ -230,21 +231,25 @@ namespace GoF2Remake.Visuals
             catch (IOException e) { Debug.LogWarning($"OriginalSkies: {file}: {e.Message}"); }
         }
 
-        static Cubemap ReadCube(string file, string name)
+        /// <summary>A stored cubemap ('size' its faces', or -1: whatever the file has).</summary>
+        static Cubemap ReadCube(string file, string name, int size)
         {
             if (!File.Exists(file) || SystemInfo.copyTextureSupport == CopyTextureSupport.None) return null;
             try
             {
                 using var r = new BinaryReader(File.OpenRead(file));
-                if (r.ReadInt32() != SkyMagic || r.ReadInt32() != OriginalConverter.FormatVersion || r.ReadInt32() != FaceSize) return null;
+                if (r.ReadInt32() != SkyMagic || r.ReadInt32() != OriginalConverter.FormatVersion) return null;
+                int stored = r.ReadInt32();
+                if (size > 0 && stored != size) return null;
+                size = stored;
                 var format = (TextureFormat)r.ReadInt32();
                 int mips = r.ReadInt32();
                 if (!SystemInfo.SupportsTextureFormat(format)) return null;
-                var cube = NewCube(name, format, mips);
+                var cube = NewCube(name, format, mips, size);
                 for (int i = 0; i < 6; i++)
                 {
                     var bytes = r.ReadBytes(r.ReadInt32());
-                    var t = new Texture2D(FaceSize, FaceSize, format, mips, false);
+                    var t = new Texture2D(size, size, format, mips, false);
                     t.LoadRawTextureData(bytes);
                     t.Apply(false, true);
                     Graphics.CopyTexture(t, 0, cube, i);
@@ -257,6 +262,30 @@ namespace GoF2Remake.Visuals
                 Debug.LogWarning($"OriginalSkies: {file}: {e.Message}");
                 return null;
             }
+        }
+
+        /// <summary>An Enhanced skies' cubemap by its GoF2SkyHd name ("stars_000", "nebula_005"): Resources', else the HD pack's
+        /// strip in the converted copy (Resources/GoF2SkyHd/<name>.png, 6:1, sRGB), made a compressed cubemap once and kept
+        /// in the GPU cache like a rendered sky. Null when neither has it.</summary>
+        public static Cubemap Hd(string name)
+        {
+            var c = Resources.Load<Cubemap>("GoF2SkyHd/" + name);
+            if (c != null) return c;
+            if (made.TryGetValue("hd:" + name, out var t) && t != null) return t as Cubemap;
+            string png = GameContent.CachePath($"Resources/GoF2SkyHd/{name}.png");
+            if (png == null || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;
+            var fi = new FileInfo(png);
+            string cacheFile = Path.Combine(GameContent.GpuCache, "skies", $"hd_{name}_{fi.Length}_{SystemInfo.graphicsDeviceType}.sky");
+            var cube = ReadCube(cacheFile, name, -1);
+            if (cube == null)
+            {
+                var strip = new Texture2D(2, 2, TextureFormat.RGBA32, false, false);
+                if (!strip.LoadImage(File.ReadAllBytes(png), false)) { OriginalAssemblies.Gone(strip); return null; }
+                cube = CompressedCube(strip, name, cacheFile) as Cubemap;
+                OriginalAssemblies.Gone(strip);
+            }
+            made["hd:" + name] = cube;
+            return cube;
         }
 
         /// <summary>A reflection cubemap by its GoF2Reflections name: Resources' (the 4x upscales), else the original's own

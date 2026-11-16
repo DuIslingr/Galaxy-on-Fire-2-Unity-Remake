@@ -53,6 +53,42 @@ namespace GoF2Remake.Tests
             using (var s = inner.GetEntry("data/b.bin").Open()) using (var ms = new MemoryStream()) { s.CopyTo(ms); Assert.AreEqual(100_000, ms.Length); }
         }
 
+        string Pack(string name, int version, params (string path, string text)[] files)
+        {
+            string path = Path.Combine(GamePaths.Data, name + ".zip");
+            Directory.CreateDirectory(GamePaths.Data);
+            if (File.Exists(path)) File.Delete(path);
+            using var z = ZipFile.Open(path, ZipArchiveMode.Create);
+            using (var w = new StreamWriter(z.CreateEntry(OriginalPacks.ManifestName).Open()))
+                w.Write($"{{\"name\":\"{name}\",\"title\":\"{name} pack\",\"version\":{version},\"order\":2,\"files\":{files.Length}}}");
+            foreach (var (p, t) in files) using (var w = new StreamWriter(z.CreateEntry(p).Open())) w.Write(t);
+            return path;
+        }
+
+        [Test]
+        public void APackIsKeptAndWrittenOverTheCopy()
+        {
+            string root = Path.Combine(GamePaths.Data, "Original"), folder = Path.Combine(GamePaths.Data, "Packs");
+            Directory.CreateDirectory(root);
+            File.WriteAllText(Path.Combine(root, "_manifest.tsv"), OriginalConverter.ManifestHeader + "\n");
+            var info = OriginalPacks.Read(Pack("hd", 3, ("Textures/main/a.png", "hd"), ("Resources/GoF2Planets3D/000/planet.json", "{}")));
+            Assert.IsNotNull(info, "a zip with gof2pack.json is a pack");
+            Assert.IsNull(OriginalPacks.Read(Pack("x", 1).Replace("x.zip", "nothing.zip")), "no file: no pack");
+            OriginalPacks.Keep(info, folder, move: false);
+            Assert.AreEqual(1, OriginalPacks.Pending(folder, root).Count, "kept, not yet written");
+            OriginalPacks.Apply(info, root, null);
+            Assert.AreEqual("hd", File.ReadAllText(Path.Combine(root, "Textures/main/a.png")));
+            Assert.IsTrue(File.Exists(Path.Combine(root, "Resources/GoF2Planets3D/000/planet.json")));
+            Assert.AreEqual(0, OriginalPacks.Pending(folder, root).Count, "written: recorded in _packs.tsv");
+            // a newer version of it is pending again; a pack reaching outside the copy is refused
+            OriginalPacks.Keep(OriginalPacks.Read(Pack("hd", 4, ("Textures/main/a.png", "hd4"))), folder, move: false);
+            Assert.AreEqual(1, OriginalPacks.Kept(folder).Count, "the older version replaced");
+            Assert.AreEqual(1, OriginalPacks.Pending(folder, root).Count);
+            var evil = OriginalPacks.Read(Pack("evil", 1, ("../outside.txt", "no")));
+            Assert.Throws<InvalidDataException>(() => OriginalPacks.Apply(evil, root, null));
+            Assert.IsFalse(File.Exists(Path.Combine(GamePaths.Data, "outside.txt")));
+        }
+
         [TestCase(CompressionLevel.NoCompression)]
         [TestCase(CompressionLevel.Optimal)]   // (a compressed OBB: through a temporary file)
         public void SomethingElseInstallsNothing(CompressionLevel level)

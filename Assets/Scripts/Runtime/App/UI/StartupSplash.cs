@@ -57,7 +57,8 @@ namespace GoF2Remake.UI
             if (GoF2Remake.Multiplayer.DedicatedServer.ShutOff(gameObject.scene)) return;
             LogosShown = Running = true;
             DontDestroyOnLoad(gameObject);   // over the menu scene until the last logo is gone
-            setup = GoF2Remake.Data.OriginalSetup.Needed;   // the player's copy first (OriginalSetupView): no music, no mods yet
+            // the player's copy first (OriginalSetupView), or the packs added since: no music, no mods yet
+            setup = GoF2Remake.Data.OriginalSetup.Needed || GoF2Remake.Data.OriginalSetup.PacksPending;
             if (!setup) BeginLoading();
             // Nothing to draw but the panel: until the menu's own, a camera that only clears the screen (black).
             cam = new GameObject("Splash camera").AddComponent<Camera>();
@@ -150,7 +151,7 @@ namespace GoF2Remake.UI
                 // a build without the original's content: the player's copy converted before anything else
                 while (uiRoot == null || logo == null) yield return null;
                 logo.style.display = DisplayStyle.None;   // (its 44 % of the height would push the card down)
-                yield return new OriginalSetupView(uiRoot).Run();
+                yield return new OriginalSetupView(uiRoot).Run(packsOnly: !GoF2Remake.Data.OriginalSetup.Needed);
                 logo.style.display = DisplayStyle.Flex;
                 setup = false;
                 BeginLoading();
