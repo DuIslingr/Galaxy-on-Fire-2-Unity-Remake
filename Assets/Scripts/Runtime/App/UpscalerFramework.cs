@@ -10,7 +10,8 @@
 // MSAA off like STP). URP resolves the active upscaler once per pipeline instance, so Bootstrap applies it again whenever
 // URP creates its pipeline (RenderPipelineManager.activeRenderPipelineCreated). Which upscalers run on this device comes from the
 // framework's own checks (IUpscaler.isSupportedOnDevice: the NVIDIA / AMD plugin, the GPU and the graphics API: DLSS and
-// FSR 2 on Direct3D 11 / 12 or Vulkan, FSR 3 / 4 on Direct3D 12 only, FSR 4 on AMD's newest GPUs), read from the pipeline's
+// FSR 2 on Direct3D 11 / 12 or Vulkan, FSR 3 / 4 on Direct3D 12 only, FSR 4 on AMD's newest GPUs; on Linux the AMD module
+// isn't there: LinuxFsrUpscaler registers FSR 4 / 3 / 2 under the same ids, on Vulkan with the player's AMD DLLs), read from the pipeline's
 // framework instance (UniversalRenderPipeline.upscaling, internal: one reflection read). On iOS the framework offers Auto, FSR 1,
 // STP and MetalFX (no NVIDIA / AMD plugins there). Without the define (Android) all of
 // this compiles to nothing and Bootstrap keeps the asset's upscaling filter.
@@ -33,7 +34,9 @@ namespace GoF2Remake
     {
         public const string Auto = "unity.auto", Fsr1 = "amd.fsr1", Stp = "unity.stp", Dlss = "nvidia.dlss4",
             Fsr4 = "amd.fsr4", Fsr3 = "amd.fsr3", Fsr2 = "amd.fsr2",
-            MetalFxSpatial = "apple.metalfx-spatial", MetalFxTemporal = "apple.metalfx-temporal";
+            MetalFxSpatial = "apple.metalfx-spatial", MetalFxTemporal = "apple.metalfx-temporal",
+            // LinuxFsrUpscaler on Windows Vulkan (its plugin with AMD's Vulkan DLLs as they are: a comparison build)
+            VkFsr4 = "ffxvk.fsr4", VkFsr3 = "ffxvk.fsr3", VkFsr2 = "ffxvk.fsr2";
 
         /// <summary>The upscaler quality option: 0 native (DLAA / FSR native AA), 1 quality, 2 balanced, 3 performance, 4 ultra
         /// performance.</summary>
@@ -79,10 +82,22 @@ namespace GoF2Remake
         public static bool MetalFxTemporalSupported => Supports(MetalFxTemporal);
 
         /// <summary>The newest FSR (4, 3, 2) this device runs, or null.</summary>
-        public static string BestFsr => Supports(Fsr4) ? Fsr4 : Supports(Fsr3) ? Fsr3 : Supports(Fsr2) ? Fsr2 : null;
+        public static string BestFsr
+        {
+            get
+            {
+                // (test switch: $GOF2_FSR_VERSION=3 / 2 takes that one where the device runs it, to compare FSR 3 with 4)
+                string v = System.Environment.GetEnvironmentVariable("GOF2_FSR_VERSION");
+                foreach (var id in v == "3" ? new[] { Fsr3, VkFsr3 } : v == "2" ? new[] { Fsr2, VkFsr2 } : System.Array.Empty<string>())
+                    if (Supports(id)) return id;
+                foreach (var id in new[] { Fsr4, VkFsr4, Fsr3, VkFsr3, Fsr2, VkFsr2 })   // (the newest FSR first, whoever runs it)
+                    if (Supports(id)) return id;
+                return null;
+            }
+        }
 
         /// <summary>"FSR 4" / "FSR 3" / "FSR 2" for the option, or null.</summary>
-        public static string BestFsrLabel => BestFsr switch { Fsr4 => "FSR 4", Fsr3 => "FSR 3", Fsr2 => "FSR 2", _ => null };
+        public static string BestFsrLabel => BestFsr switch { Fsr4 or VkFsr4 => "FSR 4", Fsr3 or VkFsr3 => "FSR 3", Fsr2 or VkFsr2 => "FSR 2", _ => null };
 
         /// <summary>The upscaler the framework renders with now (its id; empty before the pipeline exists).</summary>
         public static string ActiveId => Instance?.activeUpscaler?.upscalerId ?? "";
@@ -152,6 +167,8 @@ namespace GoF2Remake
             else if (options is FSR3Options fsr3) fsr3.fsr3QualityMode = (UnityEngine.AMD.FSR3Quality)q;
             else if (options is FSR2Options fsr2) fsr2.fsr2QualityMode = (UnityEngine.AMD.FSR2Quality)Mathf.Max(0, q - 1);
 #endif
+            // Linux (LinuxFsrUpscaler: the same ids, its own options; FSR 2 through the SDK takes native AA too)
+            if (options is LinuxFsrOptions linux) linux.qualityMode = q;
         }
 #else
         public static bool Compiled => false;

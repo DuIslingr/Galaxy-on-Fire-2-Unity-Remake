@@ -10,6 +10,12 @@
 // in a headless compositor (gamescope --backend headless -- ./GoF2Remake.x86_64 -gof2check <folder>).
 // -gof2fps <seconds> adds a frame-rate sample of each view (uncapped, no vsync; its average, median and 1 % low fps) at the
 // window's size (-screen-width / -screen-height / -screen-fullscreen 1 with gamescope's -W / -H).
+// -gof2fsr <quality> renders with the Upscaler option's FSR (0 native AA .. 4 ultra performance) for the run (the options
+// put back at the end), and reports the FSR plugin's state (LinuxFsr on Linux) ($GOF2_FSR_VERSION=3 / 2: that FSR where FSR 4 also
+// runs, UpscalerFramework.BestFsr). -gof2scale <s> renders at that render scale with the upscaler off (plain bilinear: FSR's
+// cost is the GPU frame time with FSR minus this one at its render resolution). The fps samples include the GPU frame
+// time (FrameTimingManager: development builds made by PlayerAssetsBuild have frame timing stats on); -gof2cap <fps> caps
+// them (e.g. to compare GPU timings with another program at its frame rate: the GPU's clock follows its load).
 
 using System;
 using System.Collections;
@@ -29,6 +35,9 @@ namespace GoF2Remake
         readonly StringBuilder report = new StringBuilder();
         int bad;
         float fpsSeconds;
+        int fsrQuality = -1;
+        float renderScale;
+        int fpsCap;   // -gof2cap: the fps samples' frame cap (0: uncapped)
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Begin()
@@ -42,6 +51,12 @@ namespace GoF2Remake
             c.folder = Path.GetFullPath(args[i + 1]);
             int f = Array.IndexOf(args, "-gof2fps");
             if (f >= 0 && f + 1 < args.Length) float.TryParse(args[f + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out c.fpsSeconds);
+            int q = Array.IndexOf(args, "-gof2fsr");
+            if (q >= 0 && q + 1 < args.Length && int.TryParse(args[q + 1], out int quality)) c.fsrQuality = Mathf.Clamp(quality, 0, 4);
+            int cap = Array.IndexOf(args, "-gof2cap");
+            if (cap >= 0 && cap + 1 < args.Length) int.TryParse(args[cap + 1], out c.fpsCap);
+            int rs = Array.IndexOf(args, "-gof2scale");
+            if (rs >= 0 && rs + 1 < args.Length) float.TryParse(args[rs + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out c.renderScale);
             Directory.CreateDirectory(c.folder);
             c.StartCoroutine(c.Run());
         }
@@ -70,6 +85,23 @@ namespace GoF2Remake
             Line($"HD resources: {(GameContent.HdInstalled ? "own folder " + GameContent.HdRoot + (GameContent.HdActive ? ", on" : ", off") : OriginalPacks.HdInCopy(GameContent.Root) ? "in the copy" : "none")}");
             Line($"packs applied: {string.Join(", ", OriginalPacks.Applied(GameContent.Root).Keys)}; 3D planets: {keys.Count} ({string.Join(" ", keys)}); " +
                  $"HD sky stars_000: {(Visuals.OriginalSkies.Hd("stars_000") != null ? "yes" : "no")}, star list: {World.SkyStars.List("stars_000").Length}");
+            int upscalerWas = Settings.Upscaler, upscalerQualityWas = Settings.UpscalerQuality;
+            float renderScaleWas = Settings.RenderScale;
+            if (renderScale > 0f)
+            {
+                Settings.Upscaler = Settings.UpscalerOff;
+                Settings.RenderScale = renderScale;
+                yield return null;
+            }
+            if (fsrQuality >= 0)
+            {
+                Settings.UpscalerQuality = fsrQuality;
+                Settings.Upscaler = Settings.UpscalerFsrTemporal;
+                yield return null;
+            }
+#if (UNITY_STANDALONE_LINUX || UNITY_STANDALONE_WIN) && ENABLE_UPSCALER_FRAMEWORK
+            Line($"FSR (Linux): {LinuxFsr.Status}; best {UpscalerFramework.BestFsrLabel ?? "none"}, active upscaler {UpscalerFramework.ActiveId}");
+#endif
             yield return new WaitForSecondsRealtime(8f);
             int filled = UI.UiImageSlots.Fill();
             var button = Resources.FindObjectsOfTypeAll<Texture2D>().FirstOrDefault(t => t.name == "og_button");
@@ -122,6 +154,12 @@ namespace GoF2Remake
             Shot("station");
             Line("  content: " + ContentTimings.Report(reset: true));
             yield return Fps("station");
+            if (fsrQuality >= 0 || renderScale > 0f)
+            {
+                Settings.Upscaler = upscalerWas;
+                Settings.UpscalerQuality = upscalerQualityWas;
+                Settings.RenderScale = renderScaleWas;
+            }
             Line(bad == 0 ? "OK" : $"FAILED: {bad} problem(s)");
             File.WriteAllText(Path.Combine(folder, "report.txt"), report.ToString());
             Application.Quit(bad == 0 ? 0 : 1);
@@ -154,24 +192,64 @@ namespace GoF2Remake
         {
             if (fpsSeconds <= 0f) yield break;
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = -1;
+            Application.targetFrameRate = fpsCap > 0 ? fpsCap : -1;
             yield return new WaitForSecondsRealtime(1f);
+#if (UNITY_STANDALONE_LINUX || UNITY_STANDALONE_WIN) && ENABLE_UPSCALER_FRAMEWORK
+            LinuxFsr.TimingReport(reset: true);
+#endif
             var ms = new System.Collections.Generic.List<double>(4096);
+            var gpu = new System.Collections.Generic.List<double>(4096);
+            var timing = new FrameTiming[1];
             double start = Time.realtimeSinceStartupAsDouble, last = start;
             while (last - start < fpsSeconds)
             {
+                FrameTimingManager.CaptureFrameTimings();
                 yield return null;
                 double now = Time.realtimeSinceStartupAsDouble;
                 ms.Add((now - last) * 1000.0);
                 last = now;
+                if (FrameTimingManager.GetLatestTimings(1, timing) == 1 && timing[0].gpuFrameTime > 0) gpu.Add(timing[0].gpuFrameTime);
             }
+            gpu.Sort();
+            string gpuText = gpu.Count > 0 ? $", GPU frame {gpu[gpu.Count / 2]:0.000} ms median ({gpu.Count} timed)" : ", no GPU frame times";
             ms.Sort();
             double median = ms[ms.Count / 2], p99 = ms[Math.Min(ms.Count - 1, (int)(ms.Count * 0.99))];
             Line($"  fps {name}: {Screen.width}x{Screen.height}, {ms.Count / (last - start):0} average, {1000.0 / median:0} median, " +
-                 $"{1000.0 / p99:0} 1% low ({ms.Count} frames, worst {ms[ms.Count - 1]:0.0} ms); {SystemInfo.graphicsDeviceType}, " +
-                 $"quality {QualitySettings.names[QualitySettings.GetQualityLevel()]}, MSAA {QualitySettings.antiAliasing}");
+                 $"{1000.0 / p99:0} 1% low ({ms.Count} frames, worst {ms[ms.Count - 1]:0.0} ms){gpuText}; {SystemInfo.graphicsDeviceType}, " +
+                 $"quality {QualitySettings.names[QualitySettings.GetQualityLevel()]}, upscaler {(UpscalerFramework.ActiveId is { Length: > 0 } id ? id : "none")}");
+#if (UNITY_STANDALONE_LINUX || UNITY_STANDALONE_WIN) && ENABLE_UPSCALER_FRAMEWORK
+            string fsr = LinuxFsr.TimingReport(reset: true);
+            if (fsr.Length > 0) Line("    " + fsr);
+#endif
+#if ENABLE_AMD && ENABLE_AMD_MODULE
+            string amd = AmdFsrReport();
+            if (amd.Length > 0) Line("    " + amd);
+#endif
             Bootstrap.ApplyFrameRate();
         }
+
+#if ENABLE_AMD && ENABLE_AMD_MODULE
+        /// <summary>Unity's AMD module (Windows): the FSR versions it offers and its live FSR contexts (version, quality mode,
+        /// render size), to know which FSR a run measured.</summary>
+        static string AmdFsrReport()
+        {
+            var device = UnityEngine.AMD.GraphicsDevice.device;
+            if (device == null) return "";
+            var sb = new StringBuilder("AMD module:");
+            foreach (var f in new[] { UnityEngine.AMD.GraphicsDeviceFeature.FSRUpscale4, UnityEngine.AMD.GraphicsDeviceFeature.FSRUpscale3, UnityEngine.AMD.GraphicsDeviceFeature.FSRUpscale2 })
+                if (UnityEngine.AMD.GraphicsDevice.GetFeatureVersion(f, out uint ma, out uint mi, out uint pa)) sb.Append($" {f} {ma}.{mi}.{pa}");
+            var view = device.CreateDebugView();
+            device.UpdateDebugView(view);
+            var infos = view.upscaleFeatureInfoSpan;
+            for (int i = 0; i < infos.Length; i++)
+            {
+                var x = infos[i];
+                if (x.validFeature) sb.Append($"; context {x.majorVersion}.{x.minorVersion}.{x.patchVersion} {x.qualityMode} {x.renderWidth}x{x.renderHeight}");
+            }
+            device.DeleteDebugView(view);
+            return sb.ToString();
+        }
+#endif
 
         IEnumerator Wait(Func<bool> done, float seconds, string what)
         {
