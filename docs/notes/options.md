@@ -214,7 +214,10 @@ verified on a Mac or an iPhone.
       `GOF2_KEEP_DCC_STORES=1`); FSR 3 and the game's own rendering measured the same either way (→ 2.28 ms).
     - **Against D3D12** (the Windows build under Proton CachyOS, Unity's own FSR through vkd3d-proton, same GPU),
       back to back in desktop windows, GPU time (FrameTimingManager) with FSR minus bilinear from the same render
-      resolution, five views: FSR 4 2.30 ms here against 2.54 (that one's 4.1.1), FSR 3 0.72 against 0.74.
+      resolution, five views: FSR 4 2.30 ms here against 2.54 (that one's 4.1.1), FSR 3 0.72 against 0.74. vkd3d-proton
+      does the first three itself (cached and Resizable BAR VRAM types only, wave64 for those passes: the same layer);
+      with `radv_disable_dcc_stores=true` too its FSR 4 takes 2.28 ms, level with this path (2026-11-16): nothing else
+      it does differently (images kept in GENERAL, fewer barriers, no constant-buffer copies) measures.
     - **No Unity overhead:** CR3-U (a native C++ port using ffx-vk-linux) costs the same FSR 4 time at the same clock.
       A frame cap (vsync) lets the GPU clock down: FSR 4 then takes ~4.1 ms (still within the frame).
     - **Not taken:** skipping read-only barriers, wave64 for the 32-thread passes, auto exposure off (no gain);
