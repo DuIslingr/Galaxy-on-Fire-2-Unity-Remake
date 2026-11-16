@@ -131,6 +131,7 @@ namespace GoF2Remake.Data
         /// TextAsset in Resources. Null when neither has it.</summary>
         public static string Text(string resourcePath)
         {
+            using var timing = ContentTimings.Measure("table text");
             var p = CachePath("Resources/" + resourcePath + ".json");
             if (p != null) return File.ReadAllText(p);
             var ta = Resources.Load<TextAsset>(resourcePath);

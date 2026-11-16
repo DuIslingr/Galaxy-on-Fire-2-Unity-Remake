@@ -98,8 +98,9 @@ namespace GoF2Remake.Visuals
             if (layers == null || !GameContent.Installed || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;
             // (rendered from the HD folder's textures while it is on: a sky of its own)
             string cacheFile = Path.Combine(GameContent.GpuCache, "skies", $"{name}_{FaceSize}{(GameContent.HdActive ? "_hd" : "")}_{SystemInfo.graphicsDeviceType}.sky");
+            using var timing = ContentTimings.Measure("sky rendered");
             var cached = ReadCube(cacheFile, name, FaceSize);
-            if (cached != null) return cached;
+            if (cached != null) { timing.Kind = "sky from GPU cache"; return cached; }
             var strip = RenderStrip(layers);
             if (strip == null) return null;
             var cube = CompressedCube(strip, name, cacheFile);
@@ -273,6 +274,7 @@ namespace GoF2Remake.Visuals
             var c = Resources.Load<Cubemap>("GoF2SkyHd/" + name);
             if (c != null) return c;
             if (made.TryGetValue("hd:" + name, out var t) && t != null) return t as Cubemap;
+            using var timing = ContentTimings.Measure("HD sky");
             string png = GameContent.CachePath($"Resources/GoF2SkyHd/{name}.png");
             if (png == null || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;
             var fi = new FileInfo(png);

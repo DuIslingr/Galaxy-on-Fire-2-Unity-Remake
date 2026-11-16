@@ -1178,6 +1178,7 @@ namespace GoF2Remake.Data
 
         public static Database Load(string resourceFolder = "GoF2Data")
         {
+            using var timing = ContentTimings.Measure("database");
             var db = new Database
             {
                 Ships = Read<List<ShipData>>(resourceFolder, "ships"),

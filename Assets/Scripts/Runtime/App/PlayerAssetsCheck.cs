@@ -73,6 +73,7 @@ namespace GoF2Remake
             Line($"stylesheet images (UiImageSlots): {filled} placeholders filled now; og_button {(button != null ? button.width + "x" + button.height : "not loaded")}; " +
                  $"title logo {(title != null ? title.width + "x" + title.height : "not loaded")}; still placeholders without a source: {still.Count} {string.Join(" ", still.Take(8))}");
             Shot("menu");
+            Line("  content: " + ContentTimings.Report(reset: true));
             yield return PanelShot("menu_ui");
             Settings.OriginalUi = true;   // (the Original interface style: its pieces are UiImageSlots' placeholders)
             yield return new WaitForSecondsRealtime(2f);
@@ -102,6 +103,7 @@ namespace GoF2Remake
                 yield return Wait(() => SceneManager.GetActiveScene().name == "Space", 60f, "the orbit");
                 yield return new WaitForSecondsRealtime(6f);
                 Shot($"orbit_{station:000}");
+                Line("  content: " + ContentTimings.Report(reset: true));
             }
             Session.ResetNewGame();
             Session.FreePlay = true;
@@ -111,6 +113,7 @@ namespace GoF2Remake
             yield return Wait(() => SceneManager.GetActiveScene().name == "Station", 60f, "the station");
             yield return new WaitForSecondsRealtime(6f);
             Shot("station");
+            Line("  content: " + ContentTimings.Report(reset: true));
             Line(bad == 0 ? "OK" : $"FAILED: {bad} problem(s)");
             File.WriteAllText(Path.Combine(folder, "report.txt"), report.ToString());
             Application.Quit(bad == 0 ? 0 : 1);

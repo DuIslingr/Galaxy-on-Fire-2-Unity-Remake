@@ -3,7 +3,8 @@
 // Audio/<bank>/<name>.wav | .mp3, FsbBank) as an AudioClip, made on the spot so every caller that wants its clip at once
 // (the sound tables, StoryAssets.Voice) gets it: the effects' WAV read as they are, the voices' and music's MP3 decoded by
 // NLayer (Assets/Plugins/NLayer, MIT). A long track (over StreamSeconds) is decoded as it plays (a streamed clip reading
-// the MP3), a short one whole.
+// the MP3), a short one whole. (Decoding a table's clips side by side on worker threads was tried, 2026-11-15: no faster
+// in an IL2CPP player, whose garbage collector serialises the threads' large sample arrays; the station's scene got slower.)
 
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,8 @@ namespace GoF2Remake.Data
 
         static readonly Dictionary<string, AudioClip> clips = new Dictionary<string, AudioClip>(StringComparer.OrdinalIgnoreCase);
 
+        struct Pcm { public float[] data; public int channels, rate; }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
@@ -32,10 +35,9 @@ namespace GoF2Remake.Data
         public static AudioClip Get(string projectPath)
         {
             if (string.IsNullOrEmpty(projectPath)) return null;
-            string stem = projectPath;
-            int dot = stem.LastIndexOf('.');
-            if (dot > stem.LastIndexOf('/')) stem = stem.Substring(0, dot);
+            string stem = StemOf(projectPath);
             if (clips.TryGetValue(stem, out var c)) return c;
+            using var timing = ContentTimings.Measure("audio clip");
             string name = Path.GetFileName(stem);
             try
             {
@@ -56,8 +58,24 @@ namespace GoF2Remake.Data
             return c;
         }
 
+        static string StemOf(string projectPath)
+        {
+            int dot = projectPath.LastIndexOf('.');
+            return dot > projectPath.LastIndexOf('/') ? projectPath.Substring(0, dot) : projectPath;
+        }
+
+        static AudioClip Create(string name, Pcm pcm)
+        {
+            var clip = AudioClip.Create(name, pcm.data.Length / pcm.channels, pcm.channels, pcm.rate, false);
+            clip.SetData(pcm.data, 0);
+            return clip;
+        }
+
         /// <summary>A RIFF WAVE of 16-bit PCM (FsbBank.Wav's) as a clip.</summary>
-        public static AudioClip Wav(byte[] b, string name)
+        public static AudioClip Wav(byte[] b, string name) => Create(name, DecodeWav(b));
+
+        /// <summary>A RIFF WAVE of 16-bit PCM as samples (any thread).</summary>
+        static Pcm DecodeWav(byte[] b)
         {
             if (b.Length < 12 || b[0] != 'R' || b[1] != 'I' || b[2] != 'F' || b[3] != 'F') throw new FormatException("not a WAV file");
             int o = 12, channels = 1, rate = 44100, bits = 16, dataAt = -1, dataLen = 0;
@@ -72,10 +90,12 @@ namespace GoF2Remake.Data
             if (dataAt < 0 || bits != 16 || channels < 1) throw new FormatException("not 16-bit PCM");
             int samples = dataLen / 2;
             var f = new float[samples];
-            for (int i = 0; i < samples; i++) f[i] = BitConverter.ToInt16(b, dataAt + i * 2) / 32768f;
-            var clip = AudioClip.Create(name, samples / channels, channels, rate, false);
-            clip.SetData(f, 0);
-            return clip;
+            // (little-endian 16-bit samples read in place: every platform the game runs on is little-endian)
+            var pcm = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, short>(new ReadOnlySpan<byte>(b, dataAt, samples * 2));
+            const float Scale = 1f / 32768f;
+            for (int i = 0; i < pcm.Length; i++) f[i] = pcm[i] * Scale;
+            if (f.Length % channels != 0) Array.Resize(ref f, f.Length - f.Length % channels);
+            return new Pcm { data = f, channels = channels, rate = rate };
         }
 
         /// <summary>An MP3 file as a clip: decoded whole, or streamed when it is longer than StreamSeconds.</summary>

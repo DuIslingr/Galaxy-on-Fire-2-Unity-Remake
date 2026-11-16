@@ -460,6 +460,21 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   - **Not yet:** a VR headset shows the splash's panel on the monitor only; the setup texts are in English
     (`setup.*` keys of `Localization.Extra`, which loads with a text table: there is none before the conversion).
 
+## Load times (measured 2026-11-15, Linux development build, RX 7900 XTX, the Android copy, warm caches)
+
+`ContentTimings` (Core) counts every content-layer load per kind (inclusive: an assembly's time holds its meshes' and
+textures'); `PlayerAssetsCheck` prints them per scene. The game's own hitch log (`hitches.log`) gives the load frames.
+- **Found and fixed:** the interface placeholders (`UiImageSlots.Fill`) cost ~0.86 s of the menu's first frame on every
+  start: each atlas rectangle decoded its whole atlas again (13 crops, ~0.37 s) and the text icons' atlas was drawn pixel
+  by pixel. Now every made image is kept as PNG in the copy's GPU cache (`<GpuCache>/ui`, keyed by its sources' files)
+  and `Crop` decodes an atlas once per fill: ~0.09 s. `OriginalRefs.FillScene` gathers a scene's components once (it
+  searched them all per manifest entry). WAV samples are converted in one pass.
+- **Result:** the menu's first frame ~2.7 s -> ~1.4-1.6 s; orbits 0.15-0.35 s; the hangar ~0.3 s.
+- **What remains**, and why: the menu's sound tables make ~170 clips (~0.4 s: clip creation, not decoding; decoding them
+  side by side on worker threads was no faster in IL2CPP, whose GC serialises the threads' large arrays); meshes and
+  their materials built on first use (~0.25 s on the menu); textures and skies a run hasn't met yet (the menu backdrop's
+  and the orbits' random ships) are decoded and compressed once, then come from the GPU cache.
+
 ## Plan
 
 1. Inventory and this note (done 2026-11-15); the importers, the converter, the packs (done 2026-11-15).

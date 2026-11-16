@@ -245,6 +245,7 @@ namespace GoF2Remake.Visuals
         public static GameObject Build(OriginalResMesh res, Material material = null)
         {
             if (res == null || string.IsNullOrEmpty(res.model)) return null;
+            using var timing = ContentTimings.Measure("mesh built");
             var (aem, meta) = Load(res.model);
             if (aem == null) return null;
             string name = Path.GetFileNameWithoutExtension(res.model);
@@ -334,6 +335,7 @@ namespace GoF2Remake.Visuals
         {
             if (entry == null || !GameContent.Installed) return null;
             if (templates.TryGetValue(entry.name, out var t) && t != null) return t;
+            using var timing = ContentTimings.Measure("assembly built");
             var e = Entry(entry.name);
             if (e == null) return null;
             var parent = Holder;
@@ -407,6 +409,7 @@ namespace GoF2Remake.Visuals
         {
             if (string.IsNullOrEmpty(model) || !GameContent.Installed) return null;
             if (explosions.TryGetValue(model, out var t) && t != null) return t;
+            using var timing = ContentTimings.Measure("model template built");
             var parent = Holder;
             t = OriginalModels.Build(model);
             if (t != null) t.transform.SetParent(parent, false);

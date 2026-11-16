@@ -24,6 +24,7 @@ namespace GoF2Remake.Data
             images.Clear();
             data.Clear();
             crops.Clear();
+            atlases.Clear();
             GameContent.Refreshed -= ResetStatics;
             GameContent.Refreshed += ResetStatics;   // (a new copy converted)
         }
@@ -42,6 +43,7 @@ namespace GoF2Remake.Data
         {
             if (string.IsNullOrEmpty(rel)) return null;
             if (loaded.TryGetValue(rel, out var t)) return t;
+            using var timing = ContentTimings.Measure("texture decoded");
             var path = GameContent.CachePath(rel);
             if (path == null) { loaded[rel] = null; return null; }
             var kind = KindOf(rel);
@@ -52,7 +54,7 @@ namespace GoF2Remake.Data
             string fmt = dxt ? "dxt" : etc ? "etc2" : null;
             string cacheFile = fmt != null ? CacheFile(rel, path, fmt + (kind == Kind.Normal ? "-nrm" : "") + (linear ? "-lin" : "")) : null;
             var cached = cacheFile != null ? Modding.ModTextureCache.Read(cacheFile) : null;
-            if (cached != null) t = Modding.ModTextureCache.Make(cached, name);
+            if (cached != null) { t = Modding.ModTextureCache.Make(cached, name); timing.Kind = "texture from GPU cache"; }
             if (t == null) t = Decode(path, name, kind, linear, fmt, cacheFile);
             if (t == null) { loaded[rel] = null; return null; }
             t.wrapMode = TextureWrapMode.Repeat;
@@ -119,6 +121,7 @@ namespace GoF2Remake.Data
             var t = Resources.Load<Texture2D>(resourcesPath);
             if (t != null) return t;
             if (images.TryGetValue(resourcesPath, out t)) return t;
+            using var timing = ContentTimings.Measure("image");
             var path = GameContent.CachePath("Resources/" + resourcesPath + ".png");
             if (path != null)
             {
@@ -141,6 +144,7 @@ namespace GoF2Remake.Data
         {
             if (string.IsNullOrEmpty(projectPath)) return null;
             if (images.TryGetValue(projectPath, out var t)) return t;
+            using var timing = ContentTimings.Measure("image");
             var path = GameContent.CachePath(projectPath);
             if (path != null)
             {
@@ -161,6 +165,7 @@ namespace GoF2Remake.Data
         {
             if (string.IsNullOrEmpty(path)) return null;
             if (data.TryGetValue(path, out var t) && t != null) return t;
+            using var timing = ContentTimings.Measure("data image");
             var file = GameContent.CachePath(path);
             if (file == null) return null;
             t = new Texture2D(2, 2, TextureFormat.RGBA32, mipmaps, linear) { name = Path.GetFileNameWithoutExtension(path) };
@@ -172,6 +177,16 @@ namespace GoF2Remake.Data
 
         static readonly Dictionary<string, Texture2D> crops = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
 
+        /// <summary>The atlases Crop decoded since the last ReleaseAtlases (one decode for every rectangle of an atlas).</summary>
+        static readonly Dictionary<string, Texture2D> atlases = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
+
+        /// <summary>Frees the atlases Crop keeps decoded (UiImageSlots, after a fill).</summary>
+        public static void ReleaseAtlases()
+        {
+            foreach (var a in atlases.Values) if (a != null) Gone(a);
+            atlases.Clear();
+        }
+
         /// <summary>A rectangle (x, y from the top left, as the texture manifests give them) of an atlas of the converted copy
         /// (Textures/textures/<atlas>.png, its own or a pack's) as an interface image: uncompressed, no mipmaps, clamped.
         /// Null when the copy hasn't the atlas or it is too small.</summary>
@@ -179,18 +194,20 @@ namespace GoF2Remake.Data
         {
             string key = $"{atlas}|{x},{y},{w},{h}";
             if (crops.TryGetValue(key, out var t) && t != null) return t;
+            using var timing = ContentTimings.Measure("atlas crop");
             var file = GameContent.CachePath($"Textures/textures/{atlas}.png");
             if (file == null) return null;
-            var src = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            try
+            if (!atlases.TryGetValue(file, out var src))
             {
-                if (!src.LoadImage(File.ReadAllBytes(file), false) || x + w > src.width || y + h > src.height) return null;
-                t = new Texture2D(w, h, TextureFormat.RGBA32, false) { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
-                t.SetPixels(src.GetPixels(x, src.height - y - h, w, h));
-                t.Apply(false, false);   // (readable: UiImageSlots encodes it)
-                return crops[key] = t;
+                src = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!src.LoadImage(File.ReadAllBytes(file), false)) { Gone(src); src = null; }
+                atlases[file] = src;
             }
-            finally { Gone(src); }
+            if (src == null || x + w > src.width || y + h > src.height) return null;
+            t = new Texture2D(w, h, TextureFormat.RGBA32, false) { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            t.SetPixels(src.GetPixels(x, src.height - y - h, w, h));
+            t.Apply(false, false);   // (readable: UiImageSlots encodes it)
+            return crops[key] = t;
         }
 
         /// <summary>The main menu's images MainMenuBuilder cut from the original's atlases (UI/MainMenu/Images): the FISHLABS

@@ -8,7 +8,10 @@
 //   an exact rectangle of an atlas of the converted copy (found by matching the project's images: Crops), the HUD images
 //   the converter cut (GoF2Hud), the menu's cuts (MenuImage), and a pack's copy before all of them (Resources/GoF2UiSlots:
 //   the common pack's processed pieces; the HD pack's large FISHLABS logo). Also the inline text icons' atlas (TextIcons:
-//   the sprite asset is the remake's own, its atlas a placeholder), drawn from the copy's HUD and shop icons.
+//   the sprite asset is the remake's own, its atlas a placeholder), drawn from the copy's HUD and shop icons. What is made
+//   here (a rectangle of an atlas, the menu's cuts, the text icons' atlas) is kept as PNG in the copy's GPU cache
+//   (<GpuCache>/ui), keyed by its sources' files: later starts read it instead of decoding atlases (~0.9 s of the menu's
+//   first frame before).
 
 using System.Collections.Generic;
 using System.IO;
@@ -125,6 +128,7 @@ namespace GoF2Remake.UI
         public static int Fill()
         {
             if (OriginalSetup.BuiltIn || !GameContent.Installed) return 0;
+            using var timing = ContentTimings.Measure("interface image slots");
             // (loaded now, so its atlas is among the textures below before a text first asks for an icon)
             textIcons = Resources.Load<UnityEngine.TextCore.Text.SpriteAsset>("Sprite Assets/" + TextIcons.AssetName);
             int n = 0;
@@ -135,6 +139,7 @@ namespace GoF2Remake.UI
                 if (png == null) continue;
                 if (t.LoadImage(png, false)) n++;
             }
+            OriginalTextures.ReleaseAtlases();   // (decoded once for all of a fill's rectangles)
             return n;
         }
 
@@ -143,17 +148,17 @@ namespace GoF2Remake.UI
         /// <summary>The PNG bytes of a slot's image (null: not a slot, or the copy hasn't it).</summary>
         public static byte[] ImageOf(string name)
         {
-            if (name == TextIcons.AssetName) return TextIconsAtlas();
+            if (name == TextIcons.AssetName)
+                return Made(name, TextIconsStamp(), TextIconsAtlas);
             // a pack's own copy first (the common pack's processed pieces; the HD pack's large FISHLABS logo over the copy's cut)
             var packed = GameContent.CachePath($"Resources/GoF2UiSlots/{name}.png");
             if (packed != null) return File.ReadAllBytes(packed);
-            var menu = OriginalTextures.MenuImage(name);   // (the cards, the FISHLABS logo)
-            if (menu != null) return menu.EncodeToPNG();
+            if (name.StartsWith("card_") || name == "logo_fishlabs" || name == "logo_gof2")   // (the cards, the FISHLABS logo)
+                return Made(name, Stamp("Textures/textures/gof2_logos_1440.png", "Textures/textures/gof2_campaign_select_ipad_large.png"),
+                            () => OriginalTextures.MenuImage(name)?.EncodeToPNG());
             if (Crops.TryGetValue(name, out var c))
-            {
-                var t = OriginalTextures.Crop(c.atlas, c.x, c.y, c.w, c.h, name);
-                return t != null ? t.EncodeToPNG() : null;
-            }
+                return Made(name, Stamp($"Textures/textures/{c.atlas}.png") + $"{c.x},{c.y},{c.w},{c.h}",
+                            () => OriginalTextures.Crop(c.atlas, c.x, c.y, c.w, c.h, name)?.EncodeToPNG());
             var file = Hud.Contains(name) ? GameContent.CachePath($"Resources/GoF2Hud/{name}.png") : null;
             return file != null ? File.ReadAllBytes(file) : null;
         }
@@ -174,6 +179,53 @@ namespace GoF2Remake.UI
             if (atlas == null) return null;
             var png = atlas.EncodeToPNG();
             if (Application.isPlaying) Object.Destroy(atlas); else Object.DestroyImmediate(atlas);
+            return png;
+        }
+
+        /// <summary>The source files' identity (path, size, change time) a made image is kept under.</summary>
+        static string Stamp(params string[] rels)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (var rel in rels)
+            {
+                var p = GameContent.CachePath(rel);
+                if (p == null) { sb.Append("-|"); continue; }
+                var fi = new FileInfo(p);
+                sb.Append(p).Append(':').Append(fi.Length).Append(':').Append(fi.LastWriteTimeUtc.Ticks).Append('|');
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>The text icons' sources: the copy (its manifest, rewritten by a conversion), the HD layer, the sprite table.</summary>
+        static string TextIconsStamp()
+        {
+            var m = new FileInfo(Path.Combine(GameContent.Root, "_manifest.tsv"));
+            var asset = textIcons != null ? textIcons : Resources.Load<UnityEngine.TextCore.Text.SpriteAsset>("Sprite Assets/" + TextIcons.AssetName);
+            return $"{(m.Exists ? m.LastWriteTimeUtc.Ticks : 0)}|{GameContent.HdActive}|{(asset != null ? asset.spriteCharacterTable.Count : 0)}";
+        }
+
+        /// <summary>A made image's PNG: from the copy's GPU cache when made before from the same sources, else made and kept
+        /// there. Null when it can't be made.</summary>
+        static byte[] Made(string name, string stamp, System.Func<byte[]> make)
+        {
+            string file;
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                var h = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(stamp));
+                file = Path.Combine(GameContent.GpuCache, "ui", $"{name}_{System.BitConverter.ToString(h, 0, 8).Replace("-", "").ToLowerInvariant()}.png");
+            }
+            try { if (File.Exists(file)) return File.ReadAllBytes(file); }
+            catch (IOException) { }
+            var png = make();
+            if (png == null) return null;
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(file));
+                File.WriteAllBytes(file + ".tmp", png);
+                if (File.Exists(file)) File.Delete(file);
+                File.Move(file + ".tmp", file);
+            }
+            catch (System.Exception e) when (e is IOException || e is System.UnauthorizedAccessException) { }
             return png;
         }
     }

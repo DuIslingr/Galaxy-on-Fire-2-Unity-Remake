@@ -77,6 +77,7 @@ namespace GoF2Remake.Data
         /// <summary>Resources.Load with the asset's references to the originals filled from the converted copy.</summary>
         public static T Load<T>(string resourcesPath) where T : UnityEngine.Object
         {
+            using var timing = ContentTimings.Measure("refs table");
             var a = Resources.Load<T>(resourcesPath);
             if (a != null) Fill(a, "Resources/" + resourcesPath);
             return a;
@@ -136,16 +137,28 @@ namespace GoF2Remake.Data
         static void FillScene(Scene scene)
         {
             if (!GameContent.Installed) return;
+            using var timing = ContentTimings.Measure("refs scene fill");
             string prefix = "Scenes/" + scene.name + "|";
+            Dictionary<(string type, string go), List<MonoBehaviour>> byName = null;   // (the scene's components, gathered once)
             foreach (var kv in Map)
             {
                 if (!kv.Key.StartsWith(prefix, StringComparison.Ordinal)) continue;
                 var parts = kv.Key.Substring(prefix.Length).Split('|');
                 if (parts.Length < 2) continue;
-                string type = parts[0], go = parts[1].Split('#')[0];
-                foreach (var root in scene.GetRootGameObjects())
-                    foreach (var c in root.GetComponentsInChildren<MonoBehaviour>(true))
-                        if (c != null && c.GetType().Name == type && c.gameObject.name == go) Fill(c, kv.Key);
+                if (byName == null)
+                {
+                    byName = new Dictionary<(string, string), List<MonoBehaviour>>();
+                    foreach (var root in scene.GetRootGameObjects())
+                        foreach (var c in root.GetComponentsInChildren<MonoBehaviour>(true))
+                        {
+                            if (c == null) continue;
+                            var k = (c.GetType().Name, c.gameObject.name);
+                            if (!byName.TryGetValue(k, out var l)) byName[k] = l = new List<MonoBehaviour>();
+                            l.Add(c);
+                        }
+                }
+                if (byName.TryGetValue((parts[0], parts[1].Split('#')[0]), out var found))
+                    foreach (var c in found) Fill(c, kv.Key);
             }
         }
 
