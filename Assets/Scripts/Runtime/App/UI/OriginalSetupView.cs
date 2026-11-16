@@ -82,8 +82,8 @@ namespace GoF2Remake.UI
                 ? T("staleText", "This version of the game reads the original's files differently from the one that converted your copy. " +
                                  "Show it your copy once more and it is converted again.")
                 : T("text", "This remake comes without the original game's graphics, sounds and text: it makes them from your own copy " +
-                            "of Galaxy on Fire 2 HD. Show it the Android version (the .xapk, or the .obb and .apk) or the iOS version " +
-                            "(a decrypted .ipa). It is converted once, on this device, in a few minutes."));
+                            "of Galaxy on Fire 2 HD. Show it the Android version (the .xapk, or the .obb and .apk), the iOS version " +
+                            "(a decrypted .ipa) or the macOS app (zipped). It is converted once, on this device, in a few minutes."));
             if (chosen.Count > 0)
             {
                 Heading(T("chosen", "To convert"));

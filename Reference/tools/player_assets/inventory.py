@@ -39,6 +39,7 @@ RULES = [
     ("Assets/UI/AppIcon/", ORIGINAL, "app icon, logo, splash", "the app's icon images (replace with the remake's own)"),
     ("Assets/UI/MainMenu/Images/card_", DERIVED, "main menu campaign cards (key art)", "cut from gof2_campaign_select_ipad_large at run time (OriginalTextures.MenuImage)"),
     ("Assets/UI/MainMenu/Images/logo_fishlabs.png", DERIVED, "the FISHLABS logo of the startup splash", "cut from gof2_logos_1440 at run time"),
+    ("Assets/UI/Fonts/Klavika", ORIGINAL, "Klavika, the original HD versions' interface typeface: a commercial font (Process Type Foundry) the project has no licence to ship", "not in the player's copy (its text is glyph images); players who own it import it (Options > Accessibility)"),
     ("Assets/UI/Flight/Images/crosshair", DERIVED, "the HUD's crosshairs", "cut from gof2_interface_iphone4 at run time (UiImageSlots)"),
     ("Assets/UI/MainMenu/Images/logo_gof2.png", DERIVED, "the game's logo (#67's redraw of the atlas' cut)", "cut from gof2_logos_1440 at run time"),
     ("Assets/Localization/text_", ORIGINAL, "the game's text", ".lang files"),

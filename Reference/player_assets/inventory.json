@@ -1,13 +1,13 @@
 {
  "summary": {
   "original": {
-   "files": 8884
+   "files": 8892
   },
   "derived": {
    "files": 2182
   },
   "own": {
-   "files": 1544
+   "files": 1536
   }
  },
  "folders": {
@@ -289,6 +289,13 @@
    "what": "the HUD's crosshairs",
    "source": "cut from gof2_interface_iphone4 at run time (UiImageSlots)",
    "files": 2,
+   "bytes_here": 0
+  },
+  "Assets/UI/Fonts/Klavika": {
+   "kind": "original",
+   "what": "Klavika, the original HD versions' interface typeface: a commercial font (Process Type Foundry) the project has no licence to ship",
+   "source": "not in the player's copy (its text is glyph images); players who own it import it (Options > Accessibility)",
+   "files": 8,
    "bytes_here": 0
   }
  },

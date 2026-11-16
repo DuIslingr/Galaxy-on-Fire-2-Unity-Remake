@@ -380,6 +380,13 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   crosshairs), so `stripped_checkout.py` imports those as plain textures (their .meta edited, its GUID kept, git told to
   look away with assume-unchanged; `apply` puts such a .meta and a placeholder whose file is kept again back as
   committed). Checked: og_button 304 x 70, the crosshairs 81 x 81, the cards 605 x 943, no lost shaders.
+- **The interface font** (2026-11-15, the user's choice): Klavika (Process Type Foundry) is commercial, and neither the
+  project holds a licence to ship it nor does any copy of the game contain it (Android has bitmap glyph sheets for
+  Arabic / CJK / Korean only, iOS and macOS no font files: the original drew its text from images), so it can't come from
+  the player's copy either. Inter (OFL, already the fallback) is the theme's font now (GoF2Common.uss :root; its weight
+  table's 700 the SemiBold face), Klavika's files are classified original (left out of builds without the originals), and
+  players who own Klavika import it (Options > Accessibility "Import font file…", UiFont). The option's texts say so in
+  every language.
 - **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
   - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is
     `# gof2 original cache v<N>`. `GameContent.Installed` only for this version's stamp; `GameContent.Stale` for a
