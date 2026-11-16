@@ -4,10 +4,10 @@
    "files": 8884
   },
   "derived": {
-   "files": 2172
+   "files": 2180
   },
   "own": {
-   "files": 1554
+   "files": 1546
   }
  },
  "folders": {
@@ -262,6 +262,27 @@
    "source": "",
    "files": 13,
    "bytes_here": 3102426
+  },
+  "Assets/UI/MainMenu/Images/card_": {
+   "kind": "derived",
+   "what": "main menu campaign cards (key art)",
+   "source": "cut from gof2_campaign_select_ipad_large at run time (OriginalTextures.MenuImage)",
+   "files": 6,
+   "bytes_here": 0
+  },
+  "Assets/UI/MainMenu/Images/logo_fishlabs.png": {
+   "kind": "derived",
+   "what": "the FISHLABS logo of the startup splash",
+   "source": "cut from gof2_logos_1440 at run time",
+   "files": 1,
+   "bytes_here": 0
+  },
+  "Assets/UI/MainMenu/Images/logo_gof2.png": {
+   "kind": "derived",
+   "what": "the game's logo (#67's redraw of the atlas' cut)",
+   "source": "cut from gof2_logos_1440 at run time",
+   "files": 1,
+   "bytes_here": 0
   }
  },
  "hard_references": {

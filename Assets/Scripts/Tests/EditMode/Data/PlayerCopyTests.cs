@@ -170,6 +170,21 @@ namespace GoF2Remake.Tests
             TestContext.WriteLine($"{templates.Count} templates");
         }
 
+        [Test]
+        public void TheMenuImagesAreCutFromTheConvertedCopy()
+        {
+            // MainMenuBuilder's cuts of the original's atlases, which a build without the originals hasn't
+            var fishlabs = OriginalTextures.MenuImage("logo_fishlabs");
+            Assert.IsNotNull(fishlabs, "the FISHLABS logo");
+            Assert.AreEqual((266, 303), (fishlabs.width, fishlabs.height));
+            foreach (var n in new[] { "card_gof2", "card_gof2_hover", "card_valkyrie", "card_valkyrie_hover", "card_supernova", "card_supernova_hover" })
+            {
+                var t = OriginalTextures.MenuImage(n);
+                Assert.IsNotNull(t, n);
+                Assert.AreEqual((605, 943), (t.width, t.height), n);
+            }
+        }
+
         static void Forget(Type t) =>
             t.GetMethod("ResetStatics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, null);
 

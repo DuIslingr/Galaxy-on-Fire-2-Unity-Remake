@@ -23,6 +23,7 @@ namespace GoF2Remake.Data
             loaded.Clear();
             images.Clear();
             data.Clear();
+            crops.Clear();
             GameContent.Refreshed -= ResetStatics;
             GameContent.Refreshed += ResetStatics;   // (a new copy converted)
         }
@@ -167,6 +168,50 @@ namespace GoF2Remake.Data
             t.wrapModeU = wrapU; t.wrapModeV = wrapV; t.filterMode = filter;
             if (mipmaps) t.anisoLevel = 4;
             return data[path] = t;
+        }
+
+        static readonly Dictionary<string, Texture2D> crops = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
+
+        /// <summary>A rectangle (x, y from the top left, as the texture manifests give them) of an atlas of the converted copy
+        /// (Textures/textures/<atlas>.png, its own or a pack's) as an interface image: uncompressed, no mipmaps, clamped.
+        /// Null when the copy hasn't the atlas or it is too small.</summary>
+        public static Texture2D Crop(string atlas, int x, int y, int w, int h, string name)
+        {
+            string key = $"{atlas}|{x},{y},{w},{h}";
+            if (crops.TryGetValue(key, out var t) && t != null) return t;
+            var file = GameContent.CachePath($"Textures/textures/{atlas}.png");
+            if (file == null) return null;
+            var src = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            try
+            {
+                if (!src.LoadImage(File.ReadAllBytes(file), false) || x + w > src.width || y + h > src.height) return null;
+                t = new Texture2D(w, h, TextureFormat.RGBA32, false) { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+                t.SetPixels(src.GetPixels(x, src.height - y - h, w, h));
+                t.Apply(false, true);
+                return crops[key] = t;
+            }
+            finally { Gone(src); }
+        }
+
+        /// <summary>The main menu's images MainMenuBuilder cut from the original's atlases (UI/MainMenu/Images): the FISHLABS
+        /// logo of the startup splash and the campaign cards; a build without the originals has none (docs/notes/player-
+        /// assets.md "The menu's images"), so the same rectangles of the converted copy's atlases.</summary>
+        public static Texture2D MenuImage(string name)
+        {
+            const string Logos = "gof2_logos_1440", Cards = "gof2_campaign_select_ipad_large";
+            Texture2D Card(int row, int col) => Crop(Cards, 2 + col * 626, 2 + row * 966, 605, 943, name);   // 605 x 943 on a 626 x 966 pitch
+            switch (name)
+            {
+                case "logo_fishlabs": return Crop(Logos, 1, 71, 266, 303, name);
+                case "logo_gof2": return Crop(Logos, 269, 71, 670, 207, name);
+                case "card_gof2": return Card(1, 1);
+                case "card_gof2_hover": return Card(1, 0);
+                case "card_valkyrie": return Card(1, 2);
+                case "card_valkyrie_hover": return Card(0, 0);
+                case "card_supernova": return Card(0, 1);
+                case "card_supernova_hover": return Card(0, 2);
+            }
+            return null;
         }
 
         static void Gone(UnityEngine.Object o)

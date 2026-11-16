@@ -352,6 +352,15 @@ left out (sparse checkout) is exactly a shipped build's content, a fast import, 
   - **packs.py's comparison** no longer counts what the game reads the same: Blender's `.001` suffixes on the FBX-made
     parents' names, an all-zero bounding sphere / pivot against none, infinities in keyframes (inf - inf is NaN).
   - **Development builds:** `$GOF2_DATA` points `GamePaths.Data` elsewhere (PlayerAssetsCheck with its own Packs folder).
+- **The menu's images** (2026-11-15): the inventory's rule for the campaign cards named `UI/MainMenu/card_`, but they are
+  in `UI/MainMenu/Images/`, so the stripped builds carried them, and the FISHLABS and GoF2 logos (all cut from the
+  original's atlases by MainMenuBuilder): now derived. `OriginalTextures.MenuImage` cuts the same rectangles of the converted
+  copy's atlases (`gof2_campaign_select_ipad_large`: 605 x 943 cards on a 626 x 966 pitch; `gof2_logos_1440`) at run time
+  (an atlas a pack brought too, the macOS copy lacking the cards' sheet): MainMenuSetup puts the cards on their elements
+  in a build without the originals, StartupSplash the FISHLABS logo when its own is missing. The cards come out identical
+  to the project's; the project's FISHLABS logo is a larger version (1561 x 1741) than the atlas' 266 x 303 the cut gives.
+  `logo_gof2_remake.png` (the title logo, also the HUD's) stays the remake's own for now: #67's redraw of the game's logo
+  with "REMAKE" under it (the user's call).
 - **Once converted, it stays converted** (2026-11-15, "close the gaps"): nothing is decoded, compressed or rendered twice.
   - **The format stamp:** `OriginalConverter.FormatVersion` (1); the manifest's first line is
     `# gof2 original cache v<N>`. `GameContent.Installed` only for this version's stamp; `GameContent.Stale` for a

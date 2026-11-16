@@ -164,8 +164,12 @@ namespace GoF2Remake.UI
             if (!straight)
             {
                 while (logo == null) yield return null;
-                foreach (var tex in logos)
+                for (int i = 0; i < logos.Length; i++)
+                {
+                    // (the FISHLABS logo, an original's image: a build without the originals cuts it from the player's copy)
+                    var tex = logos[i] != null ? logos[i] : i == 0 ? GoF2Remake.Data.OriginalTextures.MenuImage("logo_fishlabs") : null;
                     if (tex != null) yield return Show(tex);
+                }
             }
             Activate();   // not in yet (a slow load): now, on black (the menu's own splash is black too)
             while (!menuLoad.isDone) yield return null;
