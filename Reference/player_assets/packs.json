@@ -1,25 +1,32 @@
 {
  "editions": [
   "android",
-  "ios"
+  "ios",
+  "macos"
  ],
  "totals": {
   "android": {
    "lower": 369,
-   "differs": 87,
+   "differs": 88,
    "missing": 2047,
-   "exact": 4165
+   "exact": 4204
   },
   "ios": {
    "lower": 399,
-   "differs": 261,
-   "missing": 15,
-   "exact": 5993
+   "differs": 265,
+   "missing": 36,
+   "exact": 6008
+  },
+  "macos": {
+   "exact": 6273,
+   "lower": 145,
+   "missing": 50,
+   "differs": 240
   }
  },
  "common_pack": {
   "required": {
-   "count": 58,
+   "count": 30,
    "assets": [
     "Models/main/bars/bar_vossk.gof2mesh.json",
     "Models/main/bars/bar_vossk_anim_add.gof2mesh.json",
@@ -42,61 +49,25 @@
     "Models/supernova/stations/sn_station_113_midorian_add.gof2mesh.json",
     "Models/valkyrie/hangars/v_hangar_deep_science_anim_add.gof2mesh.json",
     "Models/valkyrie/ships/v_ship_037_deep_science.gof2mesh.json",
-    "Textures/main/fx/khador_jump_normal.png",
+    "Resources/GoF2Data/items.json",
     "Textures/main/hangars/hangar_terran_alpha_diffuse.png",
     "Textures/main/hangars/hangar_vossk_anim_add_diffuse.png",
     "Textures/main/misc/rocket_emp_normal_specular.png",
-    "Textures/main/planets/planet_000_small.png",
-    "Textures/main/planets/planet_001_small.png",
-    "Textures/main/planets/planet_002_small.png",
-    "Textures/main/planets/planet_003_small.png",
-    "Textures/main/planets/planet_004_small.png",
-    "Textures/main/planets/planet_005_small.png",
-    "Textures/main/planets/planet_006_small.png",
-    "Textures/main/planets/planet_007_small.png",
-    "Textures/main/planets/planet_008_small.png",
-    "Textures/main/planets/planet_009_small.png",
-    "Textures/main/planets/planet_010_small.png",
-    "Textures/main/planets/planet_011_small.png",
-    "Textures/main/planets/planet_012_small.png",
-    "Textures/main/planets/planet_013_small.png",
-    "Textures/main/planets/planet_014_small.png",
-    "Textures/main/planets/planet_015_small.png",
-    "Textures/main/planets/planet_016_small.png",
-    "Textures/main/planets/planet_017_small.png",
-    "Textures/main/planets/planet_018_small.png",
-    "Textures/main/planets/planet_019_small.png",
-    "Textures/main/planets/planet_void_small.png",
-    "Textures/main/stations/stations_nivelian_normal_specular.png",
     "Textures/main/turrets/turret_001_normal_specular.png",
     "Textures/main/turrets/turret_002_normal_specular.png",
-    "Textures/supernova/misc/sn_asteroid_magma_explosion.png",
-    "Textures/supernova/planets/sn_planet_025_small.png",
-    "Textures/supernova/planets/sn_planet_026_small.png",
     "Textures/supernova/suns/sn_sun_012.png",
     "Textures/valkyrie/hangars/v_hangar_deep_science_normal_specular.png",
-    "Textures/valkyrie/planets/v_planet_020_small.png",
-    "Textures/valkyrie/planets/v_planet_021_small.png",
-    "Textures/valkyrie/planets/v_planet_022_small.png",
     "Textures/valkyrie/stations/v_station_battlestation_normal_specular.png"
    ]
   },
   "optional": {
-   "count": 388,
+   "count": 137,
    "assets": [
-    "Textures/main/bars/bar_midorian_diffuse.png",
-    "Textures/main/bars/bar_midorian_normal_specular.png",
-    "Textures/main/bars/bar_nivelian_diffuse.png",
-    "Textures/main/bars/bar_nivelian_normal_specular.png",
-    "Textures/main/bars/bar_terran_diffuse.png",
-    "Textures/main/bars/bar_terran_normal_specular.png",
     "Textures/main/bars/bar_visitor_glow_midorian.png",
     "Textures/main/bars/bar_visitor_glow_nivelian.png",
     "Textures/main/bars/bar_visitor_glow_terran.png",
     "Textures/main/bars/bar_visitor_glow_vossk.png",
     "Textures/main/bars/bar_visitor_shadow.png",
-    "Textures/main/bars/bar_vossk_diffuse.png",
-    "Textures/main/bars/bar_vossk_normal_specular.png",
     "Textures/main/bars/visitor_bobolan.png",
     "Textures/main/bars/visitor_grey.png",
     "Textures/main/bars/visitor_multipod.png",
@@ -118,30 +89,18 @@
     "Textures/main/fx/glow_vossk.png",
     "Textures/main/fx/hyper_drive.png",
     "Textures/main/fx/khador_jump.png",
+    "Textures/main/fx/khador_jump_normal.png",
     "Textures/main/fx/particles.png",
     "Textures/main/fx/projectiles.png",
     "Textures/main/fx/ship_engine_glow.png",
     "Textures/main/fx/sprite_explosion.png",
     "Textures/main/fx/sprite_fire.png",
     "Textures/main/fx/sprite_smoke.png",
-    "Textures/main/galaxymap/galaxymap_bg.png",
     "Textures/main/galaxymap/galaxymap_fog_layer_0.png",
     "Textures/main/galaxymap/galaxymap_fog_layer_1.png",
     "Textures/main/galaxymap/galaxymap_orbit.png",
-    "Textures/main/galaxymap/galaxymap_planets_diffuse.png",
-    "Textures/main/galaxymap/galaxymap_planets_normal_specular.png",
-    "Textures/main/hangars/hangar_midorian_diffuse.png",
-    "Textures/main/hangars/hangar_midorian_normal_specular.png",
-    "Textures/main/hangars/hangar_nivelian_diffuse.png",
-    "Textures/main/hangars/hangar_nivelian_normal_specular.png",
-    "Textures/main/hangars/hangar_terran_diffuse.png",
-    "Textures/main/hangars/hangar_terran_normal_specular.png",
     "Textures/main/hangars/hangar_vossk_normal_specular.png",
-    "Textures/main/misc/asteroid_01_diffuse.png",
-    "Textures/main/misc/asteroid_01_normal_specular.png",
     "Textures/main/misc/asteroid_explosion.png",
-    "Textures/main/misc/asteroid_void_diffuse.png",
-    "Textures/main/misc/asteroid_void_normal_specular.png",
     "Textures/main/misc/beer_and_bra_diffuse.png",
     "Textures/main/misc/beer_and_bra_normal_specular.png",
     "Textures/main/misc/bomb_emp_a_diffuse.png",
@@ -168,151 +127,6 @@
     "Textures/main/misc/space_particle_diffuse.png",
     "Textures/main/misc/space_particle_normal_specular.png",
     "Textures/main/misc/wormhole.png",
-    "Textures/main/planets/planet_000_big.png",
-    "Textures/main/planets/planet_001_big.png",
-    "Textures/main/planets/planet_002_big.png",
-    "Textures/main/planets/planet_003_big.png",
-    "Textures/main/planets/planet_004_big.png",
-    "Textures/main/planets/planet_005_big.png",
-    "Textures/main/planets/planet_006_big.png",
-    "Textures/main/planets/planet_007_big.png",
-    "Textures/main/planets/planet_008_big.png",
-    "Textures/main/planets/planet_009_big.png",
-    "Textures/main/planets/planet_010_big.png",
-    "Textures/main/planets/planet_011_big.png",
-    "Textures/main/planets/planet_012_big.png",
-    "Textures/main/planets/planet_013_big.png",
-    "Textures/main/planets/planet_014_big.png",
-    "Textures/main/planets/planet_015_big.png",
-    "Textures/main/planets/planet_016_big.png",
-    "Textures/main/planets/planet_017_big.png",
-    "Textures/main/planets/planet_018_big.png",
-    "Textures/main/planets/planet_019_big.png",
-    "Textures/main/planets/planet_void_big.png",
-    "Textures/main/ships/battleship_terran_diffuse.png",
-    "Textures/main/ships/battleship_terran_dmg_diffuse.png",
-    "Textures/main/ships/battleship_terran_dmg_normal_specular.png",
-    "Textures/main/ships/battleship_terran_normal_specular.png",
-    "Textures/main/ships/cargo_midorian_diffuse.png",
-    "Textures/main/ships/cargo_midorian_dmg_diffuse.png",
-    "Textures/main/ships/cargo_midorian_dmg_normal_specular.png",
-    "Textures/main/ships/cargo_midorian_normal_specular.png",
-    "Textures/main/ships/cargo_nivelian_diffuse.png",
-    "Textures/main/ships/cargo_nivelian_dmg_diffuse.png",
-    "Textures/main/ships/cargo_nivelian_dmg_normal_specular.png",
-    "Textures/main/ships/cargo_nivelian_normal_specular.png",
-    "Textures/main/ships/cargo_terran_diffuse.png",
-    "Textures/main/ships/cargo_terran_dmg_diffuse.png",
-    "Textures/main/ships/cargo_terran_dmg_normal_specular.png",
-    "Textures/main/ships/cargo_terran_normal_specular.png",
-    "Textures/main/ships/cargo_vossk_diffuse.png",
-    "Textures/main/ships/cargo_vossk_dmg_diffuse.png",
-    "Textures/main/ships/cargo_vossk_dmg_normal_specular.png",
-    "Textures/main/ships/cargo_vossk_normal_specular.png",
-    "Textures/main/ships/ship_000_midorian_diffuse.png",
-    "Textures/main/ships/ship_000_midorian_normal_specular.png",
-    "Textures/main/ships/ship_001_terran_diffuse.png",
-    "Textures/main/ships/ship_001_terran_normal_specular.png",
-    "Textures/main/ships/ship_002_pirates_diffuse.png",
-    "Textures/main/ships/ship_002_pirates_normal_specular.png",
-    "Textures/main/ships/ship_003_midorian_diffuse.png",
-    "Textures/main/ships/ship_003_midorian_normal_specular.png",
-    "Textures/main/ships/ship_004_nivelian_diffuse.png",
-    "Textures/main/ships/ship_004_nivelian_normal_specular.png",
-    "Textures/main/ships/ship_005_terran_diffuse.png",
-    "Textures/main/ships/ship_005_terran_normal_specular.png",
-    "Textures/main/ships/ship_006_midorian_diffuse.png",
-    "Textures/main/ships/ship_006_midorian_normal_specular.png",
-    "Textures/main/ships/ship_007_terran_diffuse.png",
-    "Textures/main/ships/ship_007_terran_normal_specular.png",
-    "Textures/main/ships/ship_008_void_diffuse.png",
-    "Textures/main/ships/ship_008_void_normal_specular.png",
-    "Textures/main/ships/ship_009_vossk_diffuse.png",
-    "Textures/main/ships/ship_009_vossk_normal_specular.png",
-    "Textures/main/ships/ship_010_terran_diffuse.png",
-    "Textures/main/ships/ship_010_terran_normal_specular.png",
-    "Textures/main/ships/ship_011_pirates_diffuse.png",
-    "Textures/main/ships/ship_011_pirates_normal_specular.png",
-    "Textures/main/ships/ship_012_nivelian_diffuse.png",
-    "Textures/main/ships/ship_012_nivelian_normal_specular.png",
-    "Textures/main/ships/ship_016_nivelian_diffuse.png",
-    "Textures/main/ships/ship_016_nivelian_normal_specular.png",
-    "Textures/main/ships/ship_017_terran_diffuse.png",
-    "Textures/main/ships/ship_017_terran_normal_specular.png",
-    "Textures/main/ships/ship_018_nivelian_diffuse.png",
-    "Textures/main/ships/ship_018_nivelian_normal_specular.png",
-    "Textures/main/ships/ship_019_midorian_diffuse.png",
-    "Textures/main/ships/ship_019_midorian_normal_specular.png",
-    "Textures/main/ships/ship_020_midorian_diffuse.png",
-    "Textures/main/ships/ship_020_midorian_normal_specular.png",
-    "Textures/main/ships/ship_021_nivelian_diffuse.png",
-    "Textures/main/ships/ship_021_nivelian_normal_specular.png",
-    "Textures/main/ships/ship_022_terran_diffuse.png",
-    "Textures/main/ships/ship_022_terran_normal_specular.png",
-    "Textures/main/ships/ship_023_pirates_diffuse.png",
-    "Textures/main/ships/ship_023_pirates_normal_specular.png",
-    "Textures/main/ships/ship_024_pirates_diffuse.png",
-    "Textures/main/ships/ship_024_pirates_normal_specular.png",
-    "Textures/main/ships/ship_025_pirates_diffuse.png",
-    "Textures/main/ships/ship_025_pirates_normal_specular.png",
-    "Textures/main/ships/ship_026_terran_diffuse.png",
-    "Textures/main/ships/ship_026_terran_normal_specular.png",
-    "Textures/main/ships/ship_027_terran_diffuse.png",
-    "Textures/main/ships/ship_027_terran_normal_specular.png",
-    "Textures/main/ships/ship_028_terran_diffuse.png",
-    "Textures/main/ships/ship_028_terran_normal_specular.png",
-    "Textures/main/ships/ship_029_pirates_diffuse.png",
-    "Textures/main/ships/ship_029_pirates_normal_specular.png",
-    "Textures/main/ships/ship_030_midorian_diffuse.png",
-    "Textures/main/ships/ship_030_midorian_normal_specular.png",
-    "Textures/main/ships/ship_031_nivelian_diffuse.png",
-    "Textures/main/ships/ship_031_nivelian_normal_specular.png",
-    "Textures/main/ships/ship_032_pirates_diffuse.png",
-    "Textures/main/ships/ship_032_pirates_normal_specular.png",
-    "Textures/main/ships/ship_033_terran_diffuse.png",
-    "Textures/main/ships/ship_033_terran_normal_specular.png",
-    "Textures/main/ships/ship_034_terran_diffuse.png",
-    "Textures/main/ships/ship_034_terran_normal_specular.png",
-    "Textures/main/ships/ship_035_nivelian_diffuse.png",
-    "Textures/main/ships/ship_035_nivelian_normal_specular.png",
-    "Textures/main/ships/ship_036_terran_diffuse.png",
-    "Textures/main/ships/ship_036_terran_normal_specular.png",
-    "Textures/main/ships/ship_042_retro_diffuse.png",
-    "Textures/main/ships/ship_042_retro_normal_specular.png",
-    "Textures/main/ships/ship_043_retro_diffuse.png",
-    "Textures/main/ships/ship_043_retro_normal_specular.png",
-    "Textures/main/ships/ship_061_elite_nivelian_prototype_diffuse.png",
-    "Textures/main/ships/ship_061_elite_nivelian_prototype_normal_specular.png",
-    "Textures/main/ships/ship_062_prototype_diffuse.png",
-    "Textures/main/ships/ship_062_prototype_normal_specular.png",
-    "Textures/main/skyboxes/skybox_000.png",
-    "Textures/main/skyboxes/skybox_001.png",
-    "Textures/main/skyboxes/skybox_002.png",
-    "Textures/main/skyboxes/skybox_003.png",
-    "Textures/main/skyboxes/skybox_004.png",
-    "Textures/main/skyboxes/skybox_005.png",
-    "Textures/main/skyboxes/skybox_006.png",
-    "Textures/main/skyboxes/skybox_007.png",
-    "Textures/main/skyboxes/skybox_008.png",
-    "Textures/main/skyboxes/skybox_009.png",
-    "Textures/main/skyboxes/skybox_010.png",
-    "Textures/main/skyboxes/skybox_asteroid_belt_diffuse.png",
-    "Textures/main/skyboxes/skybox_asteroid_belt_normal_specular.png",
-    "Textures/main/skyboxes/skybox_stars_000.png",
-    "Textures/main/skyboxes/skybox_stars_001.png",
-    "Textures/main/skyboxes/skybox_stars_002.png",
-    "Textures/main/stations/stations_midorian_diffuse.png",
-    "Textures/main/stations/stations_midorian_normal_specular.png",
-    "Textures/main/stations/stations_nivelian_diffuse.png",
-    "Textures/main/stations/stations_pirates_diffuse.png",
-    "Textures/main/stations/stations_pirates_dmg_diffuse.png",
-    "Textures/main/stations/stations_pirates_dmg_normal_specular.png",
-    "Textures/main/stations/stations_pirates_normal_specular.png",
-    "Textures/main/stations/stations_terran_diffuse.png",
-    "Textures/main/stations/stations_terran_normal_specular.png",
-    "Textures/main/stations/stations_void_diffuse.png",
-    "Textures/main/stations/stations_void_glow.png",
-    "Textures/main/stations/stations_void_normal_specular.png",
     "Textures/main/stations/stations_vossk_diffuse.png",
     "Textures/main/stations/stations_vossk_normal_specular.png",
     "Textures/main/stations/tex_player_station_fx.png",
@@ -335,85 +149,24 @@
     "Textures/supernova/fx/sn_sprite_fireworks_rocket_sparks.png",
     "Textures/supernova/fx/sn_supernova.png",
     "Textures/supernova/galaxymap/sn_galaxymap_planets.png",
-    "Textures/supernova/misc/sn_asteroid_magma_diffuse.png",
-    "Textures/supernova/misc/sn_asteroid_magma_normal_specular.png",
+    "Textures/supernova/misc/sn_asteroid_magma_explosion.png",
     "Textures/supernova/misc/sn_fireworks_rocket_diffuse.png",
     "Textures/supernova/misc/sn_fireworks_rocket_normal_specular.png",
     "Textures/supernova/misc/sn_gas_plasma.png",
     "Textures/supernova/misc/sn_gas_plasma_normal.png",
     "Textures/supernova/misc/sn_junk_field_diffuse.png",
     "Textures/supernova/misc/sn_junk_field_normal_specular.png",
-    "Textures/supernova/misc/sn_plasma_array_midorian_diffuse.png",
-    "Textures/supernova/misc/sn_plasma_array_midorian_normal_specular.png",
-    "Textures/supernova/misc/sn_plasma_gun_valkyrie_diffuse.png",
-    "Textures/supernova/misc/sn_plasma_gun_valkyrie_normal_specular.png",
     "Textures/supernova/misc/sn_sentry_gun_001_diffuse.png",
     "Textures/supernova/misc/sn_sentry_gun_001_normal_specular.png",
     "Textures/supernova/misc/sn_sentry_gun_002_diffuse.png",
     "Textures/supernova/misc/sn_sentry_gun_002_normal_specular.png",
     "Textures/supernova/misc/sn_sentry_gun_003_diffuse.png",
     "Textures/supernova/misc/sn_sentry_gun_003_normal_specular.png",
-    "Textures/supernova/planets/sn_planet_024_big.png",
-    "Textures/supernova/planets/sn_planet_024_small.png",
-    "Textures/supernova/planets/sn_planet_025_big.png",
-    "Textures/supernova/planets/sn_planet_026_big.png",
-    "Textures/supernova/planets/sn_planet_ring.png",
-    "Textures/supernova/ships/sn_battleship_vossk_diffuse.png",
-    "Textures/supernova/ships/sn_battleship_vossk_normal_specular.png",
-    "Textures/supernova/ships/sn_cargo_midorian_wrecked_diffuse.png",
-    "Textures/supernova/ships/sn_cargo_midorian_wrecked_normal_specular.png",
-    "Textures/supernova/ships/sn_carrier_terran_1_diffuse.png",
-    "Textures/supernova/ships/sn_carrier_terran_1_normal_specular.png",
-    "Textures/supernova/ships/sn_carrier_terran_2_diffuse.png",
-    "Textures/supernova/ships/sn_carrier_terran_2_normal_specular.png",
-    "Textures/supernova/ships/sn_carrier_terran_3_diffuse.png",
-    "Textures/supernova/ships/sn_carrier_terran_3_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_044_elite_nivelian_diffuse.png",
-    "Textures/supernova/ships/sn_ship_044_elite_nivelian_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_045_most_wanted_diffuse.png",
-    "Textures/supernova/ships/sn_ship_045_most_wanted_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_046_most_wanted_diffuse.png",
-    "Textures/supernova/ships/sn_ship_046_most_wanted_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_047_most_wanted_diffuse.png",
-    "Textures/supernova/ships/sn_ship_047_most_wanted_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_048_most_wanted_diffuse.png",
-    "Textures/supernova/ships/sn_ship_048_most_wanted_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_049_boss_nivelian_diffuse.png",
-    "Textures/supernova/ships/sn_ship_049_boss_nivelian_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_051_dropship_terran_diffuse.png",
-    "Textures/supernova/ships/sn_ship_051_dropship_terran_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_052_retro_diffuse.png",
-    "Textures/supernova/ships/sn_ship_052_retro_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_054_vossk_diffuse.png",
-    "Textures/supernova/ships/sn_ship_054_vossk_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_055_modified_diffuse.png",
-    "Textures/supernova/ships/sn_ship_055_modified_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_056_modified_diffuse.png",
-    "Textures/supernova/ships/sn_ship_056_modified_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_057_modified_diffuse.png",
-    "Textures/supernova/ships/sn_ship_057_modified_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_058_modified_diffuse.png",
-    "Textures/supernova/ships/sn_ship_058_modified_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_059_modified_diffuse.png",
-    "Textures/supernova/ships/sn_ship_059_modified_normal_specular.png",
-    "Textures/supernova/ships/sn_ship_060_modified_diffuse.png",
-    "Textures/supernova/ships/sn_ship_060_modified_normal_specular.png",
     "Textures/supernova/skyboxes/sn_skybox_015.png",
     "Textures/supernova/skyboxes/sn_skybox_015_flares.png",
     "Textures/supernova/skyboxes/sn_skybox_015_flares_nasty.png",
-    "Textures/supernova/skyboxes/sn_skybox_016.png",
-    "Textures/supernova/skyboxes/sn_skybox_017.png",
-    "Textures/supernova/skyboxes/sn_skybox_018.png",
     "Textures/supernova/skyboxes/sn_skybox_planet_ring.png",
-    "Textures/supernova/skyboxes/sn_skybox_storms.png",
-    "Textures/supernova/stations/sn_burning_station_fire.png",
     "Textures/supernova/stations/sn_burning_station_fire_normal.png",
-    "Textures/supernova/stations/sn_station_mining_plant_part1_diffuse.png",
-    "Textures/supernova/stations/sn_station_mining_plant_part1_normal_specular.png",
-    "Textures/supernova/stations/sn_station_mining_plant_part2_diffuse.png",
-    "Textures/supernova/stations/sn_station_mining_plant_part2_normal_specular.png",
-    "Textures/supernova/stations/sn_stations_midorian_wrecked_diffuse.png",
-    "Textures/supernova/stations/sn_stations_midorian_wrecked_normal_specular.png",
     "Textures/supernova/turrets/sn_plasma_collector_001_diffuse.png",
     "Textures/supernova/turrets/sn_plasma_collector_001_normal_specular.png",
     "Textures/supernova/turrets/sn_plasma_collector_002_diffuse.png",
@@ -428,14 +181,8 @@
     "Textures/valkyrie/fx/v_scattergun_001_explosion.png",
     "Textures/valkyrie/fx/v_scattergun_002_explosion.png",
     "Textures/valkyrie/fx/v_shield_noise.png",
-    "Textures/valkyrie/fx/v_shield_normal.png",
     "Textures/valkyrie/fx/v_ship_engine_glow.png",
-    "Textures/valkyrie/galaxymap/v_galaxymap_planets.png",
-    "Textures/valkyrie/hangars/v_hangar_battlestation_diffuse.png",
-    "Textures/valkyrie/hangars/v_hangar_battlestation_normal_specular.png",
     "Textures/valkyrie/hangars/v_hangar_deep_science_diffuse.png",
-    "Textures/valkyrie/misc/v_asteroid_ice_diffuse.png",
-    "Textures/valkyrie/misc/v_asteroid_ice_normal_specular.png",
     "Textures/valkyrie/misc/v_guided_missile_diffuse.png",
     "Textures/valkyrie/misc/v_guided_missile_normal_specular.png",
     "Textures/valkyrie/misc/v_mine_001_diffuse.png",
@@ -444,28 +191,9 @@
     "Textures/valkyrie/misc/v_mine_002_normal_specular.png",
     "Textures/valkyrie/misc/v_mine_003_diffuse.png",
     "Textures/valkyrie/misc/v_mine_003_normal_specular.png",
-    "Textures/valkyrie/planets/v_planet_020_big.png",
-    "Textures/valkyrie/planets/v_planet_021_big.png",
-    "Textures/valkyrie/planets/v_planet_022_big.png",
-    "Textures/valkyrie/ships/v_ship_037_deep_science_diffuse.png",
-    "Textures/valkyrie/ships/v_ship_037_deep_science_normal_specular.png",
-    "Textures/valkyrie/ships/v_ship_038_deep_science_diffuse.png",
-    "Textures/valkyrie/ships/v_ship_038_deep_science_normal_specular.png",
-    "Textures/valkyrie/ships/v_ship_039_vossk_diffuse.png",
-    "Textures/valkyrie/ships/v_ship_039_vossk_normal_specular.png",
-    "Textures/valkyrie/ships/v_ship_040_deep_science_diffuse.png",
-    "Textures/valkyrie/ships/v_ship_040_deep_science_normal_specular.png",
-    "Textures/valkyrie/ships/v_ship_041_vossk_diffuse.png",
-    "Textures/valkyrie/ships/v_ship_041_vossk_normal_specular.png",
-    "Textures/valkyrie/skyboxes/v_skybox_011.png",
-    "Textures/valkyrie/skyboxes/v_skybox_012.png",
-    "Textures/valkyrie/skyboxes/v_skybox_013.png",
-    "Textures/valkyrie/skyboxes/v_skybox_014.png",
     "Textures/valkyrie/stations/v_station_battlestation_diffuse.png",
-    "Textures/valkyrie/stations/v_station_deep_science_diffuse.png",
     "Textures/valkyrie/stations/v_station_deep_science_emitters.png",
     "Textures/valkyrie/stations/v_station_deep_science_glow.png",
-    "Textures/valkyrie/stations/v_station_deep_science_normal_specular.png",
     "Textures/valkyrie/turrets/v_autoturret_001_diffuse.png",
     "Textures/valkyrie/turrets/v_autoturret_001_normal_specular.png",
     "Textures/valkyrie/turrets/v_autoturret_002_diffuse.png",
@@ -477,7 +205,7 @@
  },
  "gap_packs": {
   "android": {
-   "count": 2076,
+   "count": 2105,
    "assets": [
     "Audio/DLC2_VOICE_deu/DE_BLUEPRINT_RECOVERED_0.ogg",
     "Audio/DLC2_VOICE_deu/DE_BLUEPRINT_RECOVERED_1.ogg",
@@ -2548,17 +2276,46 @@
     "Textures/main/bars/visitor_terran_m.png",
     "Textures/main/bars/visitor_vossk.png",
     "Textures/main/fx/glow_void.png",
+    "Textures/main/fx/khador_jump_normal.png",
+    "Textures/main/planets/planet_000_small.png",
+    "Textures/main/planets/planet_001_small.png",
+    "Textures/main/planets/planet_002_small.png",
+    "Textures/main/planets/planet_003_small.png",
+    "Textures/main/planets/planet_004_small.png",
+    "Textures/main/planets/planet_005_small.png",
+    "Textures/main/planets/planet_006_small.png",
+    "Textures/main/planets/planet_007_small.png",
+    "Textures/main/planets/planet_008_small.png",
+    "Textures/main/planets/planet_009_small.png",
+    "Textures/main/planets/planet_010_small.png",
+    "Textures/main/planets/planet_011_small.png",
+    "Textures/main/planets/planet_012_small.png",
+    "Textures/main/planets/planet_013_small.png",
+    "Textures/main/planets/planet_014_small.png",
+    "Textures/main/planets/planet_015_small.png",
     "Textures/main/planets/planet_016_big.png",
+    "Textures/main/planets/planet_016_small.png",
+    "Textures/main/planets/planet_017_small.png",
+    "Textures/main/planets/planet_018_small.png",
+    "Textures/main/planets/planet_019_small.png",
+    "Textures/main/planets/planet_void_small.png",
+    "Textures/main/stations/stations_nivelian_normal_specular.png",
     "Textures/supernova/fx/sn_ship_blaze_flames_normal.png",
+    "Textures/supernova/misc/sn_asteroid_magma_explosion.png",
     "Textures/supernova/misc/sn_gas_plasma_normal.png",
     "Textures/supernova/planets/sn_planet_024_small.png",
+    "Textures/supernova/planets/sn_planet_025_small.png",
+    "Textures/supernova/planets/sn_planet_026_small.png",
     "Textures/supernova/ships/sn_ship_059_modified_diffuse.png",
     "Textures/supernova/skyboxes/sn_skybox_planet_ring.png",
-    "Textures/valkyrie/misc/v_asteroid_ice_normal_specular.png"
+    "Textures/valkyrie/misc/v_asteroid_ice_normal_specular.png",
+    "Textures/valkyrie/planets/v_planet_020_small.png",
+    "Textures/valkyrie/planets/v_planet_021_small.png",
+    "Textures/valkyrie/planets/v_planet_022_small.png"
    ]
   },
   "ios": {
-   "count": 218,
+   "count": 271,
    "assets": [
     "Models/main/hangars/hangar_midorian_add.gof2mesh.json",
     "Models/main/hangars/hangar_midorian_alpha.gof2mesh.json",
@@ -2735,12 +2492,62 @@
     "Models/valkyrie/ships/v_ship_041_vossk_lod_2.gof2mesh.json",
     "Models/valkyrie/stations/v_station_deep_science_damaged.gof2mesh.json",
     "Models/valkyrie/stations/v_station_deep_science_damaged_lod_1.gof2mesh.json",
+    "Resources/GoF2Data/item_attributes.json",
+    "Resources/GoF2Data/ships.json",
+    "Resources/GoF2Data/sn_docking_points_battlestation.json",
+    "Resources/GoF2Data/sn_docking_points_cargo_wrecks.json",
+    "Resources/GoF2Data/sn_docking_points_carrier_terran.json",
+    "Resources/GoF2Data/sn_ship_044_elite_nivelian_weapons.json",
+    "Resources/GoF2Data/sn_ship_045_most_wanted_weapons.json",
+    "Resources/GoF2Data/sn_ship_046_most_wanted_weapons.json",
+    "Resources/GoF2Data/sn_ship_047_most_wanted_weapons.json",
+    "Resources/GoF2Data/sn_ship_048_most_wanted_weapons.json",
+    "Resources/GoF2Data/sn_ship_049_boss_nivelian_weapons.json",
+    "Resources/GoF2Data/sn_ship_051_dropship_terran_weapons.json",
+    "Resources/GoF2Data/sn_ship_052_retro_weapons.json",
+    "Resources/GoF2Data/sn_ship_054_vossk_weapons.json",
+    "Resources/GoF2Data/sn_ship_055_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_056_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_057_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_058_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_059_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_060_modified_weapons.json",
+    "Resources/GoF2Data/v_collisions.json",
+    "Resources/GoF2Data/v_ships_deep_science_weapons.json",
+    "Resources/GoF2Data/v_ships_vossk_weapons.json",
+    "Resources/GoF2Data/weapons_hd.json",
     "Textures/main/fx/glow_midorian.png",
     "Textures/main/fx/glow_terran.png",
+    "Textures/main/fx/khador_jump_normal.png",
     "Textures/main/misc/rocket_explosive_diffuse.png",
     "Textures/main/misc/space_particle_diffuse.png",
+    "Textures/main/planets/planet_000_small.png",
+    "Textures/main/planets/planet_001_small.png",
+    "Textures/main/planets/planet_002_small.png",
+    "Textures/main/planets/planet_003_small.png",
+    "Textures/main/planets/planet_004_small.png",
+    "Textures/main/planets/planet_005_small.png",
+    "Textures/main/planets/planet_006_small.png",
+    "Textures/main/planets/planet_007_small.png",
+    "Textures/main/planets/planet_008_small.png",
+    "Textures/main/planets/planet_009_small.png",
+    "Textures/main/planets/planet_010_small.png",
+    "Textures/main/planets/planet_011_small.png",
+    "Textures/main/planets/planet_012_small.png",
+    "Textures/main/planets/planet_013_small.png",
+    "Textures/main/planets/planet_014_small.png",
+    "Textures/main/planets/planet_015_small.png",
+    "Textures/main/planets/planet_016_small.png",
+    "Textures/main/planets/planet_017_small.png",
+    "Textures/main/planets/planet_018_small.png",
+    "Textures/main/planets/planet_019_small.png",
+    "Textures/main/planets/planet_void_small.png",
     "Textures/main/ships/ship_063_vossk_diffuse.png",
     "Textures/main/ships/ship_063_vossk_normal_specular.png",
+    "Textures/main/stations/stations_nivelian_normal_specular.png",
+    "Textures/supernova/misc/sn_asteroid_magma_explosion.png",
+    "Textures/supernova/planets/sn_planet_025_small.png",
+    "Textures/supernova/planets/sn_planet_026_small.png",
     "Textures/textures/4_0_0_ipad_1440.png",
     "Textures/textures/4_0_0_ipad_large.png",
     "Textures/textures/4_0_1_ipad_1440.png",
@@ -2777,19 +2584,703 @@
     "Textures/textures/gof2_shop_button.png",
     "Textures/textures/gof2_shop_button_ipad_1440.png",
     "Textures/valkyrie/galaxymap/v_galaxymap_planets.png",
-    "Textures/valkyrie/planets/v_planet_021_big.png"
+    "Textures/valkyrie/planets/v_planet_020_small.png",
+    "Textures/valkyrie/planets/v_planet_021_big.png",
+    "Textures/valkyrie/planets/v_planet_021_small.png",
+    "Textures/valkyrie/planets/v_planet_022_small.png"
+   ]
+  },
+  "macos": {
+   "count": 260,
+   "assets": [
+    "Models/main/hangars/hangar_midorian_add.gof2mesh.json",
+    "Models/main/hangars/hangar_midorian_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_bot_a_anim.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_bot_a_anim_add.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_bot_b_anim.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_bot_b_anim_add.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_bot_c_anim.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_bot_c_anim_add.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x1.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x1_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x2.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x2_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x3.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x3_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x4.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x4_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x5.gof2mesh.json",
+    "Models/main/hangars/hangar_nivelian_x5_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_terran.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_bot_a_anim.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_bot_a_anim_add.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_bot_b_anim.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_bot_b_anim_add.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_bot_c_anim.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_bot_c_anim_add.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_bot_e_anim.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_bot_e_anim_add.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x1.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x1_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x2.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x2_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x3.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x3_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x4.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x4_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x5.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x5_shadow_alpha.gof2mesh.json",
+    "Models/main/hangars/hangar_terran_x6.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_midorian_lod_1.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_midorian_lod_2.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_nivelian_lod_1.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_nivelian_lod_1_emissive.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_nivelian_lod_2.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_nivelian_lod_2_emissive.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_terran_lod_1.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_terran_lod_2.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_vossk_lod_1_anim.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_vossk_lod_1_emissive.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_vossk_lod_2_anim.gof2mesh.json",
+    "Models/main/jumpgates/jumpgate_vossk_lod_2_emissive.gof2mesh.json",
+    "Models/main/misc/asteroid_01_lod_1.gof2mesh.json",
+    "Models/main/misc/asteroid_01_lod_2.gof2mesh.json",
+    "Models/main/misc/asteroid_01_lod_3.gof2mesh.json",
+    "Models/main/misc/asteroid_void_lod_1.gof2mesh.json",
+    "Models/main/misc/asteroid_void_lod_2.gof2mesh.json",
+    "Models/main/misc/asteroid_void_lod_3.gof2mesh.json",
+    "Models/main/ships/battleship_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/battleship_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/cargo_001_midorian_container_lod_1.gof2mesh.json",
+    "Models/main/ships/cargo_001_midorian_container_lod_2.gof2mesh.json",
+    "Models/main/ships/cargo_001_midorian_lod_1.gof2mesh.json",
+    "Models/main/ships/cargo_001_midorian_lod_2.gof2mesh.json",
+    "Models/main/ships/cargo_002_nivelian_lod_1.gof2mesh.json",
+    "Models/main/ships/cargo_002_nivelian_lod_2.gof2mesh.json",
+    "Models/main/ships/cargo_003_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/cargo_003_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/cargo_004_vossk_engine_add.gof2mesh.json",
+    "Models/main/ships/cargo_004_vossk_lod_1.gof2mesh.json",
+    "Models/main/ships/cargo_004_vossk_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_000_midorian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_000_midorian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_001_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_001_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_002_pirates_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_002_pirates_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_003_midorian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_003_midorian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_004_nivelian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_004_nivelian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_005_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_005_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_006_midorian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_006_midorian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_007_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_007_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_008_void_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_008_void_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_009_vossk_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_009_vossk_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_010_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_010_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_011_pirates_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_011_pirates_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_012_nivelian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_012_nivelian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_016_nivelian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_016_nivelian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_017_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_017_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_018_nivelian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_018_nivelian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_019_midorian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_019_midorian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_020_midorian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_020_midorian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_021_nivelian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_021_nivelian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_022_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_022_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_023_pirates_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_023_pirates_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_024_pirates_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_024_pirates_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_025_pirates_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_025_pirates_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_026_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_026_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_027_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_027_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_028_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_028_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_029_pirates_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_029_pirates_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_030_midorian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_030_midorian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_031_nivelian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_031_nivelian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_032_pirates_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_032_pirates_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_033_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_033_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_034_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_034_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_035_nivelian_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_035_nivelian_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_036_terran_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_036_terran_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_042_retro_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_042_retro_lod_2.gof2mesh.json",
+    "Models/main/ships/ship_043_retro_lod_1.gof2mesh.json",
+    "Models/main/ships/ship_043_retro_lod_2.gof2mesh.json",
+    "Models/supernova/misc/sn_asteroid_magma_lod_1.gof2mesh.json",
+    "Models/supernova/misc/sn_asteroid_magma_lod_2.gof2mesh.json",
+    "Models/supernova/misc/sn_asteroid_magma_lod_3.gof2mesh.json",
+    "Models/supernova/misc/sn_plasma_gun_valkyrie_lod_1.gof2mesh.json",
+    "Models/supernova/misc/sn_plasma_gun_valkyrie_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_battleship_vossk_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_battleship_vossk_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_044_elite_nivelian_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_044_elite_nivelian_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_045_most_wanted_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_045_most_wanted_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_046_most_wanted_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_046_most_wanted_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_047_most_wanted_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_047_most_wanted_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_048_most_wanted_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_048_most_wanted_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_051_dropship_terran_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_051_dropship_terran_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_052_retro_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_052_retro_lod_2.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_054_vossk_lod_1.gof2mesh.json",
+    "Models/supernova/ships/sn_ship_054_vossk_lod_2.gof2mesh.json",
+    "Models/supernova/skyboxes/sn_skybox_017.gof2mesh.json",
+    "Models/valkyrie/misc/v_asteroid_ice_lod_1.gof2mesh.json",
+    "Models/valkyrie/misc/v_asteroid_ice_lod_2.gof2mesh.json",
+    "Models/valkyrie/misc/v_asteroid_ice_lod_3.gof2mesh.json",
+    "Models/valkyrie/ships/v_ship_039_vossk_lod_1.gof2mesh.json",
+    "Models/valkyrie/ships/v_ship_039_vossk_lod_2.gof2mesh.json",
+    "Models/valkyrie/ships/v_ship_041_vossk_lod_1.gof2mesh.json",
+    "Models/valkyrie/ships/v_ship_041_vossk_lod_2.gof2mesh.json",
+    "Models/valkyrie/stations/v_station_deep_science_damaged.gof2mesh.json",
+    "Models/valkyrie/stations/v_station_deep_science_damaged_lod_1.gof2mesh.json",
+    "Resources/GoF2Data/item_attributes.json",
+    "Resources/GoF2Data/ships.json",
+    "Resources/GoF2Data/sn_docking_points_battlestation.json",
+    "Resources/GoF2Data/sn_docking_points_cargo_wrecks.json",
+    "Resources/GoF2Data/sn_docking_points_carrier_terran.json",
+    "Resources/GoF2Data/sn_ship_044_elite_nivelian_weapons.json",
+    "Resources/GoF2Data/sn_ship_045_most_wanted_weapons.json",
+    "Resources/GoF2Data/sn_ship_046_most_wanted_weapons.json",
+    "Resources/GoF2Data/sn_ship_047_most_wanted_weapons.json",
+    "Resources/GoF2Data/sn_ship_048_most_wanted_weapons.json",
+    "Resources/GoF2Data/sn_ship_049_boss_nivelian_weapons.json",
+    "Resources/GoF2Data/sn_ship_051_dropship_terran_weapons.json",
+    "Resources/GoF2Data/sn_ship_052_retro_weapons.json",
+    "Resources/GoF2Data/sn_ship_054_vossk_weapons.json",
+    "Resources/GoF2Data/sn_ship_055_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_056_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_057_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_058_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_059_modified_weapons.json",
+    "Resources/GoF2Data/sn_ship_060_modified_weapons.json",
+    "Resources/GoF2Data/v_collisions.json",
+    "Resources/GoF2Data/v_ships_deep_science_weapons.json",
+    "Resources/GoF2Data/v_ships_vossk_weapons.json",
+    "Resources/GoF2Data/weapons_hd.json",
+    "Textures/main/hangars/hangar_vossk_diffuse.png",
+    "Textures/main/hangars/hangar_vossk_normal_specular.png",
+    "Textures/main/misc/space_particle_diffuse.png",
+    "Textures/main/ships/ship_063_vossk_diffuse.png",
+    "Textures/main/ships/ship_063_vossk_normal_specular.png",
+    "Textures/main/stations/stations_vossk_diffuse.png",
+    "Textures/main/stations/stations_vossk_normal_specular.png",
+    "Textures/supernova/fx/sn_sun_explosion_core.png",
+    "Textures/supernova/fx/sn_sun_explosion_ring.png",
+    "Textures/supernova/skyboxes/sn_skybox_planet_ring.png",
+    "Textures/textures/4_0_0_ipad_1440.png",
+    "Textures/textures/4_0_0_ipad_large.png",
+    "Textures/textures/4_0_1_ipad_1440.png",
+    "Textures/textures/4_0_1_ipad_large.png",
+    "Textures/textures/4_0_2_ipad_1440.png",
+    "Textures/textures/4_0_2_ipad_large.png",
+    "Textures/textures/4_1_0_ipad_1440.png",
+    "Textures/textures/4_1_0_ipad_large.png",
+    "Textures/textures/4_1_1_ipad_1440.png",
+    "Textures/textures/4_1_1_ipad_large.png",
+    "Textures/textures/4_1_2_ipad_1440.png",
+    "Textures/textures/4_1_2_ipad_large.png",
+    "Textures/textures/4_1_3_ipad_1440.png",
+    "Textures/textures/4_1_3_ipad_large.png",
+    "Textures/textures/4_1_4_ipad_1440.png",
+    "Textures/textures/4_1_4_ipad_large.png",
+    "Textures/textures/4_2_0_ipad_1440.png",
+    "Textures/textures/4_2_0_ipad_large.png",
+    "Textures/textures/4_2_1_ipad_1440.png",
+    "Textures/textures/4_2_1_ipad_large.png",
+    "Textures/textures/4_2_2_ipad_1440.png",
+    "Textures/textures/4_2_2_ipad_large.png",
+    "Textures/textures/4_2_3.png",
+    "Textures/textures/4_2_3_ipad.png",
+    "Textures/textures/4_2_3_ipad_1440.png",
+    "Textures/textures/4_2_3_ipad_large.png",
+    "Textures/textures/4_2_4.png",
+    "Textures/textures/4_2_4_ipad.png",
+    "Textures/textures/4_2_4_ipad_1440.png",
+    "Textures/textures/4_2_4_ipad_large.png",
+    "Textures/textures/gof2_campaign_select.png",
+    "Textures/textures/gof2_campaign_select_ipad.png",
+    "Textures/textures/gof2_campaign_select_ipad_1440.png",
+    "Textures/textures/gof2_campaign_select_ipad_large.png",
+    "Textures/textures/gof2_campaign_select_iphone4.png",
+    "Textures/textures/gof2_credits.png",
+    "Textures/textures/gof2_credits_1440.png",
+    "Textures/textures/gof2_credits_iphone4.png",
+    "Textures/textures/gof2_gamepad.png",
+    "Textures/textures/gof2_gamepad_1440.png",
+    "Textures/textures/gof2_gamepad_large.png",
+    "Textures/textures/gof2_interface3_iphone4.png",
+    "Textures/textures/gof2_logos_ipad2.png",
+    "Textures/textures/gof2_logos_iphone4.png",
+    "Textures/textures/gof2_shop_button.png",
+    "Textures/textures/gof2_shop_button_ipad_1440.png",
+    "Textures/textures/gof2_shop_button_ipad_large.png",
+    "Textures/textures/gof2_shop_button_iphone4.png",
+    "Textures/textures/gof2_shop_button_large.png",
+    "Textures/valkyrie/hangars/v_hangar_deep_science_diffuse.png"
    ]
   }
  },
  "optional_hd": {
   "android": {
-   "count": 0,
-   "assets": []
+   "count": 249,
+   "assets": [
+    "Textures/main/bars/bar_midorian_diffuse.png",
+    "Textures/main/bars/bar_midorian_normal_specular.png",
+    "Textures/main/bars/bar_nivelian_diffuse.png",
+    "Textures/main/bars/bar_nivelian_normal_specular.png",
+    "Textures/main/bars/bar_terran_diffuse.png",
+    "Textures/main/bars/bar_terran_normal_specular.png",
+    "Textures/main/bars/bar_vossk_diffuse.png",
+    "Textures/main/bars/bar_vossk_normal_specular.png",
+    "Textures/main/galaxymap/galaxymap_bg.png",
+    "Textures/main/galaxymap/galaxymap_planets_diffuse.png",
+    "Textures/main/galaxymap/galaxymap_planets_normal_specular.png",
+    "Textures/main/hangars/hangar_midorian_diffuse.png",
+    "Textures/main/hangars/hangar_midorian_normal_specular.png",
+    "Textures/main/hangars/hangar_nivelian_diffuse.png",
+    "Textures/main/hangars/hangar_nivelian_normal_specular.png",
+    "Textures/main/hangars/hangar_terran_diffuse.png",
+    "Textures/main/hangars/hangar_terran_normal_specular.png",
+    "Textures/main/misc/asteroid_01_diffuse.png",
+    "Textures/main/misc/asteroid_01_normal_specular.png",
+    "Textures/main/misc/asteroid_void_diffuse.png",
+    "Textures/main/misc/asteroid_void_normal_specular.png",
+    "Textures/main/planets/planet_000_big.png",
+    "Textures/main/planets/planet_001_big.png",
+    "Textures/main/planets/planet_002_big.png",
+    "Textures/main/planets/planet_003_big.png",
+    "Textures/main/planets/planet_004_big.png",
+    "Textures/main/planets/planet_005_big.png",
+    "Textures/main/planets/planet_006_big.png",
+    "Textures/main/planets/planet_007_big.png",
+    "Textures/main/planets/planet_008_big.png",
+    "Textures/main/planets/planet_009_big.png",
+    "Textures/main/planets/planet_010_big.png",
+    "Textures/main/planets/planet_011_big.png",
+    "Textures/main/planets/planet_012_big.png",
+    "Textures/main/planets/planet_013_big.png",
+    "Textures/main/planets/planet_014_big.png",
+    "Textures/main/planets/planet_015_big.png",
+    "Textures/main/planets/planet_017_big.png",
+    "Textures/main/planets/planet_018_big.png",
+    "Textures/main/planets/planet_019_big.png",
+    "Textures/main/planets/planet_void_big.png",
+    "Textures/main/ships/battleship_terran_diffuse.png",
+    "Textures/main/ships/battleship_terran_dmg_diffuse.png",
+    "Textures/main/ships/battleship_terran_dmg_normal_specular.png",
+    "Textures/main/ships/battleship_terran_normal_specular.png",
+    "Textures/main/ships/cargo_midorian_diffuse.png",
+    "Textures/main/ships/cargo_midorian_dmg_diffuse.png",
+    "Textures/main/ships/cargo_midorian_dmg_normal_specular.png",
+    "Textures/main/ships/cargo_midorian_normal_specular.png",
+    "Textures/main/ships/cargo_nivelian_diffuse.png",
+    "Textures/main/ships/cargo_nivelian_dmg_diffuse.png",
+    "Textures/main/ships/cargo_nivelian_dmg_normal_specular.png",
+    "Textures/main/ships/cargo_nivelian_normal_specular.png",
+    "Textures/main/ships/cargo_terran_diffuse.png",
+    "Textures/main/ships/cargo_terran_dmg_diffuse.png",
+    "Textures/main/ships/cargo_terran_dmg_normal_specular.png",
+    "Textures/main/ships/cargo_terran_normal_specular.png",
+    "Textures/main/ships/cargo_vossk_diffuse.png",
+    "Textures/main/ships/cargo_vossk_dmg_diffuse.png",
+    "Textures/main/ships/cargo_vossk_dmg_normal_specular.png",
+    "Textures/main/ships/cargo_vossk_normal_specular.png",
+    "Textures/main/ships/ship_000_midorian_diffuse.png",
+    "Textures/main/ships/ship_000_midorian_normal_specular.png",
+    "Textures/main/ships/ship_001_terran_diffuse.png",
+    "Textures/main/ships/ship_001_terran_normal_specular.png",
+    "Textures/main/ships/ship_002_pirates_diffuse.png",
+    "Textures/main/ships/ship_002_pirates_normal_specular.png",
+    "Textures/main/ships/ship_003_midorian_diffuse.png",
+    "Textures/main/ships/ship_003_midorian_normal_specular.png",
+    "Textures/main/ships/ship_004_nivelian_diffuse.png",
+    "Textures/main/ships/ship_004_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_005_terran_diffuse.png",
+    "Textures/main/ships/ship_005_terran_normal_specular.png",
+    "Textures/main/ships/ship_006_midorian_diffuse.png",
+    "Textures/main/ships/ship_006_midorian_normal_specular.png",
+    "Textures/main/ships/ship_007_terran_diffuse.png",
+    "Textures/main/ships/ship_007_terran_normal_specular.png",
+    "Textures/main/ships/ship_008_void_diffuse.png",
+    "Textures/main/ships/ship_008_void_normal_specular.png",
+    "Textures/main/ships/ship_009_vossk_diffuse.png",
+    "Textures/main/ships/ship_009_vossk_normal_specular.png",
+    "Textures/main/ships/ship_010_terran_diffuse.png",
+    "Textures/main/ships/ship_010_terran_normal_specular.png",
+    "Textures/main/ships/ship_011_pirates_diffuse.png",
+    "Textures/main/ships/ship_011_pirates_normal_specular.png",
+    "Textures/main/ships/ship_012_nivelian_diffuse.png",
+    "Textures/main/ships/ship_012_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_016_nivelian_diffuse.png",
+    "Textures/main/ships/ship_016_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_017_terran_diffuse.png",
+    "Textures/main/ships/ship_017_terran_normal_specular.png",
+    "Textures/main/ships/ship_018_nivelian_diffuse.png",
+    "Textures/main/ships/ship_018_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_019_midorian_diffuse.png",
+    "Textures/main/ships/ship_019_midorian_normal_specular.png",
+    "Textures/main/ships/ship_020_midorian_diffuse.png",
+    "Textures/main/ships/ship_020_midorian_normal_specular.png",
+    "Textures/main/ships/ship_021_nivelian_diffuse.png",
+    "Textures/main/ships/ship_021_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_022_terran_diffuse.png",
+    "Textures/main/ships/ship_022_terran_normal_specular.png",
+    "Textures/main/ships/ship_023_pirates_diffuse.png",
+    "Textures/main/ships/ship_023_pirates_normal_specular.png",
+    "Textures/main/ships/ship_024_pirates_diffuse.png",
+    "Textures/main/ships/ship_024_pirates_normal_specular.png",
+    "Textures/main/ships/ship_025_pirates_diffuse.png",
+    "Textures/main/ships/ship_025_pirates_normal_specular.png",
+    "Textures/main/ships/ship_026_terran_diffuse.png",
+    "Textures/main/ships/ship_026_terran_normal_specular.png",
+    "Textures/main/ships/ship_027_terran_diffuse.png",
+    "Textures/main/ships/ship_027_terran_normal_specular.png",
+    "Textures/main/ships/ship_028_terran_diffuse.png",
+    "Textures/main/ships/ship_028_terran_normal_specular.png",
+    "Textures/main/ships/ship_029_pirates_diffuse.png",
+    "Textures/main/ships/ship_029_pirates_normal_specular.png",
+    "Textures/main/ships/ship_030_midorian_diffuse.png",
+    "Textures/main/ships/ship_030_midorian_normal_specular.png",
+    "Textures/main/ships/ship_031_nivelian_diffuse.png",
+    "Textures/main/ships/ship_031_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_032_pirates_diffuse.png",
+    "Textures/main/ships/ship_032_pirates_normal_specular.png",
+    "Textures/main/ships/ship_033_terran_diffuse.png",
+    "Textures/main/ships/ship_033_terran_normal_specular.png",
+    "Textures/main/ships/ship_034_terran_diffuse.png",
+    "Textures/main/ships/ship_034_terran_normal_specular.png",
+    "Textures/main/ships/ship_035_nivelian_diffuse.png",
+    "Textures/main/ships/ship_035_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_036_terran_diffuse.png",
+    "Textures/main/ships/ship_036_terran_normal_specular.png",
+    "Textures/main/ships/ship_042_retro_diffuse.png",
+    "Textures/main/ships/ship_042_retro_normal_specular.png",
+    "Textures/main/ships/ship_043_retro_diffuse.png",
+    "Textures/main/ships/ship_043_retro_normal_specular.png",
+    "Textures/main/ships/ship_061_elite_nivelian_prototype_diffuse.png",
+    "Textures/main/ships/ship_061_elite_nivelian_prototype_normal_specular.png",
+    "Textures/main/ships/ship_062_prototype_diffuse.png",
+    "Textures/main/ships/ship_062_prototype_normal_specular.png",
+    "Textures/main/skyboxes/skybox_000.png",
+    "Textures/main/skyboxes/skybox_001.png",
+    "Textures/main/skyboxes/skybox_002.png",
+    "Textures/main/skyboxes/skybox_003.png",
+    "Textures/main/skyboxes/skybox_004.png",
+    "Textures/main/skyboxes/skybox_005.png",
+    "Textures/main/skyboxes/skybox_006.png",
+    "Textures/main/skyboxes/skybox_007.png",
+    "Textures/main/skyboxes/skybox_008.png",
+    "Textures/main/skyboxes/skybox_009.png",
+    "Textures/main/skyboxes/skybox_010.png",
+    "Textures/main/skyboxes/skybox_asteroid_belt_diffuse.png",
+    "Textures/main/skyboxes/skybox_asteroid_belt_normal_specular.png",
+    "Textures/main/skyboxes/skybox_stars_000.png",
+    "Textures/main/skyboxes/skybox_stars_001.png",
+    "Textures/main/skyboxes/skybox_stars_002.png",
+    "Textures/main/stations/stations_midorian_diffuse.png",
+    "Textures/main/stations/stations_midorian_normal_specular.png",
+    "Textures/main/stations/stations_nivelian_diffuse.png",
+    "Textures/main/stations/stations_pirates_diffuse.png",
+    "Textures/main/stations/stations_pirates_dmg_diffuse.png",
+    "Textures/main/stations/stations_pirates_dmg_normal_specular.png",
+    "Textures/main/stations/stations_pirates_normal_specular.png",
+    "Textures/main/stations/stations_terran_diffuse.png",
+    "Textures/main/stations/stations_terran_normal_specular.png",
+    "Textures/main/stations/stations_void_diffuse.png",
+    "Textures/main/stations/stations_void_glow.png",
+    "Textures/main/stations/stations_void_normal_specular.png",
+    "Textures/supernova/misc/sn_asteroid_magma_diffuse.png",
+    "Textures/supernova/misc/sn_asteroid_magma_normal_specular.png",
+    "Textures/supernova/misc/sn_plasma_array_midorian_diffuse.png",
+    "Textures/supernova/misc/sn_plasma_array_midorian_normal_specular.png",
+    "Textures/supernova/misc/sn_plasma_gun_valkyrie_diffuse.png",
+    "Textures/supernova/misc/sn_plasma_gun_valkyrie_normal_specular.png",
+    "Textures/supernova/planets/sn_planet_024_big.png",
+    "Textures/supernova/planets/sn_planet_025_big.png",
+    "Textures/supernova/planets/sn_planet_026_big.png",
+    "Textures/supernova/planets/sn_planet_ring.png",
+    "Textures/supernova/ships/sn_battleship_vossk_diffuse.png",
+    "Textures/supernova/ships/sn_battleship_vossk_normal_specular.png",
+    "Textures/supernova/ships/sn_cargo_midorian_wrecked_diffuse.png",
+    "Textures/supernova/ships/sn_cargo_midorian_wrecked_normal_specular.png",
+    "Textures/supernova/ships/sn_carrier_terran_1_diffuse.png",
+    "Textures/supernova/ships/sn_carrier_terran_1_normal_specular.png",
+    "Textures/supernova/ships/sn_carrier_terran_2_diffuse.png",
+    "Textures/supernova/ships/sn_carrier_terran_2_normal_specular.png",
+    "Textures/supernova/ships/sn_carrier_terran_3_diffuse.png",
+    "Textures/supernova/ships/sn_carrier_terran_3_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_044_elite_nivelian_diffuse.png",
+    "Textures/supernova/ships/sn_ship_044_elite_nivelian_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_045_most_wanted_diffuse.png",
+    "Textures/supernova/ships/sn_ship_045_most_wanted_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_046_most_wanted_diffuse.png",
+    "Textures/supernova/ships/sn_ship_046_most_wanted_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_047_most_wanted_diffuse.png",
+    "Textures/supernova/ships/sn_ship_047_most_wanted_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_048_most_wanted_diffuse.png",
+    "Textures/supernova/ships/sn_ship_048_most_wanted_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_049_boss_nivelian_diffuse.png",
+    "Textures/supernova/ships/sn_ship_049_boss_nivelian_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_051_dropship_terran_diffuse.png",
+    "Textures/supernova/ships/sn_ship_051_dropship_terran_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_052_retro_diffuse.png",
+    "Textures/supernova/ships/sn_ship_052_retro_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_054_vossk_diffuse.png",
+    "Textures/supernova/ships/sn_ship_054_vossk_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_055_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_055_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_056_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_056_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_057_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_057_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_058_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_058_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_059_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_060_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_060_modified_normal_specular.png",
+    "Textures/supernova/skyboxes/sn_skybox_016.png",
+    "Textures/supernova/skyboxes/sn_skybox_017.png",
+    "Textures/supernova/skyboxes/sn_skybox_018.png",
+    "Textures/supernova/skyboxes/sn_skybox_storms.png",
+    "Textures/supernova/stations/sn_burning_station_fire.png",
+    "Textures/supernova/stations/sn_station_mining_plant_part1_diffuse.png",
+    "Textures/supernova/stations/sn_station_mining_plant_part1_normal_specular.png",
+    "Textures/supernova/stations/sn_station_mining_plant_part2_diffuse.png",
+    "Textures/supernova/stations/sn_station_mining_plant_part2_normal_specular.png",
+    "Textures/supernova/stations/sn_stations_midorian_wrecked_diffuse.png",
+    "Textures/supernova/stations/sn_stations_midorian_wrecked_normal_specular.png",
+    "Textures/valkyrie/fx/v_shield_normal.png",
+    "Textures/valkyrie/galaxymap/v_galaxymap_planets.png",
+    "Textures/valkyrie/hangars/v_hangar_battlestation_diffuse.png",
+    "Textures/valkyrie/hangars/v_hangar_battlestation_normal_specular.png",
+    "Textures/valkyrie/misc/v_asteroid_ice_diffuse.png",
+    "Textures/valkyrie/planets/v_planet_020_big.png",
+    "Textures/valkyrie/planets/v_planet_021_big.png",
+    "Textures/valkyrie/planets/v_planet_022_big.png",
+    "Textures/valkyrie/ships/v_ship_037_deep_science_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_037_deep_science_normal_specular.png",
+    "Textures/valkyrie/ships/v_ship_038_deep_science_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_038_deep_science_normal_specular.png",
+    "Textures/valkyrie/ships/v_ship_039_vossk_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_039_vossk_normal_specular.png",
+    "Textures/valkyrie/ships/v_ship_040_deep_science_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_040_deep_science_normal_specular.png",
+    "Textures/valkyrie/ships/v_ship_041_vossk_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_041_vossk_normal_specular.png",
+    "Textures/valkyrie/skyboxes/v_skybox_011.png",
+    "Textures/valkyrie/skyboxes/v_skybox_012.png",
+    "Textures/valkyrie/skyboxes/v_skybox_013.png",
+    "Textures/valkyrie/skyboxes/v_skybox_014.png",
+    "Textures/valkyrie/stations/v_station_deep_science_diffuse.png",
+    "Textures/valkyrie/stations/v_station_deep_science_normal_specular.png"
+   ]
   },
   "ios": {
-   "count": 17,
+   "count": 268,
    "assets": [
+    "Textures/main/bars/bar_midorian_diffuse.png",
+    "Textures/main/bars/bar_midorian_normal_specular.png",
+    "Textures/main/bars/bar_nivelian_diffuse.png",
+    "Textures/main/bars/bar_nivelian_normal_specular.png",
+    "Textures/main/bars/bar_terran_diffuse.png",
+    "Textures/main/bars/bar_terran_normal_specular.png",
+    "Textures/main/bars/bar_vossk_diffuse.png",
+    "Textures/main/bars/bar_vossk_normal_specular.png",
+    "Textures/main/galaxymap/galaxymap_bg.png",
+    "Textures/main/galaxymap/galaxymap_planets_diffuse.png",
+    "Textures/main/galaxymap/galaxymap_planets_normal_specular.png",
+    "Textures/main/hangars/hangar_midorian_diffuse.png",
+    "Textures/main/hangars/hangar_midorian_normal_specular.png",
+    "Textures/main/hangars/hangar_nivelian_diffuse.png",
+    "Textures/main/hangars/hangar_nivelian_normal_specular.png",
+    "Textures/main/hangars/hangar_terran_diffuse.png",
+    "Textures/main/hangars/hangar_terran_normal_specular.png",
     "Textures/main/hangars/hangar_vossk_diffuse.png",
+    "Textures/main/misc/asteroid_01_diffuse.png",
+    "Textures/main/misc/asteroid_01_normal_specular.png",
+    "Textures/main/misc/asteroid_void_diffuse.png",
+    "Textures/main/misc/asteroid_void_normal_specular.png",
+    "Textures/main/planets/planet_000_big.png",
+    "Textures/main/planets/planet_001_big.png",
+    "Textures/main/planets/planet_002_big.png",
+    "Textures/main/planets/planet_003_big.png",
+    "Textures/main/planets/planet_004_big.png",
+    "Textures/main/planets/planet_005_big.png",
+    "Textures/main/planets/planet_006_big.png",
+    "Textures/main/planets/planet_007_big.png",
+    "Textures/main/planets/planet_008_big.png",
+    "Textures/main/planets/planet_009_big.png",
+    "Textures/main/planets/planet_010_big.png",
+    "Textures/main/planets/planet_011_big.png",
+    "Textures/main/planets/planet_012_big.png",
+    "Textures/main/planets/planet_013_big.png",
+    "Textures/main/planets/planet_014_big.png",
+    "Textures/main/planets/planet_015_big.png",
+    "Textures/main/planets/planet_016_big.png",
+    "Textures/main/planets/planet_017_big.png",
+    "Textures/main/planets/planet_018_big.png",
+    "Textures/main/planets/planet_019_big.png",
+    "Textures/main/planets/planet_void_big.png",
+    "Textures/main/ships/battleship_terran_diffuse.png",
+    "Textures/main/ships/battleship_terran_dmg_diffuse.png",
+    "Textures/main/ships/battleship_terran_dmg_normal_specular.png",
+    "Textures/main/ships/battleship_terran_normal_specular.png",
+    "Textures/main/ships/cargo_midorian_diffuse.png",
+    "Textures/main/ships/cargo_midorian_dmg_diffuse.png",
+    "Textures/main/ships/cargo_midorian_dmg_normal_specular.png",
+    "Textures/main/ships/cargo_midorian_normal_specular.png",
+    "Textures/main/ships/cargo_nivelian_diffuse.png",
+    "Textures/main/ships/cargo_nivelian_dmg_diffuse.png",
+    "Textures/main/ships/cargo_nivelian_dmg_normal_specular.png",
+    "Textures/main/ships/cargo_nivelian_normal_specular.png",
+    "Textures/main/ships/cargo_terran_diffuse.png",
+    "Textures/main/ships/cargo_terran_dmg_diffuse.png",
+    "Textures/main/ships/cargo_terran_dmg_normal_specular.png",
+    "Textures/main/ships/cargo_terran_normal_specular.png",
+    "Textures/main/ships/cargo_vossk_diffuse.png",
+    "Textures/main/ships/cargo_vossk_dmg_diffuse.png",
+    "Textures/main/ships/cargo_vossk_dmg_normal_specular.png",
+    "Textures/main/ships/cargo_vossk_normal_specular.png",
+    "Textures/main/ships/ship_000_midorian_diffuse.png",
+    "Textures/main/ships/ship_000_midorian_normal_specular.png",
+    "Textures/main/ships/ship_001_terran_diffuse.png",
+    "Textures/main/ships/ship_001_terran_normal_specular.png",
+    "Textures/main/ships/ship_002_pirates_diffuse.png",
+    "Textures/main/ships/ship_002_pirates_normal_specular.png",
+    "Textures/main/ships/ship_003_midorian_diffuse.png",
+    "Textures/main/ships/ship_003_midorian_normal_specular.png",
+    "Textures/main/ships/ship_004_nivelian_diffuse.png",
+    "Textures/main/ships/ship_004_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_005_terran_diffuse.png",
+    "Textures/main/ships/ship_005_terran_normal_specular.png",
+    "Textures/main/ships/ship_006_midorian_diffuse.png",
+    "Textures/main/ships/ship_006_midorian_normal_specular.png",
+    "Textures/main/ships/ship_007_terran_diffuse.png",
+    "Textures/main/ships/ship_007_terran_normal_specular.png",
+    "Textures/main/ships/ship_008_void_diffuse.png",
+    "Textures/main/ships/ship_008_void_normal_specular.png",
+    "Textures/main/ships/ship_009_vossk_diffuse.png",
+    "Textures/main/ships/ship_009_vossk_normal_specular.png",
+    "Textures/main/ships/ship_010_terran_diffuse.png",
+    "Textures/main/ships/ship_010_terran_normal_specular.png",
+    "Textures/main/ships/ship_011_pirates_diffuse.png",
+    "Textures/main/ships/ship_011_pirates_normal_specular.png",
+    "Textures/main/ships/ship_012_nivelian_diffuse.png",
+    "Textures/main/ships/ship_012_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_016_nivelian_diffuse.png",
+    "Textures/main/ships/ship_016_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_017_terran_diffuse.png",
+    "Textures/main/ships/ship_017_terran_normal_specular.png",
+    "Textures/main/ships/ship_018_nivelian_diffuse.png",
+    "Textures/main/ships/ship_018_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_019_midorian_diffuse.png",
+    "Textures/main/ships/ship_019_midorian_normal_specular.png",
+    "Textures/main/ships/ship_020_midorian_diffuse.png",
+    "Textures/main/ships/ship_020_midorian_normal_specular.png",
+    "Textures/main/ships/ship_021_nivelian_diffuse.png",
+    "Textures/main/ships/ship_021_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_022_terran_diffuse.png",
+    "Textures/main/ships/ship_022_terran_normal_specular.png",
+    "Textures/main/ships/ship_023_pirates_diffuse.png",
+    "Textures/main/ships/ship_023_pirates_normal_specular.png",
+    "Textures/main/ships/ship_024_pirates_diffuse.png",
+    "Textures/main/ships/ship_024_pirates_normal_specular.png",
+    "Textures/main/ships/ship_025_pirates_diffuse.png",
+    "Textures/main/ships/ship_025_pirates_normal_specular.png",
+    "Textures/main/ships/ship_026_terran_diffuse.png",
+    "Textures/main/ships/ship_026_terran_normal_specular.png",
+    "Textures/main/ships/ship_027_terran_diffuse.png",
+    "Textures/main/ships/ship_027_terran_normal_specular.png",
+    "Textures/main/ships/ship_028_terran_diffuse.png",
+    "Textures/main/ships/ship_028_terran_normal_specular.png",
+    "Textures/main/ships/ship_029_pirates_diffuse.png",
+    "Textures/main/ships/ship_029_pirates_normal_specular.png",
+    "Textures/main/ships/ship_030_midorian_diffuse.png",
+    "Textures/main/ships/ship_030_midorian_normal_specular.png",
+    "Textures/main/ships/ship_031_nivelian_diffuse.png",
+    "Textures/main/ships/ship_031_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_032_pirates_diffuse.png",
+    "Textures/main/ships/ship_032_pirates_normal_specular.png",
+    "Textures/main/ships/ship_033_terran_diffuse.png",
+    "Textures/main/ships/ship_033_terran_normal_specular.png",
+    "Textures/main/ships/ship_034_terran_diffuse.png",
+    "Textures/main/ships/ship_034_terran_normal_specular.png",
+    "Textures/main/ships/ship_035_nivelian_diffuse.png",
+    "Textures/main/ships/ship_035_nivelian_normal_specular.png",
+    "Textures/main/ships/ship_036_terran_diffuse.png",
+    "Textures/main/ships/ship_036_terran_normal_specular.png",
+    "Textures/main/ships/ship_042_retro_diffuse.png",
+    "Textures/main/ships/ship_042_retro_normal_specular.png",
+    "Textures/main/ships/ship_043_retro_diffuse.png",
+    "Textures/main/ships/ship_043_retro_normal_specular.png",
+    "Textures/main/ships/ship_061_elite_nivelian_prototype_diffuse.png",
+    "Textures/main/ships/ship_061_elite_nivelian_prototype_normal_specular.png",
+    "Textures/main/ships/ship_062_prototype_diffuse.png",
+    "Textures/main/ships/ship_062_prototype_normal_specular.png",
+    "Textures/main/skyboxes/skybox_000.png",
+    "Textures/main/skyboxes/skybox_001.png",
+    "Textures/main/skyboxes/skybox_002.png",
+    "Textures/main/skyboxes/skybox_003.png",
+    "Textures/main/skyboxes/skybox_004.png",
+    "Textures/main/skyboxes/skybox_005.png",
+    "Textures/main/skyboxes/skybox_006.png",
+    "Textures/main/skyboxes/skybox_007.png",
+    "Textures/main/skyboxes/skybox_008.png",
+    "Textures/main/skyboxes/skybox_009.png",
+    "Textures/main/skyboxes/skybox_010.png",
+    "Textures/main/skyboxes/skybox_asteroid_belt_diffuse.png",
+    "Textures/main/skyboxes/skybox_asteroid_belt_normal_specular.png",
+    "Textures/main/skyboxes/skybox_stars_000.png",
+    "Textures/main/skyboxes/skybox_stars_001.png",
+    "Textures/main/skyboxes/skybox_stars_002.png",
+    "Textures/main/stations/stations_midorian_diffuse.png",
+    "Textures/main/stations/stations_midorian_normal_specular.png",
+    "Textures/main/stations/stations_nivelian_diffuse.png",
+    "Textures/main/stations/stations_pirates_diffuse.png",
+    "Textures/main/stations/stations_pirates_dmg_diffuse.png",
+    "Textures/main/stations/stations_pirates_dmg_normal_specular.png",
+    "Textures/main/stations/stations_pirates_normal_specular.png",
+    "Textures/main/stations/stations_terran_diffuse.png",
+    "Textures/main/stations/stations_terran_normal_specular.png",
+    "Textures/main/stations/stations_void_diffuse.png",
+    "Textures/main/stations/stations_void_glow.png",
+    "Textures/main/stations/stations_void_normal_specular.png",
     "Textures/main/suns/sun_000.png",
     "Textures/main/suns/sun_002.png",
     "Textures/main/suns/sun_003.png",
@@ -2802,6 +3293,110 @@
     "Textures/main/suns/sun_010.png",
     "Textures/supernova/fx/sn_sun_explosion_core.png",
     "Textures/supernova/fx/sn_sun_explosion_ring.png",
+    "Textures/supernova/misc/sn_asteroid_magma_diffuse.png",
+    "Textures/supernova/misc/sn_asteroid_magma_normal_specular.png",
+    "Textures/supernova/misc/sn_plasma_array_midorian_diffuse.png",
+    "Textures/supernova/misc/sn_plasma_array_midorian_normal_specular.png",
+    "Textures/supernova/misc/sn_plasma_gun_valkyrie_diffuse.png",
+    "Textures/supernova/misc/sn_plasma_gun_valkyrie_normal_specular.png",
+    "Textures/supernova/planets/sn_planet_024_big.png",
+    "Textures/supernova/planets/sn_planet_024_small.png",
+    "Textures/supernova/planets/sn_planet_025_big.png",
+    "Textures/supernova/planets/sn_planet_026_big.png",
+    "Textures/supernova/planets/sn_planet_ring.png",
+    "Textures/supernova/ships/sn_battleship_vossk_diffuse.png",
+    "Textures/supernova/ships/sn_battleship_vossk_normal_specular.png",
+    "Textures/supernova/ships/sn_cargo_midorian_wrecked_diffuse.png",
+    "Textures/supernova/ships/sn_cargo_midorian_wrecked_normal_specular.png",
+    "Textures/supernova/ships/sn_carrier_terran_1_diffuse.png",
+    "Textures/supernova/ships/sn_carrier_terran_1_normal_specular.png",
+    "Textures/supernova/ships/sn_carrier_terran_2_diffuse.png",
+    "Textures/supernova/ships/sn_carrier_terran_2_normal_specular.png",
+    "Textures/supernova/ships/sn_carrier_terran_3_diffuse.png",
+    "Textures/supernova/ships/sn_carrier_terran_3_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_044_elite_nivelian_diffuse.png",
+    "Textures/supernova/ships/sn_ship_044_elite_nivelian_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_045_most_wanted_diffuse.png",
+    "Textures/supernova/ships/sn_ship_045_most_wanted_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_046_most_wanted_diffuse.png",
+    "Textures/supernova/ships/sn_ship_046_most_wanted_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_047_most_wanted_diffuse.png",
+    "Textures/supernova/ships/sn_ship_047_most_wanted_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_048_most_wanted_diffuse.png",
+    "Textures/supernova/ships/sn_ship_048_most_wanted_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_049_boss_nivelian_diffuse.png",
+    "Textures/supernova/ships/sn_ship_049_boss_nivelian_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_051_dropship_terran_diffuse.png",
+    "Textures/supernova/ships/sn_ship_051_dropship_terran_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_052_retro_diffuse.png",
+    "Textures/supernova/ships/sn_ship_052_retro_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_054_vossk_diffuse.png",
+    "Textures/supernova/ships/sn_ship_054_vossk_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_055_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_055_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_056_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_056_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_057_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_057_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_058_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_058_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_059_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_059_modified_normal_specular.png",
+    "Textures/supernova/ships/sn_ship_060_modified_diffuse.png",
+    "Textures/supernova/ships/sn_ship_060_modified_normal_specular.png",
+    "Textures/supernova/skyboxes/sn_skybox_016.png",
+    "Textures/supernova/skyboxes/sn_skybox_017.png",
+    "Textures/supernova/skyboxes/sn_skybox_018.png",
+    "Textures/supernova/skyboxes/sn_skybox_storms.png",
+    "Textures/supernova/stations/sn_burning_station_fire.png",
+    "Textures/supernova/stations/sn_station_mining_plant_part1_diffuse.png",
+    "Textures/supernova/stations/sn_station_mining_plant_part1_normal_specular.png",
+    "Textures/supernova/stations/sn_station_mining_plant_part2_diffuse.png",
+    "Textures/supernova/stations/sn_station_mining_plant_part2_normal_specular.png",
+    "Textures/supernova/stations/sn_stations_midorian_wrecked_diffuse.png",
+    "Textures/supernova/stations/sn_stations_midorian_wrecked_normal_specular.png",
+    "Textures/supernova/suns/sn_sun_011.png",
+    "Textures/textures/gof2_interface.png",
+    "Textures/textures/gof2_interface2_ipad_large.png",
+    "Textures/textures/gof2_interface_iphone4.png",
+    "Textures/valkyrie/fx/v_shield_normal.png",
+    "Textures/valkyrie/hangars/v_hangar_battlestation_diffuse.png",
+    "Textures/valkyrie/hangars/v_hangar_battlestation_normal_specular.png",
+    "Textures/valkyrie/misc/v_asteroid_ice_diffuse.png",
+    "Textures/valkyrie/misc/v_asteroid_ice_normal_specular.png",
+    "Textures/valkyrie/planets/v_planet_020_big.png",
+    "Textures/valkyrie/planets/v_planet_022_big.png",
+    "Textures/valkyrie/ships/v_ship_037_deep_science_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_037_deep_science_normal_specular.png",
+    "Textures/valkyrie/ships/v_ship_038_deep_science_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_038_deep_science_normal_specular.png",
+    "Textures/valkyrie/ships/v_ship_039_vossk_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_039_vossk_normal_specular.png",
+    "Textures/valkyrie/ships/v_ship_040_deep_science_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_040_deep_science_normal_specular.png",
+    "Textures/valkyrie/ships/v_ship_041_vossk_diffuse.png",
+    "Textures/valkyrie/ships/v_ship_041_vossk_normal_specular.png",
+    "Textures/valkyrie/skyboxes/v_skybox_011.png",
+    "Textures/valkyrie/skyboxes/v_skybox_012.png",
+    "Textures/valkyrie/skyboxes/v_skybox_013.png",
+    "Textures/valkyrie/skyboxes/v_skybox_014.png",
+    "Textures/valkyrie/stations/v_station_deep_science_diffuse.png",
+    "Textures/valkyrie/stations/v_station_deep_science_normal_specular.png"
+   ]
+  },
+  "macos": {
+   "count": 14,
+   "assets": [
+    "Textures/main/suns/sun_000.png",
+    "Textures/main/suns/sun_002.png",
+    "Textures/main/suns/sun_003.png",
+    "Textures/main/suns/sun_004.png",
+    "Textures/main/suns/sun_005.png",
+    "Textures/main/suns/sun_006.png",
+    "Textures/main/suns/sun_007.png",
+    "Textures/main/suns/sun_008.png",
+    "Textures/main/suns/sun_009.png",
+    "Textures/main/suns/sun_010.png",
     "Textures/supernova/suns/sn_sun_011.png",
     "Textures/textures/gof2_interface.png",
     "Textures/textures/gof2_interface2_ipad_large.png",
@@ -2817,6 +3412,9 @@
     "ids": null
    },
    "ios": {
+    "kind": "missing"
+   },
+   "macos": {
     "kind": "missing"
    }
   },
@@ -2840,6 +3438,57 @@
      1733,
      1745,
      2447
+    ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 45,
+    "ids": [
+     43,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     588,
+     589,
+     616,
+     617,
+     620,
+     621,
+     622,
+     627,
+     631,
+     635,
+     1054,
+     1411,
+     1677,
+     1680,
+     1718,
+     1725,
+     1730,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     2447,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
     ]
    }
   },
@@ -2984,6 +3633,151 @@
      2984,
      3123
     ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 139,
+    "ids": [
+     15,
+     16,
+     17,
+     18,
+     26,
+     43,
+     45,
+     46,
+     47,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     96,
+     108,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     205,
+     206,
+     290,
+     297,
+     298,
+     370,
+     432,
+     495,
+     510,
+     511,
+     512,
+     532,
+     588,
+     589,
+     590,
+     591,
+     592,
+     593,
+     594,
+     595,
+     596,
+     597,
+     598,
+     599,
+     600,
+     601,
+     602,
+     603,
+     604,
+     605,
+     606,
+     607,
+     608,
+     609,
+     610,
+     611,
+     615,
+     616,
+     617,
+     620,
+     621,
+     622,
+     623,
+     625,
+     627,
+     628,
+     629,
+     630,
+     631,
+     632,
+     633,
+     635,
+     637,
+     638,
+     639,
+     640,
+     641,
+     642,
+     644,
+     645,
+     646,
+     647,
+     648,
+     652,
+     655,
+     661,
+     687,
+     702,
+     724,
+     736,
+     740,
+     1023,
+     1040,
+     1073,
+     1093,
+     1253,
+     1411,
+     1677,
+     1678,
+     1679,
+     1680,
+     1718,
+     1722,
+     1725,
+     1730,
+     1731,
+     1732,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     1878,
+     1879,
+     1880,
+     2075,
+     2077,
+     2078,
+     2116,
+     2118,
+     2314,
+     2447,
+     2506,
+     2671,
+     2672,
+     2984,
+     3123,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
+    ]
    }
   },
   "text_es.json": {
@@ -3006,6 +3800,56 @@
      1073,
      1411,
      2447
+    ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 44,
+    "ids": [
+     43,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     588,
+     589,
+     616,
+     617,
+     620,
+     621,
+     622,
+     631,
+     635,
+     1073,
+     1411,
+     1677,
+     1680,
+     1718,
+     1725,
+     1730,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     2447,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
     ]
    }
   },
@@ -3057,6 +3901,56 @@
      2447,
      3398
     ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 44,
+    "ids": [
+     43,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     588,
+     589,
+     617,
+     620,
+     621,
+     622,
+     631,
+     635,
+     1027,
+     1073,
+     1411,
+     1677,
+     1680,
+     1718,
+     1725,
+     1730,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     2447,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
+    ]
    }
   },
   "text_hi.json": {
@@ -3064,6 +3958,9 @@
     "kind": "missing"
    },
    "ios": {
+    "kind": "missing"
+   },
+   "macos": {
     "kind": "missing"
    }
   },
@@ -3087,6 +3984,57 @@
      1073,
      1411,
      2447
+    ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 45,
+    "ids": [
+     43,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     588,
+     589,
+     616,
+     617,
+     620,
+     621,
+     622,
+     631,
+     635,
+     1027,
+     1073,
+     1411,
+     1677,
+     1680,
+     1718,
+     1725,
+     1730,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     2447,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
     ]
    }
   },
@@ -3113,6 +4061,57 @@
      1719,
      1720
     ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 45,
+    "ids": [
+     43,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     588,
+     589,
+     594,
+     617,
+     620,
+     621,
+     622,
+     631,
+     635,
+     1027,
+     1073,
+     1677,
+     1680,
+     1718,
+     1719,
+     1720,
+     1725,
+     1730,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
+    ]
    }
   },
   "text_ko.json": {
@@ -3136,6 +4135,61 @@
      1411,
      2447
     ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 49,
+    "ids": [
+     43,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     588,
+     589,
+     616,
+     617,
+     620,
+     621,
+     622,
+     631,
+     635,
+     990,
+     991,
+     992,
+     1027,
+     1073,
+     1411,
+     1677,
+     1680,
+     1681,
+     1718,
+     1725,
+     1730,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     2447,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
+    ]
    }
   },
   "text_nl.json": {
@@ -3143,6 +4197,9 @@
     "kind": "missing"
    },
    "ios": {
+    "kind": "missing"
+   },
+   "macos": {
     "kind": "missing"
    }
   },
@@ -3165,6 +4222,56 @@
      1411,
      2447
     ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 44,
+    "ids": [
+     43,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     588,
+     589,
+     616,
+     617,
+     620,
+     621,
+     622,
+     631,
+     635,
+     1027,
+     1411,
+     1677,
+     1680,
+     1718,
+     1725,
+     1730,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     2447,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
+    ]
    }
   },
   "text_pt.json": {
@@ -3179,6 +4286,11 @@
    "ios": {
     "kind": "differs",
     "strings_differing": 440,
+    "ids": null
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 455,
     "ids": null
    }
   },
@@ -3205,6 +4317,57 @@
      1999,
      2447
     ]
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 45,
+    "ids": [
+     43,
+     48,
+     87,
+     88,
+     89,
+     90,
+     91,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     197,
+     198,
+     588,
+     589,
+     616,
+     620,
+     621,
+     622,
+     631,
+     635,
+     666,
+     1027,
+     1411,
+     1677,
+     1680,
+     1718,
+     1725,
+     1730,
+     1746,
+     1749,
+     1750,
+     1782,
+     1816,
+     1999,
+     2447,
+     3396,
+     3397,
+     3398,
+     3399,
+     3400
+    ]
    }
   },
   "text_zh.json": {
@@ -3214,6 +4377,11 @@
    "ios": {
     "kind": "differs",
     "strings_differing": 1277,
+    "ids": null
+   },
+   "macos": {
+    "kind": "differs",
+    "strings_differing": 797,
     "ids": null
    }
   }
@@ -3287,6 +4455,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 44 dB"
    ]
   },
   "Textures/main/bars/bar_visitor_glow_nivelian.png": {
@@ -3297,6 +4469,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 43 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 45 dB"
    ]
   },
   "Textures/main/bars/bar_visitor_glow_terran.png": {
@@ -3307,6 +4483,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 43 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 46 dB"
    ]
   },
   "Textures/main/bars/bar_visitor_glow_vossk.png": {
@@ -3317,6 +4497,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 45 dB"
    ]
   },
   "Textures/main/bars/bar_visitor_shadow.png": {
@@ -3327,6 +4511,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 99 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 99 dB"
    ]
   },
   "Textures/main/bars/bar_vossk_diffuse.png": {
@@ -3357,6 +4545,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 31 dB"
    ]
   },
   "Textures/main/bars/visitor_grey.png": {
@@ -3367,6 +4559,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 23 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 32 dB"
    ]
   },
   "Textures/main/bars/visitor_multipod.png": {
@@ -3377,6 +4573,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 23 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 31 dB"
    ]
   },
   "Textures/main/bars/visitor_nivelian.png": {
@@ -3387,6 +4587,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 34 dB"
    ]
   },
   "Textures/main/bars/visitor_terran_f.png": {
@@ -3397,6 +4601,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 33 dB"
    ]
   },
   "Textures/main/bars/visitor_terran_m.png": {
@@ -3407,6 +4615,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 24 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 34 dB"
    ]
   },
   "Textures/main/bars/visitor_vossk.png": {
@@ -3417,6 +4629,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 24 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 32 dB"
    ]
   },
   "Textures/main/fx/bomb_rocket_fx.png": {
@@ -3427,6 +4643,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 34 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 38 dB"
    ]
   },
   "Textures/main/fx/cloak_map.png": {
@@ -3437,6 +4657,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 32 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 34 dB"
    ]
   },
   "Textures/main/fx/explosion.png": {
@@ -3447,6 +4671,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 26 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 41 dB"
    ]
   },
   "Textures/main/fx/explosion_emp.png": {
@@ -3457,6 +4685,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 24 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 38 dB"
    ]
   },
   "Textures/main/fx/explosion_void_station.png": {
@@ -3467,6 +4699,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 34 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 48 dB"
    ]
   },
   "Textures/main/fx/fog.png": {
@@ -3477,6 +4713,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 39 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 55 dB"
    ]
   },
   "Textures/main/fx/glow_midorian.png": {
@@ -3487,6 +4727,10 @@
    "ios": [
     "differs",
     "lower and 20 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 36 dB"
    ]
   },
   "Textures/main/fx/glow_nivelian.png": {
@@ -3497,6 +4741,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 20 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 37 dB"
    ]
   },
   "Textures/main/fx/glow_pirates.png": {
@@ -3507,6 +4755,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 21 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 39 dB"
    ]
   },
   "Textures/main/fx/glow_terran.png": {
@@ -3517,6 +4769,10 @@
    "ios": [
     "differs",
     "lower and 15 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 38 dB"
    ]
   },
   "Textures/main/fx/glow_void.png": {
@@ -3527,6 +4783,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 29 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 32 dB"
    ]
   },
   "Textures/main/fx/glow_vossk.png": {
@@ -3537,6 +4797,10 @@
    "ios": [
     "lower",
     "128x128 of 512x512, 49 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 47 dB"
    ]
   },
   "Textures/main/fx/hyper_drive.png": {
@@ -3547,6 +4811,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 39 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 40 dB"
    ]
   },
   "Textures/main/fx/khador_jump.png": {
@@ -3557,6 +4825,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 37 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 41 dB"
    ]
   },
   "Textures/main/fx/khador_jump_normal.png": {
@@ -3567,6 +4839,10 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 30 dB"
    ]
   },
   "Textures/main/fx/particles.png": {
@@ -3577,6 +4853,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 27 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 46 dB"
    ]
   },
   "Textures/main/fx/projectiles.png": {
@@ -3587,6 +4867,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 34 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 38 dB"
    ]
   },
   "Textures/main/fx/ship_engine_glow.png": {
@@ -3597,6 +4881,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 37 dB"
    ]
   },
   "Textures/main/fx/sprite_explosion.png": {
@@ -3607,6 +4895,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 41 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 56 dB"
    ]
   },
   "Textures/main/fx/sprite_fire.png": {
@@ -3617,6 +4909,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 37 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 52 dB"
    ]
   },
   "Textures/main/fx/sprite_smoke.png": {
@@ -3627,6 +4923,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 40 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 37 dB"
    ]
   },
   "Textures/main/galaxymap/galaxymap_bg.png": {
@@ -3647,6 +4947,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 46 dB"
    ]
   },
   "Textures/main/galaxymap/galaxymap_fog_layer_1.png": {
@@ -3657,6 +4961,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 46 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 47 dB"
    ]
   },
   "Textures/main/galaxymap/galaxymap_orbit.png": {
@@ -3667,6 +4975,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 38 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 38 dB"
    ]
   },
   "Textures/main/galaxymap/galaxymap_planets_diffuse.png": {
@@ -3757,12 +5069,20 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/main/hangars/hangar_vossk_diffuse.png": {
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 27 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 28 dB"
    ]
   },
   "Textures/main/hangars/hangar_vossk_normal_specular.png": {
@@ -3773,6 +5093,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 23 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 26 dB"
    ]
   },
   "Textures/main/hangars/hangar_terran_alpha_diffuse.png": {
@@ -3781,6 +5105,10 @@
     null
    ],
    "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
     "missing",
     null
    ]
@@ -3813,6 +5141,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 33 dB"
    ]
   },
   "Textures/main/misc/asteroid_void_diffuse.png": {
@@ -3843,6 +5175,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 28 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 43 dB"
    ]
   },
   "Textures/main/misc/beer_and_bra_normal_specular.png": {
@@ -3853,6 +5189,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 30 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 36 dB"
    ]
   },
   "Textures/main/misc/bomb_emp_a_diffuse.png": {
@@ -3863,6 +5203,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 32 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 49 dB"
    ]
   },
   "Textures/main/misc/bomb_emp_a_normal_specular.png": {
@@ -3873,6 +5217,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 27 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 27 dB"
    ]
   },
   "Textures/main/misc/bomb_explosive_a_diffuse.png": {
@@ -3883,6 +5231,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 48 dB"
    ]
   },
   "Textures/main/misc/bomb_explosive_a_normal_specular.png": {
@@ -3893,6 +5245,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 27 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 35 dB"
    ]
   },
   "Textures/main/misc/bomb_explosive_b_diffuse.png": {
@@ -3903,6 +5259,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 33 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 49 dB"
    ]
   },
   "Textures/main/misc/bomb_explosive_b_normal_specular.png": {
@@ -3913,6 +5273,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 29 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 37 dB"
    ]
   },
   "Textures/main/misc/container_001_midorian_diffuse.png": {
@@ -3923,6 +5287,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 35 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 49 dB"
    ]
   },
   "Textures/main/misc/container_001_midorian_normal_specular.png": {
@@ -3933,6 +5301,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 30 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 43 dB"
    ]
   },
   "Textures/main/misc/container_002_nivelian_diffuse.png": {
@@ -3943,6 +5315,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 33 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 50 dB"
    ]
   },
   "Textures/main/misc/container_002_nivelian_normal_specular.png": {
@@ -3953,6 +5329,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 28 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 36 dB"
    ]
   },
   "Textures/main/misc/container_003_terran_diffuse.png": {
@@ -3963,6 +5343,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 45 dB"
    ]
   },
   "Textures/main/misc/container_003_terran_normal_specular.png": {
@@ -3973,6 +5357,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 30 dB"
    ]
   },
   "Textures/main/misc/container_004_vossk_diffuse.png": {
@@ -3983,6 +5371,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 35 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 52 dB"
    ]
   },
   "Textures/main/misc/container_004_vossk_normal_specular.png": {
@@ -3993,6 +5385,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 26 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 38 dB"
    ]
   },
   "Textures/main/misc/rocket_emp_diffuse.png": {
@@ -4003,6 +5399,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 28 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 42 dB"
    ]
   },
   "Textures/main/misc/rocket_emp_normal_specular.png": {
@@ -4011,6 +5411,10 @@
     "lower and 16 dB"
    ],
    "ios": [
+    "differs",
+    "lower and 15 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 15 dB"
    ]
@@ -4023,6 +5427,10 @@
    "ios": [
     "differs",
     "lower and 18 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 48 dB"
    ]
   },
   "Textures/main/misc/rocket_explosive_normal_specular.png": {
@@ -4033,6 +5441,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 21 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 23 dB"
    ]
   },
   "Textures/main/misc/scanner_probe_diffuse.png": {
@@ -4043,6 +5455,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 45 dB"
    ]
   },
   "Textures/main/misc/scanner_probe_normal_specular.png": {
@@ -4053,6 +5469,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 22 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 23 dB"
    ]
   },
   "Textures/main/misc/space_junk_diffuse.png": {
@@ -4063,6 +5483,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 30 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 44 dB"
    ]
   },
   "Textures/main/misc/space_junk_normal_specular.png": {
@@ -4073,6 +5497,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 23 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 23 dB"
    ]
   },
   "Textures/main/misc/space_particle_diffuse.png": {
@@ -4083,6 +5511,10 @@
    "ios": [
     "differs",
     "lower and 15 dB"
+   ],
+   "macos": [
+    "differs",
+    "lower and 16 dB"
    ]
   },
   "Textures/main/misc/space_particle_normal_specular.png": {
@@ -4093,6 +5525,10 @@
    "ios": [
     "lower",
     "64x64 of 256x256, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "128x128 of 256x256, 31 dB"
    ]
   },
   "Textures/main/misc/wormhole.png": {
@@ -4103,6 +5539,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 36 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 44 dB"
    ]
   },
   "Textures/main/planets/planet_000_big.png": {
@@ -5489,10 +6929,18 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/main/ships/ship_063_vossk_normal_specular.png": {
    "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
     "missing",
     null
    ]
@@ -5795,6 +7243,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 23 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 23 dB"
    ]
   },
   "Textures/main/stations/stations_vossk_normal_specular.png": {
@@ -5805,6 +7257,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 23 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 25 dB"
    ]
   },
   "Textures/main/stations/tex_player_station_fx.png": {
@@ -5815,12 +7271,20 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 21 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 32 dB"
    ]
   },
   "Textures/main/suns/sun_000.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 39 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 40 dB"
    ]
   },
   "Textures/main/suns/sun_001.png": {
@@ -5831,60 +7295,100 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 49 dB"
    ]
   },
   "Textures/main/suns/sun_002.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 45 dB"
    ]
   },
   "Textures/main/suns/sun_003.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 40 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 42 dB"
    ]
   },
   "Textures/main/suns/sun_004.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 40 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 43 dB"
    ]
   },
   "Textures/main/suns/sun_005.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 40 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 43 dB"
    ]
   },
   "Textures/main/suns/sun_006.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 46 dB"
    ]
   },
   "Textures/main/suns/sun_007.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 45 dB"
    ]
   },
   "Textures/main/suns/sun_008.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 40 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 43 dB"
    ]
   },
   "Textures/main/suns/sun_009.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 44 dB"
    ]
   },
   "Textures/main/suns/sun_010.png": {
    "ios": [
     "lower",
     "256x256 of 1024x1024, 41 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 45 dB"
    ]
   },
   "Textures/main/turrets/turret_001_diffuse.png": {
@@ -5895,6 +7399,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 29 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 44 dB"
    ]
   },
   "Textures/main/turrets/turret_001_normal_specular.png": {
@@ -5903,6 +7411,10 @@
     "lower and 19 dB"
    ],
    "ios": [
+    "differs",
+    "lower and 19 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 19 dB"
    ]
@@ -5915,6 +7427,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 46 dB"
    ]
   },
   "Textures/main/turrets/turret_002_normal_specular.png": {
@@ -5923,6 +7439,10 @@
     "lower and 19 dB"
    ],
    "ios": [
+    "differs",
+    "lower and 19 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 19 dB"
    ]
@@ -5935,6 +7455,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 32 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 47 dB"
    ]
   },
   "Textures/main/turrets/turret_003_normal_specular.png": {
@@ -5945,6 +7469,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 23 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 25 dB"
    ]
   },
   "Textures/supernova/fx/sn_fireworks.png": {
@@ -5955,6 +7483,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 38 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 42 dB"
    ]
   },
   "Textures/supernova/fx/sn_plasma_explosion.png": {
@@ -5965,6 +7497,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 39 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 55 dB"
    ]
   },
   "Textures/supernova/fx/sn_plasma_gun_fx_valkyrie.png": {
@@ -5975,6 +7511,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 38 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 42 dB"
    ]
   },
   "Textures/supernova/fx/sn_plasma_stream.png": {
@@ -5985,6 +7525,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 32 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 32 dB"
    ]
   },
   "Textures/supernova/fx/sn_plasma_stream_normal.png": {
@@ -5995,6 +7539,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 34 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 33 dB"
    ]
   },
   "Textures/supernova/fx/sn_projectiles.png": {
@@ -6005,6 +7553,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 24 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 30 dB"
    ]
   },
   "Textures/supernova/fx/sn_ship_blaze_flames.png": {
@@ -6015,6 +7567,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 30 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 35 dB"
    ]
   },
   "Textures/supernova/fx/sn_ship_blaze_flames_normal.png": {
@@ -6025,6 +7581,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 22 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 22 dB"
    ]
   },
   "Textures/supernova/fx/sn_shock_blast_glow.png": {
@@ -6035,6 +7595,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 41 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 44 dB"
    ]
   },
   "Textures/supernova/fx/sn_shock_blast_sphere.png": {
@@ -6045,6 +7609,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 33 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 36 dB"
    ]
   },
   "Textures/supernova/fx/sn_sprite_fireworks_rocket_sparks.png": {
@@ -6055,18 +7623,30 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 44 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 50 dB"
    ]
   },
   "Textures/supernova/fx/sn_sun_explosion_core.png": {
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 44 dB"
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/supernova/fx/sn_sun_explosion_ring.png": {
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 44 dB"
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/supernova/fx/sn_supernova.png": {
@@ -6077,6 +7657,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 39 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 42 dB"
    ]
   },
   "Textures/supernova/fx/sn_ship_blaze_glow.png": {
@@ -6087,6 +7671,10 @@
    "ios": [
     "lower",
     "64x64 of 512x512, 36 dB"
+   ],
+   "macos": [
+    "lower",
+    "128x128 of 512x512, 37 dB"
    ]
   },
   "Textures/supernova/galaxymap/sn_galaxymap_planets.png": {
@@ -6097,6 +7685,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 32 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 36 dB"
    ]
   },
   "Textures/supernova/misc/sn_asteroid_magma_diffuse.png": {
@@ -6117,6 +7709,10 @@
    "ios": [
     "differs",
     "lower and 20 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 26 dB"
    ]
   },
   "Textures/supernova/misc/sn_asteroid_magma_normal_specular.png": {
@@ -6137,6 +7733,10 @@
    "ios": [
     "lower",
     "128x128 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 47 dB"
    ]
   },
   "Textures/supernova/misc/sn_fireworks_rocket_normal_specular.png": {
@@ -6147,6 +7747,10 @@
    "ios": [
     "lower",
     "128x128 of 1024x1024, 34 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 39 dB"
    ]
   },
   "Textures/supernova/misc/sn_gas_plasma.png": {
@@ -6157,6 +7761,10 @@
    "ios": [
     "lower",
     "256x256 of 2048x2048, 32 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 38 dB"
    ]
   },
   "Textures/supernova/misc/sn_gas_plasma_normal.png": {
@@ -6167,6 +7775,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 28 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 28 dB"
    ]
   },
   "Textures/supernova/misc/sn_junk_field_diffuse.png": {
@@ -6177,6 +7789,10 @@
    "ios": [
     "lower",
     "256x256 of 2048x2048, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 48 dB"
    ]
   },
   "Textures/supernova/misc/sn_junk_field_normal_specular.png": {
@@ -6187,6 +7803,10 @@
    "ios": [
     "lower",
     "256x256 of 2048x2048, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 32 dB"
    ]
   },
   "Textures/supernova/misc/sn_plasma_array_midorian_diffuse.png": {
@@ -6237,6 +7857,10 @@
    "ios": [
     "lower",
     "128x128 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 48 dB"
    ]
   },
   "Textures/supernova/misc/sn_sentry_gun_001_normal_specular.png": {
@@ -6247,6 +7871,10 @@
    "ios": [
     "lower",
     "128x128 of 1024x1024, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 31 dB"
    ]
   },
   "Textures/supernova/misc/sn_sentry_gun_002_diffuse.png": {
@@ -6257,6 +7885,10 @@
    "ios": [
     "lower",
     "128x128 of 1024x1024, 33 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 51 dB"
    ]
   },
   "Textures/supernova/misc/sn_sentry_gun_002_normal_specular.png": {
@@ -6267,6 +7899,10 @@
    "ios": [
     "lower",
     "128x128 of 1024x1024, 26 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 33 dB"
    ]
   },
   "Textures/supernova/misc/sn_sentry_gun_003_diffuse.png": {
@@ -6277,6 +7913,10 @@
    "ios": [
     "lower",
     "128x128 of 1024x1024, 33 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 48 dB"
    ]
   },
   "Textures/supernova/misc/sn_sentry_gun_003_normal_specular.png": {
@@ -6287,6 +7927,10 @@
    "ios": [
     "lower",
     "128x128 of 1024x1024, 26 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 33 dB"
    ]
   },
   "Textures/supernova/planets/sn_planet_024_big.png": {
@@ -6767,6 +8411,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 39 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 41 dB"
    ]
   },
   "Textures/supernova/skyboxes/sn_skybox_015_flares.png": {
@@ -6777,6 +8425,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 39 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 43 dB"
    ]
   },
   "Textures/supernova/skyboxes/sn_skybox_015_flares_nasty.png": {
@@ -6787,6 +8439,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 35 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 39 dB"
    ]
   },
   "Textures/supernova/skyboxes/sn_skybox_016.png": {
@@ -6827,6 +8483,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 22 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 24 dB"
    ]
   },
   "Textures/supernova/skyboxes/sn_skybox_storms.png": {
@@ -6857,6 +8517,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 35 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 34 dB"
    ]
   },
   "Textures/supernova/stations/sn_station_mining_plant_part1_diffuse.png": {
@@ -6923,6 +8587,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 40 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 48 dB"
    ]
   },
   "Textures/supernova/suns/sn_sun_012.png": {
@@ -6931,6 +8599,10 @@
     null
    ],
    "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
     "missing",
     null
    ]
@@ -6943,6 +8615,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 48 dB"
    ]
   },
   "Textures/supernova/turrets/sn_plasma_collector_001_normal_specular.png": {
@@ -6953,6 +8629,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 28 dB"
    ]
   },
   "Textures/supernova/turrets/sn_plasma_collector_002_diffuse.png": {
@@ -6963,6 +8643,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 34 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 49 dB"
    ]
   },
   "Textures/supernova/turrets/sn_plasma_collector_002_normal_specular.png": {
@@ -6973,6 +8657,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 28 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 35 dB"
    ]
   },
   "Textures/supernova/turrets/sn_plasma_collector_003_diffuse.png": {
@@ -6983,6 +8671,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 48 dB"
    ]
   },
   "Textures/supernova/turrets/sn_plasma_collector_003_normal_specular.png": {
@@ -6993,6 +8685,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 27 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 33 dB"
    ]
   },
   "Textures/supernova/turrets/sn_turret_004_diffuse.png": {
@@ -7003,6 +8699,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 47 dB"
    ]
   },
   "Textures/supernova/turrets/sn_turret_004_normal_specular.png": {
@@ -7013,10 +8713,18 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 24 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 24 dB"
    ]
   },
   "Textures/textures/4_0_0_ipad_1440.png": {
    "ios": [
+    "differs",
+    "pixels, 17 dB"
+   ],
+   "macos": [
     "differs",
     "pixels, 17 dB"
    ]
@@ -7025,10 +8733,18 @@
    "ios": [
     "differs",
     "256x256 vs 256x128"
+   ],
+   "macos": [
+    "differs",
+    "256x256 vs 256x128"
    ]
   },
   "Textures/textures/4_0_1_ipad_1440.png": {
    "ios": [
+    "differs",
+    "pixels, 18 dB"
+   ],
+   "macos": [
     "differs",
     "pixels, 18 dB"
    ]
@@ -7037,10 +8753,18 @@
    "ios": [
     "differs",
     "256x256 vs 256x128"
+   ],
+   "macos": [
+    "differs",
+    "256x256 vs 256x128"
    ]
   },
   "Textures/textures/4_0_2_ipad_1440.png": {
    "ios": [
+    "differs",
+    "pixels, 17 dB"
+   ],
+   "macos": [
     "differs",
     "pixels, 17 dB"
    ]
@@ -7049,10 +8773,18 @@
    "ios": [
     "differs",
     "256x256 vs 256x128"
+   ],
+   "macos": [
+    "differs",
+    "256x256 vs 256x128"
    ]
   },
   "Textures/textures/4_1_0_ipad_1440.png": {
    "ios": [
+    "differs",
+    "128x128 vs 128x32"
+   ],
+   "macos": [
     "differs",
     "128x128 vs 128x32"
    ]
@@ -7061,10 +8793,18 @@
    "ios": [
     "differs",
     "256x128 vs 256x64"
+   ],
+   "macos": [
+    "differs",
+    "256x128 vs 256x64"
    ]
   },
   "Textures/textures/4_1_1_ipad_1440.png": {
    "ios": [
+    "differs",
+    "128x128 vs 128x32"
+   ],
+   "macos": [
     "differs",
     "128x128 vs 128x32"
    ]
@@ -7073,10 +8813,18 @@
    "ios": [
     "differs",
     "256x128 vs 256x64"
+   ],
+   "macos": [
+    "differs",
+    "256x128 vs 256x64"
    ]
   },
   "Textures/textures/4_1_2_ipad_1440.png": {
    "ios": [
+    "differs",
+    "128x128 vs 128x32"
+   ],
+   "macos": [
     "differs",
     "128x128 vs 128x32"
    ]
@@ -7085,10 +8833,18 @@
    "ios": [
     "differs",
     "256x128 vs 256x64"
+   ],
+   "macos": [
+    "differs",
+    "256x128 vs 256x64"
    ]
   },
   "Textures/textures/4_1_3_ipad_1440.png": {
    "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
     "missing",
     null
    ]
@@ -7097,10 +8853,18 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/textures/4_1_4_ipad_1440.png": {
    "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
     "missing",
     null
    ]
@@ -7109,10 +8873,18 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/textures/4_2_0_ipad_1440.png": {
    "ios": [
+    "differs",
+    "lower and 13 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 13 dB"
    ]
@@ -7121,10 +8893,18 @@
    "ios": [
     "differs",
     "lower and 16 dB"
+   ],
+   "macos": [
+    "differs",
+    "lower and 16 dB"
    ]
   },
   "Textures/textures/4_2_1_ipad_1440.png": {
    "ios": [
+    "differs",
+    "lower and 13 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 13 dB"
    ]
@@ -7133,10 +8913,18 @@
    "ios": [
     "differs",
     "lower and 16 dB"
+   ],
+   "macos": [
+    "differs",
+    "lower and 16 dB"
    ]
   },
   "Textures/textures/4_2_2_ipad_1440.png": {
    "ios": [
+    "differs",
+    "lower and 13 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 13 dB"
    ]
@@ -7145,10 +8933,18 @@
    "ios": [
     "differs",
     "lower and 16 dB"
+   ],
+   "macos": [
+    "differs",
+    "lower and 16 dB"
    ]
   },
   "Textures/textures/4_2_3.png": {
    "ios": [
+    "differs",
+    "64x128 vs 64x64"
+   ],
+   "macos": [
     "differs",
     "64x128 vs 64x64"
    ]
@@ -7157,10 +8953,18 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/textures/4_2_3_ipad_1440.png": {
    "ios": [
+    "differs",
+    "lower and 12 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 12 dB"
    ]
@@ -7169,10 +8973,18 @@
    "ios": [
     "differs",
     "lower and 15 dB"
+   ],
+   "macos": [
+    "differs",
+    "lower and 15 dB"
    ]
   },
   "Textures/textures/4_2_4.png": {
    "ios": [
+    "differs",
+    "64x128 vs 64x64"
+   ],
+   "macos": [
     "differs",
     "64x128 vs 64x64"
    ]
@@ -7181,10 +8993,18 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/textures/4_2_4_ipad_1440.png": {
    "ios": [
+    "differs",
+    "lower and 13 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 13 dB"
    ]
@@ -7193,10 +9013,84 @@
    "ios": [
     "differs",
     "lower and 16 dB"
+   ],
+   "macos": [
+    "differs",
+    "lower and 16 dB"
+   ]
+  },
+  "Textures/textures/gof2_campaign_select.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_campaign_select_ipad.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_campaign_select_ipad_1440.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_campaign_select_ipad_large.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_campaign_select_iphone4.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_credits.png": {
+   "macos": [
+    "differs",
+    "pixels, 10 dB"
+   ]
+  },
+  "Textures/textures/gof2_credits_1440.png": {
+   "macos": [
+    "differs",
+    "pixels, 12 dB"
+   ]
+  },
+  "Textures/textures/gof2_credits_iphone4.png": {
+   "macos": [
+    "differs",
+    "pixels, 10 dB"
+   ]
+  },
+  "Textures/textures/gof2_gamepad.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_gamepad_1440.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_gamepad_large.png": {
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/textures/gof2_interface.png": {
    "ios": [
+    "lower",
+    "same size, 37 dB"
+   ],
+   "macos": [
     "lower",
     "same size, 37 dB"
    ]
@@ -7205,10 +9099,18 @@
    "ios": [
     "lower",
     "same size, 38 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 38 dB"
    ]
   },
   "Textures/textures/gof2_interface3_iphone4.png": {
    "ios": [
+    "differs",
+    "lower and 10 dB"
+   ],
+   "macos": [
     "differs",
     "lower and 10 dB"
    ]
@@ -7217,10 +9119,18 @@
    "ios": [
     "lower",
     "same size, 37 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 37 dB"
    ]
   },
   "Textures/textures/gof2_logos_ipad2.png": {
    "ios": [
+    "differs",
+    "pixels, 23 dB"
+   ],
+   "macos": [
     "differs",
     "pixels, 23 dB"
    ]
@@ -7229,18 +9139,48 @@
    "ios": [
     "differs",
     "pixels, 9 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 9 dB"
    ]
   },
   "Textures/textures/gof2_shop_button.png": {
    "ios": [
     "differs",
     "lower and 13 dB"
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/textures/gof2_shop_button_ipad_1440.png": {
    "ios": [
     "differs",
     "pixels, 17 dB"
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_shop_button_ipad_large.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_shop_button_iphone4.png": {
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Textures/textures/gof2_shop_button_large.png": {
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Textures/valkyrie/fx/v_fog_ice.png": {
@@ -7251,6 +9191,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 39 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 47 dB"
    ]
   },
   "Textures/valkyrie/fx/v_projectiles.png": {
@@ -7261,6 +9205,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 30 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 37 dB"
    ]
   },
   "Textures/valkyrie/fx/v_scattergun_000_explosion.png": {
@@ -7271,6 +9219,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 38 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 41 dB"
    ]
   },
   "Textures/valkyrie/fx/v_scattergun_001_explosion.png": {
@@ -7281,6 +9233,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 38 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 41 dB"
    ]
   },
   "Textures/valkyrie/fx/v_scattergun_002_explosion.png": {
@@ -7291,6 +9247,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 35 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 39 dB"
    ]
   },
   "Textures/valkyrie/fx/v_shield_noise.png": {
@@ -7301,6 +9261,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 42 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 42 dB"
    ]
   },
   "Textures/valkyrie/fx/v_shield_normal.png": {
@@ -7321,6 +9285,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 34 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 37 dB"
    ]
   },
   "Textures/valkyrie/galaxymap/v_galaxymap_planets.png": {
@@ -7361,6 +9329,10 @@
    "ios": [
     "differs",
     "lower and 16 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 16 dB"
    ]
   },
   "Textures/valkyrie/hangars/v_hangar_deep_science_diffuse.png": {
@@ -7371,6 +9343,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 28 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 30 dB"
    ]
   },
   "Textures/valkyrie/misc/v_asteroid_ice_diffuse.png": {
@@ -7401,6 +9377,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 30 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 45 dB"
    ]
   },
   "Textures/valkyrie/misc/v_guided_missile_normal_specular.png": {
@@ -7411,6 +9391,10 @@
    "ios": [
     "lower",
     "512x512 of 2048x2048, 27 dB"
+   ],
+   "macos": [
+    "lower",
+    "1024x1024 of 2048x2048, 32 dB"
    ]
   },
   "Textures/valkyrie/misc/v_mine_001_diffuse.png": {
@@ -7421,6 +9405,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 47 dB"
    ]
   },
   "Textures/valkyrie/misc/v_mine_001_normal_specular.png": {
@@ -7431,6 +9419,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 27 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 34 dB"
    ]
   },
   "Textures/valkyrie/misc/v_mine_002_diffuse.png": {
@@ -7441,6 +9433,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 28 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 45 dB"
    ]
   },
   "Textures/valkyrie/misc/v_mine_002_normal_specular.png": {
@@ -7451,6 +9447,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 24 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 27 dB"
    ]
   },
   "Textures/valkyrie/misc/v_mine_003_diffuse.png": {
@@ -7461,6 +9461,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 27 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 43 dB"
    ]
   },
   "Textures/valkyrie/misc/v_mine_003_normal_specular.png": {
@@ -7471,6 +9475,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 23 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 27 dB"
    ]
   },
   "Textures/valkyrie/planets/v_planet_020_big.png": {
@@ -7691,6 +9699,10 @@
    "ios": [
     "lower",
     "256x256 of 512x512, 32 dB"
+   ],
+   "macos": [
+    "lower",
+    "256x256 of 512x512, 36 dB"
    ]
   },
   "Textures/valkyrie/stations/v_station_deep_science_glow.png": {
@@ -7701,6 +9713,10 @@
    "ios": [
     "lower",
     "1024x1024 of 2048x2048, 35 dB"
+   ],
+   "macos": [
+    "lower",
+    "same size, 44 dB"
    ]
   },
   "Textures/valkyrie/stations/v_station_deep_science_normal_specular.png": {
@@ -7721,6 +9737,10 @@
    "ios": [
     "lower",
     "1024x1024 of 4096x4096, 32 dB"
+   ],
+   "macos": [
+    "lower",
+    "2048x2048 of 4096x4096, 34 dB"
    ]
   },
   "Textures/valkyrie/stations/v_station_battlestation_normal_specular.png": {
@@ -7731,6 +9751,10 @@
    "ios": [
     "differs",
     "lower and 12 dB"
+   ],
+   "macos": [
+    "differs",
+    "pixels, 16 dB"
    ]
   },
   "Textures/valkyrie/turrets/v_autoturret_001_diffuse.png": {
@@ -7741,6 +9765,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 33 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 49 dB"
    ]
   },
   "Textures/valkyrie/turrets/v_autoturret_001_normal_specular.png": {
@@ -7751,6 +9779,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 27 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 32 dB"
    ]
   },
   "Textures/valkyrie/turrets/v_autoturret_002_diffuse.png": {
@@ -7761,6 +9793,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 31 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 47 dB"
    ]
   },
   "Textures/valkyrie/turrets/v_autoturret_002_normal_specular.png": {
@@ -7771,6 +9807,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 26 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 35 dB"
    ]
   },
   "Textures/valkyrie/turrets/v_autoturret_003_diffuse.png": {
@@ -7781,6 +9821,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 30 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 45 dB"
    ]
   },
   "Textures/valkyrie/turrets/v_autoturret_003_normal_specular.png": {
@@ -7791,6 +9835,10 @@
    "ios": [
     "lower",
     "256x256 of 1024x1024, 25 dB"
+   ],
+   "macos": [
+    "lower",
+    "512x512 of 1024x1024, 30 dB"
    ]
   },
   "Models/main/bars/bar_vossk.gof2mesh.json": {
@@ -7799,6 +9847,10 @@
     "sidecar"
    ],
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -7811,6 +9863,10 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/bars/bar_vossk_bot_a_anim_alpha.gof2mesh.json": {
@@ -7819,6 +9875,10 @@
     "sidecar"
    ],
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -7831,6 +9891,10 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/bars/bar_vossk_bot_c_anim_alpha.gof2mesh.json": {
@@ -7839,6 +9903,10 @@
     "sidecar"
    ],
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -7925,6 +9993,10 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_add.gof2mesh.json": {
@@ -7935,10 +10007,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_alpha.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -7947,10 +10027,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_bot_a_anim_add.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -7959,10 +10047,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_bot_b_anim_add.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -7971,10 +10067,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_bot_c_anim_add.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -7983,10 +10087,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_x1_shadow_alpha.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -7995,10 +10107,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_x2_shadow_alpha.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8007,10 +10127,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_x3_shadow_alpha.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8019,10 +10147,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_x4_shadow_alpha.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8031,16 +10167,28 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_x5_shadow_alpha.gof2mesh.json": {
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_x6.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8053,10 +10201,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_bot_a_anim.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8065,10 +10221,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_bot_b_anim.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8077,16 +10241,28 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_bot_c_anim.gof2mesh.json": {
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_bot_c_anim_add.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8099,6 +10275,10 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_bot_d_anim_add.gof2mesh.json": {
@@ -8109,10 +10289,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_terran_bot_e_anim.gof2mesh.json": {
    "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
     "missing",
     null
    ]
@@ -8121,16 +10309,28 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Models/main/hangars/hangar_midorian_add.gof2mesh.json": {
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_midorian_alpha.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8143,6 +10343,10 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_add.gof2mesh.json": {
@@ -8153,10 +10357,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_alpha.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8169,10 +10381,18 @@
    "ios": [
     "missing",
     null
+   ],
+   "macos": [
+    "missing",
+    null
    ]
   },
   "Models/main/hangars/hangar_nivelian_x1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8181,10 +10401,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_x2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8193,10 +10421,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_x3.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8205,10 +10441,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_x4.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8217,16 +10461,28 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_x5.gof2mesh.json": {
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/hangars/hangar_nivelian_x5_shadow_alpha.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8239,10 +10495,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/jumpgates/jumpgate_midorian_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8251,10 +10515,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/jumpgates/jumpgate_nivelian_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8263,10 +10535,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/jumpgates/jumpgate_nivelian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8275,10 +10555,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/jumpgates/jumpgate_terran_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8287,10 +10575,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/jumpgates/jumpgate_vossk_lod_1_anim.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8299,10 +10595,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/jumpgates/jumpgate_vossk_lod_2_anim.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8311,10 +10615,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/misc/asteroid_01_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8323,10 +10635,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/misc/asteroid_01_lod_3.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8335,16 +10655,28 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/misc/asteroid_void_lod_2.gof2mesh.json": {
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/misc/asteroid_void_lod_3.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8357,10 +10689,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/battleship_terran_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8369,10 +10709,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/cargo_001_midorian_container_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8381,10 +10729,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/cargo_001_midorian_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8393,10 +10749,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/cargo_002_nivelian_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8405,10 +10769,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/cargo_003_terran_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8417,10 +10789,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/cargo_004_vossk_engine_add.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8429,10 +10809,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/cargo_004_vossk_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8441,10 +10829,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_000_midorian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8453,10 +10849,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_001_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8465,10 +10869,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_002_pirates_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8477,10 +10889,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_003_midorian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8489,10 +10909,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_004_nivelian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8501,10 +10929,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_005_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8513,10 +10949,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_006_midorian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8525,10 +10969,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_007_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8537,10 +10989,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_008_void_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8549,10 +11009,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_009_vossk_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8561,10 +11029,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_010_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8573,10 +11049,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_011_pirates_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8585,10 +11069,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_012_nivelian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8597,10 +11089,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_016_nivelian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8609,10 +11109,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_017_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8621,10 +11129,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_018_nivelian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8633,10 +11149,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_019_midorian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8645,10 +11169,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_020_midorian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8657,10 +11189,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_021_nivelian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8669,10 +11209,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_022_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8681,10 +11229,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_023_pirates_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8693,10 +11249,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_024_pirates_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8705,10 +11269,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_025_pirates_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8717,10 +11289,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_026_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8729,10 +11309,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_027_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8741,10 +11329,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_028_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8753,10 +11349,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_029_pirates_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8765,10 +11369,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_030_midorian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8777,10 +11389,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_031_nivelian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8789,10 +11409,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_032_pirates_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8801,10 +11429,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_033_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8813,10 +11449,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_034_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8825,10 +11469,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_035_nivelian_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8837,10 +11489,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_036_terran_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8849,10 +11509,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_042_retro_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8861,10 +11529,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/main/ships/ship_043_retro_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8877,6 +11553,10 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/meshes/col_sphere.gof2mesh.json": {
@@ -8887,10 +11567,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/misc/sn_asteroid_magma_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8899,10 +11587,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/misc/sn_asteroid_magma_lod_3.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8911,10 +11607,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/misc/sn_plasma_gun_valkyrie_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8923,10 +11627,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_battleship_vossk_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8939,10 +11651,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_044_elite_nivelian_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8951,10 +11671,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_045_most_wanted_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8963,16 +11691,28 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_046_most_wanted_lod_1.gof2mesh.json": {
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_046_most_wanted_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8985,10 +11725,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_047_most_wanted_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -8997,10 +11745,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_048_most_wanted_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9009,10 +11765,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_051_dropship_terran_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9021,10 +11785,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_052_retro_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9033,16 +11805,34 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_054_vossk_lod_1.gof2mesh.json": {
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/supernova/ships/sn_ship_054_vossk_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
+   ]
+  },
+  "Models/supernova/skyboxes/sn_skybox_017.gof2mesh.json": {
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9053,6 +11843,10 @@
     "sidecar"
    ],
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9071,10 +11865,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/valkyrie/misc/v_asteroid_ice_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9083,10 +11885,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/valkyrie/misc/v_asteroid_ice_lod_3.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9095,10 +11905,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/valkyrie/ships/v_ship_039_vossk_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9107,10 +11925,18 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/valkyrie/ships/v_ship_041_vossk_lod_2.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -9123,16 +11949,28 @@
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/valkyrie/stations/v_station_deep_science_damaged.gof2mesh.json": {
    "ios": [
     "differs",
     "sidecar"
+   ],
+   "macos": [
+    "differs",
+    "sidecar"
    ]
   },
   "Models/valkyrie/stations/v_station_deep_science_damaged_lod_1.gof2mesh.json": {
    "ios": [
+    "differs",
+    "sidecar"
+   ],
+   "macos": [
     "differs",
     "sidecar"
    ]
@@ -21393,6 +24231,260 @@
    "android": [
     "missing",
     null
+   ]
+  },
+  "Resources/GoF2Data/item_attributes.json": {
+   "ios": [
+    "differs",
+    "table values"
+   ],
+   "macos": [
+    "differs",
+    "table values"
+   ]
+  },
+  "Resources/GoF2Data/items.json": {
+   "android": [
+    "differs",
+    "table values"
+   ],
+   "ios": [
+    "differs",
+    "table values"
+   ],
+   "macos": [
+    "differs",
+    "table values"
+   ]
+  },
+  "Resources/GoF2Data/ships.json": {
+   "ios": [
+    "differs",
+    "table values"
+   ],
+   "macos": [
+    "differs",
+    "table values"
+   ]
+  },
+  "Resources/GoF2Data/sn_docking_points_battlestation.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_docking_points_cargo_wrecks.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_docking_points_carrier_terran.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_044_elite_nivelian_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_045_most_wanted_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_046_most_wanted_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_047_most_wanted_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_048_most_wanted_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_049_boss_nivelian_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_051_dropship_terran_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_052_retro_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_054_vossk_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_055_modified_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_056_modified_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_057_modified_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_058_modified_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_059_modified_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/sn_ship_060_modified_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/v_collisions.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/v_ships_deep_science_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/v_ships_vossk_weapons.json": {
+   "ios": [
+    "missing",
+    null
+   ],
+   "macos": [
+    "missing",
+    null
+   ]
+  },
+  "Resources/GoF2Data/weapons_hd.json": {
+   "ios": [
+    "differs",
+    "table values"
+   ],
+   "macos": [
+    "differs",
+    "table values"
    ]
   }
  }

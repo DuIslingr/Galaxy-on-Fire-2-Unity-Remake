@@ -1,6 +1,7 @@
 # packs.py: what each edition of the player's copy provides, from the converter's actual output (docs/notes/player-assets.md
 # "What the player's copy can't provide"). Compares the project's converted originals with each edition's converted cache
-# (Reference/tools/player_assets/convert) and sorts every original asset per edition:
+# (Reference/tools/player_assets/convert) and sorts every original asset (textures, models, sounds, the data tables the .bin
+# files rebuild; the text per string) per edition:
 #   exact      the edition's conversion gives the project's file (images: the same pixels; meshes: the same sidecar; audio:
 #              the same sample at the same length; text: the same string)
 #   lower      the edition has it at a lower quality (a texture at a lower resolution, or the same size encoded worse, 30 dB
@@ -110,6 +111,20 @@ def main():
         for ed, cache in eds.items():
             res = ex.map(cmp_audio, [(os.path.join(A, p), os.path.join(cache, p[:-4])) for p in audio], chunksize=16)
             for p, r in zip(audio, res): verdict[p][ed] = r
+    # the data tables the converter rebuilds from the .bin files (GameTables): an edition without a table's .bin (the macOS
+    # app has none of the Supernova / Valkyrie ones) needs the project's; the same values = exact
+    made = set()
+    for cache in eds.values():
+        d = os.path.join(cache, "Resources", "GoF2Data")
+        if os.path.isdir(d): made |= {f for f in os.listdir(d) if f.endswith(".json")}
+    for f in sorted(made):
+        rel = os.path.join("Resources", "GoF2Data", f)
+        if not os.path.exists(os.path.join(A, rel)): continue
+        proj = json.load(open(os.path.join(A, rel), encoding="utf-8"))
+        for ed, cache in eds.items():
+            p = os.path.join(cache, rel)
+            verdict[rel][ed] = ("missing", None) if not os.path.exists(p) else \
+                (("exact", None) if json.load(open(p, encoding="utf-8")) == proj else ("differs", "table values"))
     # text: per string
     text = {}
     for f in sorted(os.listdir(os.path.join(A, "Localization"))):

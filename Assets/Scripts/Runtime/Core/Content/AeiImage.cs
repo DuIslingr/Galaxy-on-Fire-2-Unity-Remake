@@ -10,7 +10,8 @@
 // Types (bit 1 = mipmaps follow; the decoders read level 0 only, Unity makes its own mipmaps):
 //   0x40 / 0x42 (and 0x14 / 0x16 / 0x17, aei.py's): ETC1 (Android)
 //   0x10 / 0x12: PVRTC 4 bpp (iOS), 0x0d: PVRTC 2 bpp (iOS)
-//   0x24: 8 bpp in 16-byte blocks (iOS' cloak map only, which the remake doesn't use): not read
+//   0x20 / 0x22: DXT1, 0x24 / 0x26: DXT5 (the macOS app's high/dx5 textures; DXT5 checked against the Android copy's same
+//   textures: colour within 0.1 / 255, alpha equal; iOS' one 0x24 file is its cloak map)
 
 using System;
 using System.Collections.Generic;
@@ -41,6 +42,8 @@ namespace GoF2Remake.Data
                 case 0x14: case 0x16: case 0x17: case 0x40: case 0x42: return "ETC1";
                 case 0x10: case 0x12: return "PVRTC 4bpp";
                 case 0x0d: return "PVRTC 2bpp";
+                case 0x20: case 0x22: return "DXT1";
+                case 0x24: case 0x26: return "DXT5";
                 default: return $"unknown (0x{type:x2})";
             }
         }
@@ -87,6 +90,8 @@ namespace GoF2Remake.Data
             {
                 case 0x10: case 0x12: img.Rgba = Pvrtc.Decode(data, w, h, false); break;
                 case 0x0d: img.Rgba = Pvrtc.Decode(data, w, h, true); break;
+                case 0x20: case 0x22: img.Rgba = Dxt.Decode(data, w, h, Dxt.Kind.Dxt1); break;
+                case 0x24: case 0x26: img.Rgba = Dxt.Decode(data, w, h, Dxt.Kind.Dxt5); break;
                 default: img.Rgba = Etc1.Decode(data, w, h); break;
             }
             return img;
@@ -103,6 +108,84 @@ namespace GoF2Remake.Data
 
         static int U16(byte[] b, int o) => b[o] | (b[o + 1] << 8);
         static uint U32(byte[] b, int o) => (uint)(b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24));
+    }
+
+    /// <summary>S3TC / DXT (the macOS app's high/dx5 textures): 4x4 blocks, row-major, little-endian. DXT1 8 bytes (two
+    /// RGB565 colours, 2-bit indices; colour 0 <= colour 1: three colours and transparent black); DXT3 16 bytes (4-bit
+    /// explicit alpha, then a DXT1 colour block in four-colour mode); DXT5 16 bytes (two alpha endpoints and 3-bit indices,
+    /// then the colour block).</summary>
+#if UNITY_5_3_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]   // (no state)
+#endif
+    public static class Dxt
+    {
+        public enum Kind { Dxt1, Dxt3, Dxt5 }
+
+        public static byte[] Decode(ReadOnlySpan<byte> data, int width, int height, Kind kind)
+        {
+            var o = new byte[width * height * 4];
+            int bw = (width + 3) / 4, bh = (height + 3) / 4, size = kind == Kind.Dxt1 ? 8 : 16;
+            if (data.Length < bw * bh * size) throw new FormatException("DXT data too short");
+            Span<byte> px = stackalloc byte[64];
+            Span<byte> alpha = stackalloc byte[16];
+            Span<byte> a = stackalloc byte[8];
+            for (int by = 0; by < bh; by++)
+                for (int bx = 0; bx < bw; bx++)
+                {
+                    var blk = data.Slice((by * bw + bx) * size, size);
+                    if (kind == Kind.Dxt3)
+                        for (int i = 0; i < 16; i++) { int v = (blk[i / 2] >> ((i & 1) * 4)) & 15; alpha[i] = (byte)(v * 17); }
+                    else if (kind == Kind.Dxt5)
+                    {
+                        a[0] = blk[0]; a[1] = blk[1];
+                        if (a[0] > a[1]) for (int i = 1; i < 7; i++) a[i + 1] = (byte)(((7 - i) * a[0] + i * a[1]) / 7);
+                        else { for (int i = 1; i < 5; i++) a[i + 1] = (byte)(((5 - i) * a[0] + i * a[1]) / 5); a[6] = 0; a[7] = 255; }
+                        ulong bits = 0;
+                        for (int i = 0; i < 6; i++) bits |= (ulong)blk[2 + i] << (8 * i);
+                        for (int i = 0; i < 16; i++) alpha[i] = a[(int)((bits >> (3 * i)) & 7)];
+                    }
+                    Color(kind == Kind.Dxt1 ? blk : blk.Slice(8), kind == Kind.Dxt1, px);
+                    for (int i = 0; i < 16; i++)
+                    {
+                        int x = bx * 4 + (i & 3), y = by * 4 + (i >> 2);
+                        if (x >= width || y >= height) continue;
+                        int d = (y * width + x) * 4;
+                        o[d] = px[i * 4]; o[d + 1] = px[i * 4 + 1]; o[d + 2] = px[i * 4 + 2];
+                        o[d + 3] = kind == Kind.Dxt1 ? px[i * 4 + 3] : alpha[i];
+                    }
+                }
+            return o;
+        }
+
+        static void Color(ReadOnlySpan<byte> b, bool dxt1, Span<byte> px)
+        {
+            int c0 = b[0] | b[1] << 8, c1 = b[2] | b[3] << 8;
+            Span<int> r = stackalloc int[4], g = stackalloc int[4], bl = stackalloc int[4], a = stackalloc int[4];
+            Rgb565(c0, out r[0], out g[0], out bl[0]); Rgb565(c1, out r[1], out g[1], out bl[1]);
+            a[0] = a[1] = a[2] = a[3] = 255;
+            if (c0 > c1 || !dxt1)
+            {
+                r[2] = (2 * r[0] + r[1]) / 3; g[2] = (2 * g[0] + g[1]) / 3; bl[2] = (2 * bl[0] + bl[1]) / 3;
+                r[3] = (r[0] + 2 * r[1]) / 3; g[3] = (g[0] + 2 * g[1]) / 3; bl[3] = (bl[0] + 2 * bl[1]) / 3;
+            }
+            else
+            {
+                r[2] = (r[0] + r[1]) / 2; g[2] = (g[0] + g[1]) / 2; bl[2] = (bl[0] + bl[1]) / 2;
+                r[3] = g[3] = bl[3] = 0; a[3] = 0;
+            }
+            uint idx = (uint)(b[4] | b[5] << 8 | b[6] << 16 | b[7] << 24);
+            for (int i = 0; i < 16; i++)
+            {
+                int k = (int)((idx >> (2 * i)) & 3);
+                px[i * 4] = (byte)r[k]; px[i * 4 + 1] = (byte)g[k]; px[i * 4 + 2] = (byte)bl[k]; px[i * 4 + 3] = (byte)a[k];
+            }
+        }
+
+        static void Rgb565(int c, out int r, out int g, out int b)
+        {
+            r = (c >> 11) & 31; g = (c >> 5) & 63; b = c & 31;
+            r = (r << 3) | (r >> 2); g = (g << 2) | (g >> 4); b = (b << 3) | (b >> 2);
+        }
     }
 
     /// <summary>ETC1 (Ericsson Texture Compression 1, OES_compressed_ETC1_RGB8_texture): 4x4 blocks of 8 bytes, big-endian,
