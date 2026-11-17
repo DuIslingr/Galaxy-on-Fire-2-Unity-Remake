@@ -13,7 +13,9 @@
 // -gof2fsr <quality> renders with the Upscaler option's FSR (0 native AA .. 4 ultra performance) for the run (the options
 // put back at the end), and reports the FSR plugin's state (LinuxFsr on Linux) ($GOF2_FSR_VERSION=3 / 2: that FSR where FSR 4 also
 // runs, UpscalerFramework.BestFsr). -gof2scale <s> renders at that render scale with the upscaler off (plain bilinear: FSR's
-// cost is the GPU frame time with FSR minus this one at its render resolution). The fps samples include the GPU frame
+// cost is the GPU frame time with FSR minus this one at its render resolution). -gof2fsrlite <n>: FSR 4 Lite (the option "FSR 4
+// Lite") for the run with 1; with 2 the option changed while playing: in the hangar, the last view, it goes on and off again,
+// a picture and a frame-rate sample each time. The fps samples include the GPU frame
 // time (FrameTimingManager: development builds made by PlayerAssetsBuild have frame timing stats on); -gof2cap <fps> caps
 // them (e.g. to compare GPU timings with another program at its frame rate: the GPU's clock follows its load).
 
@@ -36,6 +38,7 @@ namespace GoF2Remake
         int bad;
         float fpsSeconds;
         int fsrQuality = -1;
+        int fsrLite;   // -gof2fsrlite: 1 FSR 4 Lite for the run, 2 switched in the hangar
         float renderScale;
         int fpsCap;   // -gof2cap: the fps samples' frame cap (0: uncapped)
 
@@ -53,6 +56,8 @@ namespace GoF2Remake
             if (f >= 0 && f + 1 < args.Length) float.TryParse(args[f + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out c.fpsSeconds);
             int q = Array.IndexOf(args, "-gof2fsr");
             if (q >= 0 && q + 1 < args.Length && int.TryParse(args[q + 1], out int quality)) c.fsrQuality = Mathf.Clamp(quality, 0, 4);
+            int lite = Array.IndexOf(args, "-gof2fsrlite");
+            if (lite >= 0 && lite + 1 < args.Length) int.TryParse(args[lite + 1], out c.fsrLite);
             int cap = Array.IndexOf(args, "-gof2cap");
             if (cap >= 0 && cap + 1 < args.Length) int.TryParse(args[cap + 1], out c.fpsCap);
             int rs = Array.IndexOf(args, "-gof2scale");
@@ -87,6 +92,7 @@ namespace GoF2Remake
                  $"HD sky stars_000: {(Visuals.OriginalSkies.Hd("stars_000") != null ? "yes" : "no")}, star list: {World.SkyStars.List("stars_000").Length}");
             int upscalerWas = Settings.Upscaler, upscalerQualityWas = Settings.UpscalerQuality;
             float renderScaleWas = Settings.RenderScale;
+            bool fsrLiteWas = Settings.Fsr4Lite;
             if (renderScale > 0f)
             {
                 Settings.Upscaler = Settings.UpscalerOff;
@@ -96,11 +102,13 @@ namespace GoF2Remake
             if (fsrQuality >= 0)
             {
                 Settings.UpscalerQuality = fsrQuality;
+                Settings.Fsr4Lite = fsrLite == 1;
                 Settings.Upscaler = Settings.UpscalerFsrTemporal;
                 yield return null;
             }
 #if (UNITY_STANDALONE_LINUX || UNITY_STANDALONE_WIN) && ENABLE_UPSCALER_FRAMEWORK
-            Line($"FSR (Linux): {LinuxFsr.Status}; best {UpscalerFramework.BestFsrLabel ?? "none"}, active upscaler {UpscalerFramework.ActiveId}");
+            Line($"FSR (Linux): {LinuxFsr.Status}; best {UpscalerFramework.BestFsrLabel ?? "none"}, active upscaler {UpscalerFramework.ActiveId}" +
+                 $"; FSR 4 Lite {(UpscalerFramework.Fsr4LiteAvailable ? Settings.Fsr4Lite ? "on" : "available" : "not available")}");
 #endif
             yield return new WaitForSecondsRealtime(8f);
             int filled = UI.UiImageSlots.Fill();
@@ -154,8 +162,18 @@ namespace GoF2Remake
             Shot("station");
             Line("  content: " + ContentTimings.Report(reset: true));
             yield return Fps("station");
+            if (fsrQuality >= 0 && fsrLite == 2)
+                foreach (bool on in new[] { true, false })
+                {
+                    Settings.Fsr4Lite = on;
+                    yield return new WaitForSecondsRealtime(3f);
+                    Shot(on ? "station_lite" : "station_full_again");
+                    Line($"FSR 4 Lite switched {(on ? "on" : "off")} in the hangar (available: {UpscalerFramework.Fsr4LiteAvailable})");
+                    yield return Fps(on ? "station_lite" : "station_full_again");
+                }
             if (fsrQuality >= 0 || renderScale > 0f)
             {
+                Settings.Fsr4Lite = fsrLiteWas;
                 Settings.Upscaler = upscalerWas;
                 Settings.UpscalerQuality = upscalerQualityWas;
                 Settings.RenderScale = renderScaleWas;

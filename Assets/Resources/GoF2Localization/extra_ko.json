@@ -1330,6 +1330,7 @@
  "upscalerQ": "품질",
  "upscalerQuality": "업스케일러 품질",
  "upscalerQualityHelp": "DLSS / FSR 렌더링 해상도: 네이티브부터 3분의 1까지.",
+ "fsr4LiteHelp": "AMD가 내장 그래픽용으로 만든 FSR 4의 경량 모델: 더 빠르지만 화질이 조금 떨어집니다.",
  "upscalerStp": "Unity STP: 시간적 안티에일리어싱과 업스케일링, MSAA 대체",
  "upscalerUP": "울트라 성능",
  "voiceAuto": "텍스트와 같게",

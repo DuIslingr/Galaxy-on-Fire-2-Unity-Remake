@@ -1331,6 +1331,7 @@
  "upscalerQ": "الجودة",
  "upscalerQuality": "جودة رفع الدقة",
  "upscalerQualityHelp": "الدقة التي يعرض بها DLSS / FSR: من الأصلية حتى الثلث.",
+ "fsr4LiteHelp": "نموذج FSR 4 الأصغر الذي صممته AMD للرسوميات المدمجة: أسرع، مقابل انخفاض بسيط في جودة الصورة.",
  "upscalerStp": "Unity STP: تنعيم وتكبير زمني؛ يحل محل MSAA",
  "upscalerUP": "أداء فائق",
  "voiceAuto": "مثل النص",

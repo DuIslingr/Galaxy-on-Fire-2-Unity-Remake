@@ -107,13 +107,13 @@ namespace GoF2Remake
 
         /// <summary>Activates the upscaler 'id' (one this device doesn't run falls back to Auto) with the DLSS / FSR quality
         /// mode 'quality'; false before URP has made its pipeline (Bootstrap applies it again then).</summary>
-        public static bool Apply(string id, int quality)
+        public static bool Apply(string id, int quality, bool fsr4Lite = false)
         {
             var pipeline = Pipeline;
             var instance = Instance;
             if (pipeline == null || instance == null) return false;
             if (string.IsNullOrEmpty(id) || !Supports(id)) id = Auto;
-            SetQuality(instance, id, Mathf.Clamp(quality, QualityNative, QualityUltra));
+            SetQuality(instance, id, Mathf.Clamp(quality, QualityNative, QualityUltra), fsr4Lite);
             if (instance.activeUpscaler?.upscalerId != id && !pipeline.SetUpscaler(id)) pipeline.SetUpscaler(Auto);
             return true;
         }
@@ -144,7 +144,7 @@ namespace GoF2Remake
 
         /// <summary>The quality mode on the upscaler's options (the framework's global options; a changed mode recreates the
         /// upscaler's context).</summary>
-        static void SetQuality(Upscaling instance, string id, int q)
+        static void SetQuality(Upscaling instance, string id, int q, bool fsr4Lite)
         {
             var upscaler = instance.GetIUpscalerById(id);
             var options = upscaler != null ? instance.GetGlobalOptions(upscaler) : null;
@@ -168,7 +168,24 @@ namespace GoF2Remake
             else if (options is FSR2Options fsr2) fsr2.fsr2QualityMode = (UnityEngine.AMD.FSR2Quality)Mathf.Max(0, q - 1);
 #endif
             // Linux (LinuxFsrUpscaler: the same ids, its own options; FSR 2 through the SDK takes native AA too)
-            if (options is LinuxFsrOptions linux) linux.qualityMode = q;
+            if (options is LinuxFsrOptions linux)
+            {
+                linux.qualityMode = q;
+                linux.lite = fsr4Lite;
+            }
+        }
+
+        /// <summary>The option "FSR 4 Lite" applies: FSR 4 is the FSR this device runs, through ffx-vk-linux (Linux).</summary>
+        public static bool Fsr4LiteAvailable
+        {
+            get
+            {
+#if UNITY_STANDALONE_LINUX
+                return BestFsr == Fsr4 && LinuxFsr.LiteAvailable;
+#else
+                return false;
+#endif
+            }
         }
 #else
         public static bool Compiled => false;
@@ -180,7 +197,8 @@ namespace GoF2Remake
         public static string BestFsrLabel => null;
         public static string ActiveId => "";
         public static bool Ready => false;
-        public static bool Apply(string id, int quality) => false;
+        public static bool Apply(string id, int quality, bool fsr4Lite = false) => false;
+        public static bool Fsr4LiteAvailable => false;
         public static void FlushContexts(ScriptableRenderContext context, Camera camera) { }
 #endif
     }

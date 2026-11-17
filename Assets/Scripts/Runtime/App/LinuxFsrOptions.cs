@@ -13,6 +13,9 @@ namespace GoF2Remake
         /// Upscaler quality option's order, UpscalerFramework.Quality*).</summary>
         [Range(0, 4)] public int qualityMode = 1;
 
+        /// <summary>FSR 4 only: FSR 4 Lite, AMD's smaller model (Settings.Fsr4Lite; LinuxFsr.LiteAvailable).</summary>
+        public bool lite;
+
         /// <summary>FSR's sharpening pass (RCAS) and its strength, 0..1.</summary>
         public bool sharpening;
         [Range(0f, 1f)] public float sharpness = 0.5f;

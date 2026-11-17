@@ -1342,6 +1342,7 @@
  "upscalerQ": "Qualité",
  "upscalerQuality": "Qualité de la mise à l'échelle",
  "upscalerQualityHelp": "La résolution de rendu de DLSS / FSR : de native à un tiers.",
+ "fsr4LiteHelp": "Le modèle allégé de FSR 4, conçu par AMD pour les puces graphiques intégrées : plus rapide, au prix d'un peu de qualité d'image.",
  "upscalerStp": "Unity STP : anticrénelage et mise à l'échelle temporels ; remplace le MSAA",
  "upscalerUP": "Ultra performance",
  "voiceAuto": "Comme le texte",

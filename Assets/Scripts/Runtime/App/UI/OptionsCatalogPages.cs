@@ -108,6 +108,12 @@ namespace GoF2Remake.UI
                     () => X("upscalerQualityHelp", "The resolution DLSS / FSR render at: from native down to a third."));
                 quality.visible = DlssOrFsrOn;
                 list.Add(quality);
+                // FSR 4 Lite (remake, 2026-11-16, the user's request; docs/notes/options.md "FSR on Linux"): AMD's smaller FSR 4
+                // model, where FSR 4 runs through ffx-vk-linux (Linux); the row only while FSR 4 is the upscaler there.
+                var fsr4Lite = Toggle("fsr4Lite", OptionPage.Graphics, () => "FSR 4 Lite", () => Settings.Fsr4Lite, v => Settings.Fsr4Lite = v);
+                fsr4Lite.description = () => X("fsr4LiteHelp", "FSR 4's smaller model, made by AMD for integrated graphics: faster, at some cost in image quality.");
+                fsr4Lite.visible = () => Bootstrap.ActiveUpscaler == Settings.UpscalerFsrTemporal && UpscalerFramework.Fsr4LiteAvailable;
+                list.Add(fsr4Lite);
             }
             // MSAA with a temporal upscaler on (STP, DLSS, FSR 2+, MetalFX Temporal): its anti-aliasing takes the place, so the row
             // is greyed out (a player's request: with DLAA it read as if it did something) and says why.

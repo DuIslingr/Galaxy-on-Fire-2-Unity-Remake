@@ -1330,6 +1330,7 @@
  "upscalerQ": "品質",
  "upscalerQuality": "アップスケーラーの品質",
  "upscalerQualityHelp": "DLSS / FSR の描画解像度：ネイティブから3分の1まで。",
+ "fsr4LiteHelp": "AMDが内蔵グラフィックス向けに作ったFSR 4の軽量モデル：高速ですが、画質は少し下がります。",
  "upscalerStp": "Unity STP：テンポラルアンチエイリアスとアップスケール（MSAAの代わり）",
  "upscalerUP": "ウルトラパフォーマンス",
  "voiceAuto": "テキストと同じ",

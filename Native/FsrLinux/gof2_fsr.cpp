@@ -55,6 +55,7 @@ int ffxvkLoad(const char* directory)
     return 0;
 }
 const char* ffxvkError() { return s_loadError.c_str(); }
+int ffxvkFsr4Model(const char*) { s_loadError = "FSR 4 Lite needs ffx-vk-linux"; return 1; }   // (AMD's own loader: the GPU's model only)
 }
 #define ffxCreateContext p_ffxCreateContext
 #define ffxDestroyContext p_ffxDestroyContext
@@ -518,6 +519,7 @@ struct CreateData   // LinuxFsrUpscaler.CreateData
     int32_t major;   // 4 / 3 / 2: the provider
     uint32_t maxRenderWidth, maxRenderHeight, displayWidth, displayHeight;
     uint32_t flags;  // FFX_UPSCALE_ENABLE_*
+    int32_t lite;    // FSR 4: 1 = FSR 4 Lite (ffx-vk-linux's ffxvkFsr4Model), 0 the GPU's own model
 };
 struct DispatchData   // LinuxFsrUpscaler.DispatchData
 {
@@ -535,6 +537,8 @@ struct DispatchData   // LinuxFsrUpscaler.DispatchData
 };
 struct DestroyData { int32_t handle; };
 #pragma pack(pop)
+
+bool s_liteMade;   // the model of the last FSR 4 context (what ffx-vk-linux is set to)
 
 const Provider* ProviderFor(int major)
 {
@@ -568,6 +572,19 @@ void Create(const CreateData& d)
     if (!p) { Log("FSR %d: no such provider", d.major); return; }
     UnityVulkanInstance vi = s_vk->Instance();
     auto gdpa = FsrGdpa();
+    // FSR 4's model for this context (the option "FSR 4 Lite"): set for the contexts made from here on, on the thread
+    // that makes them; one that can't be had (the driver DLL not loadable a second time) leaves the model as it was
+    bool lite = false;
+    if (d.major == 4)
+    {
+        lite = d.lite != 0;
+        if (ffxvkFsr4Model(lite ? "lite" : nullptr) != 0)
+        {
+            Log("FSR 4%s: %s", lite ? " Lite" : "", ffxvkError());
+            lite = s_liteMade;
+        }
+        s_liteMade = lite;
+    }
     ffxCreateContextDescUpscaleVersion version{};
     version.header.type = FFX_API_CREATE_CONTEXT_DESC_TYPE_UPSCALE_VERSION;
     version.version = FFX_UPSCALER_VERSION;
@@ -590,7 +607,7 @@ void Create(const CreateData& d)
     ffxReturnCode_t r = ffxCreateContext(&ctx, &up.header, nullptr);
     if (r != FFX_API_RETURN_OK) { Log("FSR %s: context %ux%u -> %ux%u failed (%u)", p->name.c_str(), d.maxRenderWidth, d.maxRenderHeight, d.displayWidth, d.displayHeight, r); return; }
     c.ctx = ctx; c.live = true; c.lastFrame = rs.currentFrameNumber;
-    Log("FSR %s context %d: %ux%u -> %ux%u, flags 0x%x", p->name.c_str(), d.handle, d.maxRenderWidth, d.maxRenderHeight, d.displayWidth, d.displayHeight, d.flags);
+    Log("FSR %s%s context %d: %ux%u -> %ux%u, flags 0x%x", p->name.c_str(), lite ? " Lite" : "", d.handle, d.maxRenderWidth, d.maxRenderHeight, d.displayWidth, d.displayHeight, d.flags);
 }
 
 bool Image(void* tex, void* buffer, bool write, uint32_t extraUsage, FfxApiResource& out)
@@ -834,6 +851,18 @@ EXPORT const char* Gof2Fsr_Status()
 }
 
 EXPORT UnityRenderingEventAndData Gof2Fsr_EventFunc() { return OnEvent; }
+
+/// 1 where FSR 4 Lite can be asked for (CreateData.lite): FSR 4 runs here through ffx-vk-linux, which holds the driver
+/// DLL's two models apart. Not on Windows (AMD's own loader gives the GPU's model).
+EXPORT int Gof2Fsr_LiteAvailable()
+{
+#ifdef _WIN32
+    return 0;
+#else
+    std::lock_guard<std::mutex> g(s_lock);
+    return ProviderFor(4) ? 1 : 0;
+#endif
+}
 
 /// The dispatches' average GPU and render-thread CPU milliseconds since the last call with 'reset'.
 EXPORT void Gof2Fsr_Timings(double* gpuMs, double* cpuMs, int* samples, int reset)

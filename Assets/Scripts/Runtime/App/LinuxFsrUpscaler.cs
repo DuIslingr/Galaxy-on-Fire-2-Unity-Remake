@@ -34,6 +34,7 @@ namespace GoF2Remake
         [DllImport(Lib)] static extern IntPtr Gof2Fsr_Status();
         [DllImport(Lib)] static extern IntPtr Gof2Fsr_EventFunc();
         [DllImport(Lib)] static extern void Gof2Fsr_Timings(out double gpuMs, out double cpuMs, out int samples, int reset);
+        [DllImport(Lib)] static extern int Gof2Fsr_LiteAvailable();
 
         // The main thread's part (the render function: the context, the texture pointers, the event), for TimingReport.
         static readonly System.Diagnostics.Stopwatch mainWatch = new System.Diagnostics.Stopwatch();
@@ -65,6 +66,7 @@ namespace GoF2Remake
         {
             public int handle, major;
             public uint maxRenderWidth, maxRenderHeight, displayWidth, displayHeight, flags;
+            public int lite;   // FSR 4: 1 = FSR 4 Lite
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 8)]
@@ -82,7 +84,7 @@ namespace GoF2Remake
         public const uint FlagHdr = 1 << 0, FlagDisplayResMotionVectors = 1 << 1, FlagJitteredMotionVectors = 1 << 2,
             FlagDepthInverted = 1 << 3, FlagDynamicResolution = 1 << 6;
 
-        static bool tried, ready;
+        static bool tried, ready, liteAvailable;
         static string[] providers = new string[5];
         static IntPtr eventFunc, ring;
         static int ringNext;
@@ -111,6 +113,8 @@ namespace GoF2Remake
                 ready = Gof2Fsr_Init(dir) != 0;
                 for (int major = 2; major <= 4; major++) providers[major] = Marshal.PtrToStringAnsi(Gof2Fsr_Provider(major));
                 eventFunc = Gof2Fsr_EventFunc();
+                try { liteAvailable = ready && Gof2Fsr_LiteAvailable() != 0; }
+                catch (EntryPointNotFoundException) { liteAvailable = false; }   // (a plugin built before FSR 4 Lite)
                 Debug.Log($"FSR (Linux): {Status} ({dir})");
             }
             catch (Exception e) when (e is DllNotFoundException || e is EntryPointNotFoundException)
@@ -132,6 +136,10 @@ namespace GoF2Remake
 
         /// <summary>The provider of FSR 'major' (4 / 3 / 2) this device runs, e.g. "4.1.2"; null when none.</summary>
         public static string Provider(int major) => ready && !string.IsNullOrEmpty(providers[major]) ? providers[major] : null;
+
+        /// <summary>FSR 4 Lite can be asked for (the Graphics option "FSR 4 Lite"): FSR 4 runs here through ffx-vk-linux,
+        /// which keeps an instance of AMD's driver DLL per model. Linux only.</summary>
+        public static bool LiteAvailable => liteAvailable && Provider(4) != null;
 
         public static int NewHandle()
         {
@@ -160,6 +168,7 @@ namespace GoF2Remake
     public sealed class LinuxFsrContext : IUpscalerContext
     {
         readonly int major, quality;
+        readonly bool lite;   // FSR 4 Lite (the model is the context's: a changed option makes a new one)
         int handle = -1;
         LinuxFsr.CreateData made;
 
@@ -167,12 +176,14 @@ namespace GoF2Remake
         {
             this.major = major;
             quality = options.qualityMode;
+            lite = major == 4 && options.lite && LinuxFsr.LiteAvailable;
             createdForDisplayResolution = displayResolution;
         }
 
         public Vector2Int createdForDisplayResolution { get; }
         public int lastUsedFrame { get; set; }
-        public bool IsValidForOptions(UpscalerOptions options) => options is LinuxFsrOptions o && o.qualityMode == quality;
+        public bool IsValidForOptions(UpscalerOptions options) =>
+            options is LinuxFsrOptions o && o.qualityMode == quality && (major == 4 && o.lite && LinuxFsr.LiteAvailable) == lite;
 
         public void Cleanup(CommandBuffer cmd)
         {
@@ -191,6 +202,7 @@ namespace GoF2Remake
             if (handle < 0) return -1;
             want.handle = handle;
             want.major = major;
+            want.lite = lite ? 1 : 0;
             LinuxFsr.Issue(cmd, LinuxFsr.EventCreate, want);
             made = want;
             return handle;
