@@ -123,6 +123,17 @@ names the classes to start from: `Spaceship`, `BGSSpaceshipEquipment`, `BGSSpace
 - Scale: the `.mesh` units read as metres for the cockpit (8 wide, 13.6 long); confirm against the NIF node scales and a
   known hull (the Frontier is ~40 m long) before fixing `scale`.
 
+## The ships importer (2026-11-20)
+
+Step 1 below exists: `~/GOF2UnityRemakeMods/starfield_ships_importer` (its README and ROADMAP), which reads the
+archives, plugins, `.mesh` geometry and the material database in Python and writes the `starfield_ships` mod: 353 named
+hulls assembled from their modules, materials as ships.json entries over shared maps, mounts from the weapon modules
+and engines, the engine sounds by manufacturer family, Blender icons. Learned on the way: Bethesda's reference rotations
+are `Rx(-x) Ry(-y) Rz(-z)` (checked on the Frontier's mirrored lasers), the `.mesh` normals and tangents are unsigned
+10:10:10:2, Starfield's normal maps are DirectX-style (measured by integrability on the bolt decals), the triangle
+winding agrees with the normals, and a material's texture set inherits its files from its parent object (a child stores
+only what differs, so every CDB lookup climbs the parent chain).
+
 ## Suggested order
 
 1. A1 ships with A4 sounds and A3 weapons: a `starfield_ships` importer (blueprint -> modules -> one GLB, materials from
