@@ -241,6 +241,7 @@ namespace GoF2Remake.Modding
             "crate", "crateSize", "wreck", "deathFx", "deathThroes", "warpIn",   // its loot container's and wreck's models (ModCrates, World.WreckBreakup)
             "wingmanDevice",   // a hired wingman's device in it (ModWingmen, Flight.WingmanDevice)
             "animations",      // the model's clips by what the ship does: idle, Chorus flight's drift (ModShipAnimator)
+            "driftFx",         // Chorus flight's drift look on its nodes: particles and energy-field shells (World.ModDriftFx)
         };
 
         static void ParseShips(ModInfo mod, Parsed p)
