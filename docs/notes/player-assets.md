@@ -491,3 +491,40 @@ textures'); `PlayerAssetsCheck` prints them per scene. The game's own hitch log 
    desktop sky upscale.
 6. **Builds without the originals:** the build strips every original and derived folder; a clean install, given only the
    player's copy, runs end to end. CI builds then need none of the LFS assets.
+
+## Upstream readiness (assessed 2026-11-16)
+
+Functionally complete on Linux desktop and well tested there; not ready to propose upstream yet.
+
+**What holds**
+- Edit-mode suite in the checkout without the originals (batch, `$GOF2_ORIGINAL_CACHE` the packed Android copy):
+  4,597 of 4,611 pass, 13 skipped (content not in that checkout: HD skies, 3D planets, imported originals), 1 failed:
+  `ModScriptTests.EveryDeniedGameClassStillExists` reports `WinConsole` missing; this branch touches neither the test
+  nor the class, and it failed the same way in the run before.
+- All 12 `PlayerCopyTests` pass against the converted Android copy.
+- The last in-game check of a Linux build without the originals (Android copy, common pack, HD folder; the morning of
+  2026-11-16, before the FSR 4 Lite commit): menu, three orbits, hangar, no lost shaders, no missing materials.
+- From the sections above, not verified again that day: all three editions convert; each with its packs is the project
+  everywhere but the lower-resolution assets.
+
+**What blocks a pull request**
+1. It sits on other unmerged work: the branch is the fork's `main` plus 47 commits (251 files, 8,464 lines of C#), and
+   the fork's `main` is 204 commits ahead of `upstream/main`: the open upstream PRs 288-294 (parts 1-7 of 7). It can't
+   go in before them without a rebase onto `upstream/main` (not tried).
+2. Linux desktop only: never run on Windows (upstream's main platform), Android, iOS or macOS. The phones are the
+   risk (the document pickers, a ~4 GB conversion). In VR the setup screen shows on the monitor only.
+3. The full project was never tested again: every run was in the stripped checkout. A build with the originals is
+   designed to be unchanged (OriginalRefs fills empty fields only), but no run has confirmed it. One change reaches
+   every build: Inter in place of Klavika.
+4. The switch itself isn't made: the originals and `Reference/binaries` are still in the repository; a build without
+   them needs the stripped checkout. Removing them is the maintainer's decision.
+5. The packs have no home: common, per-edition and HD (2.3 GB) are to be distributed outside GitHub; where is undecided.
+6. Loose ends: the setup screen's texts are English only; the remake's remodels, `option_*` icons and race emblems
+   come only from the common pack.
+7. FSR on Linux (and FSR 4 Lite, not yet run in the game) is in the same branch: a topic of its own, its own PR.
+8. `.lfsconfig` sends every LFS upload, this fork's too, to the upstream maintainer's server.
+
+**Suggested order:** wait for 288-294 to merge; then a stacked series like the earlier parts, the importers and the
+converter first (plain C#, no behaviour change), then the content layer, then first start / packs / HD, then the
+stripped checkout and its builds; FSR on Linux separately. Before that: the suite in a full checkout, one Windows
+build without the originals, one conversion on a phone.
