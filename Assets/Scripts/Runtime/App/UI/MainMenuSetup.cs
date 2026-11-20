@@ -109,6 +109,7 @@ namespace GoF2Remake.UI
             exitButton = Bind("exitButton", () => ShowDialog(Localization.Get(390), Localization.Get(53), Quit));
             // Remake: the chosen save folder's newer saves in first (SaveFolder; a no-op without one), then Resume's test.
             OptionsCatalog.SaveFolderPressed = ChooseSaveFolder;
+            OptionsCatalog.BenchmarkPressed = StartBenchmark;
             SyncSaveFolder(true);
             resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);   // only with a save
             UpdateColumnFit();
@@ -177,6 +178,7 @@ namespace GoF2Remake.UI
 
             foreach (var (tab, pg) in OptionPages) Bind(tab, () => SelectTab(pg));
             Bind("optionsDefaults", ShowResetChoice);   // 497: asks first (this tab or every tab)
+            Bind("optionsApply", ApplyOptions);          // the Graphics tab's staged changes (Settings.ApplyStaged)
             SetupOptions();
 
             root.RegisterCallback<NavigationCancelEvent>(_ =>
@@ -219,7 +221,7 @@ namespace GoF2Remake.UI
 
             // Rework (docs/UI-DESIGN.md "Button prompts"): with a controller, B on every Back and the dialog's No / Cancel,
             // A on the focused dialog button (InputGlyph.PadPrompt; their texts go through InputGlyph.SetText from here).
-            root.Query<Button>(className: "back-button").ForEach(b => { if (b.name != "optionsDefaults") InputGlyph.PadPrompt(b, PadButton.B); });
+            root.Query<Button>(className: "back-button").ForEach(b => { if (b.name != "optionsDefaults" && b.name != "optionsApply") InputGlyph.PadPrompt(b, PadButton.B); });
             InputGlyph.PadPrompt(root.Q<Button>("dialogYes"), PadButton.A, true);
             InputGlyph.PadPrompt(root.Q<Button>("dialogAlt"), PadButton.A, true);
             InputGlyph.PadPrompt(root.Q<Button>("dialogNo"), PadButton.B);

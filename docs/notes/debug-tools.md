@@ -4,9 +4,15 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## UI and platforms
 
-- **Game Rules access** (issue #311): Debug tools is the first custom control under Options > Gameplay > Game Rules > Expand.
-  The preset remains visible; expanding the custom controls and legacy Debug entry points require the same app-session confirmation. Opening them does not
-  enable cheats or change rules. Existing Debug pages remain available through their normal enable toggle.
+- The station creates its Debug menu entry even while locked and refreshes visibility when returning to the system
+  menu. Enabling/disabling Debug through Options therefore works without reloading the station. The confirmation
+  and multiplayer access checks are retained.
+  Enabling Debug uses its own confirmation. Opening an already-enabled Debug page in the main menu, station or
+  flight never asks to expand Game Rules, grants rule-editing consent or changes the experience profile.
+
+- **Game Rules access** (issue #311): Expand/Custom has its own app-session consent. Debug tools belongs to the
+  always-visible Tools section and uses a separate Enable/Cancel confirmation when enabled. Debug entry points
+  never grant or request Game Rules consent.
 
 - **Debug sizing** (remake): the main menu's Debug panel is 88 % of the screen high with the mission list and the cheats
   (a ScrollView following the focus) filling it; the pause menu's Debug page scrolls its rows (`.debug-scroll`, as tall
@@ -35,7 +41,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   Void return station); then the step's story orbit (launched when docked there, else an arrival from the previous
   place) or that place (docked, never at an empty orbit or a refusing station). Steps only reached inside another (46,
   53, 107, 129, 149 / 150) aren't offered; 42 is since 2026-11-09 (`MainCampaignLevels.Build42`: 41's level from Errkt's
-  end, on 41's radio) (`Story.MissionSelectStart`). On the right the cheat toggles (`Cheats`,
+  end, on 41's radio) (`Story.MissionSelectStart`). Such a
+  game never saves (#308, `Session.MissionSelectGame`, cleared by a new or loaded game; no Save game button): its
+  auto-save on docking replaced the player's own, and Resume then loaded the test. On the right the cheat toggles (`Cheats`,
   PlayerPrefs `cheat_*`, rows from `CheatsCatalog` through `OptionControl`): god mode (`Target.Damage` /
   `PlayerHealth.Kill`, no gamma drain, volatile goods safe), infinite ammo (`WeaponSystem`), no equipment cooldown
   (`Cheats.NoEquipmentCooldown`, players' wish 2026-11-02 "also boosters"; it replaced "no boost cooldown": the booster

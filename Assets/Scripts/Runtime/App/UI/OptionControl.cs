@@ -124,6 +124,7 @@ namespace GoF2Remake.UI
                     {
                         if (i != 2 || d.customRulesRequested == null) return false;
                         d.customRulesRequested();
+                        Refresh();   // (the row itself: Custom is selected at once, no prompt between)
                         return true;
                     };
                     choice.Changed += i =>
@@ -133,7 +134,8 @@ namespace GoF2Remake.UI
                         UpdateDescription();
                         NotifyChanged();
                         // A display or size change asks to be kept, else it goes back by itself (docs/UI-DESIGN.md "Options").
-                        if (d.confirm && before != i) SettingsConfirm.Changed(this, before);
+                        // (a staged row asks once it is applied: OptionsCatalog.ApplyStaged)
+                        if (d.confirm && before != i && !(d.staged && Settings.Staging)) SettingsConfirm.Changed(this, before);
                     };
                     Field = choice;
                     break;

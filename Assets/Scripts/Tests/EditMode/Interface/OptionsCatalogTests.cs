@@ -81,8 +81,9 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
-        public void GameRulesStayHiddenUntilConfirmationAndCancelChangesNothing()
+        public void GameRulesShowWithoutAGate()
         {
+            // (2026-11-20: the "Expand" button and its consent prompt are gone; the rows show under their groups at once)
             bool before = GameRulesAccess.Confirmed;
             bool debug = Cheats.Unlocked, stacking = Settings.KaamoStacking;
             try
@@ -90,21 +91,12 @@ namespace GoF2Remake.Tests
                 GameRulesAccess.Reset();
                 var view = new OptionsView(() => { }, false);
                 for (int i = 0; i < 5; i++) view.StepTab(1);
-                Assert.IsFalse(view.RulesPromptOpen, "the profile selector opens without prompting");
+                Assert.IsFalse(view.RulesPromptOpen);
                 Assert.IsTrue(view.NavItems().Any(v => view.RowOf(v)?.def.id == "gameplayExperience"));
                 Assert.IsTrue(view.NavItems().Any(v => view.RowOf(v)?.def.id == "difficulty"));
-                Assert.IsFalse(view.NavItems().Any(v => view.RowOf(v)?.def.section == OptionSection.GameRules
-                    && view.RowOf(v)?.def.id != "gameplayExperience" && view.RowOf(v)?.def.id != "difficulty"));
-                var gate = view.NavItems().OfType<UnityEngine.UIElements.Button>().Single(b => b.ClassListContains("options-section-gate"));
-                view.Activate(gate);
-                Assert.IsTrue(view.RulesPromptOpen);
-                Assert.AreEqual(2, view.NavItems().Count);
-                view.Activate(view.FooterButtons[0]);
-                Assert.IsFalse(GameRulesAccess.Confirmed);
-                view.Activate(gate);
-                view.Activate(view.FooterButtons[1]);
-                Assert.IsTrue(GameRulesAccess.Confirmed);
-                Assert.IsTrue(view.NavItems().Any(v => view.RowOf(v)?.def.id == "pirateEvents"));
+                Assert.IsTrue(view.NavItems().Any(v => view.RowOf(v)?.def.id == "pirateEvents"), "a rule row, without opening anything");
+                Assert.IsFalse(view.NavItems().OfType<UnityEngine.UIElements.Button>().Any(b => b.ClassListContains("options-section-gate")));
+                Assert.IsFalse(GameRulesAccess.Confirmed, "the Debug pages' own consent is not given by looking");
                 Assert.AreEqual(debug, Cheats.Unlocked);
                 Assert.AreEqual(stacking, Settings.KaamoStacking);
             }
@@ -194,7 +186,8 @@ namespace GoF2Remake.Tests
             Assert.AreEqual("resetBindings", rows[0].id, "Reset key bindings first");
             var bindings = rows.Where(o => o.kind == OptionKind.Binding).ToList();
             Assert.AreEqual(GameControls.Rows.Count, bindings.Count);
-            for (int i = 0; i < bindings.Count; i++) Assert.AreSame(GameControls.Rows[i], bindings[i].control);
+            // (each control once; their order is the tab's categories', SettingsTests.OtherTabsHaveCategories)
+            CollectionAssert.AreEquivalent(GameControls.Rows.ToList(), bindings.Select(o => o.control).ToList());
         }
 
         [Test]
@@ -442,11 +435,12 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
-        public void AndroidStartsOnTheLowPresetAt60FpsWithOriginalCollision()
+        public void AndroidFallbackUsesLowGraphicsAt60FpsWithOriginalCollision()
         {
             try
             {
                 Settings.ResetToDefaults();
+                Settings.Reset(Settings.GameplayKeys); // test fresh preference fallbacks, without an explicit Remake selection
                 Settings.OverrideAndroidDefaults(true);
                 Assert.AreEqual(Settings.PresetLow, OptionsCatalog.CurrentPreset(), "every preset option at Low");
                 Assert.AreEqual(FrameRate.Fps60, Settings.FrameRate);
@@ -500,7 +494,7 @@ namespace GoF2Remake.Tests
             var row = OptionsCatalog.All().Single(o => o.id == "originalUi");
             Assert.AreEqual(OptionPage.Cosmetics, row.page);
             Assert.AreEqual(OptionSection.Interface, row.section);
-            StringAssert.Contains("Select it manually", row.description());
+            StringAssert.Contains("manual Custom option", row.description());
             StringAssert.Contains("Cosmetic Experience", row.description());
             row.setIndex(1);
             Settings.Reset(Settings.GraphicsKeys);
@@ -510,7 +504,7 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
-        public void OriginalExperienceStillDefaultsToRemakeUiAndPreservesManualStyle()
+        public void NamedCosmeticPresetsSelectRemakeUiAndManualStyleSelectsCustom()
         {
             Settings.Reset(new[] { "originalUi" });
             Settings.ApplyExperience(Settings.ExperienceOriginal);
@@ -518,13 +512,16 @@ namespace GoF2Remake.Tests
             Settings.ApplyScopedExperience(false, 0);
             Assert.IsFalse(Settings.OriginalUi, "Original gameplay never forces the old interface");
             Settings.OriginalUi = true;
+            Assert.AreEqual(2, Settings.CurrentScopedExperience(true));
+            Settings.ApplyScopedExperience(false, 1);
+            Assert.IsTrue(Settings.OriginalUi, "Gameplay leaves cosmetic choices alone");
             Settings.ApplyExperience(Settings.ExperienceOriginal);
             Settings.ApplyScopedExperience(false, 1);
-            Assert.IsTrue(Settings.OriginalUi, "the old interface remains an explicit independent preference");
+            Assert.IsFalse(Settings.OriginalUi, "named Cosmetics reset every cosmetic parameter; legacy UI is Custom-only");
         }
 
         [TestCase(false)] [TestCase(true)]
-        public void GameplayCustomAndExpandUseTheSameConfirmation(bool alreadyCustom)
+        public void GameplayCustomSelectsWithoutAPrompt(bool alreadyCustom)
         {
             bool confirmed = GameRulesAccess.Confirmed;
             try
@@ -538,17 +535,10 @@ namespace GoF2Remake.Tests
                 for (int i = 0; i < 5; i++) view.StepTab(1);
                 var field = view.NavItems().Single(e => view.RowOf(e)?.def.id == "gameplayExperience");
                 var choice = (ChoiceRow)field;
+                Assert.IsTrue(view.NavItems().Any(e => view.RowOf(e)?.def.id == "kaamoVip"), "the rules show before Custom is picked");
                 choice.Step(1);
-                Assert.IsTrue(view.RulesPromptOpen, "also when Custom was already displayed");
-                Assert.IsFalse(GameRulesAccess.Confirmed);
-                view.Activate(view.FooterButtons[0]);
-                Assert.IsFalse(GameRulesAccess.Confirmed);
-                Assert.AreEqual(vip, Settings.KaamoVipMode);
-                Assert.AreEqual(pirates, Settings.PirateEvents);
-                choice.Step(1);
-                view.Activate(view.FooterButtons[1]);
-                Assert.IsTrue(GameRulesAccess.Confirmed);
-                Assert.AreEqual(2, view.RowOf(field).def.getIndex(), "accepted Custom/Expand is explicitly Custom");
+                Assert.IsFalse(view.RulesPromptOpen, "no consent prompt any more");
+                Assert.AreEqual(2, view.RowOf(field).def.getIndex(), "Custom is explicitly Custom");
                 Assert.AreEqual(2, ((ChoiceRow)field).Index, "the visible selection is Custom");
                 Assert.IsTrue(view.NavItems().Any(e => view.RowOf(e)?.def.id == "kaamoVip"));
                 Assert.AreEqual(vip, Settings.KaamoVipMode);
@@ -607,6 +597,126 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(1, Settings.CurrentScopedExperience(cosmetics), "explicit selection activates Remake");
             Settings.ApplyScopedExperience(cosmetics, 2);
             Assert.AreEqual(2, Settings.CurrentScopedExperience(cosmetics), "explicit Custom preserves values but changes mode");
+        }
+
+        [TestCase("Calibri - Regular|Klavika - Regular|Klavika - Medium", "system:Klavika - Medium|system:Klavika - Regular|system:Calibri - Regular")]
+        [TestCase("Calibri - Regular", "system:Calibri - Regular")]
+        [TestCase("Klavika - Normal|Calibri - Regular", "system:Klavika - Normal|system:Calibri - Regular")]
+        [TestCase("klavika - medium|CALIBRI - Regular", "system:klavika - medium|system:CALIBRI - Regular")]
+        [TestCase("Arial - Regular|Klavika Condensed - Regular|Calibri - Bold", "")]
+        public void AutomaticFontCandidatesFollowFamilyAndBodyWeightPriority(string installed, string expected)
+        {
+            var method = typeof(GoF2Remake.UI.UiFont).GetMethod("DefaultSystemKeys",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            var keys = (IEnumerable<string>)method.Invoke(null, new object[] { installed.Split('|') });
+            Assert.AreEqual(expected, string.Join("|", keys));
+        }
+
+        [Test]
+        public void AutomaticFontFallsBackToThemeWhenPreferredFamiliesAreAbsent()
+        {
+            var flags = System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic;
+            var type = typeof(GoF2Remake.UI.UiFont);
+            var names = type.GetField("systemNames", flags);
+            var font = type.GetField("automaticFont", flags);
+            var family = type.GetField("automaticFamily", flags);
+            object oldNames = names.GetValue(null), oldFont = font.GetValue(null), oldFamily = family.GetValue(null);
+            try
+            {
+                names.SetValue(null, new[] { "Arial - Regular" });
+                font.SetValue(null, null);
+                family.SetValue(null, null);
+                Settings.UiFont = "";
+                Assert.IsNull(GoF2Remake.UI.UiFont.Current, "null inherits bundled Inter");
+                Assert.AreEqual("Inter", GoF2Remake.UI.UiFont.DefaultName);
+                Assert.IsNull(GoF2Remake.UI.UiFont.Problem);
+                Assert.AreEqual("", Settings.UiFont, "automatic resolution does not persist a device-specific font");
+            }
+            finally
+            {
+                names.SetValue(null, oldNames);
+                font.SetValue(null, oldFont);
+                family.SetValue(null, oldFamily);
+            }
+        }
+
+        [Test]
+        public void AutomaticFontLabelMatchesItsResolvedFamilyAndKeepsTheAutomaticChoice()
+        {
+            Settings.UiFont = "";
+            var current = GoF2Remake.UI.UiFont.Current;
+            string family = GoF2Remake.UI.UiFont.DefaultName;
+            if (current != null) Assert.AreEqual(family, current.faceInfo.familyName);
+            else Assert.AreEqual("Inter", family);
+            var row = OptionsCatalog.All().Single(d => d.id == "uiFont");
+            Assert.AreEqual(family + " (default)", row.choices()[0]);
+            Assert.AreEqual(0, row.getIndex());
+            Assert.AreEqual("", Settings.UiFont);
+            Assert.AreSame(current, GoF2Remake.UI.UiFont.Current, "reuse the resolved asset");
+        }
+
+        [Test]
+        public void ExplicitMissingFontDoesNotSilentlySelectAnAutomaticSystemFont()
+        {
+            Settings.UiFont = "file:missing-hotfix-font.ttf";
+            Assert.IsNull(GoF2Remake.UI.UiFont.Current);
+            Assert.IsNotNull(GoF2Remake.UI.UiFont.Problem);
+            Assert.AreEqual("file:missing-hotfix-font.ttf", Settings.UiFont);
+        }
+
+        [Test]
+        public void KaamoUiDefaultsOnAndResetsOnlyWithCosmetics()
+        {
+            Settings.Reset(new[] { "kaamoSpecialUiFeatures" });
+            var row = OptionsCatalog.All().Single(o => o.id == "kaamoSpecialUiFeatures");
+            Assert.AreEqual("Kaamo special UI features", row.label());
+            Assert.AreEqual(OptionPage.Cosmetics, row.page);
+            Assert.AreEqual(OptionSection.Interface, row.section);
+            Assert.IsTrue(row.getBool());
+            row.setBool(false);
+            Settings.Reset(Settings.GameplayKeys);
+            Assert.IsFalse(row.getBool());
+            Settings.Reset(Settings.CosmeticsKeys);
+            Assert.IsTrue(row.getBool());
+            Assert.AreEqual(OptionSection.GameRules, OptionsCatalog.All().Single(o => o.id == "kaamoVip").section);
+        }
+
+        [Test]
+        public void GameplayPresetsOptIntoVipOnlyForRemake()
+        {
+            var gameplay = OptionsCatalog.All().Single(o => o.id == "gameplayExperience");
+            gameplay.setIndex(1);
+            Assert.AreEqual(Settings.KaamoVipCard, Settings.KaamoVipMode);
+            bool pirates = Settings.PirateEvents;
+            gameplay.setIndex(2);
+            Assert.AreEqual(Settings.KaamoVipCard, Settings.KaamoVipMode, "Custom preserves VIP too");
+            Assert.AreEqual(pirates, Settings.PirateEvents, "Custom preserves other rules");
+            gameplay.setIndex(0);
+            Assert.AreEqual(Settings.KaamoVipOff, Settings.KaamoVipMode);
+        }
+
+        [Test]
+        public void CosmeticPresetsControlKaamoToolsAndStyleWithoutChangingVip()
+        {
+            Settings.KaamoVipMode = Settings.KaamoVipAlways;
+            Settings.OriginalUi = true;
+            Settings.ApplyScopedExperience(true, 0);
+            Assert.IsFalse(Settings.KaamoSpecialUiFeatures);
+            Assert.AreEqual(0, Settings.CurrentScopedExperience(true));
+            Assert.IsFalse(Settings.OriginalUi, "legacy style requires a manual Custom override");
+            Assert.AreEqual(Settings.KaamoVipAlways, Settings.KaamoVipMode, "cosmetics cannot change paid benefits");
+            Settings.KaamoSpecialUiFeatures = true;
+            Assert.AreEqual(2, Settings.CurrentScopedExperience(true), "an override is Custom");
+            Settings.ApplyScopedExperience(true, 2);
+            Assert.IsTrue(Settings.KaamoSpecialUiFeatures, "Custom preserves the override");
+            Settings.ApplyScopedExperience(true, 1);
+            Assert.IsTrue(Settings.KaamoSpecialUiFeatures);
+            Assert.AreEqual(1, Settings.CurrentScopedExperience(true));
+            Settings.KaamoSpecialUiFeatures = false;
+            Assert.AreEqual(2, Settings.CurrentScopedExperience(true));
+            Settings.ApplyScopedExperience(false, 1);
+            Assert.IsFalse(Settings.KaamoSpecialUiFeatures, "Gameplay preset cannot change cosmetic tools");
+            Assert.IsFalse(Settings.OriginalUi);
         }
 
     }
