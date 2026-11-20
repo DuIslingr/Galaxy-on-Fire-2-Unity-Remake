@@ -4,6 +4,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## UI and platforms
 
+- **Game Rules access** (issue #311): Debug tools is the first custom control under Options > Gameplay > Game Rules > Expand.
+  The preset remains visible; expanding the custom controls and legacy Debug entry points require the same app-session confirmation. Opening them does not
+  enable cheats or change rules. Existing Debug pages remain available through their normal enable toggle.
+
 - **Debug sizing** (remake): the main menu's Debug panel is 88 % of the screen high with the mission list and the cheats
   (a ScrollView following the focus) filling it; the pause menu's Debug page scrolls its rows (`.debug-scroll`, as tall
   as them, shrunk to the panel) with the selection kept in view; the station's Debug page is as tall as its 570 px list,
@@ -102,7 +106,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   38, 250 ms apart from the turret mounts, one salvo per 4 s while held) at the locked ship when hostile, else the nearest
   hostile ship within 2 km of the hull; never a neutral or friendly one; the item's damage, x3 on hit boxes. Hulls over 150 m
   (sized without the additive glow layers) get a chase camera behind the stern (its height x `Hull.cameraHeight`: the
-  carrier 0.4, just above its deck), the model centred on the pivot and a longer
+  carrier 0.4, just above its deck; a mod ship's own `"camera"` instead, moved with the centred model:
+  `PlayerHull.BigHullOffsets`), the model centred on the pivot and a longer
   far plane, and are shrunk on the hangar turntable. The hulls the player can't normally own (13 / 14 / 15, the capital
   ships; never an ownable or mod ship) fly with weight (`PlayerHull.ApplyMass`: `ShipController.mass` = log(radius / 150
   m) / log(2500 / 150), the flown model's size: race freighters ~0.2, the Terran battleship 0.72, the carrier 0.91):

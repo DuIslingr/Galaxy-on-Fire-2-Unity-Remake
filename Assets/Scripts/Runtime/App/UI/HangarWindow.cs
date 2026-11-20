@@ -258,6 +258,8 @@ namespace GoF2Remake.UI
             itemRow.Add(itemRight);
             rowActions = new VisualElement { pickingMode = PickingMode.Ignore };
             rowActions.AddToClassList("row-actions");
+            rowActions.RegisterCallback<GeometryChangedEvent>(_ => FitRowActionMinimum());
+            actionButton.RegisterCallback<GeometryChangedEvent>(_ => FitRowActionMinimum());
             // Modified (a player's sketch 2026-11-09): a mounted item's or a hold item's actions inside its row, at its right
             // end: DEMOUNT over the two arrows that move it a slot up / down, or the hold's amount over MOUNT (PlaceRowActions).
             rowMove = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -506,7 +508,7 @@ namespace GoF2Remake.UI
             if (!IsOpen) return;
             AutoEquip();
             if (HasPending) Revert();
-            if (searchFocused) { searchField.Blur(); SetSearchFocus(false); }
+            EndSearchEntry();
             IsOpen = false;
             ClearBlueprintShopHighlight();
             editing = -1;
@@ -545,7 +547,8 @@ namespace GoF2Remake.UI
 
         public void SetTab(Tab t)
         {
-            if (t == Tab.Ships && !VipTools) return;   // the VIP Card's tab, only with its perks at the club
+            EndSearchEntry();
+            if (t == Tab.Ships && !VipTools) return;   // the extra tab, only with the free UI tools at the club
             if (tab == t && rows.Count > 0 && editing < 0) return;
             if (tab == Tab.Shop && t != Tab.Shop) ClearBlueprintShopHighlight();
             // Confirm freight for the entire pending shipment before leaving the recipe.

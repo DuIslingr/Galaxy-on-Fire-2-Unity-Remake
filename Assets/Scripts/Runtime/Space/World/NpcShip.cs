@@ -225,11 +225,37 @@ namespace GoF2Remake.World
         /// <summary>Remake co-op: a story level's ship of the leader's (CampaignLevel): shown to the crew, never handed over
         /// (it goes when the leader leaves the orbit), never dropped with the orbit's authority.</summary>
         public bool StoryShip { get; set; }
+        /// <summary>Remake co-op: the fires a story level lit on this ship (StoryBurn: bits of BurnRecords), sent with its copy
+        /// (NetProxy's role flags) so the crew's copies burn too (a Discord report 2026-11-17: Errkt's freighter didn't burn
+        /// for the second pilot).</summary>
+        public int StoryBurns { get; private set; }
+        /// <summary>The WreckBurn records StoryBurns' bits stand for (bit i = BurnRecords[i]).</summary>
+        public static readonly int[] BurnRecords = { WreckBurn.VosskCargo, WreckBurn.VosskFreighterSmoke, WreckBurn.Cargo, WreckBurn.Battleship, WreckBurn.DeepScience };
+        readonly Dictionary<int, WreckBurn> storyBurns = new Dictionary<int, WreckBurn>();
+
+        /// <summary>A story level's fire on this ship (WreckBurn record 'record'), burning; the same one again if lit already.</summary>
+        public WreckBurn StoryBurn(int record)
+        {
+            if (!storyBurns.TryGetValue(record, out var b)) storyBurns[record] = b = new WreckBurn(transform, record);
+            b.SetEmitting(true);
+            int i = System.Array.IndexOf(BurnRecords, record);
+            if (i >= 0) StoryBurns |= 1 << i;
+            return b;
+        }
+
+        /// <summary>A story level's fire on this ship goes out (the burning flames die away).</summary>
+        public void StopStoryBurn(int record)
+        {
+            if (storyBurns.TryGetValue(record, out var b)) b.SetEmitting(false);
+            int i = System.Array.IndexOf(BurnRecords, record);
+            if (i >= 0) StoryBurns &= ~(1 << i);
+        }
         /// <summary>Multiplayer: this player's own stand-in, never shown to the others (a follower's copy of the mission's
         /// mining plant, FreelanceOrbit).</summary>
         public bool LocalOnly { get; set; }
         Route route;
         Gun gun;
+        System.Action<Target, int, int, Vector3> gunBlast;   // WireGun's echo handler (HitByBlast with its gun), unhooked with the gun
         GunRig rig;
         /// <summary>Remake: this ship's (or turret's) gun visuals (ValkyrieLevels: the battlestation turrets' twin muzzles).</summary>
         public GunRig Rig => rig;
@@ -506,7 +532,9 @@ namespace GoF2Remake.World
             // red (a player's report: only the Most Wanted criminals were).
             Target.plateRed = spec.wantedIndex >= 0 || spec.nameText == 1611 || spec.nameText == 1663;
             Target.radius = (spec.hitRadius > 0f ? spec.hitRadius : NpcTables.HitRadiusUnits) * M * spec.HullScale * StructureScale;
-            Target.hitpoints = new Hitpoints(spec.hitpoints > 0 ? spec.hitpoints : NpcTables.Hull(kind, spec.ship));
+            Target.hitpoints = new Hitpoints(spec.hitpoints > 0 ? spec.hitpoints : NpcTables.Hull(kind, spec.ship), Mathf.Max(0, spec.shield));
+            Target.hitpoints.energyResistance = Mathf.Clamp01(spec.energyResistance);
+            Target.hitpoints.ballisticResistance = Mathf.Clamp01(spec.ballisticResistance);
             Target.hitpoints.SetEmp(spec.empPoints > 0 ? spec.empPoints : NpcTables.Emp(kind), NpcTables.EmpRecoveryMs(kind));   // also with a hull override
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
             Target.SlowBy = (ms, factor, noTurn) => { if (Target.Alive && !Target.phased) slow.Apply(ms, factor, noTurn); };
@@ -759,6 +787,7 @@ namespace GoF2Remake.World
             if (Current == State.Dying) { UpdateSmoke(); UpdateDying(dtMs); return; }
             UpdateRelations();
             Hp.Update(dtMs);
+            Hp.RegenerateShield(dtMs, Spec.shieldRechargeMs);
             slow.Tick(dtMs);
             // PlayerFighter::handleCloaking: race 10 only (Harval's Scimitar cloaks as a Specter, at 158); scripted ships too.
             if (Race == Standing.Specter) cloak?.Update(dtMs, !Asleep && !inactive, panic, Hp.empDisabled);

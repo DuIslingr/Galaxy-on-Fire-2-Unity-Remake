@@ -4,7 +4,7 @@
 // the cockpit view (2) can't be reached in this build. The new mode's name shows for 4000 ms (Hud::draw: 217 Standard,
 // 218 Turret, 220 Free look). Free look (LevelScript::lookBehind + setRotationAroundTarget / setFreeLookMode): the camera
 // orbits the ship (MGame::freeCamTouch*: -0.005 rad per px, the pitch offset clamped to +-200 px, a fling that decays x0.9
-// per frame; zoom 1500..20000 units, wheel / key steps x -50) while the ship flies on under the player's controls; mining,
+// per frame; zoom 1500..MaxOrbitDistance units, wheel / key steps x -50) while the ship flies on under the player's controls; mining,
 // object docking, cutscenes, the jump scenes and death go back to the standard view.
 // Input (remake): V / controller D-pad up cycles; the orbit follows a touch drag off the controls (FlightHud forwards it
 // instead of the dodge swipe), the mouse (moved with the mouse-steering cursor captured, else with the middle button
@@ -41,7 +41,14 @@ namespace GoF2Remake.Flight
 {
     public class FreeLookCamera : MonoBehaviour
     {
-        const float M = 0.05f, FrameMs = OriginalFrame.Ms, MinDistance = 1500f, MaxDistance = 20000f;
+        const float M = 0.05f, FrameMs = OriginalFrame.Ms, MinDistance = 1500f;
+        /// <summary>Modder hook: maximum free-look orbit distance in game units (the original's 20,000). A mod may set this
+        /// before or during gameplay. Options > Gameplay "Remake free look" (Settings.RemakeFreeLook) zooms out to
+        /// FarOrbitDistance (#336); a mod ship's own default distance (ships.json camera.orbitDistance) is always reachable.</summary>
+        public static float MaxOrbitDistance = 20000f;
+        public const float FarOrbitDistance = 70000f;
+        float shipDefaultDistance;   // SetDefaultOrbitDistance's (game units), 0 = none
+        float OrbitMax => Mathf.Max(MinDistance, MaxOrbitDistance, shipDefaultDistance, Settings.RemakeFreeLook ? FarOrbitDistance : 0f);
         public enum Mode { Standard = 0, Turret = 1, FirstPerson = 2, FreeLook = 3 }
         const string CockpitPref = "flight_camera_cockpit";
 
@@ -84,11 +91,20 @@ namespace GoF2Remake.Flight
         bool leftDrag;   // Modified: docked at an object, the left button held from off the HUD orbits the camera
 
         /// <summary>'turret' is unused since the turrets are looked up on the player (PlayerTurret.On); kept for the callers.</summary>
-        public static FreeLookCamera Attach(GameObject player, ChaseCamera chase, PlayerTurret turret = null)
+        public static FreeLookCamera Attach(GameObject player, ChaseCamera chase, PlayerTurret turret = null, float defaultOrbitDistance = 3800f)
         {
             var f = player.AddComponent<FreeLookCamera>();
             f.chase = chase;
+            f.SetDefaultOrbitDistance(defaultOrbitDistance);
             return f;
+        }
+
+        /// <summary>Sets the ship's default free-look orbit radius (game units), clamped to the existing zoom range.</summary>
+        public void SetDefaultOrbitDistance(float gameUnits)
+        {
+            shipDefaultDistance = Mathf.Clamp(gameUnits, MinDistance, FarOrbitDistance);
+            distance = Mathf.Clamp(gameUnits, MinDistance, OrbitMax);
+            if (Current == Mode.FreeLook) Place();
         }
 
         /// <summary>The ship's manual turrets (and plasma collectors), in mount order: the ones with a turret view. Looked up
@@ -177,13 +193,39 @@ namespace GoF2Remake.Flight
         const float CockpitHoldSeconds = 0.5f;
         float cameraDownAt = -1f;
         bool cameraHoldUsed;
+        bool cameraIncludesTurrets;
+
+        /// <summary>CLAUDE.md "Key bindings": keyboard/controller camera cycling never enters manual turret control.
+        /// Touch keeps its combined cycle because its existing camera button is the only view control.</summary>
+        public void CycleCameraView()
+        {
+            if (Blocked != null && Blocked()) return;
+            Set(NextMode(Current, Base, false, Settings.CockpitInCameraCycle && !VrFlags.Enabled));
+            RememberBase();
+        }
+
+        /// <summary>Contextual turret action: cycle manual mounts, or toggle fire when only automatic turrets are installed.</summary>
+        public void CycleTurretView()
+        {
+            if (Blocked != null && Blocked() && (TurretAllowed == null || !TurretAllowed())) return;
+            if (!TurretMode)
+            {
+                var automatic = PlayerTurret.On(gameObject).Find(t => t.IsAuto);
+                if (automatic != null) automatic.SetAuto(!automatic.AutoEnabled);
+                return;
+            }
+            if (Current != Mode.Turret) Set(Mode.Turret);
+            else if (turretIndex + 1 < Manual().Count) EnterTurret(turretIndex + 1, true);
+            else Set(Base);
+        }
 
         /// <summary>The camera button went down (the key, the controller, the touch button): a tap cycles on release, a hold
         /// switches to or from the cockpit view (Update).</summary>
-        public void CameraDown()
+        public void CameraDown(bool includeTurrets = true)
         {
             cameraDownAt = Time.unscaledTime;
             cameraHoldUsed = false;
+            cameraIncludesTurrets = includeTurrets;
         }
 
         /// <summary>The camera button came up: a tap's cycle ('cycle' false: only let go, e.g. while mining).</summary>
@@ -191,7 +233,7 @@ namespace GoF2Remake.Flight
         {
             bool tap = cameraDownAt >= 0f && !cameraHoldUsed;
             cameraDownAt = -1f;
-            if (tap && cycle) Cycle();
+            if (tap && cycle) { if (cameraIncludesTurrets) Cycle(); else CycleCameraView(); }
         }
 
         /// <summary>The chase view <-> the cockpit view (the "Cockpit view" binding, a held camera button); from a turret view
@@ -312,7 +354,7 @@ namespace GoF2Remake.Flight
             float pitch = Mathf.Asin(Mathf.Clamp(-u.y, -1f, 1f)), yaw = Mathf.Atan2(u.x, u.z);
             x = yaw / 0.005f;
             y = Mathf.Clamp(-pitch / 0.005f, -200f, 200f);
-            d = Mathf.Clamp(len / M, MinDistance, MaxDistance);
+            d = Mathf.Clamp(len / M, MinDistance, OrbitMax);
             return true;
         }
 
@@ -324,7 +366,7 @@ namespace GoF2Remake.Flight
         void EnterFreeLook()
         {
             px = 0f; py = 0f; fling = Vector2.zero; wheel = 0f;
-            distance = Mathf.Clamp(distance, MinDistance, MaxDistance);
+            distance = Mathf.Clamp(distance, MinDistance, OrbitMax);
             es2Look = chase != null && chase.Es2Mode && !DockingHoldsCamera && (DockedView == null || !DockedView());
             if (es2Look)
             {
@@ -424,7 +466,7 @@ namespace GoF2Remake.Flight
             // Not under a menu either (Navigation.PressesBlocked): in a multiplayer session the game doesn't pause, and the
             // pause / autopilot / secondary weapon menus' D-pad up cycled the camera (Discord report, 2026-10-17).
             // A tap cycles on release, a hold switches the cockpit view (CameraDown / CameraUp, also the touch button's).
-            if (!halted && !Navigation.PressesBlocked && cycleAction.WasPressedThisFrame()) CameraDown();
+            if (!halted && !Navigation.PressesBlocked && cycleAction.WasPressedThisFrame()) CameraDown(false);
             if (cycleAction.WasReleasedThisFrame() && cameraDownAt >= 0f) CameraUp(!halted && !Navigation.PressesBlocked);
             if (cameraDownAt >= 0f && !cameraHoldUsed && Time.unscaledTime - cameraDownAt >= CockpitHoldSeconds)
             {
@@ -432,6 +474,7 @@ namespace GoF2Remake.Flight
                 if (!halted && !Navigation.PressesBlocked) ToggleCockpit();
             }
             if (!halted && !Navigation.PressesBlocked && GameControls.CockpitView.WasPressedThisFrame()) ToggleCockpit();
+            if (!halted && !Navigation.PressesBlocked && GameControls.TurretView.WasPressedThisFrame()) CycleTurretView();
             // Remake: free look while a key is held (GameControls.FreeLookHold, EVERSPACE 2's Alt in the free-flight layout):
             // from the standard view, back to it on release.
             if (!halted && !Navigation.InputHalted)
@@ -528,7 +571,7 @@ namespace GoF2Remake.Flight
             }
             px += delta.x;
             py = Mathf.Clamp(py + delta.y, -200f, 200f);
-            distance = Mathf.Clamp(distance, MinDistance, MaxDistance);
+            distance = Mathf.Clamp(distance, MinDistance, OrbitMax);
             Place();
         }
 

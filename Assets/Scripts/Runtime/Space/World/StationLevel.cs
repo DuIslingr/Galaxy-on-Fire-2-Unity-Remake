@@ -124,6 +124,9 @@ namespace GoF2Remake.World
         readonly EaseInOut[] drift = { new EaseInOut(), new EaseInOut(), new EaseInOut() };
         readonly bool[] driftSign = new bool[3];
         Vector3 hangarCamBase;
+        // Remake: the hangar camera's own pose and lens this frame, before Inspect ship's orbit takes over (null until the
+        // hangar view was shown): the flights shrink at the edge of this view (HangarFlight.View).
+        HangarFlight.View? hangarView;
 
         // Bar camera: intro A -> B (EaseInOutMatrix, t 0.75 -> 1.25), then sway.
         Vector3 barPosA, barPosB;
@@ -312,6 +315,7 @@ namespace GoF2Remake.World
                 }
             }
             BuildHangar();
+            if (orbitDocked && orbit != null && orbit.ExternalDocked) ApplyShipYaw();   // show the station-scene copy at the exterior hardpoint
             BuildBar();
             // Remake: ships now and then flying past outside the bar's windows (not at an evacuated station).
             if (!Evacuated && !orbitDocked) gameObject.AddComponent<BarFlybys>().Setup(this, barRoot, barPosB, barRotB, BarRace == 1, RandomParkedShip,
@@ -342,7 +346,7 @@ namespace GoF2Remake.World
             if (flyIn && lane != null && playerShip != null)
             {
                 var engine = HangarFlight.AddEngine(playerShip.gameObject, true, db, shipIndex, out float volume);
-                playerFlight = HangarFlight.Arrival(playerShip, lane, playerShip.position, playerShip.rotation, engine, volume);
+                playerFlight = HangarFlight.Arrival(playerShip, lane, playerShip.position, playerShip.rotation, engine, volume, hangarView);
                 playerFlightStart = Time.unscaledTime;
             }
         }

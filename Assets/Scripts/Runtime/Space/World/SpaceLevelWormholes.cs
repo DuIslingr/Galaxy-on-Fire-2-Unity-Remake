@@ -67,7 +67,11 @@ namespace GoF2Remake.World
         /// <summary>The Khador Drive's refusal at 42 in the Void (Story.EscapesByWormhole): the way out instead of 525.</summary>
         static string WormholeEscapeHint => Localization.Extra("khadorWormholeEscape",
             "The Khador Drive won't work here. Destroy the freighter, then escape through the wormhole.");
-        bool WormholeNoPull => WormholeKills && Story.Index == 40;
+        bool WormholeNoPull => (WormholeKills && Story.Index == 40) || FollowsLeadersHole;
+        /// <summary>Remake co-op: a follower in a story orbit the leader runs: the wormhole is the leader's (mirrored), and the
+        /// leader's ride takes the crew (CoopTravel). Its own ride ran Story.Advance and rode alone (24: the leader then
+        /// followed the guest's advance inside 24's level), and at 40 it killed: a follower's script event stays 0.</summary>
+        bool FollowsLeadersHole => Campaign != null && Campaign.Follower && !Campaign.LeaderAway;
         /// <summary>MGame::OnUpdate, PlayerEgo::isInWormhole (see the header).</summary>
         void UpdateWormholeRide()
         {
@@ -77,11 +81,14 @@ namespace GoF2Remake.World
                 return;
             }
             if (riding || Collision == null || !Collision.InWormhole || Health == null || Health.Dead) return;
+            if (FollowsLeadersHole) return;   // remake co-op: the leader's ride takes it along
             int index = Story.Index;
             bool active = !Session.FreePlay && Campaign != null && Story.IsLevelMission(Layout.stationIndex);
             if (index == 42)
             {
-                if (Layout.alienOrbit) return;   // the mother ship's explosion: the level script rides out itself
+                // the mother ship's explosion: the level script rides out itself (remake co-op: a follower whose leader has
+                // gone rides out on its own, else the held-open wormhole kept it for good)
+                if (Layout.alienOrbit && !(Campaign != null && Campaign.Follower)) return;
                 RideWormhole();
                 return;
             }
@@ -254,6 +261,7 @@ namespace GoF2Remake.World
             Session.ShipIndex = shipIndex;
             var prefab = AssembledObject.LoadPrefab(PlayerHull.Assembly(db, shipIndex));
             if (prefab == null) { Session.ShipIndex = before; return; }
+            FreeLook?.SetDefaultOrbitDistance(Modding.ModShipView.OrbitDistance(db.Ship(shipIndex)));
             Hangar.SyncBuiltIn(db);   // the new hull's built-in items, the old one's gone
             var root = ctrl.gameObject;
             PlayerHull.RemoveTurrets(this);   // before the old model goes (they ride on it)
@@ -423,7 +431,7 @@ namespace GoF2Remake.World
             turrets.AddRange(PlayerTurret.AttachAll(root, db, Session.ShipIndex, Session.Equipment, chase));
             hardpoints = Modding.ModHardpoints.AttachWeapons(db, Session.ShipIndex, Session.Equipment, ctrl.visualModel);   // a kit ship's weapon models
             // MGame::switchCamera: the camera button's modes (standard / turret / free look).
-            FreeLook = FreeLookCamera.Attach(root, chase, Turret);
+            FreeLook = FreeLookCamera.Attach(root, chase, Turret, Modding.ModShipView.OrbitDistance(db.Ship(Session.ShipIndex)));
             // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).
             if (!Layout.interstellar) GasClouds = GasCloudField.Spawn(db, Layout, ctrl, Turret);
             if (!Layout.interstellar && !Layout.alienOrbit) WreckField.Spawn(db, Layout);   // remake mods: the orbit's wreck field
@@ -735,9 +743,23 @@ namespace GoF2Remake.World
         {
             if (!flyIn) CoopLeaderMoved(Session.StationIndex, true, false);   // remake co-op: the story's move into a station
             // Remake mods: the player's own docking near a mobile station (and not at the orbit's station) docks there.
-            if (flyIn && MobileInRange is MobileStation near && !(Layout.hasStation && StationShown && leftDockRange && InDockRange))
+            if (flyIn && MobileInRange is MobileStation near && !AtFixedStationDockRange)
             {
                 DockMobile(near);
+                return;
+            }
+            if (flyIn && DockingBlocked) { Navigation?.Refuse(); return; }
+            // Class roles choose the docking route. Frigates / cruisers / carriers require a manually authored exterior
+            // attachment and a slotType 8 ship hardpoint; they never fall back to an internal hangar or NPC pad.
+            if (flyIn && ExternalDockClass)
+            {
+                if (TryBeginExternalDocking()) return;
+                Navigation?.Refuse(Localization.Extra("hullNoExternalDock", "This ship or station has no compatible exterior docking point."));
+                return;
+            }
+            if (flyIn && !InternalDockEligible)
+            {
+                Navigation?.Refuse(string.Format(Localization.Extra("hullNoDock", "The {0} doesn't fit in the hangar."), PlayerHull.Label));
                 return;
             }
             // Remake mods: EVERSPACE 2's docking: the ship lands on the dock in this orbit, then the station opens (Es2Dock).
@@ -830,6 +852,11 @@ namespace GoF2Remake.World
         /// else its hangar (DockAt).</summary>
         void DockMobile(MobileStation mobile)
         {
+            if (!InternalDockEligible)
+            {
+                Navigation?.Refuse(Localization.Extra("hullNoExternalDock", "This ship needs a compatible exterior docking point; this mobile station has no external dock."));
+                return;
+            }
             if (MobileDock(mobile) is not Es2Dock d) { DockAt(mobile); return; }
             if (Es2Busy || DockedInOrbit || Leaving) return;
             if (DockingBlocked) { Navigation?.Refuse(); return; }
@@ -846,7 +873,7 @@ namespace GoF2Remake.World
         void DockAt(MobileStation mobile)
         {
             if (DockingBlocked) { Navigation?.Refuse(); return; }
-            if (!PlayerHull.PlayerShip)
+            if (!InternalDockEligible)
             {
                 Navigation?.Refuse(string.Format(Localization.Extra("hullNoDock", "The {0} doesn't fit in the hangar."), PlayerHull.Label));
                 return;

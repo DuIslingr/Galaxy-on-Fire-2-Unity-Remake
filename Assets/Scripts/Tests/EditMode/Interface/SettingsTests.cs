@@ -121,6 +121,7 @@ namespace GoF2Remake.Tests
         {
             AllDefaults();
             Assert.IsTrue(Settings.AutoJumpgate, "on by default");
+            Assert.IsFalse(Settings.KaamoKeepsEquipment, "stored equipment is opt-in");
             Settings.AutoJumpgate = false;
             Assert.IsFalse(Settings.AutoJumpgate);
             CollectionAssert.Contains(Settings.GameplayKeys, "autoJumpgate");
@@ -332,8 +333,8 @@ namespace GoF2Remake.Tests
             Settings.HintScalePercent = 60;
             Settings.ChallengeComboSounds = false;
             Settings.MedalSound = Settings.MedalSoundOriginal;
-            Settings.Reset(Settings.GameplayKeys);
-            Assert.AreEqual(100, Settings.HintScalePercent, "Gameplay's Default settings");
+            Settings.Reset(Settings.CosmeticsKeys);
+            Assert.AreEqual(100, Settings.HintScalePercent, "Cosmetics' Default settings");
             Settings.Reset(Settings.SoundKeys);
             Assert.IsTrue(Settings.ChallengeComboSounds, "Sound's Default settings");
             Assert.AreEqual(Settings.MedalSoundChime, Settings.MedalSound);
@@ -522,7 +523,7 @@ namespace GoF2Remake.Tests
         [Test]
         public void TheResetGroupsDontOverlap()
         {
-            var groups = new[] { Settings.SoundKeys, Settings.GraphicsKeys, Settings.ControlsKeys, Settings.GameplayKeys, Settings.LanguageKeys };
+            var groups = new[] { Settings.SoundKeys, Settings.GraphicsKeys, Settings.ControlsKeys, Settings.GameplayKeys, Settings.CosmeticsKeys, Settings.LanguageKeys };
             var all = groups.SelectMany(g => g).ToList();
             Assert.AreEqual(all.Count, all.Distinct().Count(), "a key in two tabs: " + string.Join(", ", all.GroupBy(k => k).Where(g => g.Count() > 1).Select(g => g.Key)));
             CollectionAssert.DoesNotContain(all, "language", "the text language isn't reset");
@@ -576,5 +577,46 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(row.IsDefault());
             Assert.AreEqual(70f, Settings.FieldOfView, 1e-4f);
         }
+        [Test]
+        public void CameraShakeDefaultsToTheOriginalsAndTheRemakeLooksSoftenIt()
+        {
+            AllDefaults();
+            Assert.AreEqual(1f, Settings.CameraShake, 1e-6f, "the ported shakes at full strength (2026-11-19)");
+            Settings.CameraShake = 0.75f;
+            DataUiTestKit.ClearSettingsCache();
+            Assert.AreEqual(0.75f, Settings.CameraShake, 1e-6f, "existing choices are kept");
+            Settings.Reset(Settings.GraphicsKeys);
+            Assert.AreEqual(1f, Settings.CameraShake, 1e-6f, "Graphics reset: the default");
+            Settings.ApplyScopedExperience(true, 1);
+            Assert.AreEqual(0.3f, Settings.CameraShake, 1e-6f, "Cosmetic Experience Remake: #342's 30 %");
+            Settings.ApplyScopedExperience(true, 0);
+            Assert.AreEqual(1f, Settings.CameraShake, 1e-6f, "Cosmetic Experience Original");
+        }
+
+        [Test]
+        public void EveryAdditionStartsOffAndTheOriginalPresetsTurnItOff()
+        {
+            AllDefaults();
+            Assert.IsFalse(Settings.RebuiltPlanets);
+            Assert.IsFalse(Settings.RemasteredEffects);
+            Assert.IsFalse(Settings.TurretLeadAim);
+            Assert.IsFalse(Settings.RemakeFreeLook);
+            Assert.IsFalse(Settings.BlueprintAutocomplete);
+            Assert.IsFalse(Settings.HostileAutopilotFastForward);
+            Assert.AreEqual(Settings.ExperienceOriginal, Settings.CurrentExperience(), "the defaults are the Original experience");
+
+            Settings.ApplyExperience(Settings.ExperienceRemake);
+            Assert.IsTrue(Settings.RebuiltPlanets && Settings.RemasteredEffects && Settings.TurretLeadAim && Settings.RemakeFreeLook
+                          && Settings.BlueprintAutocomplete && Settings.HostileAutopilotFastForward, "Remake turns every addition on");
+            Settings.ApplyScopedExperience(false, 0);
+            Assert.IsFalse(Settings.TurretLeadAim || Settings.RemakeFreeLook || Settings.BlueprintAutocomplete || Settings.HostileAutopilotFastForward,
+                           "Gameplay Experience Original");
+            Assert.IsTrue(Settings.RebuiltPlanets && Settings.RemasteredEffects, "the gameplay preset leaves the looks");
+            Settings.ApplyScopedExperience(true, 0);
+            Assert.IsFalse(Settings.RebuiltPlanets || Settings.RemasteredEffects, "Cosmetic Experience Original: the graphics page's looks too");
+            Assert.AreEqual(0, Settings.CurrentScopedExperience(true));
+            Assert.AreEqual(0, Settings.CurrentScopedExperience(false));
+        }
+
     }
 }

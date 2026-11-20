@@ -263,6 +263,12 @@ namespace GoF2Remake.UI
                 () => Settings.RebuiltPlanets, v => Settings.RebuiltPlanets = v);
             rebuiltPlanets.description = () => X("rebuiltPlanetsHelp", "The planets in orbit, on the star map and in slipstream are lit 3D spheres rebuilt from the original planet images. Off: the original flat images. From the next orbit or star map view.");
             list.Add(rebuiltPlanets);
+            // Remake (#340, behind a switch 2026-11-19): the emergency shield's PC version look and the subtler cloak
+            // (Settings.RemasteredEffects, the shader global _GoF2RemasteredFx).
+            var remasteredFx = Toggle("remasteredEffects", OptionPage.Graphics, () => X("remasteredEffects", "Remastered shield and cloak"),
+                () => Settings.RemasteredEffects, v => Settings.RemasteredEffects = v);
+            remasteredFx.description = () => X("remasteredEffectsHelp", "The emergency system's shield shows the PC version's energy bands and bends the view behind it further; the cloak bends what shows through it half as far, finer at today's resolutions. Off: the original's effects.");
+            list.Add(remasteredFx);
             list.Add(Slider("fov", OptionPage.Graphics, () => X("fov", "Field of view"), 55f, 95f,
                 () => Settings.FieldOfView, v => Settings.FieldOfView = Mathf.Round(v), v => $"{Mathf.RoundToInt(v)}°"));
             list.Add(Slider("cameraShake", OptionPage.Graphics, () => X("cameraShake", "Camera shake"), 0f, 1f,
@@ -343,10 +349,10 @@ namespace GoF2Remake.UI
             }
             // Remake (players' wish): the original game's look for every menu, the remake's screens and features kept
             // (Settings.OriginalUi, GoF2Original.uss).
-            list.Add(Choice("originalUi", OptionPage.Graphics, () => X("uiStyle", "Interface style"), true,
+            list.Add(Choice("originalUi", OptionPage.Gameplay, () => X("uiStyle", "Interface style"), true,
                 () => new[] { X("uiStyleRemake", "Remake"), X("uiStyleOriginal", "Original") },
                 () => Settings.OriginalUi ? 1 : 0, i => Settings.OriginalUi = i == 1,
-                () => X("uiStyleHelp", "Remake: the remake's look. Original: the original game's panels, buttons and colours; the menus keep every new feature.")));
+                () => X("uiStyleHelp", "Remake is the default interface, including with Cosmetic Experience: Original. The Original interface is a legacy option with dated layout and usability. Select it manually if you prefer its appearance; Cosmetic Experience presets do not change Interface style.")));
             list.Add(Choice("uiWidth", OptionPage.Graphics, () => X("uiWidth", "Interface width"), true,
                 () => new[] { "16:9", "21:9", X("uiWidthFull", "Full width") },
                 () => Settings.UiWidth, i => Settings.UiWidth = i,
@@ -355,6 +361,14 @@ namespace GoF2Remake.UI
                 () => System.Array.ConvertAll(UiMarginSteps, m => m < 0f ? X("uiMarginAuto", "Automatic") : m == 0f ? X("off", "Off") : m.ToString("0.#") + " %"),
                 () => Mathf.Max(0, System.Array.IndexOf(UiMarginSteps, Settings.UiMarginPercent)), i => Settings.UiMarginPercent = UiMarginSteps[Mathf.Clamp(i, 0, UiMarginSteps.Length - 1)],
                 () => X("uiMarginHelp", "Moves the interface in from the screen's edges, for TVs that cut them off.")));
+            // Remake (the user's request): the device's safe area (SafeArea.Device) kept clear, on both sides, or not at all.
+            // Phones only (UnityEngine.Device: the Device Simulator too); a desktop's safe area is the whole screen.
+            var screenCutout = Choice("screenCutout", OptionPage.Graphics, () => X("screenCutout", "Camera cutout"), true,
+                () => new[] { X("screenCutoutClear", "Keep clear"), X("screenCutoutBoth", "Both sides"), X("screenCutoutFull", "Full screen") },
+                () => Settings.ScreenCutout, i => Settings.ScreenCutout = i,
+                () => X("screenCutoutHelp", "Keep clear moves the interface away from the camera hole or notch. Both sides leaves the same gap on the other side, so the interface stays centred. Full screen uses the whole display: the camera may cover a little of the interface."));
+            screenCutout.visible = () => UnityEngine.Device.Application.isMobilePlatform;
+            list.Add(screenCutout);
             list.Add(Toggle("showFps", OptionPage.Graphics, () => X("showFps", "Show FPS"), () => Settings.ShowFps, v => Settings.ShowFps = v));
             // Remake (#137): the counter in any corner or the middle of any side, so it can stay clear of what a player watches.
             var fpsPosition = Choice("fpsPosition", OptionPage.Graphics, () => X("fpsPosition", "FPS counter position"), false,
@@ -380,19 +394,6 @@ namespace GoF2Remake.UI
         /// <summary>All()'s Options > Controls and the key bindings rows.</summary>
         static void AddControls(List<OptionDef> list)
         {
-            // Remake: free flight after EVERSPACE 2 (Settings.FlightStyle, FlightModel.StepFree) and (2026-11-11) Chorus's
-            // (FlightModel.StepChorus); each switches the key layout too. Original = the original's flight and key layout,
-            // untouched (FlightStyles' order: Original, Free, Chorus).
-            var freeFlight = Choice("flightStyle", OptionPage.Controls, () => X("flightStyle", "Flight style"), true,
-                () => new[] { StyleName(FlightStyles.Original), StyleName(FlightStyles.Free), StyleName(FlightStyles.Chorus) },
-                () => Settings.FlightStyle, i => Settings.FlightStyle = i);
-            freeFlight.description = () => (FlightStyles.Forced ? FlightStyleForcedNote() + " " : "") + X("flightStyleHelp", "Free flight: W / S thrust, A / D strafe, Space / Ctrl up and down, Q / E roll, Shift boost, Z dampeners. Own key layout.")
-                + " " + X("flightStyleChorusHelp", "Chorus: W flies on at full speed, S brakes, Shift boosts, hold Space to drift, A / D dodge. Own key layout.")
-                // Remake: free flight's touch layout (TouchControlsFreeFlight), on a touch device.
-                + (Application.isMobilePlatform || InputMode.Current == InputKind.Touch
-                    ? " " + X("flightStyleTouchHelp", "Touch: the stick thrusts and strafes, drag the screen (or the held fire button) to aim, the buttons beside the stick go up, down and switch the dampeners; the ship rolls itself level.")
-                    : "");
-            list.Add(freeFlight);
             // MenuTouchWindow state 8: 490 Touch / 491 Accelerometer pictures (options[0x11]), 492 Steering Calibration
             // (493, then OK stores the device's position), the sensitivity slider per mode (+0x14 / +0x18).
             if (Flight.TiltSteering.Available)
@@ -554,14 +555,51 @@ namespace GoF2Remake.UI
             X("experienceOriginal", "Original"), X("experienceCosmetic", "Cosmetic"), X("experienceRemake", "Remake"), X("presetCustom", "Custom"),
         };
 
+        static string[] ScopedExperienceNames() => new[]
+        {
+            X("experienceOriginal", "Original"), X("experienceRemake", "Remake"), X("presetCustom", "Custom"),
+        };
+
         static void AddGameplay(List<OptionDef> list)
         {
+            var autocomplete = Toggle("blueprintAutocomplete", OptionPage.Gameplay,
+                () => X("blueprintAutocomplete", "Blueprint autocomplete"),
+                () => Settings.BlueprintAutocomplete, v => Settings.BlueprintAutocomplete = v);
+            autocomplete.description = () => X("blueprintAutocompleteHelp",
+                "Allows paying credits to supply a blueprint's missing ingredients. Off by default. Blueprints that forbid autocomplete remain unavailable.");
+            list.Add(autocomplete);
+            // Remake: free flight after EVERSPACE 2 (Settings.FlightStyle, FlightModel.StepFree) and (2026-11-11) Chorus's
+            // (FlightModel.StepChorus); each switches the key layout too. Original = the original's flight and key layout,
+            // untouched (FlightStyles' order: Original, Free, Chorus).
+            var freeFlight = Choice("flightStyle", OptionPage.Gameplay, () => X("flightStyle", "Flight style"), true,
+                () => new[] { StyleName(FlightStyles.Original), StyleName(FlightStyles.Free), StyleName(FlightStyles.Chorus) },
+                () => Settings.FlightStyle, i => Settings.FlightStyle = i);
+            freeFlight.description = () => (FlightStyles.Forced ? FlightStyleForcedNote() + " " : "") + X("flightStyleHelp", "Free flight: W / S thrust, A / D strafe, Space / Ctrl up and down, Q / E roll, Shift boost, Z dampeners. Own key layout.")
+                + " " + X("flightStyleChorusHelp", "Chorus: W flies on at full speed, S brakes, Shift boosts, hold Space to drift, A / D dodge. Own key layout.")
+                // Remake: free flight's touch layout (TouchControlsFreeFlight), on a touch device.
+                + (Application.isMobilePlatform || InputMode.Current == InputKind.Touch
+                    ? " " + X("flightStyleTouchHelp", "Touch: the stick thrusts and strafes, drag the screen (or the held fire button) to aim, the buttons beside the stick go up, down and switch the dampeners; the ship rolls itself level.")
+                    : "");
+            list.Add(freeFlight);
+            // Remake (#354's turret aiming, behind a switch 2026-11-19; Settings.TurretLeadAim, TurretAim, TurretTargeting).
+            var turretLead = Toggle("turretLeadAim", OptionPage.Gameplay, () => X("turretLeadAim", "Turrets lead moving targets"),
+                () => Settings.TurretLeadAim, v => Settings.TurretLeadAim = v);
+            turretLead.description = () => X("turretLeadAimHelp", "Turrets (yours, sentry guns and the NPCs') turn straight onto their target, fire only when on it and aim where it will be when the shot arrives. Off: the original's turrets.");
+            list.Add(turretLead);
+            // Remake (#336 / #302, behind a switch 2026-11-19; Settings.RemakeFreeLook, FreeLookCamera, CombatRadar).
+            var remakeFreeLook = Toggle("remakeFreeLook", OptionPage.Gameplay, () => X("remakeFreeLook", "Remake free look"),
+                () => Settings.RemakeFreeLook, v => Settings.RemakeFreeLook = v);
+            remakeFreeLook.description = () => X("remakeFreeLookHelp", "Free look zooms out more than three times as far, and locks onto the ship nearest the middle of the view instead of your ship's crosshair. Off: the original's free look.");
+            list.Add(remakeFreeLook);
             // Remake (the user's request, 2026-11-04): Original / Cosmetic / Remake set the experience options at once
             // (Settings.ApplyExperience); the row shows the one they match, else Custom (picking Custom sets nothing). Every
             // row below reads off (or its first choice) = the original game.
-            list.Add(Choice("gameExperience", OptionPage.Gameplay, () => X("gameExperience", "Game experience"), true,
-                ExperienceNames, Settings.CurrentExperience, i => Settings.ApplyExperience(i),
-                () => X("gameExperienceHelp", "Original: the game as it was, nothing added. Cosmetic: the original plus the remake's presentation, like ships flying in and out of the hangars and animated dialogue. Remake: every new feature on. Change any option below and it becomes Custom.")));
+            list.Add(Choice("cosmeticExperience", OptionPage.Gameplay, () => X("cosmeticExperience", "Cosmetic Experience"), true,
+                ScopedExperienceNames, () => Settings.CurrentScopedExperience(true), i => Settings.ApplyScopedExperience(true, i),
+                () => X("cosmeticExperienceHelp", "Original or Remake presentation settings, independently of gameplay. Any manual Cosmetics change selects Custom, even if values match a preset again. Select Original or Remake explicitly to reactivate it.")));
+            list.Add(Choice("gameplayExperience", OptionPage.Gameplay, () => X("gameplayExperience", "Gameplay Experience"), true,
+                ScopedExperienceNames, () => Settings.CurrentScopedExperience(false), i => Settings.ApplyScopedExperience(false, i),
+                () => X("gameplayExperienceHelp", "Original or Remake gameplay settings, independently of cosmetics. Choosing Custom or expanding Game Rules selects Custom without changing any rule. Any manual Gameplay change selects Custom, even if values match a preset again. Select Original or Remake explicitly to reactivate it.")));
             // The original's fly-past camera, as a "skip" so that off is the original (Settings.LaunchCamera).
             var skipLaunch = Toggle("launchCamera", OptionPage.Gameplay, () => X("skipLaunchCamera", "Skip launch and arrival camera"),
                 () => !Settings.LaunchCamera, v => Settings.LaunchCamera = !v);
@@ -666,7 +704,7 @@ namespace GoF2Remake.UI
             // Remake (PR #282): the shop's and storage's item order (Hangar.ShopItems); off = the original's, by item number.
             var shopOrder = Toggle("shopByCategory", OptionPage.Gameplay, () => X("shopByCategory", "Sort the shop by category"),
                 () => Settings.ShopByCategory, v => Settings.ShopByCategory = v);
-            shopOrder.description = () => X("shopByCategoryHelp", "The shop and storage list items by category, then tech level, so add-on equipment sits beside its kind. Off: by item number, as in the original.");
+            shopOrder.description = () => X("shopByCategoryHelp", "The shop and storage list items by category, subtype and tech level; beam lasers and manual/automatic turrets stay together. Off: by item number, as in the original.");
             list.Add(shopOrder);
             var cloakBay = Toggle("cloakBay", OptionPage.Gameplay, () => X("cloakBay", "Cloak bay on cloaking ships"),
                 () => Settings.CloakBay, v => Settings.CloakBay = v);
@@ -709,6 +747,13 @@ namespace GoF2Remake.UI
                 () => new[] { X("fastForwardTime", "Time speedup"), X("fastForwardCruise", "Ship cruise") },
                 () => Settings.FastForwardCruise ? 1 : 0, i => Settings.FastForwardCruise = i == 1,
                 () => X("fastForwardModeHelp", "Time speedup: the whole game runs 5x while you hold it. Ship cruise: only your ship flies 5x as fast, everything else keeps its pace, as in multiplayer.")));
+            var hostileFastForward = Toggle("hostileAutopilotFastForward", OptionPage.Gameplay,
+                () => X("hostileAutopilotFastForward", "Time speedup near hostiles"),
+                () => Settings.HostileAutopilotFastForward, v => Settings.HostileAutopilotFastForward = v);
+            hostileFastForward.description = () => X("hostileAutopilotFastForwardHelp",
+                "Allows time speedup on autopilot despite hostile radar contacts. Has no effect while Ship cruise is selected; its value is kept for Time speedup. Other restrictions still apply. Not available in multiplayer or co-op.");
+            hostileFastForward.enabled = () => !NetSession.Active;
+            list.Add(hostileFastForward);
             // Remake (Discord, 2026-11-04; SystemJump.DockToStream): the autopilot takes the jumpgate toward a set destination
             // without the gate's "Travel to this station?".
             var autoJumpgate = Toggle("autoJumpgate", OptionPage.Gameplay, () => X("autoJumpgate", "Autopilot takes jumpgates"),
@@ -744,6 +789,12 @@ namespace GoF2Remake.UI
                 () => System.Array.ConvertAll(HudOpacitySteps, p => p + " %"),
                 () => Mathf.Max(0, System.Array.IndexOf(HudOpacitySteps, Settings.HudOpacityPercent)), i => Settings.HudOpacityPercent = HudOpacitySteps[Mathf.Clamp(i, 0, HudOpacitySteps.Length - 1)],
                 () => X("hudOpacityHelp", "How solid the HUD markings are; messages and menus stay opaque.")));
+            list.Add(Choice("systemMapAnimationSpeed", OptionPage.Gameplay,
+                () => X("systemMapAnimationSpeed", "Map animation speed"), true,
+                () => new[] { "1×", "2×", "4×" },
+                () => Settings.SystemMapAnimationSpeed == 4 ? 2 : Settings.SystemMapAnimationSpeed == 2 ? 1 : 0,
+                i => Settings.SystemMapAnimationSpeed = 1 << Mathf.Clamp(i, 0, 2),
+                () => X("systemMapAnimationSpeedHelp", "Speeds up opening and closing systems and Full Map without changing simulation time. At ×2 and ×4, zoom sounds are muted.")));
             // Remake (players' request): a far ship's marker that leaves the ship in view, and its distance (CombatView,
             // FarShipMarkers).
             list.Add(Choice("farShipMarkers", OptionPage.Gameplay, () => X("farShipMarkers", "Far ship markers"), true,
@@ -812,5 +863,10 @@ namespace GoF2Remake.UI
                     action = () => SaveFolderPressed?.Invoke(),
                 });
         }
+
+        // Owner follow-up (#311): save-bind Kaamo stacking/limit, content, travel/simulation, informer rules, difficulty
+        // and future economy/balance profiles. Preserve purchased upgrade levels in migrations. Autocomplete and
+        // combat/AI need UI separation but are not requested as mandatory save-bound rules. Stored equipment is QoL.
+        static void SplitGameplay(List<OptionDef> list) => OrganizeGameplay(list);
     }
 }

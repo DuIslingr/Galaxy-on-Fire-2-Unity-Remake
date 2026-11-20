@@ -20,7 +20,7 @@
 //    it should be, the sliding ship left the frame).
 //  * Boost (MGame::OnUpdate): the vertical FOV grows by 0.35 rad x the boost percentage, and
 //    TargetFollowCamera::setBoostPercentage(pct, clamp(boost speed, 2, 8)) jitters the look-at point by
-//    pct x n units per axis each frame. The radial blur on top (post effect 0x1400002) isn't reproduced.
+//    pct x n units per axis each frame. The radial blur on top (post effect 0x1400002): RadialBlurPass.
 //  * The cockpit view (MGame::switchCamera mode 2, TargetFollowCamera::enableFirstPersonCam +0xf0, unreachable in this
 //    build: switchCamera and nextCamId turn 2 into 3): the camera on the ship's matrix, looking along its direction, the
 //    ship hidden (PlayerEgo::hideShipForFirstPersonCameraView), the hit shake x0.001 and the rumble x0.0015. Remake
@@ -319,7 +319,9 @@ namespace GoF2Remake.Flight
                 targetSlide = Vector3.zero;
                 lookShift = new Vector3(3f * dodgeLookScale * model.YawRate * target.metersPerUnit, 0f, 0f);
             }
-            bool original = GoF2Remake.Data.Settings.OriginalChaseCamera;
+            bool returning = returnLookMs > 0f;   // Modified: ReturnLookingAt
+            if (returning) returnLookMs = Mathf.Max(0f, returnLookMs - dtMs);
+            bool original = GoF2Remake.Data.Settings.OriginalChaseCamera || returning;
             float posEase = original ? Ease(posK, dtMs) : Follow(posK, dtMs), rotEase = original ? Ease(rotK, dtMs) : Follow(rotK, dtMs);
             if (easeInMs > 0f)   // Modified: SoftReturn
             {
@@ -353,7 +355,7 @@ namespace GoF2Remake.Flight
             {
                 // A new start (the chase taking over from a fly-in or another camera, the option switched) or a jump: the look
                 // point starts where the camera looks now, at the ship's distance (no turn in one frame).
-                if (!lookValid || (desiredLook - lookPoint).sqrMagnitude > 1000f * 1000f)
+                if (!lookValid || (!returning && (desiredLook - lookPoint).sqrMagnitude > 1000f * 1000f))
                     lookPoint = transform.position + transform.forward * (desiredLook - transform.position).magnitude;
                 lookValid = true;
                 lookPoint = Vector3.Lerp(lookPoint, desiredLook, rotEase) + noUpdate;
@@ -452,10 +454,25 @@ namespace GoF2Remake.Flight
         public void SoftReturn(float ms) { easeInMs = easeInTotalMs = ms; }
         float easeInMs, easeInTotalMs;
 
+        /// <summary>Modified: a cutscene handing the camera back where it is (the prologue's fight, LevelScript's
+        /// setLookAtCam(false) + setTarget(player), no setPosition): TargetFollowCamera eases its look point too, from what
+        /// the cutscene looked at, so the view stays on the pirates and swings over to the ship as the camera glides in
+        /// (the original's frames, the user's capture). For 'ms' the follow is the Original one (Ease, the eased look
+        /// point) whatever the option, starting from 'from', under SoftReturn's slow start.</summary>
+        public void ReturnLookingAt(Vector3 from, float ms)
+        {
+            SoftReturn(ms);
+            lookPoint = from;
+            lookValid = true;
+            returnLookMs = ms;
+        }
+        float returnLookMs;
+
         public void Snap()
         {
             easeInMs = 0f;
             glideMs = 0f;
+            returnLookMs = 0f;
             if (target == null) return;
             var ship = target.transform;
             PlaceBehind();

@@ -119,13 +119,14 @@ namespace GoF2Remake.Flight
             t != null && t.kind == Navigation.Kind.DockingTarget && t.dockingShip != null ? t.dockingShip.Target : null;
         Mining mining;
         WeaponSystem weapons;
+        FreeLookCamera freeLook;
         PlayerHealth health;
         Traffic traffic;
         CombatAssets assets;
         AudioSource sfx, beamLoop;
         int lockTimeMs = 8000, tractorItem = -1, tractorLockMs, tractorMode;
         int cargoScan;   // attr 31: 0 none, 1 the first cargo entry (the original), 2 the whole hold (remake mods)
-        bool hitpointScan, weaponScan;
+        bool hitpointScan, weaponScan, classScan;
         float timer;
         bool noTractorShown;
         // Remake (#45, like Mining's "No drill installed."): salvage refused for want of a tractor beam; ignored until it leaves
@@ -164,6 +165,7 @@ namespace GoF2Remake.Flight
             nav = navigation;
             mining = miningSystem;
             weapons = weaponSystem;
+            freeLook = GetComponent<FreeLookCamera>();
             health = playerHealth;
             traffic = trafficManager;
             assets = CombatAssets.Load();
@@ -175,6 +177,7 @@ namespace GoF2Remake.Flight
             ShipScan = scanner != null && scanner.Attr(ScanShipAttr) == 1;
             hitpointScan = scanner != null && scanner.Attr(ScanHitpointsAttr) == 1;
             weaponScan = scanner != null && scanner.Attr(ScanWeaponsAttr) == 1;
+            classScan = scanner != null && scanner.Attr(GoF2Remake.Modding.ShipClassRules.ScanClassAttr) == 1;   // remake mods (ShipClassRules)
             var filter = Shop.FirstMounted(db, 33);
             CloudRadar = filter != null && filter.Attr(57) == 1;
             CloudOffScreen = filter != null && filter.Attr(58) == 1;
@@ -273,7 +276,8 @@ namespace GoF2Remake.Flight
             if (!blocked && cam != null && tractorMode == 1 && Salvaging == null) AutoSalvage(cam, true);
             if (!blocked && cam != null)
             {
-                var c = cam.WorldToScreenPoint(ChaseCamera.AimOrigin(transform) + transform.forward * CrosshairDistanceMeters);
+                // (Remake free look, #302: the middle of the view in free look; else the ship's crosshair, as the original)
+                var c = LockCrosshairPoint(cam, transform, Settings.RemakeFreeLook && freeLook != null && freeLook.FreeLookActive);
                 float box = Screen.width / 16f, bestD = float.MaxValue, stealD = float.MaxValue;
                 if (c.z > 0f)
                 {
@@ -450,11 +454,21 @@ namespace GoF2Remake.Flight
         {
             // remake: the Rite of the Senses reads the cargo too (at least the first entry, as the original's cargo scanner)
             int cargo = RiteSenses.Active ? Mathf.Max(cargoScan, 1) : cargoScan;
-            if (locked == null || traffic == null || (cargo == 0 && !hitpointScan && !weaponScan)) return;
-            var ship = traffic.Ships.Find(s => s != null && s.Target == locked);
-            if (ship == null) return;
-            string text = ScanReadout(cargo, ship.CargoList, hitpointScan ? locked.hitpoints : null,
-                                      weaponScan ? new[] { ship.GunItem, ship.SecondGunItem } : null);
+            if (locked == null || (cargo == 0 && !hitpointScan && !weaponScan && !classScan)) return;
+            var ship = traffic != null ? traffic.Ships.Find(s => s != null && s.Target == locked) : null;
+            // another player's ship (NetPlayer) and another game's NPC (NetProxy) carry their ship index in netShipIndex
+            int index = locked.netShipIndex >= 0 ? locked.netShipIndex : locked.shipType;
+            string classLabel = classScan && index >= 0 && db != null
+                ? GoF2Remake.Modding.ShipClassRules.ClassLabel(db.Ship(index)) : null;
+            int cargoMode = ship != null ? cargo : 0;
+            Hitpoints hp = hitpointScan ? locked.hitpoints : null;
+            IReadOnlyList<int> guns = weaponScan && ship != null ? new[] { ship.GunItem, ship.SecondGunItem } : null;
+            string text = ScanReadout(cargoMode, ship?.CargoList, hp, guns);
+            if (!string.IsNullOrEmpty(classLabel))
+            {
+                string cls = Localization.Extra("scanShipClass", "Class: #C").Replace("#C", classLabel);
+                text = string.IsNullOrEmpty(text) ? cls : cls + " · " + text;
+            }
             if (text != null) Message?.Invoke(text, 0, HudMessageKind.Scan);
         }
 
@@ -629,6 +643,18 @@ namespace GoF2Remake.Flight
             if (nav == null) return;
             nav.ShipLockActive = Busy || Salvaging != null;   // Radar+8 / +0x1c
             nav.ShipLocked = Locked != null ? Locked.transform : null;   // remake: fast-forward to a ship that holds still
+        }
+
+        /// <summary>The lock-acquisition point: the ship's forward aim line normally, the active camera's viewport centre while free look is active.</summary>
+        public static Vector3 LockCrosshairPoint(Camera cam, Transform ship, bool freeLookActive)
+        {
+            if (cam == null || ship == null) return Vector3.zero;
+            if (freeLookActive)
+            {
+                var centre = cam.pixelRect.center;
+                return new Vector3(centre.x, centre.y, 1f);
+            }
+            return cam.WorldToScreenPoint(ChaseCamera.AimOrigin(ship) + ship.forward * CrosshairDistanceMeters);
         }
 
         static bool InBox(Camera cam, Vector3 crosshair, float box, Vector3 world, out float dist)

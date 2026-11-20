@@ -329,6 +329,14 @@ namespace GoF2Remake.Flight
                     at += Modding.ModHardpoints.MuzzleOffset(shipIndex, shown, secondary, mounts[slot % mounts.Count]);
                 }
                 var gun = new Gun(item, at, secondary);
+                // Secondary launch behaviour belongs to the hardpoint, not the item or its cosmetic model rotation.
+                // Primaries, turrets and NPC weapons retain their existing launch and homing behaviour.
+                if (secondary && mounts.Count > 0)
+                {
+                    var mount = mounts[slot % mounts.Count];
+                    gun.launchTurn = mount.LaunchTurn;
+                    gun.homingDelayMs = Mathf.Max(0, mount.lockDelayMs);
+                }
                 gun.Ignores = t => t.playerProof;   // multiplayer: through squadmates
                 if (!secondary)
                 {
@@ -673,7 +681,8 @@ namespace GoF2Remake.Flight
                 : r.gun.damage * DamageBoost * FlightDamageFactor;
             if (!missile && wasAlive && target.isShip) PrimaryDamageDealt?.Invoke(damage);
             if (Cheats.OneHitKills && !target.isPlayer) damage = 99999999f;
-            target.Damage(damage, false, r.gun.bullets[bullet].velocity, r.gun.shieldFactor);
+            var shot = r.gun.bullets[bullet];
+            target.Damage(damage, false, shot.velocity, r.gun.shieldFactor, r.gun.damageType, shot.networkSourceObjectId, shot.networkShotId);
             if (r.gun.slowMs > 0f && target.Alive && !target.isPlayer) target.SlowBy?.Invoke(r.gun.slowMs, r.gun.slowFactor, r.gun.slowFreeze);   // remake mods: slowMs (slowFreeze: no turning)
             // remake mods (2026-11-02): EVERSPACE 2's corrosion / infestation and destabilization (TargetDebuffs)
             if (target.Alive && target.isShip && !target.isPlayer)
@@ -703,7 +712,11 @@ namespace GoF2Remake.Flight
             bool wasAlive = target.Alive;
             target.lastPlayerWeapon = r.gun.itemIndex;
             if (Cheats.OneHitKills && !target.isPlayer && dmg > 0) dmg = 99999999;
-            if (dmg > 0) target.Damage(dmg, false, (target.transform.position - center).normalized);
+            if (dmg > 0)
+            {
+                if (r.gun.damageType == DamageType.None) target.Damage(dmg, false, (target.transform.position - center).normalized);
+                else target.Damage(dmg, false, (target.transform.position - center).normalized, r.gun.shieldFactor, r.gun.damageType);
+            }
             if (wasAlive && !target.Alive && target.isAsteroid)
             {
                 Session.AsteroidsDestroyed++;
@@ -723,7 +736,7 @@ namespace GoF2Remake.Flight
             if (target == null || !target.Alive) return;
             target.lastPlayerWeapon = item;
             if (Cheats.OneHitKills && !target.isPlayer && damage > 0f) damage = 99999999f;
-            if (damage > 0f) target.Damage(damage, false, direction, shieldFactor);
+            if (damage > 0f) target.Damage(damage, false, direction, shieldFactor, item >= 0 && GoF2Remake.Data.Database.Shared.Item(item) is GoF2Remake.Data.ItemData it ? (DamageType)Mathf.Clamp(it.Attr(Gun.DamageTypeAttr), 0, 2) : DamageType.None);
             ApplyEmp(target, emp);
             if (damage > 0f) Hit?.Invoke();
         }

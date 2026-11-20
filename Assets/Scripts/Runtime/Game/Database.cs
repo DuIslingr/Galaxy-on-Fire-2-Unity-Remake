@@ -37,9 +37,19 @@ namespace GoF2Remake.Data
         /// seat and the damage smoke's points (game units in position_engine's axes, like the mounts) and the explosion's
         /// size when the ship dies (x the fighters' 1).</summary>
         [System.NonSerialized] public float[] chaseCamera;
+        /// <summary>Remake mods (ships.json \"camera.orbitDistance\"): the free-look orbit's default radius in game units.</summary>
+        [System.NonSerialized] public float orbitCameraDistance = 3800f;
         [System.NonSerialized] public Vector3? cockpit;
         [System.NonSerialized] public List<Vector3> smokePoints;
         [System.NonSerialized] public float explosionScale = 1f;
+
+        /// <summary>Remake mods (ships.json "dockingRole"): an explicit "internal" or "external" dock role; null preserves size-based legacy eligibility.</summary>
+        [System.NonSerialized] public string dockingRole;
+        /// <summary>Remake mods (Modding.ShipClassRules, ships.json "shipClass" / "classTags"): the ship's class (a free word a
+        /// class scanner shows) and the words it answers to besides; none on every original ship.</summary>
+        [System.NonSerialized] public string shipClass;
+        [System.NonSerialized] public string shipClassLabel;
+        [System.NonSerialized] public string[] classTags;
     }
 
     [System.Serializable] public class StatEntry { public string key; public int value; }
@@ -67,12 +77,22 @@ namespace GoF2Remake.Data
         [System.NonSerialized] public int lookIndex;
         public int Look => modded ? lookIndex : index;
 
+        /// <summary>The hitscan beam looks shared by display grouping and weapon behavior, including mod-derived items.</summary>
+        public static bool IsBeamLook(int look) => look == 9 || look == 10 || look == 11 || look == 228;
+        /// <summary>Remake mods (Modding.ShipClassRules, items.json "allowedClasses" / "excludedClasses"): the ship classes / tags
+        /// that may / may not mount it; null = no list (every original item: it fits every ship).</summary>
+        [System.NonSerialized] public string[] allowedClasses, excludedClasses;
+
         public bool HasAttr(int id) => System.Array.IndexOf(attrKeys, id) >= 0;
         public int Attr(int id, int fallback = 0)
         {
             int i = System.Array.IndexOf(attrKeys, id);
             return i >= 0 ? attrValues[i] : fallback;
         }
+
+        /// <summary>CLAUDE.md "Mining": cores from a completed class-A asteroid; absent = one, negative = zero.</summary>
+        public const int CoreYieldAttr = 189;   // (was 172: Flight.Gun.BeamRadiusAttr's)
+        public int CoreYield => Mathf.Max(0, Attr(CoreYieldAttr, 1));
 
         /// <summary>Attribute 1: 0 primary, 1 secondary, 2 turret, 3 equipment, 4 commodity.</summary>
         public int TypeId => Attr(1, type switch { "primary" => 0, "secondary" => 1, "turret" => 2, "equipment" => 3, _ => 4 });
@@ -125,6 +145,22 @@ namespace GoF2Remake.Data
         public int slotType; public int[] position_engine; public float[] turretAngles; public bool upsideDown;
         public float[] glowColor, glowSize, turretUp;
         public string glowShape;
+        /// <summary>Per-mount turret model scale; multiplies the weapon's own turret scale. 1 = unchanged, up to 1000.</summary>
+        public float turretScale = 1f;
+        public float TurretScale => turretScale <= 0f || float.IsNaN(turretScale) || float.IsInfinity(turretScale) ? 1f : Mathf.Clamp(turretScale, 0.01f, 1000f);
+
+        /// <summary>A secondary mount's launchRotation in the ship model's Unity frame: Euler degrees [x, y, z] or
+        /// quaternion [x, y, z, w]; identity when absent. Used only for player secondary launch direction.</summary>
+        public Quaternion LaunchTurn
+        {
+            get
+            {
+                var r = launchRotation;
+                if (r != null && r.Length >= 4) return new Quaternion(r[0], r[1], r[2], r[3]).normalized;
+                if (r != null && r.Length >= 3) return Quaternion.Euler(r[0], r[1], r[2]);
+                return Quaternion.identity;
+            }
+        }
 
         /// <summary>turretUp (else upsideDown) in the Unity ship frame ((-x, y, z), the models are mirrored): a unit vector,
         /// Vector3.up for a plain mount.</summary>
@@ -177,8 +213,16 @@ namespace GoF2Remake.Data
         /// is turned on the hull, in the ship model's frame (x right, y up, z forward): Euler degrees [x, y, z] (Unity's order)
         /// or a quaternion [x, y, z, w]; none = upright (upsideDown still turns it over). Only the look and the muzzle: the
         /// shots still fly along the nose. An exhaust mount (slotType 3) of a ship with "engineFx": the way it blows, turned
-        /// from straight back (Modding.EngineFx).</summary>
+        /// from straight back (Modding.EngineFx). An external docking hardpoint (slotType 8): its orientation
+        /// (ExternalDockingRules).</summary>
         public float[] rotation;
+        /// <summary>Remake mods, a secondary (slotType 1) mount: the direction its shots leave in, as a turn from the ship's
+        /// nose in the ship model's frame. Euler degrees [x, y, z] or quaternion [x, y, z, w]; absent = straight ahead.
+        /// Separate from visual rotation; primaries, turrets and NPC guns ignore it.</summary>
+        public float[] launchRotation;
+        /// <summary>Remake mods, a secondary (slotType 1) mount: milliseconds after launch before its homing shots begin
+        /// steering toward their lock. Zero / absent = immediate homing; only player secondaries use this value.</summary>
+        public int lockDelayMs;
         /// <summary>Remake mods, a primary / secondary mount: nodes of the ship's model (by name) that show only while this mount
         /// carries a weapon (a hardpoint's pylon; Modding.ModHardpoints.AttachWeapons).</summary>
         public string[] nodes;
@@ -222,7 +266,7 @@ namespace GoF2Remake.Data
         public int priceDefault;           // the Default Economy's price (0 = the same as 'price')
         public int hangarHeight = 250;     // StationTables.ShipY: pivot height above the hangar floor, game units
         public string assembly;            // set by ModContent: "ship_NNN_mod" (Database.ShipAssembly finds it by number)
-        public List<WeaponMount> mounts;   // like weapons_hd.json: slotType 0 primary, 1 secondary, 2 turret, 3 exhaust, 4 manoeuvring jet
+        public List<WeaponMount> mounts;   // like weapons_hd.json: slotType 0 primary, 1 secondary, 2 turret, 3 exhaust, 4 manoeuvring jet, 8 external-docking hardpoint
         public string model;               // the glTF / GLB file in the mod, or "gof2:<model>" (Modding.GameModels)
         public string icon;                // the shop icon (PNG, 180 x 88 like the originals); none = the Phantom's
         /// <summary>Remake (Modding.GameModels): with a "gof2:" model, the original ship that model belongs to (its hangar
@@ -1341,6 +1385,13 @@ namespace GoF2Remake.Data
         /// <summary>Mount positions of a slot type for a ship, in the order of Ship::getSlotPos.</summary>
         public List<WeaponMount> MountsOf(int shipIndex, int slotType)
         {
+            // Remake external docking: slotType 8 is a ship-authored docking hardpoint, not a build-part weapon socket.
+            // Keep it on the ship definition even when a kit build supplies the weapon / exhaust mounts.
+            if (slotType == 8)
+            {
+                var dockingSet = WeaponMounts.FirstOrDefault(m => m.ship == shipIndex);
+                return dockingSet != null ? dockingSet.mounts.Where(m => m.slotType == 8).ToList() : new List<WeaponMount>();
+            }
             // Remake mods: a customizable ship's mounts come with its build's parts (Modding.ModShipKits).
             var built = Modding.KitRules.BuildMounts(shipIndex, slotType);
             if (built != null) return built;

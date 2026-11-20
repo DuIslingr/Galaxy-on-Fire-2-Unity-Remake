@@ -4,6 +4,57 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## UI and platforms
 
+- **Cosmetics and Gameplay (final organization)**: Cosmetics has Presentation, UI, and HUD and map.
+  Gameplay shows Difficulty beside Gameplay Experience, then expandable Game Rules: World, Progression and economy,
+  Combat and NPC behavior, Traversal, and Missions and simulation. Mod traffic/settings belong to Missions; there is
+  no separate Mods tab. Tools are always visible; every Debug enable asks Enable/Cancel independently of Expand.
+  Nested headings stay cyan and are indented. Interface style and its reset belong to Cosmetics > UI.
+  The UI portion of #345 and explicit selection interaction of #346 are included here to avoid competing edits.
+  Complete preset values and default-reset policy are delivered separately by #346. Save-bound rules remain a
+  proposal under #311; Difficulty is unchanged by reset. Future independently customizable difficulty rules should
+  be considered inside Game Rules without changing current save/session ownership.
+
+- **Cosmetics and Gameplay** (issue #311, UI organization only): Cosmetics has Special features (presentation and
+  transition animations) and UI; Gameplay has QoL and Game Rules. Time speedup near hostiles, stored ships keeping
+  equipment, and autopilot jumpgate confirmations are QoL (defaults: off, off and on respectively). Discord presence
+  belongs to Accessibility. Gameplay Experience is always visible under Game Rules; Expand asks for confirmation
+  before revealing the custom controls, with Debug tools first.
+  Custom Game Rules stay hidden until explicit confirmation; Cancel/Back changes nothing. The same app-session consent
+  gate covers legacy main-menu, station and flight Debug entries. Confirmation enables no cheat and applies no rule.
+  Existing setting keys, save formats and multiplayer authority are retained. Cosmetics and Gameplay reset only
+  their own keys. Cosmetic Experience and Gameplay Experience independently offer Original / Remake / Custom;
+  they reuse their scope's values from the existing explicit preset table. Cosmetic Original sorts by ID, Remake
+  by type. The legacy welcome screen retains its existing whole-experience API. Custom only reports a mixed state.
+  Owner follow-up: bind Kaamo stacking/limit, world content, travel/simulation, informer rules, difficulty and future
+  economy/balance profiles to the playthrough. Preserve purchased upgrades during migration. Autocomplete and
+  combat/AI need UI separation but are not proposed as mandatory save-bound settings. Stored equipment is QoL.
+
+- **Camera shake** (Graphics, `Settings.CameraShake`): 100 % by default, the ported shakes unscaled (#342 had made 30 % the
+  default; back 2026-11-19); the Cosmetic and Remake experiences set 30 %. Saved values are kept; Graphics defaults: 100 %.
+
+- **Camera cutout** (remake, 2026-11-19, the user's request; Graphics below "Screen edge margin", phones only:
+  `UnityEngine.Device.Application.isMobilePlatform`, so the Device Simulator shows it; `Settings.ScreenCutout`, key
+  `screenCutout`): Keep clear (0, the default: the behaviour since the iOS work, platform behaviour rather than a
+  gameplay change, so not in the experience presets) / Both sides (1: left and right both the larger inset; Android insets
+  only the camera hole's side, which moved the HUD's left half, the joystick and the FF / autopilot buttons, right) / Full
+  screen (2: no device insets at all, the home indicator's included). Applied in `SafeArea.Device` (testable overload
+  `Device(Rect, w, h, cutout)`, `ScreenCutoutTests`), which every safe-area user reads (the HUD, touch controls, station,
+  main menu, star map, `KeepClear` overlays, FPS / speedrun / story-step labels); in `UiLayout.Revision`, so the screens
+  lay out again when it changes. The edge margin and interface width still apply on top.
+
+- **Original by default** (2026-11-19, after an audit of the 46 PRs merged that day): every remake addition starts off and
+  the Original presets turn it off. The defaults put back: 3D planets off (`rebuiltPlanets`), camera shake 100 %. Behind new
+  switches (default off): Gameplay > Combat "Turrets lead moving targets" (`turretLeadAim`: #354's turret aim, see
+  weapons.md "Turrets"), "Remake free look" (`remakeFreeLook`: #336's zoom to 70,000 and #302's lock on the view's middle;
+  off: the original's 20,000 and the ship's crosshair), Graphics "Remastered shield and cloak" (`remasteredEffects`: #340's
+  PC version shield bubble and half-bent cloak, shader global `_GoF2RemasteredFx`; off: the phone original's). Kept on:
+  #340's boost blur (the original's own effect 0x1400002) and its cloak fixes, #300's Kaamo purchase step, #298's keys.
+  - The experience presets (`ExperienceKeys`, `Experiences`) gained rebuiltPlanets, cameraShake, remasteredEffects,
+    blueprintAutocomplete, hostileAutopilotFastForward, turretLeadAim and remakeFreeLook (Original: off / 100 %; Cosmetic:
+    the looks on, shake 30 %; Remake: all on). The Cosmetic Experience covers the Graphics page's experience options too
+    (`Settings.InScope`). Migration version 10 (`AddedExperienceKeys`): an install matching a preset gets its values for
+    the new options. A fresh install stores both Custom flags off, so its rows read Original, not Custom.
+
 - Text comes from the original table via `Localization.Get(textId)`; remake-only strings via `Extra(key, english)`,
   translated per language in `Resources/GoF2Localization/extra_<lang>.json` (a { key: text } object, loaded with the
   table by `Localization.LoadExtra`; 11 languages, KiritoJPK, PR #54, then Chinese and Hindi; a key it lacks stays
@@ -126,7 +177,7 @@ default, clear of the safe area; at the top centre the flight HUD's lock plate a
 #137), every weapon's own shot sound (`Settings.EachWeaponSound`, Sound tab), the Supernova Challenge's combo sounds
 (#165, Sound tab, `Settings.ChallengeComboSounds`, on: SV_Mode_01..10 in `ChallengeOrbit.PlaySound`), the medal sound
 (#165, Sound tab, `Settings.MedalSound`: the remake's chime, the original's info blip, or none; the toast in
-`StationMenu`), the battle music tracks one by one
+`StationMenu`), the four battle music groups in story order
 (Sound tab, `MusicTracks`, "Music tracks off" in npcs-and-combat.md), mute in background (desktop,
 `Settings.MuteInBackground`: `Bootstrap` zeroes the listener volume while the window is unfocused), double-press fire
 for auto-fire (`Settings.KeyAutofire`, off by default: the touch fire button's 249 ms latch, `AutofireLatch`, on the
@@ -143,6 +194,9 @@ build without them hides STP instead of freezing. **DLSS / FSR 2-4** (`UpscalerF
 behind the undocumented `ENABLE_UPSCALER_FRAMEWORK` define (Player settings, Standalone only; Android keeps the asset's
 upscaling filter) on the built-in modules `com.unity.modules.nvidia` / `com.unity.modules.amd`. With it compiled in URP
 ignores the old upscaling filter: every upscaler choice goes through `UniversalRenderPipeline.SetUpscaler` (Off =
+`unity.auto`, `amd.fsr1`, `unity.stp`,
+vidia.dlss4`, the newest of `amd.fsr4` / `fsr3` / `fsr2`), set again on
+`RenderPipelineManager.activeRenderPipelineCreated`; the quality mode on the framework's options; device support from
 `unity.auto`, `amd.fsr1`, `unity.stp`, `nvidia.dlss4`, the newest of `amd.fsr4` / `fsr3` / `fsr2`), set again on
 `RenderPipelineManager.activeRenderPipelineCreated`; the quality mode on the framework's options (on Windows only since 2026-11-16: `GoF2.App.asmdef` lacked the
 `ENABLE_AMD_MODULE` / `ENABLE_NVIDIA_MODULE` version defines, which only the render pipeline package had, so the DLSS / FSR
@@ -267,13 +321,21 @@ verified on a Mac or an iPhone.
     which GPUs the SDK DLL's checks take).
 - **Original bloom** (`ClassicBloomPass` + `Resources/GoF2PostFx/ClassicBloom.shader`; the bloom option's "Original"):
   the original's only post effect (`AbyssEngine::BloomShader`, on from `MGame::OnInitialize` via
-  `Engine::SetPostEffect(0x1400000, true)`; the radial blur 0x1400002 and glow 0x1400001 exist but are never switched
-  on) as a URP render-graph pass after the post-processing, queued from `beginCameraRendering` on every base screen
+  `Engine::SetPostEffect(0x1400000, true)`; the glow 0x1400001 exists but is never switched on; the radial blur 0x1400002
+  runs while boosting, `RadialBlurPass`, below) as a URP render-graph pass after the post-processing, queued from `beginCameraRendering` on every base screen
   camera with post-processing (no renderer-asset change): the scene sampled into 256 × 256 through the original's
   gamma-space bright pass (Luminance 0.08, middle gray 0.005, white cutoff 0.014: about everything above half
-  brightness), 6 × the "horizontal" blur (its offsets are vec2(o), a diagonal blur) and the vertical one (9 taps,
+  brightness), 6 × the horizontal blur (the phone's offsets are vec2(o), a diagonal blur; Modified 2026-11-17: truly
+  horizontal, as the PC version's BloomShader.fx, the user's files) and the vertical one (9 taps,
   texSize 256), then clamp(scene + glow) (`Engine::switchBloom` = 3 in the binary); URP's Bloom is off meanwhile. The
   original also blooms its HUD (drawn into the same FBO); the remake's UI Toolkit HUD doesn't.
+- **Boost blur** (`RadialBlurPass` + `Resources/GoF2PostFx/RadialBlur.shader`, remake 2026-11-17, always on): the
+  original's post effect 0x1400002, which `MGame::OnUpdate` switches on while `PlayerEgo::boosting` (not docking to a
+  planet): the screen smeared toward the player's ship on screen, mixed in by clamp(distance x the boost percentage);
+  the pixel and 5 samples 0.01-0.03 of the screen along the line, x 0.1429. A render-graph pass after the
+  post-processing on the camera with a `ChaseCamera` whose ship boosts (`BoostVisualPercent`). The PC version's
+  BlurShader.fx is another, zoom-style blur (6 scaled samples, `u_radial_bright`) whose strength and brightness aren't
+  known; the phone's is the one ported.
 - Frame rate option (`Settings.FrameRate`: 30 / 60 / 120 / Uncapped / V-Sync, default V-Sync; 60 on Android, the user's choice
   2026-10-22: a 120 Hz phone at 120 heats up and throttles; 60 on iOS too since 2026-11-14, `Settings.IosDefaults`) is
   applied by `Bootstrap.ApplyFrameRate`.
@@ -350,3 +412,10 @@ verified on a Mac or an iPhone.
   reflections pick their blur by mip level); textures made at run time (the mods') aren't affected. Android already
   compresses everything as ASTC (the project's Android default format). Mobile is always display-synced: V-Sync there
   means `targetFrameRate` = display refresh rate.
+
+- Interface style belongs to Cosmetics > UI, including reset ownership. Remake is the default even with Original presets. Original UI is a manual legacy appearance option; experience presets preserve that choice.
+- Original and Remake experience presets activate only through explicit selection. Any manual change in the corresponding Cosmetics or Gameplay section persistently selects Custom, even after values return to a preset match. Gameplay Custom and Expand share the same consent gate: accepting selects Custom without altering any rule or cheat; cancelling changes nothing.
+
+- Kaamo search (#315) starts read-only and inactive. Only primary click, F or controller Search activates entry. Hover/incidental focus cannot capture hangar keys. Enter, Escape, outside click, tab change and reopening end entry.
+
+- Kaamo numeric shortcuts follow visible order: 1 Ship, 2 Store, 3 Ships, 4 Blueprints when the extra tab is present. Ordinary hangars keep 1/2/3 and ignore 4. Cycling and tooltips use the same order.

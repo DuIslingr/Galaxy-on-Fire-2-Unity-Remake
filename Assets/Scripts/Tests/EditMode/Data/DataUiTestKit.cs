@@ -128,7 +128,7 @@ namespace GoF2Remake.Tests
         /// <summary>Every Settings key stored as a float (the five reset groups but the voice language, plus the tilt
         /// calibration, which no group resets).</summary>
         public static IEnumerable<string> SettingFloatKeys =>
-            Settings.SoundKeys.Concat(Settings.GraphicsKeys).Concat(Settings.ControlsKeys).Concat(Settings.GameplayKeys).Concat(Settings.AccessibilityKeys)
+            Settings.SoundKeys.Concat(Settings.GraphicsKeys).Concat(Settings.ControlsKeys).Concat(Settings.GameplayKeys).Concat(Settings.CosmeticsKeys).Concat(Settings.AccessibilityKeys)
                 .Concat(new[] { "tiltCalX", "tiltCalZ", "tiltCalibrated" }).Distinct();
 
         /// <summary>The keys in those groups Settings keeps as text (restored as floats they lost their value).</summary>
@@ -154,7 +154,7 @@ namespace GoF2Remake.Tests
                 Keep(SettingsPrefix + "language", true);
                 Keep(SettingsPrefix + "voiceLanguage", true);
                 // The game experience's migration and the welcome screen (Settings.MigrateExperienceDefaults, WelcomeShown).
-                foreach (var k in new[] { "experienceDefaults", "experienceDefaults.played", "welcomeShown" }) Keep(SettingsPrefix + k, false);
+                foreach (var k in new[] { "experienceDefaults", "experienceDefaults.played", "welcomeShown", "musicTrackGroups.v1" }) Keep(SettingsPrefix + k, false);
                 // Every flight style's layout (GameControls' "_free" / "_chorus" keys): ResetToDefaults below drops the loaded one.
                 foreach (var k in ControlsLayoutKeys) Keep(k, true);
             }

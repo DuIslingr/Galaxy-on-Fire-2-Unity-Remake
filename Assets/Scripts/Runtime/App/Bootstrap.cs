@@ -70,6 +70,7 @@ namespace GoF2Remake
             UwpDisplay.Install();                 // UWP: the display's real pixel size (a 4K TV, an Xbox), not its view pixels
 #endif
             Visuals.ClassicBloomPass.Install();   // the "Original" bloom option
+            Visuals.RadialBlurPass.Install();     // Modified: the original's boost blur (post effect 0x1400002), always on
             Visuals.PreTransformGuard.Install();  // Android Vulkan: the scene never drawn straight to the pre-rotated back buffer
             HitchLogger.Install();                // development builds: frame hitches to hitches.log
             UI.ScreenshotKey.Install();           // F12: a screenshot to the pictures library
@@ -160,7 +161,11 @@ namespace GoF2Remake
             ApplyFog();
             ApplyPostProcessing();
             ApplyDisplay();
+            // Options > Graphics "Remastered shield and cloak" (#340): the shield bubble's and the cloak's look (ShieldBubble,
+            // Cloak shaders); 0 = the phone original's.
+            Shader.SetGlobalFloat(RemasteredFxId, Settings.RemasteredEffects ? 1f : 0f);
         }
+        static readonly int RemasteredFxId = Shader.PropertyToID("_GoF2RemasteredFx");
 
         // Android at 100 % render scale (#45, #163): since Vulkan pre-transform went back on (2026.10.23) part of the screen
         // stays black / frozen at exactly 100 % (rotating the phone 180 degrees shows the other part), on Mali, Exynos and

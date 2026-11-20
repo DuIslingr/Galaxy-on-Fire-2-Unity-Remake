@@ -150,6 +150,14 @@ plasma_arsenal.zip            plasma_arsenal.zip
                                  └─ items.json
 ```
 
+### The in-game mod catalog
+
+Players browse and install shared mods in the game (**Mods > Mod Browser > Explore Mods**), with each mod's preview,
+description, author, views and downloads. To list yours, add one small file to
+[gof2r-mods](https://github.com/JoppieToppie/gof2r-mods) by pull request; its README explains it. The easiest way is to
+point the file at your own GitHub repository. Then every new release there, with a higher `version` in `mod.json`,
+reaches players as an update within the hour, with no further pull request.
+
 ## mod.json
 
 Every mod needs a `mod.json` at its top level:
@@ -292,6 +300,7 @@ energy cells.
 | `radarShowsCargo` | 31 | 1 = shows a locked ship's cargo (its first entry); 2 = its whole hold (see [Scanner readouts](#scanner-readouts)) |
 | `drillSpeed` | 32 | Mining laser speed |
 | `miningYield` | 33 | Mining laser yield |
+| `coreYield` | 189 | Cores from a completed class-A asteroid, capped to free cargo. Default 1; negative values act as zero. Applies to drills and mining beams independently of ore yield. |
 | `cabins` | 34 | Passenger cabins |
 | `cloakDurationMs` | 35 | How long the cloak lasts (ms) |
 | `cloakChargeMs` | 36 | Cloak charge time (ms) |
@@ -324,13 +333,26 @@ energy cells.
 | `scanShip` | 140 | Scanners: 1 = the lock plate names the locked ship's hull, "Pirate · Phantom 85%" (see [Scanner readouts](#scanner-readouts)) |
 | `scanHitpoints` | 141 | Scanners: 1 = a new lock shows the ship's shield, armor and hull |
 | `scanWeapons` | 142 | Scanners: 1 = a new lock shows the ship's weapons |
+| `pitchTurnRate`, `yawTurnRate`, `rollTurnRate` | 191 to 193 | Independent pitch, yaw and roll rate bonuses (%) |
+| `pitchTurnAcceleration`, `yawTurnAcceleration`, `rollTurnAcceleration` | 194 to 196 | Independent pitch, yaw and roll response / ramp bonuses (%) |
+| `strafeAcceleration` | 197 | Lateral acceleration bonus (%) in free flight |
+| `hoverSpeed`, `hoverAcceleration` | 198 to 199 | Vertical thrust speed and acceleration bonuses (%) in free flight |
+| `reverseSpeed`, `reverseAcceleration` | 200 to 201 | Reverse thrust speed and acceleration bonuses (%) in free flight |
+| `forwardAcceleration` | 202 | Forward thrust acceleration bonus (%) in free flight |
 | `tractorNoLock` | 137 | Tractor beams: 1 = the scanner never locks a container; every beam takes containers by itself (see [Multi-grab tractor beams](#multi-grab-tractor-beams)) |
-| `shieldDamage` | 124 | A weapon's damage to a shield in percent (default 100; the Disruptor Laser and items based on it 200). What the shield doesn't absorb hits the armor and hull at the plain damage. Only ships with a shield feel it: the players (each other in multiplayer), not the game's NPCs |
+| `shieldDamage` | 124 | A weapon's damage to a shield in percent (default 100; the Disruptor Laser and items based on it 200). What the shield doesn't absorb hits the armor and hull at the plain damage. |
+| `damageType` | 190 | Optional explicit damage channel: `1` = energy, `2` = ballistic; unset / `0` keeps the original damage behaviour. This is not inferred from the weapon category. |
+| `energyResistance` | 183 | Optional shield resistance to energy damage, percent (0–100). The shield takes less energy damage and overflow still reaches armor / hull. |
+| `ballisticResistance` | 184 | Optional shield resistance to ballistic penetration, percent (0–100). Ballistic hits damage shield and hull together; penetration is reduced by this resistance multiplied by the remaining shield fraction. |
 | `echoDelayMs` | 127 | A second, weaker blast at each hit, this many ms after it (0 or none = no echo; see [Echo blasts](#echo-blasts)) |
 | `echoPercent` | 128 | The echo's damage, EMP and size in percent of the shot's (default 50) |
 | `echoRadius` | 129 | The echo's reach in game units (0 = the gun's own `blastRadius`) |
 | `echoExplosion` | 130 | The explosion the echo shows: 0 ship, 8 to 10 scatter (8 the default), 11 shock blast, 13 fireworks; -1 none |
-| `missileDefense` | 131 | Missile defense: with this item mounted, the ship's automatic turrets shoot down the homing missiles flying at it within this reach (game units, 20 per metre), before turning to enemy ships. Any item can carry it; on a seatless cabin (`"base": 91`, `"cabinSize": 0`) it changes nothing else and the shop calls it "Missile defense". Another player's missiles in multiplayer are left alone |
+| `missileDefense` | 131 | The automatic turrets can shoot down covered incoming ordnance within this reach (game units, 20 per metre), then resume enemy targeting. Any item can carry it; on a seatless cabin (`"base": 91`, `"cabinSize": 0`) it changes nothing else and the shop calls it "Missile defense". Incoming PvP missiles are canceled through the server so the shooter's live projectile and a late hit are both stopped. |
+| `missileDefenseMode` | 185 | Optional behavior for items with `missileDefense`: 0 (default) is balanced and lets turrets resume enemy targeting between threats; 1 reserves automatic turrets for ordnance defense and prevents them firing at ships. If several defense items are mounted, the strongest mode applies. |
+| `missileDefenseTargets` | 186 | Optional coverage bitmask for items with `missileDefense`: 1 homing missiles, 2 rockets, 4 nukes; combine values to cover more than one type (7 covers all). Omit it or set 0 to cover all three for compatibility. If several defense items are mounted, their coverage is combined. |
+| `missileDefenseCycleMs` | 187 | Optional delay in milliseconds after an auto turret's defense shot reaches the projectile before it is destroyed (0 = destroy on arrival). The largest mounted value applies. |
+| `missileDefenseCapacity` | 188 | Optional maximum number of incoming projectiles point defense can engage at once. Positive values from mounted defense items are added; omit it or set 0 on any mounted defense item for unlimited capacity. |
 | `cruiseSpeed` | 133 | A cruise drive's speed factor in hundredths (400 = x4; > 0 makes an item based on the Khador Drive a cruise drive, see [Cruise drives](#cruise-drives)) |
 | `interstellar` | 135 | 1: the mounted cruise drive also flies the space between the systems ([Cruise drives](#cruise-drives)) |
 | `cruiseRange` | 134 | Cruise drive: the distance one leg of energy cells buys (game units, 20 per metre; default 60000 = 3 km) |
@@ -950,11 +972,11 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `modelPitch`, `modelRoll` | More turns in degrees (about the side axis and the length axis), for a model lying nose up or on its side in its file. |
 | `modelOffset` | `[x, y, z]` in game units (like the mounts): the sized model moved off the ship's centre, the point it turns, docks and flies around. |
 | `icon` | The shop icon, a PNG of 180 x 88 like the originals (the ship on the plate), or one of the game's (`"gof2:ship_028"`). None = the Phantom's (on a game model: that ship's). |
-| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x toward the pilot's left, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"turretUp": [x, y, z]` is the way its base faces, in the same axes: `[0, 1, 0]` on top (the default), `[0, -1, 0]` under the hull (or `"upsideDown": true`), `[1, 0, 0]` / `[-1, 0, 0]` the left / right side, `[0, 0, 1]` the nose, or any slant; the Mod Builder sets it from the hull's surface where you place the turret), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; `"glowShape"` gives it another outline in that box: `"round"` (the default), `"rounded"` (a rectangle with rounded corners), `"square"` (a square or, with a different half width and half height, a rectangle), `"hexagon"`, `"diamond"` or `"triangle"`). |
+| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x toward the pilot's left, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (optional `"turretScale": 2.5` multiplies this mount's turret model size; 1 = default, 0.01–1000 supported; `"turretUp": [x, y, z]` is the way its base faces, in the same axes: `[0, 1, 0]` on top (the default), `[0, -1, 0]` under the hull (or `"upsideDown": true`), `[1, 0, 0]` / `[-1, 0, 0]` the left / right side, `[0, 0, 1]` the nose, or any slant; the Mod Builder sets it from the hull's surface where you place the turret), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; `"glowShape"` gives it another outline in that box: `"round"` (the default), `"rounded"` (a rectangle with rounded corners), `"square"` (a square or, with a different half width and half height, a rectangle), `"hexagon"`, `"diamond"` or `"triangle"`). |
 | `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). A customizable ship's is measured from its build instead. |
 | `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point; a customizable ship's primary / secondary mounts may also carry `"rotation"`, see [Customizable ships](#customizable-ships)), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; `"glowShape"` gives it another outline in that box: `"round"` (the default), `"rounded"` (a rectangle with rounded corners), `"square"` (a square or, with a different half width and half height, a rectangle), `"hexagon"`, `"diamond"` or `"triangle"`; with `engineFx`, `"fxScale"` sizes that exhaust's effect and `"rotation"` turns the way it blows, as a weapon mount's below;
 `"outline": [x0, y0, x1, y1, ...]` the nozzle's shape seen from behind, game units around the mount, for the [exhaust
-styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet fires whenever the ship strafes, rises, sinks or reverses against it, and with no input the jets blowing along the ship's drift fire to brake it, like EVERSPACE 2's lateral thrusters; only on the player's ship. Its colour is the hue of the `lateral thruster` colour slot, else of the flames' boost colour, at EVERSPACE 2's own brightness: a slot's `intensity` doesn't change it), 5 booster (a ship with engine flames: EVERSPACE 2's booster socket, its trail and light in `boostColor` while boosting; `"socketScale"` sizes them, as on an exhaust), 6 contrail point (EVERSPACE 2's wing-tip contrails: a white ribbon trailing from the point while boosting and flying nose first, `"socketScale"` its width and, below 1, its faintness; on every ship, `"es2Engine": { "contrails": false }` turns a ship's off), 7 headlight fixture (`"direction": [x, y, z]` the way it shines: a lens flare there while the player's headlights are on (the Headlights key, L), and materials named `Headlight` glow only then; the light itself is the player's one headlight at the nose, on any ship). |
+styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet fires whenever the ship strafes, rises, sinks or reverses against it, and with no input the jets blowing along the ship's drift fire to brake it, like EVERSPACE 2's lateral thrusters; only on the player's ship. Its colour is the hue of the `lateral thruster` colour slot, else of the flames' boost colour, at EVERSPACE 2's own brightness: a slot's `intensity` doesn't change it), 5 booster (a ship with engine flames: EVERSPACE 2's booster socket, its trail and light in `boostColor` while boosting; `"socketScale"` sizes them, as on an exhaust), 6 contrail point (EVERSPACE 2's wing-tip contrails: a white ribbon trailing from the point while boosting and flying nose first, `"socketScale"` its width and, below 1, its faintness; on every ship, `"es2Engine": { "contrails": false }` turns a ship's off), 7 headlight fixture (`"direction": [x, y, z]` the way it shines: a lens flare there while the player's headlights are on (the Headlights key, L), and materials named `Headlight` glow only then; the light itself is the player's one headlight at the nose, on any ship), 8 external docking hardpoint (`"rotation": [x, y, z]` in degrees; a ship needs this as well as an external role and a station attachment). |
 | `engineGlowRadius` | Size of the engine flame at each exhaust mount (game units, default 24); a mount's `glowSize` replaces it. |
 | `engineGlowColor` | `[r, g, b]` (0 to 1): the flame colour of every exhaust without its own `glowColor`. None = the game's own blue-white flame. |
 | `materials` | Optional. Replace the model's own materials, see below. |
@@ -976,6 +998,7 @@ styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way 
 | `deathFx` | Optional. The ship's own death effects in place of the game's explosion (its sound stays): a JSON file in the mod, `{ "main": { "emitters": [...] }, "dying": { "emitters": [...] }, "dyingCount": [3, 12] }`: `main` plays where it explodes, `dying` that many times over an NPC's death tumble at points about its hull. Each emitter is a particle system: `image` (a PNG, white on black, added; `sheet` [columns, rows] of frames with `frames` (the frame over its life, samples 0..1 of the sheet) or `randomFrame`), `bursts` [time, count, ...] and `rate` (a second, over `duration`), `life`, `size` (game units), `speed` (outward, or along the ship's nose with `forward`) and `spin` (degrees a second) as [min, max], `sphere` (the radius they start in), `drag` (the share of its speed lost a second), `inherit` (of the ship's motion, default 1), `randomRotation`, `stretch` (drawn along its flight, that long for its width), `color` (its brightest colour; above 1 glows), `colorOverLife` [r, g, b, ...] and `alphaOverLife` (samples 0..1 over its life, times it), `sizeOverLife` (samples, times `size`), `"blend": "alpha"` (the image drawn over what is behind instead of added: smoke, debris; `color` then a plain tint, 0 to 1), `"light"` (no particles: a point light of that range in game units, `lightIntensity` bright, its `color`, dimming and growing with `colorOverLife`, `alphaOverLife` and `sizeOverLife` over its `life`, from its first burst). `"trail": { "image", "every", "life", "size", ... }` leaves puffs of that image every `every` game units along each particle's flight (with no `image` of its own, the particle is only the trail's source: burning debris); `"noise": [strength, cell]` shakes the particles with a turbulence (game units a second, its cells' size). Ships may share a file. Only a look: other players see the game's explosion. |
 | `driftFx` | Optional. The look of [Chorus flight](#flight-styles)'s drift on your ship while it drifts (Chorus's Forsaken): `{ "parts": [ { "node": "SCK_VFX_Drift_L2", "fx": { "emitters": [...] }, "fields": [...] }, ... ] }`. Each part sits on a node of the ship's model, by name (none or a missing one: the ship itself), and moves with it (a wing folding out). `fx` is a list of particle emitters as in `deathFx` (below), in the node's frame, with three more fields: `"loop": true` emits again every `duration` until the drift ends (a light flashes again), `"local": true` keeps its particles moving with the node, `"at": [x, y, z]` is where they start (game units: x right, y up, z forward in the node's frame). `fields` are energy shells shown while the drift lasts: `{ "mesh": "fx/shell.json", "band": "...png", "mask": "...png", "distort": "...png", "line": "...png", "background": "...png", "color": [r, g, b, a], "exposure": 3 }`, the mesh a JSON file (`positions` and `normals` [x, y, z, ...] in game units in the node's frame, `uvs` [u, v, ...] with v down, `triangles`), drawn with Chorus's M_Drift_MagnetField (the five greyscale maps; its other values, such as `tiling`, `pan`, `fresnel`, default to Chorus's). As the drift ends the emitters stop and their particles live out. Only a look, only your ship. |
 | `wingmanDevice` | Optional. What a hired wingman flying this ship uses (Galaxy on Fire 3's wingmen): `"repair"` (Hull Repair: with your hull under 40 %, a quarter of it mended over 3 seconds), `"ammo"` (Ammo Supply: 5 more rounds of your selected secondary weapon when you are down to one or none) or `"charged"` (Charged Shots: its own shots do x1.75 for 5 seconds while it attacks); 55 seconds between uses. The HUD says when it does. None = nothing, like the game's wingmen. See [Wingmen](#wingmen). |
+| `dockingRole` | Optional per-ship docking eligibility: `"internal"` or `"external"`. Omitted or `null` keeps the legacy size-based rule. External docking also requires at least one `slotType: 8` ship hardpoint and a station's authored `orbit.externalDocks` point. |
 | `integrated` | Optional, also in an `override`. Equipment built into the hull, like the Kothar ships' Khador Drive (Cronus, Typhon, Nemesis) and the Specter's / Scimitar's cloak: `{ "khadorDrive": true, "cloak": true }`. `khadorDrive`: the ship can make Khador jumps without the drive in a slot (it still needs energy cells). `cloak`: `true` (the U'tool's stats), a cloak item (a number or `"mod:id"`, e.g. `96`) whose stats it has, or `false`; a cloak the player mounts replaces it, and with the Gameplay option "Cloak bay on cloaking ships" it goes into the built-in cloak's bay instead of a slot. `false` takes an original ship's away. `items`: any equipment built in, a list of item numbers, `"mod:id"` keys or `{ "item": ..., "amount": n }` (a secondary weapon's starting ammo, default 10), e.g. `"items": [46, { "item": 36, "amount": 20 }, 54]`. Built-in items work like mounted ones but take no slot, show on the hangar's Ship tab under "Built into the ship", and can't be demounted, sold or stored; they stay with the ship type when the player changes ships. A one-per-ship item the player fits (a shield, armor, a booster, a scanner, a drill, a cloak...) takes the built-in one's place without a slot, and the built-in one is back when it is demounted; built-in weapons and turrets add to the ship's own slots. A built-in launcher's missiles are refilled by buying more; a one-off item that is used up (an emergency system) is back at the next docking. An empty list takes them away. |
 
 Ship and station materials are lit physically (URP Lit): they reflect the system's sky by their smoothness (the
@@ -1091,7 +1114,8 @@ How a ship is seen, for a new ship or an original through `override` (each one o
 - `camera`: the chase camera, in game units: `distance` behind the ship's pivot and `height` above it, aimed at a point
   `lookHeight` above the pivot and `lookAhead` ahead of it (negative: behind it). The game's are 1338 / 600 / 600 / -650 for
   every ship, made for hulls of about 1200-1400 units; a bigger hull needs the camera further out or it fills the screen.
-  A field left out keeps the game's.
+  A field left out keeps the game's. Without a `camera`, a hull over 150 m across gets one fitted to its size. Free
+  flight's EVERSPACE 2 camera uses `distance` and `height` only: it looks along the ship.
 - `cockpit`: where the cockpit view (F2, or holding the camera button) sits, a point like a hardpoint's `position_engine`
   (x the pilot's left, y up, z the nose). Without it the game puts the seat on the bow from the hull's shape. Either way
   the seat stays behind the frontmost gun, so its shots start in view.
@@ -1433,6 +1457,7 @@ edits them in space, the hull beside the orbit's station with its hardpoints and
   **`"hostile": true`** makes it always the player's enemy.
 - **`hull`** sets its hit points (x the difficulty), or **`hullFactor`** multiplies its default (a new capital ship: 5 x the
   Terran battleship's, as the enhanced battleship has; a freighter: the freighter's; a boss: the pirate boss's).
+  **`shield`** adds an optional NPC shield pool (points); **`shieldRechargeMs`** is the time for a full recharge (0 = no regeneration). **`energyResistance`** and **`ballisticResistance`** are shield resistances in percent (0–100): energy resistance reduces incoming energy damage to the shield, while ballistic resistance reduces hull penetration in proportion to the remaining shield fraction. These are opt-in; NPCs without these fields keep their original hull-only behaviour.
   **`gunFactor`** multiplies its guns' and turrets' damage. A game capital ship given a hull (or a ship) can be destroyed.
 - **`hardpoints`**: its turrets and other parts, in the format of `ships.json`'s `"subsystems"` (above) with `"position"`
   (game units in the ship's frame), `"kind"` `"turret"` by default and a turret without an `"item"` the game's Terran
@@ -1644,7 +1669,12 @@ Everything else is a normal ship's (stats, `mounts`, `icon`, glows, `lounge`, `d
 fires from, and glows at, its parts' mounts of each slot type (with the tier extensions' at that tier), and uses the ship's own
 `mounts` only for a slot type none of its parts has. A primary or secondary mount may carry `"rotation"`: how its weapon model is turned on the hull, in the ship model's frame (x
 right, y up, z forward), as Euler degrees `[x, y, z]` or a quaternion `[x, y, z, w]` (a gun on a slanted wing); the shots
-still fly along the nose, from the turned model's muzzle. `"nodes": ["<node name>", ...]` names parts of the ship's own
+still fly along the nose, from the turned model's muzzle. A secondary mount may also carry `"launchRotation"`, a separate
+turn from the nose that sets its shots' initial direction (Euler degrees `[x, y, z]` or quaternion `[x, y, z, w]`; absent =
+straight ahead). It does not change the weapon model's appearance, and `"rotation"` does not redirect the shot. A secondary
+mount's `"lockDelayMs"` delays homing by that many milliseconds after launch (e.g. `1000` for one second; absent / zero =
+immediate homing). Both fields are per hardpoint, so identical missiles on different mounts can behave differently. Primaries,
+turrets and NPC weapons ignore them. `"nodes": ["<node name>", ...]` names parts of the ship's own
 model (a hardpoint's pylon) that show only while that mount carries a weapon: with two guns mounted, only the first two
 mounts' pylons show. So wings can carry their guns, rears their exhausts, and a turret socket
 comes with the wing set that has one (give the ship as many turret slots as its default build has turret mounts).
@@ -1714,8 +1744,10 @@ either style flies by (see [Flight rules](#flight-rules)).
 **Items** (their `stats`, see [Stats](#stats)): a booster's and a Steering Nozzle's own stats (`boostSpeed`,
 `boostRechargeMs`, `boostDurationMs`, `agility`) count in both styles unless `flightScope` keeps them to one. On top of that,
 any item (an engine part, a module, a booster) can carry percentage bonuses for both styles (`topSpeed`, `turnRate`,
-`strafeSpeed`), for the original only (`originalTopSpeed`...) or free flight only (`freeTopSpeed`, ..., `freeAcceleration`), and
-`freeBoostFactor` sets free flight's boost outright (by default free flight takes the booster's original boost speed x 3.2 / 3:
+`strafeSpeed`, `pitchTurnRate`, `yawTurnRate`, `rollTurnRate`, `pitchTurnAcceleration`, `yawTurnAcceleration`,
+`rollTurnAcceleration`). Movement-axis modifiers are `strafeAcceleration`, `hoverSpeed`, `hoverAcceleration`,
+`reverseSpeed`, `reverseAcceleration` and `forwardAcceleration`; acceleration modifiers apply in free flight. Existing
+`original*` and `free*` fields remain available for legacy style-specific bonuses, and `freeBoostFactor` sets free flight's boost outright (by default free flight takes the booster's original boost speed x 3.2 / 3:
 Linear and Cyclotron x1.6, Synchrotron x2.67, Me'al x3.2, Polytron x4.27). The bonuses of every mounted item and of the ship
 add up; no total goes below -90 %.
 
@@ -1741,7 +1773,7 @@ bonuses instead.
 | Field | |
 |---|---|
 | `flightStyle` | `"free"`, `"chorus"` or `"original"`: this ship always flies so, whatever the player's option (`"player"` or no field: the player's). Chorus flight is a free-flight style: the `free` bonuses and `flightScope` 2 count in it too. |
-| `flight` | Bonuses in % for both styles: `topSpeed`, `turnRate`, `strafeSpeed`, `acceleration` (free flight only: the original has none), `boostFactor` (free flight's boost in hundredths of the top speed), `fullStopDamage` and `lowSpeedResistance` (EVERSPACE 2's ship passives, see the [stats](#stats) 138 / 139: the guns hit harder while the ship stands still, it takes less once it has flown slower than 30 m/s for a second). `original` / `free` inside it: the same, for one style only. `rules`: the ship's own [flight rules](#flight-rules). |
+| `flight` | Bonuses in %: `topSpeed`, `turnRate`, `strafeSpeed`, `pitchTurnRate`, `yawTurnRate`, `rollTurnRate`, `pitchTurnAcceleration`, `yawTurnAcceleration`, `rollTurnAcceleration`, `strafeAcceleration`, `hoverSpeed`, `hoverAcceleration`, `reverseSpeed`, `reverseAcceleration`, `forwardAcceleration`, `acceleration`, `boostFactor` (free flight's boost in hundredths of the top speed), `fullStopDamage` and `lowSpeedResistance` (EVERSPACE 2's ship passives, see the [stats](#stats) 138 / 139: the guns hit harder while the ship stands still, it takes less once it has flown slower than 30 m/s for a second). The acceleration fields count in free flight only (the original has none); the axis turn rates and their response in both styles. `original` / `free` inside it: the same, for one style only. `rules`: the ship's own [flight rules](#flight-rules). |
 
 **Who decides the style**, first match: an event or mission (the **Set Flight Model** node, `/flightstyle`), the ship flown,
 the mod campaign (`campaign.json`'s `"flightStyle"`), a new-game option that is on (`gameoptions.json`'s `"flightStyle"`), then
@@ -1755,8 +1787,9 @@ Nozzle and Kaamo Club upgrades), its boost from the booster.
 
 ### Flight rules
 
-Past the bonuses, **every number the player's ship moves by** can be changed: the top speed, how fast the turn rate builds
-and dies away, the strafe, the dodge, the level-out, free flight's acceleration, braking, dampeners, boost and auto-roll.
+Past the bonuses, **every number the player's ship moves by** can be changed: the top speed, how fast each turn axis builds
+and dies away, the strafe, the dodge, the level-out, free flight's forward / reverse / lateral / vertical acceleration,
+braking, dampeners, boost and auto-roll.
 A mod's **`flight.json`** sets them for every ship the player flies while the mod is on; a ship's `"flight": { "rules": { ... } }`
 sets them for that ship (over `flight.json`). Later mods win field by field; anything not named keeps the game's value.
 
@@ -1817,6 +1850,10 @@ per ms.
 | `levelGraceMs` | 300 | After this long (ms) a push ends a level-out without the neutral stick. |
 | **Free flight: turning** | | |
 | `freeTurnRateDeg` | 125 | Top turn rate at handling 100, degrees per second. |
+| `freePitchRateDeg` | 0 (uses `freeTurnRateDeg`) | Pitch top rate at handling 100, degrees per second. |
+| `freeYawRateDeg` | 0 (uses `freeTurnRateDeg`) | Yaw top rate at handling 100, degrees per second. |
+| `freeRollRateDeg` | 0 (uses `freeTurnRateDeg x freeRollShare`) | Roll top rate at handling 100, degrees per second. |
+| `freePitchRampMs`, `freeYawRampMs`, `freeRollRampMs` | 0 (uses `freeTurnRampMs`) | Time for that axis to reach its top rate and return, ms. |
 | `freeTurnExponent` | 0.75 | The turn rate grows with (handling / 100) to this power. |
 | `freeTurnAboveShare` | 0.1 | The share of the turn rate above the top rate at handling 100 that counts. |
 | `freeTurnRampMs` | 400 | Time from no turn to the top turn rate and back, ms. |
@@ -1827,7 +1864,10 @@ per ms.
 | `freeStrafeShare` | 0.5 | Top speed sideways, of the forward one. |
 | `freeHoverShare` | 0.5 | Top speed up and down, of the forward one. |
 | `freeAccelForward` | 1.3851 | Forward acceleration, top speeds per second (at handling 100). |
-| `freeAccelSide` | 1.88877 | Backward, sideways and up / down acceleration, their top speeds per second. |
+| `freeAccelSide` | 1.88877 | Sideways and up / down acceleration, their top speeds per second. |
+| `freeAccelReverse` | 0 (uses `freeAccelSide`) | Backward acceleration, in backward top speeds per second; does not change backward top speed. |
+| `freeAccelStrafe` | 0 (uses `freeAccelSide`) | Left/right acceleration, in sideways top speeds per second. |
+| `freeAccelHover` | 0 (uses `freeAccelSide`) | Up/down acceleration, in vertical top speeds per second. |
 | `freeAccelHandlingExponent` | 0.5 | The acceleration grows with (handling / 100) to this power. |
 | `freeEaseExponent` | 3 | Dampeners on: the acceleration eases out as 1 - (speed / top speed) to this power. |
 | `freeBrakeShare` | 0.25 | Dampeners on: braking, of the forward acceleration. |
@@ -1837,7 +1877,7 @@ per ms.
 | **Free flight: boost** | | |
 | `freeBoostScale` | 1.06667 | Boost top speed = the booster's original boost x this (of the top speed). |
 | `freeBoostFallback` | 3.2 | Boost top speed of a booster without a boost speed, of the top speed. |
-| `freeBoostAccel` | 1.63 | Acceleration while boosting, of the forward one. |
+| `freeBoostAccel` | 1.63 | Acceleration multiplier while boosting, applied to the requested forward, reverse, strafe and vertical movement. |
 | `freeBoostDurationMs` | 3500 | A full boost pool lasts this long (ms) for a booster without a duration. |
 | `boostRestartEnergy` | 0.2 | An emptied boost pool boosts again from this share. |
 | **Free flight: auto-roll** | | |
@@ -2092,6 +2132,7 @@ ahead of it; pitch up from the horizon.
 | `skybox` | The orbit's own sky, with the fields of a system's [`skybox`](#skies), in place of the system's sky in this orbit alone (each of a system's stations can show its own). |
 | `skyRotation` | `[x, y, z]` degrees: the sky's turn in this orbit, like the system skybox's `rotation` but for this station alone (over the system's `rotation` and `sunAligned`): each orbit can show its sky from its own angle, lined up with its own `sun`. |
 | `pads` | Docking pads outside the station, docked at from space like the arms in the Luur mission: `[ { "position": [x, y, z], "approach": [x, y, z], "facing": [x, y, z] } ]`. `position` is where the ship rests, `approach` where it comes in from (default 2000 units above the pad), `facing` where its nose points (default `z`). The player docks at the nearest free one ("DOCK" on the station's pads target); missions hear it as `on pad` (see the steps). With `"station": "nodock"` they are the only way to dock. |
+| `externalDocks` | Manually placed exterior attachment transforms for eligible large ships: `[ { "position": [x, y, z], "rotation": [x, y, z] } ]`, game units and Euler degrees in the station-root frame. Used only with a ship's `slotType: 8` hardpoint and an external docking class/tag. These are separate from `pads`, which remain for mission/NPC docking. |
 | `pirateHeld` | `true`: pirates hold this station on every visit, like the Kaamo Club at the start (four pirate outposts and their fighters; no docking, jumpgate or Khador Drive until the outposts fall). Driven out, they come back after 30 minutes of play. `false` keeps the station free in a system that is `pirateHeld`. |
 | `wrecks` | A field of wrecks to salvage, like EVERSPACE 2's wreck fields: `{ "count": 1-60 (default 12), "centre": [x, y, z], "spread": units across (default 60000) }`, or `true` for 12 at the default place. Each visit lays out that many wreck containers at random in the field, each with a freighter's loot (or a little Space Waste); they stay until emptied. `"models"`: glTF / GLB wreck hulls in your mod laid among them (`"hulks"` of them, default twice the models up to 8; one at random each; the largest model `"size"` units at its largest side, default 8000, the others in proportion as you made them, each a little bigger or smaller; turned at random, the same for every player), with `"materials"` like a station model's; the player slides along each one's box and pilots steer around it. |
 | `containers` | Closed containers, like EVERSPACE 2's: `{ "count": 1-40 (default 6), "centre": [x, y, z], "spread": units across (default 40000), "bulletproof": share 0-1 (default 0.3) }`, or `true` for 6 at the default place. Each visit lays them out at random in the field, each holding 1 to 3 freighter loot rolls (a bulletproof one 2 to 4: EVERSPACE 2's counts for its containers and rare ones). A hit opens an ordinary one; shots bounce off a bulletproof one. Either opens with the action key (OPEN, F) within 360 m in front of your ship. Opened, it throws its loot out as crates for the tractor beam, which stay until emptied. Not in the alien orbit or interstellar space. `"loot": [ { "item": "mod:core", "amount": 2 }, ... ]` puts fixed items in them on top, an entry a container (the bulletproof ones first), each found once a game: once its container is opened it doesn't come back. `"model"` and `"bulletproofModel"` (glTF / GLB files in the mod) draw them, as big as the race's container, with `"materials"` like ships.json's (by the model's mesh or material names); without them the race's container. `"cloaked": [ [x, y, z], ... ]` (up to 10) adds cloaked containers at those places, like EVERSPACE 2's: a shimmer in space with no marker until your ship is within 144 m ("Container nearby" shows within 2 km), opened with the action key, with a rare container's loot and the fixed loot first. `"secure": [ { "at": [x, y, z], "triggers": [ [x, y, z], ... ], "ordered": true/false, "retrigger": seconds } ]` (up to 6, each with 1-8 triggers) adds locked containers, like EVERSPACE 2's armoured ones: small red lights are placed around them, and shooting one lights it green; once all are lit the container bursts open. With `"ordered"` they must be shot in the listed order (a wrong one puts the earlier ones out again); with `"retrigger"` each lit one goes dark after that many seconds, so you have to be quick. A secure container can also have `"sockets": [ { "at": [x, y, z], "orb": [x, y, z] } or { "at": [x, y, z], "coil": [x, y, z] } ]` (up to 4), which must all be filled as well (`"triggers"` may then be left out): an `"orb"` socket wants an energy sphere from the dispenser placed at the `"orb"` place (GRAB at the dispenser, the sphere fades after 40 s), a `"coil"` socket the energy coil placed at the `"coil"` place (GRAB it). A carried one hangs behind your ship, a coil turning with it as in EVERSPACE 2 (DROP lets it go, drifting on as it moved, a coil let go mid-turn tumbling on); firing your guns while carrying throws it ahead instead, and it goes into a socket of its kind it passes within 36 m. `"conductors": { "sources": [...], "statics": [...], "portables": [...], "receivers": [...], "radius": 4000, "receiverRadius": 40 }` (places as `[x, y, z]` or `[x, y, z, radius]`, up to 12 of each) adds a conductor puzzle like EVERSPACE 2's: energy jumps from a source to any conductor within reach (either one's radius, default 4000 units = 200 m; a receiver's 40), on along the chain, shown as beams. Carry (GRAB / DROP / fire to throw) the portable conductors into gaps until every receiver is energized for 1.5 s. Containers with exactly the same conductors share one puzzle. `"sounds": { "grab", "hold", "drop", "throw", "dispenser", "conductor", "unlock" }` names your [sounds](#sound-effects) for the puzzles: grabbing, a loop while something is carried, letting go, throwing, a loop at each dispenser, a hum at each energized receiver, and a secure container bursting open (each optional). |
@@ -2159,6 +2200,8 @@ a race goes (a system's or ship's `race`, `/spawn`, `/standing`, `standing(...)`
 | `relations` | `{ "<race>": "friend" \| "neutral" \| "enemy" }`: who its ships fight. Mods' races by id or `"mod_id:id"`, the game's races by word (`terran`, `vossk`, `nivelian`, `midorian`, `pirates`, `void`, `specters`). A relation one side leaves out is the other side's; when neither names it the two are enemies if either is `hostile` or one is the game's pirates, Void or Specters, else neutral. |
 | `diplomats` | `false`: no lounge diplomat reconciles it (default `true`, `false` for a hostile race). |
 | `gun` | An item (a number or `"mod:id"`): the gun look and sound of its NPC fighters. Default: its look race's. |
+| `visitor` | Optional path to a `.glb` model in the mod, used for this race's Space Lounge visitors instead of the look race's built-in figure. The model origin should be at the feet and the model should be authored in GoF2 model units (the loader applies the game's 0.05 scene scale). Its scene and mesh renderers (static or skinned) are required; embedded textures use the normal mod GLB texture pipeline, and its glTF animations loop while the visitor is shown. |
+| `visitorScale` | Optional positive multiplier for the visitor model size (default `1`). Use it to fine-tune a model authored in GoF2 model units. |
 
 In the Space Lounges of a mod race's system, now and then (the game's 35 %) a diplomat of a race of the same mod that
 the player is at war with offers to restore it to neutral, for |standing| / 100 x 16 000 credits, like the game's
@@ -3309,7 +3352,8 @@ named can use them: a **Dialog** page, a **Radio** call, an **Ask** / **Vote** q
 | `id` | **Required.** a-z, 0-9, _ and -. |
 | `name` | The name shown over the portrait (a string, or per language). Default: the id. |
 | `portrait` | **Required.** A PNG for the game's portrait box, 4:5 (320 x 400 stays sharp on big screens). It covers the box, its top kept. Leave it transparent around the character and the game's portrait background shows behind, like the game's own faces. |
-| `race`, `gender` | What the game draws by race: the figure standing in the Space Lounge when the character is a bar mission's client, the name's colour in the dialogue. Default `terran`, `male`. |
+| `race`, `gender` | The character's race and gender: the race sets the dialogue name colour and, for a bar-mission client, chooses the lounge figure. A race may be a game race word or a custom race id / `"mod_id:race_id"`. If omitted, a bar-mission client inherits the mission's race; omitted gender inherits the mission client's gender (default `male` otherwise). |
+| `silhouette` | Optional independent Space Lounge figure: `terran`, `vossk`, `nivelian`, `midorian`, `void`, `cyborg`, `octopod`, `bobolian` or `grey`. Omit it to use the selected race's visitor (including a custom race's `visitor` GLB) or, for game races, the original race / portrait-based figure. An explicit built-in silhouette overrides a custom race mesh. `cyborg`, `midorian` and `void` use the original Terran male mesh; `octopod` uses the game's Multipod mesh. |
 | `mirrored` | `true`: drawn mirrored (the game mirrors Keith's portrait). |
 | `frame` | `false`: without the faint scanlines the game draws over every portrait (a light screen look, about 10 % dark lines). |
 | `background` | `false`: without the dark, half-transparent backdrop behind the picture. It only shows through transparent parts of your PNG (a cut-out character), so a full picture looks the same either way. |
@@ -3571,3 +3615,79 @@ Nivelian interior; the system has its own sun and its own nebula sky. It also br
 `Modding/Examples/pirate_bounty` is a script mod: `scripts/main.lua` pays a bounty for every pirate you destroy, counts them
 in the save and reports the count a moment after you dock (`game.wait`), with its numbers read from `data/bounty.json`
 by the module `scripts/lib/bounty.lua` and a `/bounty` command of its own.
+
+
+## Ship classes and class-based equipment restrictions
+
+Ship classes are **mod-defined**, not assigned automatically to original ships. Add `shipClass` and optional `classTags` to a ship entry in `ships.json` (new ship or override):
+
+```json
+{
+  "id": "my_frigate",
+  "shipClass": "frigate",
+  "classTags": ["capital", "large_hull"],
+  "className": { "en": "Frigate" }
+}
+```
+
+Use `allowedClasses` and/or `excludedClasses` on an item in `items.json` (new item or override):
+
+```json
+{
+  "id": "capital_shield",
+  "base": 12,
+  "allowedClasses": ["frigate", "freighter", "cruiser", "carrier"],
+  "excludedClasses": ["civilian"]
+}
+```
+
+- A ship matches its `shipClass` and every `classTags` entry. Matching is case-insensitive.
+- An item with no class lists remains unrestricted.
+- An unclassified ship (no class and no tags) remains unrestricted. A mod must classify a hull before class restrictions apply to it; this prevents a mod's item override from unexpectedly changing every stock ship.
+- If an item has an allow-list, a classified ship must match at least one entry. If it has an exclude-list, matching any entry blocks it. If both are present, both conditions apply.
+- An empty list clears that item's corresponding restriction. Omitting a field in an override leaves an earlier mod's value intact.
+- The engine defines 16 canonical project classes: `light_fighter`, `heavy_fighter`, `light_bomber`, `heavy_bomber`, `interceptor`, `stealth_bomber`, `stealth_fighter`, `scout`, `hauler`, `light_privateer`, `privateer`, `heavy_privateer`, `frigate`, `freighter`, `cruiser`, and `carrier`. Their IDs are exposed by `ShipClassRules`; they are not automatically assigned to original hulls. Mods assign `shipClass` per hull. Additional `classTags` may still be mod-defined. The Scimitar is the `stealth_fighter`; Betty and Wasp are `scout` hulls; the Nivelian Corvette is a `cruiser`.
+- Optional `className` text (or `text/<language>.json` key `shipclass.<id>.name`) controls the scanner's display label; otherwise the ID is humanized.
+
+The rules apply when mounting or swapping equipment, when equipment is carried onto another hull, and when built-in equipment is synchronized. Incompatible mounted items are returned to the hold, not deleted. Multiplayer profile validation also moves incompatible equipment to the hold on the server, so a modified client cannot retain an invalid loadout by uploading a save.
+
+A scanner item can set `"stats": { "scanClass": 1 }` (attribute 143) to show a target ship's mod-defined class on its lock plate. Ships without a class do not show a class label. This also works for other players' ships in multiplayer.
+
+
+### Class design thesis and movement envelopes
+
+The 16 classes describe ship roles and broad handling expectations; they are **not** one-size-fits-all stat presets. Every hull is tuned individually within its class envelope. Equipment restrictions use the class identity, while movement values remain per-ship data.
+
+| Class | Role and defining characteristics | Movement intent |
+|---|---|---|
+| Light Fighter | Agile combat craft; strong handling and useful primary-weapon capability. | Responsive fighter handling within the standard dogfight speed band. |
+| Heavy Fighter | Heavier fighter with substantial weapon fit; turret-equipped fighters need at least four weapon hardpoints. Fighter classification normally uses the 75-tonne cargo boundary as a guide, not a substitute for inspecting the hull; the cargo threshold is a role boundary, not a hard-coded engine test. | More mass and momentum than a light fighter, while retaining fighter-grade control. |
+| Light Bomber | Secondary-weapon/bombing-equipment focused attack craft. | Less agile than fighters; movement must account for ordnance load and momentum. |
+| Heavy Bomber | Larger or more heavily equipped bomber; Teneta is the current assignment. | Heavier momentum than light bombers; do not tune as a fighter with extra weapons. |
+| Interceptor | High-speed combat specialist with strong primary weapons; no turrets. Turret configuration is a disqualifier for this class. | 300–500 m/s intended speed envelope; high acceleration and fast response, while preserving strong primary combat capability. |
+| Stealth Bomber | Stealth-oriented bomber role. No hull is currently assigned in the reviewed roster. | Bomber momentum and secondary-weapon priorities; stealth does not imply interceptor agility. |
+| Stealth Fighter | Stealth-oriented fighter role; Scimitar is assigned here. | Fighter handling with its own per-hull stealth trade-offs; do not classify it as a bomber. |
+| Scout | Reconnaissance and mobility specialist; Betty and Wasp are assigned here. Limited combat emphasis distinguishes it from an interceptor. | 300–500 m/s intended speed envelope, combining interceptor-like speed with fighter-like agility. |
+| Hauler | Large cargo capacity and no primary weapons; cargo role takes precedence over combat capability. | Cargo mass and inertia matter more than dogfight agility; tune each hull to its load and scale. |
+| Light Privateer | Multipurpose ship with useful cargo for its size and mixed weapon capability; Furious, Salvéhn and Cronus are assigned here. | More agile than heavier privateers; handling sits between fighters and bombers. |
+| Privateer | General-purpose privateer; Groza, Velasco, Blue Fyre, Anaan, Nuyang II and Hernstein are assigned here. | Balanced handling between fighter and bomber behaviour, with cargo and weapon compromises; privateers sit between fighters and bombers in handling. |
+| Heavy Privateer | Larger multipurpose privateer; Bloodstar, Gator Custom, S'Kanarr and Dark Angel are assigned here. | More momentum than standard privateers, but not automatically a capital-ship flight model. |
+| Frigate | Capital combat vessel. No hull is assigned in the reviewed class roster. | Capital-scale handling; fighter dogfight speed assumptions do not apply. Tune steering and translation independently. |
+| Freighter | Large transport/cargo vessel. Terran Freighter is the intended class assignment. | Cargo- and mass-led movement; slower response and substantial momentum are expected, but values remain hull-specific. |
+| Cruiser | Capital combat vessel; the Nivelian Corvette is classified as a cruiser. | Capital-scale movement with independent roll, strafe and steering tuning; not a fighter profile. |
+| Carrier | Fleet-support capital vessel. | Capital-scale movement; tune for hull size and role rather than borrowing freighter or fighter values. |
+
+**Movement baselines and control priorities**
+
+- Standard dogfighting ships should generally sit around **215–325 m/s**.
+- Interceptors and scouts should generally sit around **300–500 m/s**.
+- Forward thrust is the strongest translation axis. Reverse acceleration should be stronger than lateral strafe; vertical movement uses the same movement behaviour as strafe.
+- Reverse acceleration must be independently tunable rather than inheriting strafe acceleration.
+- Roll, lateral/vertical strafe and steering on the two turn axes must be independently tunable wherever the flight model exposes them. A ship can, for example, have excellent roll but poor strafing: the Amboss is the explicit reference case.
+- Class envelopes guide tuning; they do not override individual hull identity. Do not flatten ships into identical movement presets just because they share a class.
+
+**Reviewed assignment decisions**
+
+The additional classes were deliberate additions to the original fourteen: **Stealth Fighter** (Scimitar) and **Scout** (Betty, Wasp). Other accepted corrections include VoidX remaining Heavy Fighter, Gryphon remaining Heavy Fighter, Nuyang II and Hernstein as Privateers, Dark Angel as Heavy Privateer, and Cronus as Light Privateer. Stealth Bomber remains unassigned. The Frigate class remains available even where no hull is assigned in the reviewed roster. The Corvette is a Cruiser, not a Frigate or Privateer.
+
+These assignments are mod data decisions, not automatic base-game classifications. A mod that wants these classifications must explicitly set `shipClass` on its ship entries.
