@@ -18,6 +18,10 @@
 // a picture and a frame-rate sample each time. The fps samples include the GPU frame
 // time (FrameTimingManager: development builds made by PlayerAssetsBuild have frame timing stats on); -gof2cap <fps> caps
 // them (e.g. to compare GPU timings with another program at its frame rate: the GPU's clock follows its load).
+// -gof2stations <s,s,...> flies these stations' orbits instead of 0, 27 and 101, -gof2dock <s> docks that one instead of 0:
+// each a station number or a mod's station key ("mod_id:id", ModWorld.StationIndexOf), e.g. a mod's stations and its own
+// hangar (-gof2stations gof3_ships:manticore -gof2dock gof3_ships:manticore). Each view also reports its glowing materials
+// (_EMISSION and a colour) by emission flag and shader.
 
 using System;
 using System.Collections;
@@ -41,6 +45,8 @@ namespace GoF2Remake
         int fsrLite;   // -gof2fsrlite: 1 FSR 4 Lite for the run, 2 switched in the hangar
         float renderScale;
         int fpsCap;   // -gof2cap: the fps samples' frame cap (0: uncapped)
+        string[] stations = { "0", "27", "101" };   // -gof2stations
+        string dock = "0";   // -gof2dock
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Begin()
@@ -62,6 +68,10 @@ namespace GoF2Remake
             if (cap >= 0 && cap + 1 < args.Length) int.TryParse(args[cap + 1], out c.fpsCap);
             int rs = Array.IndexOf(args, "-gof2scale");
             if (rs >= 0 && rs + 1 < args.Length) float.TryParse(args[rs + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out c.renderScale);
+            int st = Array.IndexOf(args, "-gof2stations");
+            if (st >= 0 && st + 1 < args.Length) c.stations = args[st + 1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray();
+            int dk = Array.IndexOf(args, "-gof2dock");
+            if (dk >= 0 && dk + 1 < args.Length) c.dock = args[dk + 1];
             Directory.CreateDirectory(c.folder);
             c.StartCoroutine(c.Run());
         }
@@ -86,6 +96,14 @@ namespace GoF2Remake
                 yield return null;
             }
             yield return Wait(() => SceneManager.GetActiveScene().name == "MainMenu", 1f, "the main menu");
+            // The mods that are on: everything they load (the loading screen's work: models, hangar shadows, ship icons).
+            float modsStart = Time.realtimeSinceStartup;
+            yield return Wait(() => !Modding.ModLoading.Busy, 900f, "the mods to load");
+            var built = Modding.ModShips.Built.ToList();
+            if (built.Count > 0)
+                Line($"mods loaded in {Time.realtimeSinceStartup - modsStart:0} s: {built.Count} mod ship(s); icons drawn from the model " +
+                     $"{Modding.ModShipIcons.Count} ({Modding.ModShipIcons.Drawn} drawn now, the rest cached); still without an icon " +
+                     $"{built.Count(b => Modding.ModShips.Icon(b.ship) == null)}");
             var keys = Enumerable.Range(0, 27).Select(k => k.ToString("000")).Where(World.RebuiltPlanets.Has).ToList();
             Line($"HD resources: {(GameContent.HdInstalled ? "own folder " + GameContent.HdRoot + (GameContent.HdActive ? ", on" : ", off") : OriginalPacks.HdInCopy(GameContent.Root) ? "in the copy" : "none")}");
             Line($"packs applied: {string.Join(", ", OriginalPacks.Applied(GameContent.Root).Keys)}; 3D planets: {keys.Count} ({string.Join(" ", keys)}); " +
@@ -137,8 +155,10 @@ namespace GoF2Remake
                 PlayerPrefs.SetInt(OriginalSetup.HdAskedPref, asked);
             }
             else Line("HD window over the menu: couldn't open");
-            foreach (int station in new[] { 0, 27, 101 })
+            foreach (string name in stations)
             {
+                int station = StationOf(name);
+                if (station < 0) continue;
                 Session.ResetNewGame();
                 Session.FreePlay = true;
                 Session.CampaignMission = 20;
@@ -150,17 +170,20 @@ namespace GoF2Remake
                 yield return new WaitForSecondsRealtime(6f);
                 Shot($"orbit_{station:000}");
                 Line("  content: " + ContentTimings.Report(reset: true));
+                Glow($"orbit_{station:000}");
+                StationShots($"orbit_{station:000}");
                 yield return Fps($"orbit_{station:000}");
             }
             Session.ResetNewGame();
             Session.FreePlay = true;
             Session.CampaignMission = 20;
-            Session.StationIndex = 0;
+            Session.StationIndex = Mathf.Max(0, StationOf(dock));
             SceneManager.LoadScene("Station");
             yield return Wait(() => SceneManager.GetActiveScene().name == "Station", 60f, "the station");
             yield return new WaitForSecondsRealtime(6f);
             Shot("station");
             Line("  content: " + ContentTimings.Report(reset: true));
+            Glow("station");
             yield return Fps("station");
             if (fsrQuality >= 0 && fsrLite == 2)
                 foreach (bool on in new[] { true, false })
@@ -181,6 +204,28 @@ namespace GoF2Remake
             Line(bad == 0 ? "OK" : $"FAILED: {bad} problem(s)");
             File.WriteAllText(Path.Combine(folder, "report.txt"), report.ToString());
             Application.Quit(bad == 0 ? 0 : 1);
+        }
+
+        /// <summary>A station by number or by a mod's key ("mod_id:id"); -1 (and a problem) when it isn't there.</summary>
+        int StationOf(string name)
+        {
+            int i = int.TryParse(name, out int n) ? n : Modding.ModWorld.StationIndexOf(name);
+            if (i < 0) { Line($"FAILED: no station {name} (its mod off?)"); bad++; }
+            else Line($"station {name}: {i}");
+            return i;
+        }
+
+        /// <summary>How many renderers' materials ask for emission (_EMISSION on, a colour above the templates' 1/255) and with
+        /// which emission flags: the mods' baked lighting lives there (2026-11-21). Whether the build kept the variant shows
+        /// only in the picture (a stripped variant falls back to one without the keyword, which no API reports).</summary>
+        void Glow(string scene)
+        {
+            var mats = FindObjectsByType<Renderer>(FindObjectsInactive.Exclude).SelectMany(r => r.sharedMaterials)
+                .Where(m => m != null && m.IsKeywordEnabled("_EMISSION") && m.HasProperty("_EmissionColor")
+                            && m.GetColor("_EmissionColor").maxColorComponent > 1f / 255f + 1e-4f).ToList();
+            Line($"  emission in {scene}: {mats.Count} glowing material slots; flags " +
+                 string.Join(", ", mats.GroupBy(m => m.globalIlluminationFlags).Select(g => $"{g.Key} {g.Count()}")) + "; shaders " +
+                 string.Join(", ", mats.GroupBy(m => m.shader.name).Select(g => $"{g.Key} {g.Count()}")));
         }
 
         /// <summary>The main menu's UI panel (UI Toolkit draws over the cameras: not in Shot) rendered into a png.</summary>
@@ -306,6 +351,38 @@ namespace GoF2Remake
             var cross = Resources.FindObjectsOfTypeAll<Texture2D>().FirstOrDefault(t => t.name == "crosshair");
             Line($"{name}: scene {SceneManager.GetActiveScene().name}, {renderers.Length} renderers, {broken.Count} with a lost shader" +
                  (broken.Count > 0 ? " (" + string.Join(", ", broken.Take(12)) + ")" : "") + $", {empty} without a material, camera {(cam != null ? "yes" : "none")}" + (cross != null ? $", crosshair {cross.width}x{cross.height}" : ""));
+        }
+
+        /// <summary>The orbit's station and its mobile stations, each framed whole by the main camera from the side it looks
+        /// from (<name>_station.png, <name>_mobile_<n>.png): the flight view seldom shows them (2026-11-21, the GoF3 stations'
+        /// baked lights in their emission). The camera is put back.</summary>
+        void StationShots(string name)
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+            var targets = new System.Collections.Generic.List<(string, GameObject)>();
+            var level = FindAnyObjectByType<World.SpaceLevel>();
+            if (level != null && level.Station != null) targets.Add(($"{name}_station", level.Station));
+            int n = 0;
+            foreach (var m in FindObjectsByType<World.MobileStation>(FindObjectsInactive.Exclude)) targets.Add(($"{name}_mobile_{n++}", m.gameObject));
+            var t = cam.transform;
+            Vector3 pos = t.position; Quaternion rot = t.rotation; float far = cam.farClipPlane, near = cam.nearClipPlane;
+            foreach (var (shot, go) in targets)
+            {
+                var rs = go.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled && !(r is ParticleSystemRenderer)).ToList();
+                if (rs.Count == 0) { Line($"{shot}: no renderers"); continue; }
+                var b = rs[0].bounds;
+                foreach (var r in rs) b.Encapsulate(r.bounds);
+                var dir = pos - b.center;
+                if (dir.sqrMagnitude < 1f) dir = new Vector3(0.4f, 0.35f, -1f);
+                float dist = b.extents.magnitude / Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * 1.05f;
+                t.position = b.center + dir.normalized * dist;
+                t.LookAt(b.center);
+                cam.farClipPlane = Mathf.Max(far, dist + b.extents.magnitude * 2f);
+                cam.nearClipPlane = Mathf.Max(near, dist * 0.001f);
+                Shot(shot);
+            }
+            t.SetPositionAndRotation(pos, rot); cam.farClipPlane = far; cam.nearClipPlane = near;
         }
 
         void Line(string s)
