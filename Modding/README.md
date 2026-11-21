@@ -2212,7 +2212,7 @@ them (`/standing`, the quests' Standing step) or ask for them (`standing(guild) 
 ## Campaigns
 
 A mod can be a game of its own: `campaign.json` adds an entry under the three campaigns in **Start new game**. Picking it
-asks for the difficulty and the economy like the others, then starts the player where the campaign says, with the GoF2
+asks for the difficulty and the economy like the others (not the economy when the campaign names its own), then starts the player where the campaign says, with the GoF2
 story off.
 
 ```json
@@ -2253,9 +2253,13 @@ story off.
 | `ships` | `"mod"`: dealers sell only mods' ships. Default `"all"`. |
 | `trafficShips` | The ships NPC fighters fly, per race (`terran`, `vossk`, `nivelian`, `midorian`, `pirate`). Default: the game's. |
 | `flightStyle` | `"free"`, `"chorus"` or `"original"`: the campaign's games always fly so (see [Flight styles](#flight-styles)). Default: the player's option. |
+| `economy` | `"original"` (the original game's prices and stock) or `"default"` (the remake's Default Economy): the campaign's own, and the menu doesn't ask. Default: the player picks. |
+| `medals` | The only [medals](#medals) the campaign's games award and show: the game's by number (0-44, as in the Status window from 0), mods' by key (`"mod_id:medal"`; a bare id is this mod's). `[]`: none at all. Default: every medal. |
 
 A campaign's mod usually depends on the mods with its galaxy, ships and items, so turning it on turns them on too. Saves
-remember the campaign; loading one asks for its mods like any modded save.
+remember the campaign; loading one asks for its mods like any modded save. A campaign's own rules beyond these fields are
+[scripts](#scripts): `Session.ModCampaign` is the campaign's id from before its tables load, and a script can
+[patch](#patching-the-games-methods) any of the game's methods (what shops stock, what NPC ships carry).
 
 ## DLCs
 
@@ -2868,7 +2872,19 @@ the default; `@trigger` the player a When block is about; any selector). The ste
 | Cutscenes | `cutscene` (letterbox, freeze, invulnerable), `camera` (from, to, seconds, look, follow, fov, shake), `chasecamera`, `cutsceneend`, `fade` (direction: out / in / clear, seconds, colour), `letterbox` (on) |
 | Sound and screen | `music` (track), `sound` (sound), `timer` (seconds, label, stop) |
 | Score | `points` (amount), `scoreboard` (show, title), `score` (mode), `winner` (mode), `pvp` (on) |
-| Other | `command` (line: any event command) |
+| Other | `command` (line: any event command), `lua` (code, result: see below) |
+
+**Lua**: `{ "type": "lua", "code": "...", "result": "variable" }` runs code of your own where no step does what you need
+(the graph Editor's **Lua** node, in Commands, is the same). It runs in your mod's [scripts](#scripts), so it sees their
+globals and functions, the `game` table and the game's classes, and the player is asked to allow it like any script.
+`local event = ...` gives the mission's side: `event.name`, `event.get("expression")` (any value of the mission: a
+variable, `kills`, `credits`, `docked(78)`) and `event.set("variable", number)`; a number or `true` / `false` it returns
+goes into the `result` variable. Only a mod's own missions run it (not a file of the Events folder), and it runs where the
+mission runs: single player, or the host in a session. `Modding/Examples/lost_shipment` pays a bonus with one.
+
+```json
+{ "type": "lua", "result": "bonus", "code": "local event = ...\nlocal bonus = event.get(\"kills\") * 500\nSession.AddCredits(bonus)\nreturn bonus" }
+```
 
 Places (camera, ship orders) are written as for the [cutscenes](#cutscenes). A field wired to a value node holds
 `{ "$value": "v1" }`, the node in `"values"`: `[ { "id": "v1", "type": "compare", "op": ">=", "a": { "$value": "v2" }, "b": 5 } ]`.
@@ -3174,7 +3190,8 @@ end)
 ```
 
 Change them only there: the game loads its tables again whenever a game starts or loads, and a change made elsewhere is gone
-with the next load. New items, ships and systems still belong in the JSON files (they get their numbers and their place in
+with the next load. A [campaign](#campaigns)'s id is in `Session.ModCampaign` before its tables load, so a change meant for
+that campaign alone checks it (`if Session.ModCampaign == "my_mod" then ... end`); other games load the tables without it. New items, ships and systems still belong in the JSON files (they get their numbers and their place in
 the saves there); a script changes what exists and decides what happens.
 
 ### Hooks
@@ -3201,6 +3218,47 @@ game.listen("Settings", "Changed", function() print("an option changed") end)
 
 Both are undone when your scripts stop, or with `game.off(handle)`. `scripting.md` lists every hook with what it is for.
 `game.hook` and `game.listen` take any public delegate or event of any object, not only the hook classes'.
+
+### Patching the game's methods
+
+`game.patch` puts your function in the place of **any method of the game's classes**, public or not: there doesn't have
+to be a hook for it. It gets the code it replaced as `original`, then the object the method was called on (not for a
+static method), then the arguments; what it returns is what the caller gets:
+
+```lua
+-- Shops stock nothing above tech level 5.
+game.patch("Shop", "GenerateItems", function(original, db, station)
+    local list = original(db, station)
+    for i = list.Count - 1, 0, -1 do
+        if db:Item(list[i].item).techLevel > 5 then list:RemoveAt(i) end
+    end
+    return list
+end)
+
+-- An object's method: self comes after original.
+game.patch("ItemData", "HasAttr", function(original, self, id)
+    return id == 9 or original(self, id)
+end)
+```
+
+- `game.describe("Shop", true)` lists a class's methods with the private ones; a property is `get_Name` / `set_Name`.
+- Call `original(...)` with the same kind of arguments to run the game's own code (or the patch another mod put there
+  before yours); leave it out and that code doesn't run. A method with `out` / `ref` values returns them after its result,
+  and so does your function: `local ok, index = original(reference)` ... `return ok, index`.
+- Where a method has several versions, name the parameter types as a fourth argument, the way `game.describe` prints them:
+  `game.patch("CapitalShips", "RollLoot", fn, "Database")`. The error lists the versions.
+- An error in your function leaves the game's own behaviour for that call; after five errors in a row the patch is taken
+  out. `game.off(handle)` takes it out, and so does stopping the scripts.
+- A value of a type scripts can't hold (see [Limits](#limits)) arrives as `nil` and is passed on unchanged.
+
+What can't be patched: constructors, generic methods and classes, a struct's own methods, the small pieces the compiler
+makes (lambdas, the inside of a coroutine, automatic properties: set the field or property instead), network calls (RPCs),
+methods that take or return a file or address, and the classes scripts can't use. Unity's own code and other libraries
+can't either: only the game's classes are prepared for it.
+
+A patch reaches deeper than a hook, and the game's inner methods change between versions: a patch that worked can find its
+method renamed or gone after an update (`game.patch` then fails with an error naming it). Prefer a hook or an event where
+one does the job, and wrap a patch you can live without in `pcall`.
 
 ### Commands
 
@@ -3266,8 +3324,26 @@ The functions it may have: `update`, `lateUpdate`, `fixedUpdate` (with the secon
 `triggerEnter`, `triggerExit` (with the collider) and `collisionEnter` (with the collision). `self.gameObject` and
 `self.transform` are the object's. The component goes when your scripts stop.
 
-The game's interface is Unity's UI Toolkit: its classes (`VisualElement`, `Label`, `Button` ...) are there like any other,
-and `game.uiEvent(element, "ClickEvent", function(event) ... end)` listens to an element's events.
+The game's interface is Unity's UI Toolkit: its classes (`VisualElement`, `Label` ...) are there like any other,
+`game.uiEvent(element, "ClickEvent", function(event) ... end)` listens to an element's events, and `game.style` sets an
+element's own styles (the element's `style` itself can't be reached from a script):
+
+```lua
+local label = Label.__new("AUTO TURRET: ON")
+label:AddToClassList("gof-semibold")                      -- one of the game's own style classes
+game.style(label, { position = "absolute", left = 24, top = 230, fontSize = 16, color = "#9fd8ff" })
+game.field(game.findOne("FlightHud"), "root"):Add(label)   -- onto the flight HUD (its root is a private field)
+```
+
+`game.style` takes UI Toolkit's style names: a number is pixels (or the plain number of `opacity`, `flexGrow` ...), a
+text `"50%"`, `"auto"`, a colour (`"#ff8800"`, `"red"`, a `Color`), or a choice by name (`position = "absolute"`,
+`display = "none"`, `flexDirection = "row"`); `backgroundImage` takes `game.texture(...)`; `nil` takes a style off again.
+A class whose short name Unity uses twice is asked for by its full name: `game.type("UnityEngine.UIElements.Button")`.
+The game builds each screen anew (the flight HUD for every flight), so add your elements again when yours is gone
+(`label.parent ~= root`); `Modding/Examples/turret_status` does.
+
+A Lua function also serves where a list of the game's objects wants one: `db.Stations:Find(function(s) return s.index
+== 70 end)`, `list:RemoveAll(fn)`, `list:Sort(function(a, b) return a.amount - b.amount end)`, `list:ForEach(fn)`.
 
 ### What players see
 
@@ -3322,8 +3398,8 @@ out of the host's session; a dedicated server runs the scripts of every mod in i
   can't be called.
 - Some of the game's own classes are left out because they open files or the network (the file pickers, the mod importer,
   the updater, the save folder tools), and so are the game's functions that take a file name, a path or an address.
-- A script can't rewrite a function of the game that isn't behind a delegate: it changes the data and state the function
-  works with, or replaces the hook it is called through.
+- A script replaces the game's functions with [`game.patch`](#patching-the-games-methods), but not Unity's own or another
+  library's, and not the few kinds listed there.
 - New classes can't be written in Lua; `game.behaviour` is how a script gets a component of its own.
 - Scripts run on the game's main thread, between its frames: a long calculation makes the game stutter, and a single call
   is stopped after ten million Lua instructions.
@@ -3604,17 +3680,32 @@ warnings and are skipped. The game's log (`Player.log`) lists every problem too.
 warnings starting with "Script:" and the file and line (`scripts/main.lua:(12,5-9): attempt to index a nil value`); the mod
 stays on and its other scripts keep running.
 
-## Example
+## Examples
 
-`Modding/Examples/plasma_arsenal` in the repository is a complete small mod: two new weapons (the Plasma Lance with its
-own bolts, muzzle flash, impact and shot sound), one rebalanced shield, German texts and a preview image. Copy it into your Mods folder to try it. The Star Wars, Star Trek and Halo ship mods (made from
-PR #34) show ships with models, materials, glows, two turrets and lounge sellers. `Modding/Examples/frontier_systems` adds the
-Kepler system with jumpgate routes and two stations: Kepler Prime with its own station model, its own planet and its own
-hangar and bar (GLBs built from simple shapes, with their markers), and the Rho Freeport looking like an original with a
-Nivelian interior; the system has its own sun and its own nebula sky. It also brings a character, Captain Vega, with a (placeholder) portrait.
-`Modding/Examples/pirate_bounty` is a script mod: `scripts/main.lua` pays a bounty for every pirate you destroy, counts them
-in the save and reports the count a moment after you dock (`game.wait`), with its numbers read from `data/bounty.json`
-by the module `scripts/lib/bounty.lua` and a `/bounty` command of its own.
+`Modding/Examples` in the repository holds a mod for each part of the format. Copy one into your Mods folder to try it,
+and read its files: every field carries a comment on what it does.
+
+| Example | What it shows |
+|---|---|
+| `plasma_arsenal` | [items.json](#itemsjson): a new weapon with its own bolts, flash, impact and shot sound, a new missile, a change to an original shield; texts per language (`text/de.json`); a preview image. |
+| `exploding_bra` | A weapon whose projectile is one of [the game's own models](#the-games-own-models) (`"gof2:bra"`): no 3D file. |
+| `courier_ships` | [ships.json](#shipsjson): two new ships on the game's models (sold by dealers and a lounge seller, a Default Economy price, kept out of NPC traffic) and a change to the Betty's hold. |
+| `warlord_fleet` | [npcships.json](#npc-ships-npcshipsjson): a pirate capital ship with turret hardpoints, escorts, loot and where it appears, and a pirate boss. |
+| `frontier_systems` | [systems.json and stations.json](#systemsjson-and-stationsjson): a system with its own sun and sky, a station with its own model, planet, hangar and bar ([interiors.json](#hangars-and-bars), GLBs with their markers), one built from the game's parts with a hand-laid orbit, and a [character](#characters). |
+| `kepler_guild` | [races.json](#races) and [building on other mods](#building-on-other-mods): two races with relations, given `frontier_systems`' system by an override; its ships. |
+| `heavy_flight` | [flight.json](#flight-rules): every ship's flight rules, and one ship's own rules winning over them. |
+| `hired_guns` | [wingmen.json](#wingmen) (a crew's ships and radio lines) and [wanted.json](#most-wanted) (three criminals with escorts, routes and conditions). |
+| `tinkerers_bench` | [blueprints.json](#blueprints) (every way to find one, the three autocomplete forms), [gameoptions.json](#new-game-options) and [conditions](#conditions) that tie them together. |
+| `sound_pack` | [Sound effects](#sound-effects) and [music](#music): a game sound replaced by a file of the same name, a new track given to a system. |
+| `lost_shipment` | [Missions](#story-missions-and-bar-missions) written by hand: a bar mission (a dialogue, a fight, cargo to hand in, a Lua step) and a quest that starts by itself after it. |
+| `epilogue` | [dlc.json](#dlcs): the smallest complete DLC, its intro call and its one mission. |
+| `scavenger` | A whole game mode: a [campaign](#campaigns) with its own economy and [medals](#medals), and its rules as [patches](#patching-the-games-methods) of the game's methods. |
+| `pirate_bounty` | [Scripts](#scripts): events (`game.on`), a module, a data file, a value kept in the save, `game.wait` and a chat command. |
+| `mixed_wings`, `heavy_ammo`, `khador_interference` | [Patches](#patching-the-games-methods) in a few lines each: every raider its own ship, missiles that take cargo space, no Khador Drive in some systems (read from a data file). |
+| `turret_status` | [The interface](#objects-and-the-interface) from a script: a line of its own on the flight HUD. |
+
+The Star Wars, Star Trek and Halo ship mods made from PR #34 (not in the repository: third-party models) show ships with
+models, materials, glows, turrets and lounge sellers.
 
 
 ## Ship classes and class-based equipment restrictions

@@ -199,6 +199,15 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   in Play mode with a local test campaign (Mods/test_campaign: Kepler, the Jedi Starfighter, the plasma weapons): the entry,
   the start (station, ship, credits, equipment), only Kepler visible, mod-only dealers, Jedi / Banshee traffic, missions
   inside Kepler, the quest running, save / load keeping it.
+  **For whole game modes as mods** (#313, AntonTolochko's Scavenger mode, withdrawn from #285 to be a mod): `BeginGame`
+  sets `Session.ModCampaign` before `Database.Load`, and `Database.Shared` loads again when the campaign changes, so a
+  script's `database` handler can keep its changes to its campaign; `"economy": "original" | "default"` fixes the
+  economy (`PickDifficulty` skips the panel, Back from the game options goes to the difficulty); `"medals": [n | key]`
+  are the only medals awarded and shown (`ModCampaigns.MedalAllowed`: `Achievements.Check` / `Elite` / `Earned`,
+  `ModMedals.Check` / `Shown`, the Status grid keeps a hidden one's number with no button; `[]` none). What shops offer and
+  NPC ships carry: a script patches the methods (`game.patch`, "Patches" under Mod scripts; two hooks made for it,
+  `ModHooks.ItemOffered` / `CargoRolled`, were dropped the same day for that). The save slots stay shared by every campaign (#313's answer, 2026-11-20:
+  the replaced auto-save is kept in Saves/Deleted, #240), and #285's v19 saves aren't read.
 - **Mod DLCs** (remake, 2026-11-01, the user's request: mods that go on after the last DLC; `ModDlcs`, a mod's `dlc.json`:
   name, description, image, imageHover, showTitle, quest (required), index, intro, introSpeaker, startStation, startShip,
   credits, equipment, cargo; the guide's "DLCs"): one play order for the DLCs that are on (`ModDlcs.All`): the player's
@@ -772,10 +781,74 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   ...))`; single player: straight back. *Settings*: `game.config`, JSON in PlayerPrefs `mod_script_config_<id>`,
   written on stop / `game.saveConfig()`. *The scene*: `game.space()` / `station()` / `player()`, `game.myId()`. *More
   events*: `lateUpdate`, `trade` (`Hangar.Shared`), `missionAccepted` / `missionSucceeded` / `missionFailed`
-  (`Freelance`), `storyStep` (`Story.Advance`), `chat` (`NetChat.Added`). Still not possible, by nature: rewriting a
-  method that isn't behind a delegate (no runtime patching under IL2CPP), defining C# classes, anything before the main
-  menu. Verified: `ModScriptMoreTests` (13; 37 with `ModScriptTests`). Not yet: the message RPCs in a real session,
+  (`Freelance`), `storyStep` (`Story.Advance`), `chat` (`NetChat.Added`). Still not possible, by nature: defining C# classes, anything before the main
+  menu (rewriting a method: Patches, below). Verified: `ModScriptMoreTests` (13; 37 with `ModScriptTests`). Not yet: the message RPCs in a real session,
   `game.sound`, a `LuaBehaviour`'s physics messages, the new game events in play.
+  **Patches** (2026-11-20, the user: "so lua can do anything and we don't have to write hooks for anything anymore";
+  `Core/PatchRuntime.cs`, `Editor/CodeGen/PatchWeaver.cs`, `Modding/ModScriptsPatch.cs`, the guide's "Patching the game's
+  methods"): `game.patch(target, "Method", fn [, "ParamTypes"])` replaces any method of the game's classes. IL2CPP can't
+  rewrite a method at run time (Harmony's way), so the build does the preparing: `PatchWeaver` is an ILPostProcessor
+  (assembly `Unity.GoF2.Patching.CodeGen`: Unity hands the ILPostProcessing API only to assemblies named
+  `Unity.*.CodeGen`; Unity.Pipeline's CodeReload weaver was the model) run on GoF2.Core / Game / Space / Net / App after
+  every compile, the Editor's too. Each method gets `[PatchSite(id)]` and a prologue `h = PatchTable.Table[id]; if (h !=
+  null && !PatchRuntime.Skip(h)) return (T)h(this, args)` (arguments boxed into an object[], ref / out values copied
+  back; `PatchTable` is made per assembly: a readonly array, the `Skipped` count). 13,573 methods woven on 2026-11-20
+  (Core 583, Game 3477, Space 4340, Net 1905, App 3268; the DLLs +15 %), left out: constructors (4160), compiler-made
+  code (lambdas, iterator / async state machines, local functions: 8670), auto-property accessors (1429), RPCs (160)
+  and Netcode's generated `__` members (its ILPP runs first), struct instance methods (36), generics (26), ref-struct /
+  pointer signatures (11), `[AggressiveInlining]` (the way to keep a hot method out), Burst and native callbacks.
+  **Its own code**: `Skip` is true once for the handler being passed by (a thread-static), so the runtime calls the
+  method again by reflection (`MethodInfo.Invoke`, the inner exception rethrown unwrapped); an overridable method gets a
+  private `__patchBase_<Name>` that calls it non-virtually (reflection would run the object's override instead).
+  Patches on one method stack, the newest first (`PatchRuntime.Add`, `PatchBody(original, self, args)`; Dispose takes
+  one out; `RemoveAll` at SubsystemRegistration). **The Lua side** (`Vm.Patch`): `original` first, `self` for an
+  instance method, then the arguments; the result, then the ref / out values (as game.hook); the nearest class up the
+  chain declaring the name, a 4th argument of parameter types for overloads; `ScriptAccess.PatchTarget` refuses classes
+  scripts can't use and a method that takes or returns a path-like text (`HandlesPath`: it could send the game's files
+  elsewhere); a value of a type scripts can't hold is nil in Lua and passes through; off the main thread / stopped /
+  game.off: the method as it was; a Lua error: the method's own behaviour without running it twice, 5 in a row take
+  the patch out. The classes are named `Patch*` so the sandbox's prefix rule denies them to scripts. Cost with no
+  patch: a static array load and a branch per call (edit-mode suite 94 -> 100 s). Tests `ModScriptPatchTests` (16).
+  Checked in a Windows IL2CPP development build (2026-11-20; run headless as `-server -allowmods -noprofiles` with
+  `$GOF2_DATA` naming a scratch data folder holding the Scavenger example and a self-test script mod, results read
+  from the log): static, instance and private methods, out values, two stacked patches, removal, the method's own
+  exception going on to its caller, and the example's recipes, shop stock (664 stacks), cargo (167 kinds) and
+  autocomplete rule, 16 of 16. Not yet: a frame-time measurement in flight, a patch in a real session, the mode
+  played by hand.
+  **The example** `Modding/Examples/scavenger` (2026-11-20, the proof that a game mode needs no code of its own in the
+  game: AntonTolochko's Scavenger mode of #285 as campaign.json + medals.json + 12 patches, tests
+  `ScavengerExampleTests`): `ModCampaigns.Start` (the finished world, `Session.UseCompletedWorld`, set again on
+  `gameLoaded`: a save doesn't keep `CompletedWorld`), the `database` event (every recipe but the Chromo Plasma's
+  cleared, the Fireworks' 42 rows), `ModBlueprints.AutocompleteOverride` / `Available`, `Shop.GenerateItems` (fresh
+  stock only, so sold loot can be bought back), `AgentGenerator.CreateAgent` / `StorySellerAvailable` /
+  `AddStoryBlueprintSellers`, `CapitalShips.ResupplyOffers` / `RollLoot`, `NpcTables.RollLoot`, `NpcShip.AddOwnLoot`
+  (a fixed crate's items rerolled through the private `loot`), `ModMedals.Available`. **Four small ones** from
+  players' requests (2026-11-20, tests `PatchExampleModsTests`, play mode `TurretStatusExampleTests`): `mixed_wings`
+  (#307: `TrafficPlan.AddRaiders`, each raider its own `NpcTables.RandomFighter`), `heavy_ammo` (#323: `Shop.CargoLoad`
+  + half a ton a mounted round), `khador_interference` (#325: `GalaxyMap.HasJumpDrive` false in the systems of its
+  data file), `turret_status` (#314: a Label on `FlightHud.root`, updated by `game.every`). Writing them found three
+  gaps in the bridge, closed the same day: MoonSharp refused any class hiding a base member with `new` ("Multiple
+  members named experimental": TextElement over VisualElement, so Label, Button and every text control;
+  `ScriptAccess.RegisterHidingTypes` describes such classes itself at `Install`, the most derived member winning, on a
+  `StandardUserDataDescriptor` made with `HideMembers` so it fills nothing); a Lua function wasn't a `Predicate` /
+  `Comparison` / `Action` of a game class (`list:Find(fn)`; `RegisterDelegateTypes` adds the three for every game
+  class, not structs: IL2CPP); an element's `style` is Unity's internal `InlineStyleAccess`, which scripts can't hold:
+  `game.style(element, table)` (`ScriptAccess.SetStyle`: IStyle's properties by name, numbers / "50%" / keywords /
+  colours / enum names / a Texture2D). Also learnt: scripts can't call `Database.Load` (one overload takes a path, so
+  the name is trimmed: `Database.Shared`), and a short class name Unity uses twice (`Button`, `Target`) needs its
+  full name. **The examples** (2026-11-21, the user: "make sure the example mods show most of the capabilities of the
+  modding system, each mod focuses on a different part"): 21 in `Modding/Examples`, the guide's "Examples" table maps
+  each to its chapter. New that day: courier_ships, warlord_fleet, hired_guns, tinkerers_bench, kepler_guild,
+  heavy_flight (written by subagents from the loaders' field lists, then checked), lost_shipment (with the event graphs'
+  new Lua step), epilogue, sound_pack (its WAVs generated: a lock chime, a 16 s pad that loops); frontier_systems and
+  plasma_arsenal got a comment on every field. `ExampleModsTests` loads each with its dependencies and fails on any
+  warning or script error and on an example no test names; `ContentExampleModsTests` checks what each JSON example
+  says it shows. Found on the way (not changed): a wanted.json `ship` takes no name (only a number or `mod:id`), a
+  `route` of `[1, 1]` never activates (the second station is always in another system), a race's `description` is
+  read but shown nowhere, the star map's system panel shows no emblem for a mod race without `icon`, ships.json's
+  `skinned` / `overcharge` are documented but warned as unknown, the guide's two `mounts` rows disagree on x. Left out
+  against the prototype:
+  its own save slots and menu tab (campaigns share the slots, #313's answer), localized texts.
 - **Mod browser** (`ModBrowser`, the main menu's Mods button and `modsPanel`; styles `.mods-*` in MainMenu.uss; its Online
   tab: "Mod catalog" below): the Installed tab's list in
   load order (thumbnail, name, version · author, On / Off / Error / Can't load), a click or keyboard / controller focus
