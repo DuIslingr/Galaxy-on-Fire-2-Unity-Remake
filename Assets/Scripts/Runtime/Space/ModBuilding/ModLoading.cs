@@ -3,8 +3,9 @@
 // background: their ship models (ModShips, all at once), stations and rooms (ModStations), weapon fx (ModWeapons), loot
 // containers (ModCrates), music
 // (ModMusic), sound effects (ModSounds) and the ships' and weapons' own sounds (ModShipSounds), then the ships' hangar shadows (World.ShipShadowBaker: read from the cache
-// or baked, once the models are built). Busy until all are done; Progress weighs each ship as four steps, each station
-// three, each weapon two and each track, sound or hangar shadow one.
+// or baked, once the models are built) and the icons of the ships without their own (ModShipIcons). Busy until all are done;
+// Progress weighs each ship as four steps, each station three, each weapon two and each track, sound, hangar shadow or
+// icon one.
 
 using System.Collections.Generic;
 
@@ -26,13 +27,13 @@ namespace GoF2Remake.Modding
             ModTextures.Preload();
             ModCharacters.Preload();
             ModMusic.Preload();
-            _ = Busy;   // and the rest (the ships' own sounds, voices, hangar shadows)
+            _ = Busy;   // and the rest (the ships' own sounds, voices, hangar shadows, icons)
         }
 
         /// <summary>Something of the mods is still loading.</summary>
         public static bool Busy => !ModShips.Ready || !ModStations.Ready || !ModRaceVisitors.Ready || !ModWeapons.Ready || !ModCrates.Ready || !ModMusic.Ready || !ModSounds.Ready || !ModShipSounds.Ready || !ModTextures.Ready
                                    || !ModVoices.ReplacementsReady
-                                   || !World.ShipShadowBaker.ModShipsBaked;
+                                   || !World.ShipShadowBaker.ModShipsBaked || !ModShipIcons.IconsReady;
 
         /// <summary>The mods that are on bring something to load (ship, station or room models, planets / suns / skies,
         /// weapon fx, music, sounds). The counts are known once Busy has started each loader; with none (no mods, or
@@ -49,13 +50,15 @@ namespace GoF2Remake.Modding
                 float shipWeight = ModShips.Count * 4f, stationWeight = ModStations.Count * 3f + 1f, raceVisitorWeight = ModRaceVisitors.Count, weaponWeight = ModWeapons.Count * 2f;
                 float musicWeight = ModMusic.Count, soundWeight = ModSounds.Count + ModShipSounds.Count, textureWeight = ModTextures.Count;
                 float shadowWeight = World.ShipShadowBaker.PrebakeWanted ? ModShips.Count : 0f;
-                float total = shipWeight + stationWeight + raceVisitorWeight + weaponWeight + musicWeight + soundWeight + textureWeight + shadowWeight;
+                float iconWeight = ModShipIcons.Wanted ? ModShipIcons.Count : 0f;
+                float total = shipWeight + stationWeight + raceVisitorWeight + weaponWeight + musicWeight + soundWeight + textureWeight + shadowWeight + iconWeight;
                 float skins = ModTextures.Count > 0 ? (ModTextures.Count - ModTextures.Loading) / (float)ModTextures.Count : 1f;
                 float music = ModMusic.Count > 0 ? (ModMusic.Count - ModMusic.Loading) / (float)ModMusic.Count : 1f;
                 float sounds = soundWeight > 0 ? (soundWeight - ModSounds.Loading - ModShipSounds.Loading) / soundWeight : 1f;
                 float weapons = ModWeapons.Count > 0 ? ModWeapons.Done / (float)ModWeapons.Count : 1f;
                 return (ModShips.Progress * shipWeight + ModStations.Progress * stationWeight + weapons * weaponWeight
-                        + ModRaceVisitors.Progress * raceVisitorWeight + music * musicWeight + sounds * soundWeight + skins * textureWeight + World.ShipShadowBaker.PrebakeProgress * shadowWeight) / total;
+                        + ModRaceVisitors.Progress * raceVisitorWeight + music * musicWeight + sounds * soundWeight + skins * textureWeight + World.ShipShadowBaker.PrebakeProgress * shadowWeight
+                        + ModShipIcons.Progress * iconWeight) / total;
             }
         }
 
@@ -86,6 +89,9 @@ namespace GoF2Remake.Modding
                 if (ModShips.Ready && shadows != null && World.ShipShadowBaker.PrebakeDone < World.ShipShadowBaker.PrebakeCount)
                     parts.Add(string.Format(Data.Localization.Extra("modsLoadingShadows", "Hangar shadows {0} / {1}"),
                                             World.ShipShadowBaker.PrebakeDone, World.ShipShadowBaker.PrebakeCount) + ": " + shadows);
+                if (ModShips.Ready && ModShipIcons.Current != null && ModShipIcons.Done < ModShipIcons.Count)
+                    parts.Add(string.Format(Data.Localization.Extra("modsLoadingIcons", "Ship icons {0} / {1}"),
+                                            ModShipIcons.Done, ModShipIcons.Count) + ": " + ModShipIcons.Current);
                 return string.Join("   ·   ", parts);
             }
         }

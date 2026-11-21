@@ -413,6 +413,7 @@
  "modsLoading": "모드 불러오는 중",
  "modsLoadingMusic": "음악 {0} / {1}",
  "modsLoadingShadows": "격납고 그림자 {0} / {1}",
+ "modsLoadingIcons": "함선 아이콘 {0} / {1}",
  "modsLoadingShips": "함선 {0} / {1}",
  "modsLoadingSounds": "사운드 {0} / {1}",
  "modsLoadingStations": "정거장 {0} / {1}",

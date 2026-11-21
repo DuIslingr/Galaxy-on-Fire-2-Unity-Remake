@@ -424,6 +424,7 @@
  "modsLoading": "Cargando mods",
  "modsLoadingMusic": "Música {0} / {1}",
  "modsLoadingShadows": "Sombras del hangar {0} / {1}",
+ "modsLoadingIcons": "Iconos de naves {0} / {1}",
  "modsLoadingShips": "Naves {0} / {1}",
  "modsLoadingSounds": "Sonidos {0} / {1}",
  "modsLoadingStations": "Estaciones {0} / {1}",

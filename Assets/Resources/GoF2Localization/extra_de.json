@@ -424,6 +424,7 @@
  "modsLoading": "Mods werden geladen",
  "modsLoadingMusic": "Musik {0} / {1}",
  "modsLoadingShadows": "Hangarschatten {0} / {1}",
+ "modsLoadingIcons": "Schiffssymbole {0} / {1}",
  "modsLoadingShips": "Schiffe {0} / {1}",
  "modsLoadingSounds": "Geräusche {0} / {1}",
  "modsLoadingStations": "Stationen {0} / {1}",

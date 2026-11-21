@@ -6,7 +6,7 @@
 // like a prefab. glTF loading is asynchronous: Preload starts it (the main menu and Bootstrap, again whenever the
 // active mods change) and the menu waits for Ready before a game scene loads. A ship whose model isn't there (still
 // loading, or broken) shows the Phantom's. Also each ship's shop icon (the entry's "icon" PNG, 180 x 88 like the
-// originals; none = the Phantom's).
+// originals; none = one drawn from the model on the loading screen, ModShipIcons; until then the Phantom's).
 // The ships load side by side (at most ShipSlots at once: each holds its whole GLB file until glTFast has read it, and the
 // GoF3 Ships mod's 79 came to 430 MB): its files are read on worker threads, its textures decoded in the background
 // (ModMaterials.PreloadTexture; a GLB's embedded images the same way, ModGltf), its glTF parsed by glTFast's jobs, and the

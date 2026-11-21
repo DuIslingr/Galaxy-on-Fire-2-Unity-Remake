@@ -384,6 +384,7 @@
   "modsLoading": "मॉड लोड हो रहे हैं",
   "modsLoadingMusic": "संगीत {0} / {1}",
   "modsLoadingShadows": "हैंगर छायाएँ {0} / {1}",
+  "modsLoadingIcons": "जहाज़ आइकन {0} / {1}",
   "modsLoadingShips": "जहाज़ {0} / {1}",
   "modsLoadingSounds": "आवाज़ें {0} / {1}",
   "modsLoadingStations": "स्टेशन {0} / {1}",

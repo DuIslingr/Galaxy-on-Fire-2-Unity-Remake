@@ -7,7 +7,8 @@
 // Never turned: HullIconBuilder lays a hull wider than long along the icon, which suits its freighters and capital ships,
 // but a mod ship's nose is +Z, and a wide-winged fighter (the Betty, 39 x 28 m) came out with its nose away from the camera.
 // It renders on a stage far below the station on the item window's layer (30); while it renders, the scene's own lights,
-// ambient and fog are kept off that layer so every icon is lit alike whatever hangar the builder is in.
+// ambient and fog are kept off that layer so every icon is lit alike whatever hangar the builder is in. The model's own
+// flames are left out (their engine inputs at 0), and so are its light-only cards (IsGlowCard). Also every mod ship without an icon of its own (ModShipIcons).
 
 using System.Collections.Generic;
 using GoF2Remake.Visuals;
@@ -23,6 +24,10 @@ namespace GoF2Remake.Modding
         static readonly Vector3 Stage = new Vector3(0f, -90000f, 60000f);   // away from the item window's stages
         static readonly Vector3 ViewFrom = new Vector3(-1f, 0.55f, 0.3f);   // HullIconBuilder.ViewFrom
         const float Roll = -15f;
+        /// <summary>The flame shader's inputs from the engines (EngineFlame, Es2EngineVfx): on / off, thrust, boost, ES2's travel
+        /// and cruise modes.</summary>
+        static readonly int[] FlameInputs = { Shader.PropertyToID("_FlameLevel"), Shader.PropertyToID("_FlameThrust"), Shader.PropertyToID("_FlameBoost"),
+                                              Shader.PropertyToID("_Travel"), Shader.PropertyToID("_Cruise") };
 
         /// <summary>The icon of a ship template (a ModShips template or any assembled ship prefab) as a texture, null when
         /// nothing could be drawn. 'turn': degrees about the ship's up axis, for a model whose nose isn't its +Z.</summary>
@@ -32,6 +37,7 @@ namespace GoF2Remake.Modding
             var stage = new GameObject("Ship icon stage");
             stage.transform.position = Stage;
             var rt = new RenderTexture(IconW * Super, IconH * Super, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
+            var clones = new List<Material>();
             var lights = new List<(Light light, int mask)>();
             var ambientMode = RenderSettings.ambientMode;
             var ambient = RenderSettings.ambientLight;
@@ -52,6 +58,32 @@ namespace GoF2Remake.Modding
                 foreach (var lg in go.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
                 foreach (var r in go.GetComponentsInChildren<Renderer>(true))
                     if (r is TrailRenderer || r is ParticleSystemRenderer || r is LineRenderer) r.enabled = false;
+                // The model's own flames (EVERSPACE 2's exhaust sections, EngineFlame) off: copies of their materials with the
+                // engines' inputs at 0 (EVERSPACE 2's fade to nothing, the others shrink into the nozzles), the property blocks
+                // EngineFlame set cleared. At their defaults they streaked far behind the hull, and the icon, fitted to the
+                // pixels drawn, shrank the ship to a speck in front of them (2026-11-21, ES2 and NMS ships; a block on the
+                // flame's submesh alone left EVERSPACE 2's drawn).
+                foreach (var f in go.GetComponentsInChildren<EngineFlame>(true)) f.enabled = false;
+                foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+                {
+                    var mats = r.sharedMaterials;
+                    bool any = false;
+                    for (int i = 0; i < mats.Length; i++)
+                    {
+                        bool flame = EngineFlame.IsFlame(mats[i]);
+                        if (!flame && !IsGlowCard(mats[i])) continue;
+                        var off = new Material(mats[i]) { name = mats[i].name + " (icon)" };
+                        if (flame) foreach (var id in FlameInputs) { if (off.HasProperty(id)) off.SetFloat(id, 0f); }
+                        else foreach (var pass in AllPasses) off.SetShaderPassEnabled(pass, false);   // drawn by no pass at all
+                        clones.Add(off);
+                        mats[i] = off;
+                        any = true;
+                    }
+                    if (!any) continue;
+                    r.SetPropertyBlock(null);
+                    for (int i = 0; i < mats.Length; i++) r.SetPropertyBlock(null, i);
+                    r.sharedMaterials = mats;
+                }
                 foreach (var t in go.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = Layer;
                 go.transform.rotation = Quaternion.Euler(0f, turn, 0f);   // a ship's nose is +Z: the view alone dips it to the bottom left
                 var bounds = Bounds(go);
@@ -98,9 +130,28 @@ namespace GoF2Remake.Modding
                 RenderSettings.ambientLight = ambient;
                 RenderSettings.fog = fog;
                 Object.DestroyImmediate(stage);
+                foreach (var m in clones) Object.Destroy(m);
                 rt.Release();
                 Object.Destroy(rt);
             }
+        }
+
+        static readonly int BaseColor = Shader.PropertyToID("_BaseColor"), EmissionColor = Shader.PropertyToID("_EmissionColor"),
+                            Surface = Shader.PropertyToID("_Surface");
+        /// <summary>URP's pass tags (LightMode): a card with all of them off draws nothing, not even its faint reflection.</summary>
+        static readonly string[] AllPasses = { "UniversalForward", "UniversalForwardOnly", "SRPDefaultUnlit", "UniversalGBuffer", "DepthOnly",
+                                               "DepthNormals", "DepthNormalsOnly", "ShadowCaster", "MotionVectors", "XRMotionVectors", "Meta" };
+
+        /// <summary>A light-only card of the model: see-through, black, glowing (EVERSPACE 2's freighters and transports carry
+        /// their beams and light streaks as such faces, T_Structures_FX_Lights: the ES2 importer's "opacity" materials with
+        /// a black colour). Left out of the icon (no pass draws them: a clear colour still showed their reflection as a grey box), which
+        /// they stretched to several times the hull.</summary>
+        static bool IsGlowCard(Material m)
+        {
+            if (m == null || !m.HasProperty(Surface) || m.GetFloat(Surface) < 0.5f || !m.HasProperty(BaseColor) || !m.HasProperty(EmissionColor)) return false;
+            var c = m.GetColor(BaseColor);
+            var e = m.GetColor(EmissionColor);
+            return Mathf.Max(c.r, c.g, c.b) < 0.02f && Mathf.Max(e.r, e.g, e.b) > 0f;
         }
 
         static void AddLight(Transform parent, Vector3 dir, Color colour, float intensity)

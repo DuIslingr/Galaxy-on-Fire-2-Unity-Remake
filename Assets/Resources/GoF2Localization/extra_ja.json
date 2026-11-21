@@ -413,6 +413,7 @@
  "modsLoading": "MODを読み込み中",
  "modsLoadingMusic": "音楽 {0} / {1}",
  "modsLoadingShadows": "格納庫の影 {0} / {1}",
+ "modsLoadingIcons": "艦船アイコン {0} / {1}",
  "modsLoadingShips": "船 {0} / {1}",
  "modsLoadingSounds": "サウンド {0} / {1}",
  "modsLoadingStations": "ステーション {0} / {1}",

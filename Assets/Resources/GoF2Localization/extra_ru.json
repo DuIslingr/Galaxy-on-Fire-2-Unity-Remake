@@ -424,6 +424,7 @@
  "modsLoading": "Загрузка модов",
  "modsLoadingMusic": "Музыка {0} / {1}",
  "modsLoadingShadows": "Тени в ангаре {0} / {1}",
+ "modsLoadingIcons": "Значки кораблей {0} / {1}",
  "modsLoadingShips": "Корабли {0} / {1}",
  "modsLoadingSounds": "Звуки {0} / {1}",
  "modsLoadingStations": "Станции {0} / {1}",

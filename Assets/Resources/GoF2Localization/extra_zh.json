@@ -384,6 +384,7 @@
   "modsLoading": "正在加载模组",
   "modsLoadingMusic": "音乐 {0} / {1}",
   "modsLoadingShadows": "机库阴影 {0} / {1}",
+  "modsLoadingIcons": "舰船图标 {0} / {1}",
   "modsLoadingShips": "飞船 {0} / {1}",
   "modsLoadingSounds": "音效 {0} / {1}",
   "modsLoadingStations": "太空站 {0} / {1}",

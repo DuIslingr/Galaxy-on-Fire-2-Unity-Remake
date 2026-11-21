@@ -17,7 +17,7 @@ namespace GoF2Remake.Flight
             GameHooks.RepairLiveShip = PlayerHealth.RepairLive;
             GameHooks.ResolveOriginal = Visuals.OriginalContent.Resolve;
             GameHooks.ResetControls = GameControls.ResetToDefaults;
-            GameHooks.ModsScanned = ids => { ShipShadowBaker.PruneCache(ids); Visuals.ModLodCache.PruneCache(ids); };
+            GameHooks.ModsScanned = ids => { ShipShadowBaker.PruneCache(ids); Visuals.ModLodCache.PruneCache(ids); Modding.ModShipIcons.PruneCache(ids); };
             GameHooks.FlightMessage = text => UI.UiHooks.FlightMessage?.Invoke(text);
             // Mod scripts' game.message: the flight HUD's message line, docked a toast.
             GameHooks.Notice = text => UI.UiHooks.FlightMessage?.Invoke(text) == true || UI.UiHooks.StationToast?.Invoke(text) == true;

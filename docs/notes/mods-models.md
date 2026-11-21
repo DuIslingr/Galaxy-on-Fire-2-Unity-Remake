@@ -92,7 +92,12 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   10 s from the cache). Textures load once per key however many ask at once (`ModMaterials.Once`), at most 6 decodes at once
   (2 on phones, `DecodeSlots`), phones compress in Texture2D.Compress's fast mode; at most 8 ships load at once (3 on phones,
   `ModShips.ShipSlots`), each holding its GLB until glTFast has read it. Shop icon: the entry's PNG
-  (`ItemInfo.ShipIcon`), else the Phantom's; the dialogue tints mod
+  (`ItemInfo.ShipIcon`), else one drawn from the built template on the loading screen (`ModShipIcons`, 2026-11-21: the
+  Mod Builder's `ShipIconMaker`, GoF2's camera, light and ship frame, the model's own flames and its light-only cards
+  left out (`IsGlowCard`: ES2's freighters' beams stretched the framing); `ModLoading.Busy` waits for it, "Ship icons n / m";
+  cached as `ModCache/ShipIcons/<mod id>/<key>.png`, the key the hull's triangles, its materials' shaders and main
+  textures, the mod's version and `IconVersion`; pruned like the hangar shadows; none in batch mode), else the
+  Phantom's (a ship whose model failed). The GoF3 importer ships no ship icons since then; the dialogue tints mod
   ship names (no sprite). Code that sizes a ship by its renderers must skip trails (empty at the origin): the item window and
   `NetPlayer` use mesh renderers only. Another player's ship built before the session's mods were on (they join before
   NetState applies them) is built again on `ModShips.ModelsChanged`.

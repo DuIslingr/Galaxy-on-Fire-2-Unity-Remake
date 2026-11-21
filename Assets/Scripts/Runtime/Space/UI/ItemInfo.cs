@@ -22,7 +22,8 @@ namespace GoF2Remake.UI
             var own = Modding.ModContent.ItemIcon(item);   // a mod's own icon (items.json "icon")
             return own != null ? own : Icon($"item_{Modding.ModContent.ItemLook(item):000}");
         }
-        /// <summary>The ship's shop icon; a mod's ship its own ("icon" in ships.json), else the Phantom's.</summary>
+        /// <summary>The ship's shop icon; a mod's ship its own ("icon" in ships.json), else the one drawn from its model
+        /// (Modding.ModShipIcons), else the Phantom's.</summary>
         public static Texture2D ShipIcon(int ship) =>
             Modding.ModContent.IsModShip(ship) ? Modding.ModShips.Icon(ship) ?? ModelShipIcon(ship) ?? Icon("ship_010") : Icon($"ship_{ship:000}");
 

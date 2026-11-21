@@ -424,6 +424,7 @@
  "modsLoading": "Wczytywanie modów",
  "modsLoadingMusic": "Muzyka {0} / {1}",
  "modsLoadingShadows": "Cienie w hangarze {0} / {1}",
+ "modsLoadingIcons": "Ikony statków {0} / {1}",
  "modsLoadingShips": "Statki {0} / {1}",
  "modsLoadingSounds": "Dźwięki {0} / {1}",
  "modsLoadingStations": "Stacje {0} / {1}",
