@@ -594,12 +594,12 @@ namespace GoF2Remake.Modding
                         copy.SetTexture("_EmissionMap", e);
                         var ec = spec.emissionColor != null ? new Color(spec.emissionColor[0], spec.emissionColor[1], spec.emissionColor[2]) : Color.white;
                         copy.SetColor("_EmissionColor", ec * spec.emissionIntensity);
-                        copy.EnableKeyword("_EMISSION");
+                        ModMaterials.Glowing(copy);
                     }
                     else if (spec.emissionColor != null)
                     {
                         copy.SetColor("_EmissionColor", new Color(spec.emissionColor[0], spec.emissionColor[1], spec.emissionColor[2]) * spec.emissionIntensity);
-                        copy.EnableKeyword("_EMISSION");
+                        ModMaterials.Glowing(copy);
                     }
                     if (Tex(spec.metallicSmoothness, true) is Texture2D ms)
                     {
@@ -650,7 +650,7 @@ namespace GoF2Remake.Modding
                             if (t.property == "emission")
                             {
                                 copy.SetColor("_EmissionColor", col.linear * (t.intensity * strength));
-                                copy.EnableKeyword("_EMISSION");
+                                ModMaterials.Glowing(copy);
                             }
                             else if (t.property == "decal1" || t.property == "decal2" || t.property == "decal3")
                             {

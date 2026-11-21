@@ -136,7 +136,13 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   Matched by eye to GoF3's own render of the Cronus (thumbs/ship_terran_020); the room and the game's ships are unchanged.
   `ModAssetsGuard` puts the keyword back before a build (else the variant is stripped). A mod's hangar / bar goes back to
   Lit (`ModMaterials.PlainLit`; it enables the material's keywords again after the shader switch, which dropped
-  `_EMISSION`, so every mod room lost its glow until 2026-10-24). Tests `ModHullLightingTests`. Measured: no frame-time
+  `_EMISSION`, so every mod room lost its glow until 2026-10-24). A player build keeps only the variants its materials
+  use, and none of the game's own is URP Lit with emission outside a transparent one: `Resources/GoF2Mods/RoomVariants`
+  (`ModMaterials.RoomVariants`) holds each mod template as `PlainLit` makes it (URP Lit, `_GOF2_PBR` left out), else
+  the rooms glowed only in the Editor, which compiles a missing variant on demand (the GoF3 Manticore's hangar, its
+  lighting baked into its emission, a flat grey in the releases until 2026-11-21). A glowing mod material carries
+  `RealtimeDirectEmission` (`ModMaterials.Glowing`; it had `None`, and the 2026.11.20 release drew every mod object but
+  the kit ships without its emission). Tests `ModHullLightingTests`. Measured: no frame-time
   difference (a 4K frame filled with hull, on, off and plain Lit within ±0.1 ms). When URP is updated, copy its Lit.shader
   again and redo the two marked lines. Anything that picks hull renderers by shader name accepts "GoF2/Hull" (the cloaks,
   the star map). Its materials keep the MotionVectors pass on (2026-10-28): URP's LitShader editor, which the shader

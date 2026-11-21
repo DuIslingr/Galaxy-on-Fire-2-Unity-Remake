@@ -274,6 +274,50 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AGlowingMaterialCarriesTheFlagUrpKeepsItsEmissionBy()
+        {
+            // With None, URP's Lit check drops _EMISSION (Unity 7000.0.0a20): the 2026.11.20 release drew every mod object but
+            // the kit ships without its glow, the GoF3 stations' and capital ships' baked lights with it.
+            var m = ModMaterials.FromSpec(null, new CustomShipMaterial { emissionColor = new[] { 1f, 0.5f, 0.2f } }, "glow test");
+            try
+            {
+                Assert.IsTrue(m.IsKeywordEnabled("_EMISSION"));
+                Assert.AreEqual(MaterialGlobalIlluminationFlags.RealtimeDirectEmission, m.globalIlluminationFlags & MaterialGlobalIlluminationFlags.RealtimeDirectEmission);
+            }
+            finally { Object.DestroyImmediate(m); }
+        }
+
+        [Test]
+        public void EveryModRoomVariantIsKeptForThePlayerBuild()
+        {
+            // A player build keeps only the variants its materials use; a mod room's (each template after PlainLit) is URP
+            // Lit with emission, which none of the game's own materials is outside a transparent one (2026-11-21: the GoF3
+            // Manticore's hangar a flat grey in the releases, its lighting baked into its emission).
+            static string Key(Material m) => m.shader.name + "|" + string.Join(" ",
+                System.Linq.Enumerable.OrderBy(System.Linq.Enumerable.Select(m.enabledKeywords, k => k.name), k => k, System.StringComparer.Ordinal));
+            var kept = new System.Collections.Generic.HashSet<string>();
+            foreach (var v in Resources.LoadAll<Material>(ModMaterials.RoomVariants))
+            {
+                Assert.IsTrue(v.IsKeywordEnabled("_EMISSION"), $"{v.name} lost _EMISSION on import (its emission flag or colour)");
+                kept.Add(Key(v));
+            }
+            var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);
+            foreach (var t in a.LitTemplates)
+            {
+                if (t == null) continue;
+                var m = new Material(t);
+                var room = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                try
+                {
+                    room.GetComponent<MeshRenderer>().sharedMaterial = m;
+                    ModMaterials.PlainLit(room);
+                    Assert.IsTrue(kept.Contains(Key(m)), $"{t.name} as a room ({Key(m)}) has no material in Resources/{ModMaterials.RoomVariants}");
+                }
+                finally { Object.DestroyImmediate(room); Object.DestroyImmediate(m); }
+            }
+        }
+
+        [Test]
         public void AGoF2HangarLightsTheModHullsFromAbove()
         {
             float dim = Shader.GetGlobalFloat("_GoF2PbrIndirectDim");

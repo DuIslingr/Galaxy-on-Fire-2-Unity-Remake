@@ -471,12 +471,18 @@ namespace GoF2Remake.Modding
         /// <summary>A material with an emission map or colour draws it: _EMISSION on its copy, whatever the template holds. The
         /// templates' keyword is lost whenever the Editor re-saves them (a shader reimport did, 2026-11-02: every mod room and
         /// glow went dark, the Manticore's hangar a flat grey with GoF3's baked lighting in its emission); ModAssetsGuard
-        /// only restores it before a build.</summary>
-        static void Glowing(Material m)
+        /// only restores it before a build. The flag is RealtimeDirectEmission, the templates' own since Unity 7000.0.0a20
+        /// (ModAssetsBuilder): URP's Lit check keeps _EMISSION only with it, and with None every mod object but the kit ships
+        /// came out without its glow in the 2026.11.20 release (the GoF3 Manticore's hangar flat grey again, the stations,
+        /// gates and capital ships without their baked lights, all of which live in the emission).</summary>
+        public static void Glowing(Material m)
         {
             m.EnableKeyword("_EMISSION");
-            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            m.globalIlluminationFlags = EmissionFlags;
         }
+
+        /// <summary>The emission flag a glowing mod material carries (Glowing): the one URP's Lit check keeps _EMISSION by.</summary>
+        public const MaterialGlobalIlluminationFlags EmissionFlags = MaterialGlobalIlluminationFlags.RealtimeDirectEmission;
 
         static readonly int Es2WearId = Shader.PropertyToID("_Es2Wear"), Es2Wear2Id = Shader.PropertyToID("_Es2Wear2"), Es2GrungeId = Shader.PropertyToID("_Es2Grunge");
 
@@ -936,7 +942,7 @@ namespace GoF2Remake.Modding
             {
                 // Battle damage embers: dark until DamageEmbers lights them with the hull damage.
                 var dmg = Texture(mod, e.damageEmission, false);
-                if (dmg != null) { m.SetTexture("_EmissionMap", dmg); m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None; m.SetOverrideTag(DamageEmbersTag, "1"); }
+                if (dmg != null) { m.SetTexture("_EmissionMap", dmg); Glowing(m); m.SetOverrideTag(DamageEmbersTag, "1"); }
             }
             if (clip && !glass) m.SetFloat("_Cutoff", e.alphaClip);
             m.SetFloat("_Cull", e.doubleSided ? (float)CullMode.Off : (float)CullMode.Back);
@@ -1186,9 +1192,18 @@ namespace GoF2Remake.Modding
 
         static Material mrBlit;
 
+        /// <summary>The Resources folder of the URP Lit materials that keep the mod rooms' variants in a player build (PlainLit):
+        /// each ModLit_ / ModSpec_ template on URP Lit without _GOF2_PBR, its textures and emission flag kept.</summary>
+        public const string RoomVariants = "GoF2Mods/RoomVariants";
+
         /// <summary>A mod's hangar or bar: its materials (copies of the GoF2/Hull templates) back on URP Lit, like the game's
         /// rooms, which don't have the original's hull reflection. The keywords are enabled again on the new shader: a shader
-        /// switch keeps only those both declare alike, and URP Lit's _EMISSION was dropped, so every mod room lost its glow.</summary>
+        /// switch keeps only those both declare alike, and URP Lit's _EMISSION was dropped, so every mod room lost its glow.
+        /// A player build keeps only the variants some material in it uses, and none of the game's own uses URP Lit with
+        /// emission outside a transparent one: Resources/GoF2Mods/RoomVariants (RoomVariants) holds each template as it comes
+        /// out of here, so the rooms keep their glow outside the Editor too (the GoF3 Manticore's hangar, its lighting baked
+        /// into its emission, was a flat grey in every release until 2026-11-21; the Editor compiles a missing variant on
+        /// demand and never showed it).</summary>
         public static void PlainLit(GameObject room)
         {
             var lit = Shader.Find("Universal Render Pipeline/Lit");

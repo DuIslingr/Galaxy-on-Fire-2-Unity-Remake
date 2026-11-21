@@ -73,7 +73,8 @@ This file holds only what every task needs. Everything about one area of the gam
   `LitInput.hlsl`): every line of URP's the copy lacks, other than those a `GoF2` line replaces, is to bring over. The
   native plugins' `CMakeLists.txt` name the Editor's `PluginAPI` folder by version. From a20 the Editor validates a
   material when it imports it: URP's Lit editor keeps `_EMISSION` only with `globalIlluminationFlags`
-  `RealtimeDirectEmission` (the mod templates, `ModAssetsBuilder` / `ModAssetsGuard`).
+  `RealtimeDirectEmission` (the mod templates, `ModAssetsBuilder` / `ModAssetsGuard`; every material the mods' code makes
+  glow, `ModMaterials.Glowing`).
 - **Scripting backend:** IL2CPP for Windows / Linux (Standalone; the Editor modules "Windows / Linux Build Support (IL2CPP)";
   Linux builds from Windows use `com.unity.toolchain.win-x86_64-linux` + `com.unity.sdk.linux-x86_64`, which the first Linux
   IL2CPP build added) and Android; native callbacks must be static `[AOT.MonoPInvokeCallback]` methods (`WinConsole`). A
