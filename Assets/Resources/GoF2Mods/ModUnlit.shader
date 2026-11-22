@@ -8,6 +8,9 @@
 //   alpha x _Alpha; + the rim (GoF3's RimEffect: clamp(N.E + 1), E the eye's direction to the vertex, remapped from
 //   _Rim.x .. _Rim.y, x _RimColor); the texture scrolls by _Scroll (UV a second); clamped to 0..1 like GoF3's LDR
 //   framebuffer (no bloom off its additive layers); everything x _Fade (StarMap's fade, per renderer by a property block).
+//   The flow map (_FlowMap, _Flow: tiling, strength; _FlowSpeed): the texture's coordinates pushed by (flow.rg x 2 - 1) x
+//   strength, the flow map's own scrolling (GoF3's UVAnim_Flow*); AngleBlend (_AngleBlend: on, min, max, absolute): alpha
+//   x clamp((|N.E| or clamp(-N.E)) - min) / (max - min)), E the eye's direction to the vertex.
 // The blend is GoF3's BlendStateDescriptor of the material's BlendMode (_SrcBlend / _DstBlend / _BlendOp), with its depth
 // write and cull. In Resources so a build keeps it (ModMaterials loads it by name).
 Shader "GoF2/ModUnlit"
@@ -27,6 +30,10 @@ Shader "GoF2/ModUnlit"
         _RimColor ("Rim colour", Color) = (0, 0, 0, 0)
         _Rim ("Rim (min, max)", Vector) = (0, 1, 0, 0)
         _Scroll ("Scroll (UV / s)", Vector) = (0, 0, 0, 0)
+        _FlowMap ("Flow map", 2D) = "gray" {}
+        _Flow ("Flow (tiling, strength)", Vector) = (1, 0, 0, 0)
+        _FlowSpeed ("Flow scroll (UV / s)", Vector) = (0, 0, 0, 0)
+        _AngleBlend ("Angle blend (on, min, max, absolute)", Vector) = (0, 0, 1, 1)
         _Fade ("Fade", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Source blend", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Destination blend", Float) = 0
@@ -51,11 +58,12 @@ Shader "GoF2/ModUnlit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
+            TEXTURE2D(_FlowMap); SAMPLER(sampler_FlowMap);
             CBUFFER_START(UnityPerMaterial)
                 float4 _MainTex_ST;
                 half4 _Color, _Color1, _Color2, _RimColor;
                 float _UseVertexColor, _Colorize, _ColorizeVertex, _ColorizeMode, _ColorizeMul, _Alpha, _Fade;
-                float4 _Rim, _Scroll;
+                float4 _Rim, _Scroll, _Flow, _FlowSpeed, _AngleBlend;
                 float _SrcBlend, _DstBlend, _BlendOp, _ZWrite, _Cull;
             CBUFFER_END
 
@@ -64,7 +72,7 @@ Shader "GoF2/ModUnlit"
             half3 ToLinear(half3 c) { c = max(c, 0.0); return lerp(pow((c + 0.055) / 1.055, 2.4), c / 12.92, step(c, 0.04045)); }
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; half4 color : COLOR; };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; half rim : TEXCOORD1; };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; half rim : TEXCOORD1; float2 flowUV : TEXCOORD2; half angle : TEXCOORD3; };
 
             Varyings vert(Attributes i)
             {
@@ -78,12 +86,24 @@ Shader "GoF2/ModUnlit"
                 float r = saturate(dot(n, e) + 1.0);
                 float span = _Rim.y - _Rim.x;
                 o.rim = saturate((r - _Rim.x) / (abs(span) < 1e-5 ? 1e-5 : span));
+                o.flowUV = i.uv * _Flow.x + frac(_FlowSpeed.xy * _Time.y);
+                float nde = dot(n, e);
+                float ab = _AngleBlend.w > 0.5 ? abs(nde) : saturate(-nde);
+                float aspan = _AngleBlend.z - _AngleBlend.y;
+                o.angle = _AngleBlend.x > 0.5 ? saturate((ab - _AngleBlend.y) / (abs(aspan) < 1e-5 ? 1e-5 : aspan)) : 1.0;
                 return o;
             }
 
             half4 frag(Varyings i) : SV_Target
             {
-                half4 t = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                float2 uv = i.uv;
+                if (_Flow.y > 0.0)
+                {
+                    // the flow map is data: back to its stored values (it loads as a colour image)
+                    float2 flow = ToGamma(SAMPLE_TEXTURE2D(_FlowMap, sampler_FlowMap, i.flowUV).rgb).rg * 2.0 - 1.0;
+                    uv += flow * _Flow.y;
+                }
+                half4 t = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
                 half4 c = half4(ToGamma(t.rgb), t.a) * _Color;
                 if (_UseVertexColor > 0.5) c *= i.color;
                 if (_Colorize > 0.5)
@@ -96,7 +116,7 @@ Shader "GoF2/ModUnlit"
                         c.rgb *= k.a;
                     }
                 }
-                c.a *= _Alpha;
+                c.a *= _Alpha * i.angle;
                 c.rgb += i.rim * _RimColor.rgb;
                 c = saturate(c) * _Fade;
                 return half4(ToLinear(c.rgb), c.a);

@@ -458,8 +458,16 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0.5f, u.color2[1]);
             Assert.AreEqual(0.4f, u.rimColor[0]); Assert.AreEqual(1f, u.rimMin); Assert.AreEqual(0.05f, u.rimMax);
             Assert.AreEqual(new Vector2(0.05f, 0f), u.scroll);
+            var fx = ModGlbImages.Unlit.From(Newtonsoft.Json.Linq.JObject.Parse(
+                "{ 'blend': 'addAlpha', 'flow': { 'texture': { 'index': 7 }, 'tiling': 2, 'strength': 0.07, 'speed': [0.05, 0.05] }, " +
+                "'angleBlend': { 'min': 0.1, 'max': 0.2, 'absolute': false }, 'colorize': { 'color2': [1, 1, 1, 1], 'mode': 'multiply' } }"));
+            Assert.AreEqual(7, fx.flowTexture); Assert.AreEqual(2f, fx.flowTiling); Assert.AreEqual(0.07f, fx.flowStrength, 1e-6f);
+            Assert.AreEqual(new Vector2(0.05f, 0.05f), fx.flowSpeed);
+            Assert.IsTrue(fx.angleBlend); Assert.IsFalse(fx.angleAbsolute); Assert.AreEqual(0.1f, fx.angleMin, 1e-6f); Assert.AreEqual(0.2f, fx.angleMax, 1e-6f);
+            Assert.IsTrue(fx.colorizeMultiply);
             var plain = ModGlbImages.Unlit.From(Newtonsoft.Json.Linq.JObject.Parse("{}"));
             Assert.AreEqual("opaque", plain.blend); Assert.IsFalse(plain.colorize); Assert.IsNull(plain.rimColor); Assert.IsTrue(plain.depthWrite);
+            Assert.AreEqual(-1, plain.flowTexture); Assert.IsFalse(plain.angleBlend); Assert.IsFalse(plain.colorizeMultiply);
             Assert.AreEqual((UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendMode.OneMinusSrcColor, UnityEngine.Rendering.BlendOp.Add), ModMaterials.UnlitBlend("screen"));
             Assert.AreEqual((UnityEngine.Rendering.BlendMode.SrcAlpha, UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendOp.Add), ModMaterials.UnlitBlend("addAlpha"));
             Assert.AreEqual((UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendMode.Zero, UnityEngine.Rendering.BlendOp.Add), ModMaterials.UnlitBlend("opaque"));

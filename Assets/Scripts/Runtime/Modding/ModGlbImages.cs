@@ -143,7 +143,11 @@ namespace GoF2Remake.Modding
                         result.gof3Cube[cname] = (string)ex2["environmentCube"];
                     if (m?["extras"] is JObject ex3 && (string)m["name"] is string gname && ex3["additive"]?.Type == JTokenType.Boolean && (bool)ex3["additive"])
                         result.glow[gname] = Glow.From(ex3);
-                    if (m?["extras"]?["unlit"] is JObject ux && (string)m["name"] is string uname) result.unlit[uname] = Unlit.From(ux);
+                    if (m?["extras"]?["unlit"] is JObject ux && (string)m["name"] is string uname)
+                    {
+                        result.unlit[uname] = Unlit.From(ux);
+                        Mark(result, ux["flow"]?["texture"], Role.Color);   // (its flow map: loaded like the others)
+                    }
                 }
 
             // The new binary chunk: every other bufferView packed (16-byte aligned), then the stand-in PNG.
@@ -237,7 +241,8 @@ namespace GoF2Remake.Modding
         /// may pass 1), "vertexColors", "colorize" { "color1" (null: the vertex colours), "color2", "multiplier", "mode": "tint" |
         /// "multiply" }, "alpha",
         /// "rim" { "color", "min", "max" }, "scroll" [u, v] a second, "cull" back | front | none, "depthWrite", "layer" (its
-        /// draw order among the blended ones, GoF3's RenderLayer).</summary>
+        /// draw order among the blended ones, GoF3's RenderLayer), "flow" { "texture": { "index" }, "tiling", "strength",
+        /// "speed" [u, v] } (GoF3's flow map), "angleBlend" { "min", "max", "absolute" }.</summary>
         public sealed class Unlit
         {
             public string blend = "opaque", cull = "back";
@@ -249,6 +254,13 @@ namespace GoF2Remake.Modding
             public float rimMin, rimMax = 1f;
             public UnityEngine.Vector2 scroll;
             public int layer;
+            /// <summary>The flow map's glTF texture index (-1: none), its tiling, strength and scroll.</summary>
+            public int flowTexture = -1;
+            public float flowTiling = 1f, flowStrength;
+            public UnityEngine.Vector2 flowSpeed;
+            /// <summary>AngleBlend: on, its min / max, |N.E| (absolute) or clamp(-N.E).</summary>
+            public bool angleBlend, angleAbsolute = true;
+            public float angleMin, angleMax = 1f;
 
             public static Unlit From(JObject u)
             {
@@ -270,6 +282,18 @@ namespace GoF2Remake.Modding
                 if (u["rim"] is JObject rim) { r.rimColor = Floats(rim["color"], 3, new[] { 0f, 0f, 0f }); r.rimMin = Number(rim["min"], 0f); r.rimMax = Number(rim["max"], 1f); }
                 if (u["scroll"] is JArray sc && sc.Count >= 2) r.scroll = new UnityEngine.Vector2(Number(sc[0], 0f), Number(sc[1], 0f));
                 if (u["layer"] != null && (u["layer"].Type == JTokenType.Integer || u["layer"].Type == JTokenType.Float)) r.layer = (int)(float)u["layer"];
+                if (u["flow"] is JObject fl)
+                {
+                    if (fl["texture"]?["index"] is JToken fi && fi.Type == JTokenType.Integer) r.flowTexture = (int)fi;
+                    r.flowTiling = Number(fl["tiling"], 1f); r.flowStrength = Number(fl["strength"], 0f);
+                    if (fl["speed"] is JArray fs && fs.Count >= 2) r.flowSpeed = new UnityEngine.Vector2(Number(fs[0], 0f), Number(fs[1], 0f));
+                }
+                if (u["angleBlend"] is JObject ab)
+                {
+                    r.angleBlend = true;
+                    r.angleMin = Number(ab["min"], 0f); r.angleMax = Number(ab["max"], 1f);
+                    if (ab["absolute"]?.Type == JTokenType.Boolean) r.angleAbsolute = (bool)ab["absolute"];
+                }
                 return r;
             }
 

@@ -51,6 +51,7 @@ namespace GoF2Remake.UI
             SetLayer(go);
             go.SetActive(true);
             mapScene = go; mapSceneSpec = spec;
+            mapSceneChildren = -1;
             mapSceneCam = go.transform.InverseTransformPoint(c.position);
             mapSceneTarget = go.transform.InverseTransformPoint(t.position);
             mapSceneUp = go.transform.InverseTransformPoint(u.position);
@@ -265,12 +266,57 @@ namespace GoF2Remake.UI
             tr.localScale = Vector3.one * s;
             tr.localPosition = pt - rot * (mapSceneTarget * s);
 
-            // each station on its area
+            PlaceOnAreas();
+        }
+
+        /// <summary>Each station's planet object on its area (a station without one at the scene's target).</summary>
+        void PlaceOnAreas()
+        {
+            if (mapScene == null || zoomSystem < 0) return;
+            var pt = systemRoot.transform.TransformPoint(U(SunGame(zoomSystem)));
             for (int k = 0; k < planetObjects.Count && k < mapSceneAreas.Count; k++)
             {
                 var pl = planetObjects[k];
                 if (pl == null) continue;
-                pl.position = mapSceneAreas[k] != null ? mapSceneAreas[k].position : systemRoot.transform.TransformPoint(pt);
+                pl.position = mapSceneAreas[k] != null ? mapSceneAreas[k].position : pt;
+            }
+        }
+
+        /// <summary>Update, after UpdateSystemTransforms and any script patched onto it: the map scene keeps the system view.
+        /// Scripts made before map scenes dressed GoF3's systems themselves (another player's GoF3 map package and the
+        /// Galaxy on Fire 3D mod's copies of it, 2026-11-22: pictures hung in the system root, the planets moved onto their
+        /// own marks, GoF3's nebulae as "GoF3 nebula layer n" in the galaxy view): while a scene shows, what else hangs in
+        /// the system root is hidden and the planets go back onto their areas before the overlay places their rings; while
+        /// the map scenes' own nebulae show, those older nebula layers are hidden.</summary>
+        void HoldMapScene()
+        {
+            if (mapScene != null && systemRoot != null)
+            {
+                PlaceOnAreas();
+                if (systemRoot.transform.childCount != mapSceneChildren)
+                {
+                    mapSceneChildren = systemRoot.transform.childCount;
+                    var own = new HashSet<Transform>();
+                    foreach (var p in planetObjects) if (p != null) own.Add(p);
+                    foreach (var o in orbitObjects) if (o != null) own.Add(o);
+                    own.Add(mapScene.transform);
+                    for (int i = 0; i < systemRoot.transform.childCount; i++)
+                    {
+                        var c = systemRoot.transform.GetChild(i);
+                        if (own.Contains(c)) continue;
+                        foreach (var r in c.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
+                    }
+                }
+            }
+            else mapSceneChildren = -1;
+            if (mapGalaxies.Count > 0 && world != null && world.transform.childCount != mapWorldChildren)
+            {
+                mapWorldChildren = world.transform.childCount;
+                for (int i = 0; i < world.transform.childCount; i++)
+                {
+                    var c = world.transform.GetChild(i);
+                    if (c.name.StartsWith("GoF3 nebula layer")) c.gameObject.SetActive(false);
+                }
             }
         }
 

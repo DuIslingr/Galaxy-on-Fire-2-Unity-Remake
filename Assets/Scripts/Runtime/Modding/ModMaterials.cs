@@ -1114,6 +1114,18 @@ namespace GoF2Remake.Modding
                 m.SetVector("_Rim", new Vector4(u.rimMin, u.rimMax, 0f, 0f));
             }
             m.SetVector("_Scroll", new Vector4(u.scroll.x, u.scroll.y, 0f, 0f));
+            if (u.flowTexture >= 0 && u.flowStrength > 0f)
+            {
+                var ft = images?.Invoke(u.flowTexture, ModGlbImages.Role.Color, 0f, 1f) ?? gltf.GetTexture(u.flowTexture);
+                if (ft != null)
+                {
+                    ft.wrapMode = TextureWrapMode.Repeat;
+                    m.SetTexture("_FlowMap", ft);
+                    m.SetVector("_Flow", new Vector4(u.flowTiling, u.flowStrength, 0f, 0f));
+                    m.SetVector("_FlowSpeed", new Vector4(u.flowSpeed.x, u.flowSpeed.y, 0f, 0f));
+                }
+            }
+            if (u.angleBlend) m.SetVector("_AngleBlend", new Vector4(1f, u.angleMin, u.angleMax, u.angleAbsolute ? 1f : 0f));
             var (src, dst, op) = UnlitBlend(u.blend);
             m.SetFloat("_SrcBlend", (float)src); m.SetFloat("_DstBlend", (float)dst); m.SetFloat("_BlendOp", (float)op);
             m.SetFloat("_ZWrite", u.depthWrite ? 1f : 0f);

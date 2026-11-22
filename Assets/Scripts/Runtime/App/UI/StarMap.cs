@@ -269,6 +269,7 @@ namespace GoF2Remake.UI
         // ... and the galaxy view's nebulae of those scenes ("map_galaxy"), fitted to their systems' suns
         readonly List<(GameObject go, List<Renderer> renderers)> mapGalaxies = new List<(GameObject, List<Renderer>)>();
         float mapGalaxyFade = -1f;
+        int mapSceneChildren = -1, mapWorldChildren = -1;   // (HoldMapScene: when another script hangs something new)
         readonly List<Renderer> mapSceneHidden = new List<Renderer>();     // the galaxy's suns and background while it shows
         float mapSceneFade = -1f, mapSceneNear;
         static readonly Dictionary<string, Material> modPlanetMaterials = new Dictionary<string, Material>();
@@ -518,6 +519,7 @@ namespace GoF2Remake.UI
             UpdateSystemTransforms();
             UpdateMapGalaxies();
             UpdateWormhole();
+            HoldMapScene();
             UpdateOverlay();
         }
 

@@ -85,7 +85,12 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   scaled apart, the third the depth at their mean, turned unmirrored); it fades out over the zoom into a system
   (`UpdateMapGalaxies`). **systems.json `"mapMarkers"`** (`ModWorld.MapMarkers`: ring, selected, pulse images; the
   overlay's `MarkerTex` via `ModRaces.Emblem`'s cache) on the system's sun in the galaxy view and its stations' rings in
-  its view (GoF3's orange rings in the GoF3 Systems mod).
+  its view (GoF3's orange rings in the GoF3 Systems mod). GoF3's flow maps (`_FlowMap`, `"flow"` extras: the plasma storm's swirl) and
+  AngleBlend (`_AngleBlend`, `"angleBlend"`: its sheets drew edge-on as white wedges on Incident Ash's giants without it).
+  **Older map scripts** (another player's GoF3 map package and the Galaxy on Fire 3D mod's copies hang pictures in the system
+  root, move the planets onto their marks and hang "GoF3 nebula layer n" in the galaxy view): `HoldMapScene` (each
+  Update, after the scripts' patches, before the overlay) hides what else hangs in the system root while a scene shows,
+  puts the planets back on their areas, and hides those nebula layers while the map scenes' own show.
   Tests `ModWorldTests.ASystemsMapScene` / `AMapScene*` / `MapMarkersNeedTheirImages` / `MapNebulaeFitOntoTheSuns` /
   `AnUnlitLookFromItsExtras`; the player check's `-gof2map` (`PlayerAssetsCheck.MapShots`, `StarMap.ShowSystemNow` /
   `ShowGalaxyNow`) shoots the galaxy view round the first system, the full map and each system's view with the overlay.
