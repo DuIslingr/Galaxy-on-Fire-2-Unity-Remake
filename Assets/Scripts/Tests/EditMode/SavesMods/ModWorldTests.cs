@@ -390,6 +390,81 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(30000, map.radius);
         }
 
+        // systems.json "mapScene" and stations.json "mapArea" (StarMap's system view as one 3D scene, 2026-11-22).
+        [Test]
+        public void ASystemsMapScene()
+        {
+            WriteMod("w", "t_world", "1.0", "", ("models/map.glb", "x"), ("textures/ring.png", "x"),
+                ("systems.json", "[ { 'override': 15, 'mapScene': { 'model': 'models/map.glb', 'camera': 'GM_star_A', 'fov': 30 }, 'mapMarkers': { 'ring': 'textures/ring.png' } } ]"),
+                ("stations.json", "[ { 'override': 78, 'mapArea': 'Area 1' } ]"));
+            ScanAndEnable("t_world");
+            Database.Load();
+            var s = ModWorld.MapSceneOf(15);
+            Assert.IsNotNull(s);
+            Assert.AreEqual("models/map.glb", s.model);
+            Assert.AreEqual("GM_star_A", s.camera);
+            Assert.AreEqual(30f, s.fov);
+            Assert.AreEqual("t_world|models/map.glb", s.Key);
+            Assert.AreEqual("Area 1", ModWorld.MapAreaOf(78));
+            Assert.IsNull(ModWorld.MapSceneOf(16));
+            Assert.IsNull(ModWorld.MapAreaOf(79));
+            Assert.AreEqual(1, ModWorld.MapSceneModels().Count);
+            var mk = ModWorld.MapMarkersOf(15);
+            Assert.AreEqual("textures/ring.png", mk.ring);
+            Assert.IsNull(mk.selected); Assert.IsNull(mk.pulse);
+            Assert.IsNull(ModWorld.MapMarkersOf(16));
+        }
+
+        [Test] public void MapMarkersNeedTheirImages() =>
+            StringAssert.Contains("mapMarkers image", WorldError("systems.json", "[ { 'override': 15, 'mapMarkers': { 'pulse': 'textures/none.png' } } ]"));
+
+        // The galaxy view's nebulae onto the suns (StarMap.FitOntoSuns): a scene in GoF3's layout (its stars in x / z, y the
+        // plane's normal, x mirrored as glTFast brings it in) onto suns scaled 0.8 / 0.75 and moved: back on them exactly.
+        [Test]
+        public void MapNebulaeFitOntoTheSuns()
+        {
+            var from = new System.Collections.Generic.List<Vector3> { new Vector3(10, 600, 20), new Vector3(-40, 610, 5), new Vector3(30, 605, -60), new Vector3(-5, 598, 44) };
+            var to = from.ConvertAll(p => new Vector3(-p.x * 0.8f + 100f, p.z * 0.75f - 50f, -200f + (p.y - 603.25f) * 0.1f));
+            var fit = typeof(GoF2Remake.UI.StarMap).GetMethod("FitOntoSuns", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            var args = new object[] { from, to, null, null, null };
+            Assert.IsTrue((bool)fit.Invoke(null, args));
+            var rot = (Quaternion)args[2]; var scale = (Vector3)args[3]; var pos = (Vector3)args[4];
+            Assert.AreEqual(0.8f, scale.x, 1e-3f); Assert.AreEqual(0.75f, scale.z, 1e-3f);
+            for (int i = 0; i < from.Count; i++)
+            {
+                var q = pos + rot * Vector3.Scale(scale, from[i]);
+                Assert.AreEqual(to[i].x, q.x, 1e-2f); Assert.AreEqual(to[i].y, q.y, 1e-2f);
+            }
+            Assert.Greater(Matrix4x4.Rotate(rot).determinant, 0f, "unmirrored");
+        }
+
+        [Test] public void AMapSceneNeedsItsModel() =>
+            StringAssert.Contains("isn't in the mod", WorldError("systems.json", "[ { 'override': 15, 'mapScene': { 'model': 'models/none.glb', 'camera': 'c' } } ]"));
+        [Test] public void AMapSceneNeedsACamera() =>
+            StringAssert.Contains("\"mapScene\" must be", WorldError("systems.json", "[ { 'override': 15, 'mapScene': { 'model': 'models/none.glb' } } ]"));
+        [Test] public void AMapAreaIsANodeName() =>
+            StringAssert.Contains("\"mapArea\" must be", WorldError("stations.json", "[ { 'override': 78, 'mapArea': 3 } ]"));
+
+        // A glTF material's "unlit" extras (GoF3's map materials, GoF2/ModUnlit) and GoF3's blend table.
+        [Test]
+        public void AnUnlitLookFromItsExtras()
+        {
+            var u = ModGlbImages.Unlit.From(Newtonsoft.Json.Linq.JObject.Parse(
+                "{ 'blend': 'screen', 'cull': 'none', 'depthWrite': false, 'layer': -50, 'color': [0.1, 0.2, 0.3, 2.5], " +
+                "'colorize': { 'color2': [1, 0.5, 0, 1], 'multiplier': 2, 'color1': null }, 'rim': { 'color': [0.4, 0.2, 0.1], 'min': 1, 'max': 0.05 }, 'scroll': [0.05, 0] }"));
+            Assert.AreEqual("screen", u.blend); Assert.AreEqual("none", u.cull); Assert.IsFalse(u.depthWrite); Assert.AreEqual(-50, u.layer);
+            Assert.AreEqual(2.5f, u.color[3]);
+            Assert.IsTrue(u.colorize); Assert.IsTrue(u.colorizeVertex, "color1 null: the vertex colours"); Assert.AreEqual(2f, u.multiplier);
+            Assert.AreEqual(0.5f, u.color2[1]);
+            Assert.AreEqual(0.4f, u.rimColor[0]); Assert.AreEqual(1f, u.rimMin); Assert.AreEqual(0.05f, u.rimMax);
+            Assert.AreEqual(new Vector2(0.05f, 0f), u.scroll);
+            var plain = ModGlbImages.Unlit.From(Newtonsoft.Json.Linq.JObject.Parse("{}"));
+            Assert.AreEqual("opaque", plain.blend); Assert.IsFalse(plain.colorize); Assert.IsNull(plain.rimColor); Assert.IsTrue(plain.depthWrite);
+            Assert.AreEqual((UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendMode.OneMinusSrcColor, UnityEngine.Rendering.BlendOp.Add), ModMaterials.UnlitBlend("screen"));
+            Assert.AreEqual((UnityEngine.Rendering.BlendMode.SrcAlpha, UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendOp.Add), ModMaterials.UnlitBlend("addAlpha"));
+            Assert.AreEqual((UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendMode.Zero, UnityEngine.Rendering.BlendOp.Add), ModMaterials.UnlitBlend("opaque"));
+        }
+
         [Test]
         public void AnOrbitWithoutStationOrAsteroids()
         {

@@ -53,6 +53,9 @@ namespace GoF2Remake.Modding
             /// <summary>Remake mods: a material's glow layer from its "extras" ("additive": true and its terms, Glow), by
             /// material name: drawn by GoF2/ModGlow instead of a lit material (ModMaterials.GlowFromGltf).</summary>
             public readonly Dictionary<string, Glow> glow = new Dictionary<string, Glow>();
+            /// <summary>Remake mods: a material's unlit look from its "extras" ("unlit": {...}, Unlit), by material name: drawn
+            /// by GoF2/ModUnlit instead of a lit material (ModMaterials.UnlitFromGltf).</summary>
+            public readonly Dictionary<string, Unlit> unlit = new Dictionary<string, Unlit>();
         }
 
         const uint Magic = 0x46546C67, ChunkJson = 0x4E4F534A, ChunkBin = 0x004E4942;
@@ -140,6 +143,7 @@ namespace GoF2Remake.Modding
                         result.gof3Cube[cname] = (string)ex2["environmentCube"];
                     if (m?["extras"] is JObject ex3 && (string)m["name"] is string gname && ex3["additive"]?.Type == JTokenType.Boolean && (bool)ex3["additive"])
                         result.glow[gname] = Glow.From(ex3);
+                    if (m?["extras"]?["unlit"] is JObject ux && (string)m["name"] is string uname) result.unlit[uname] = Unlit.From(ux);
                 }
 
             // The new binary chunk: every other bufferView packed (16-byte aligned), then the stand-in PNG.
@@ -223,6 +227,58 @@ namespace GoF2Remake.Modding
                     g.pulseVertexOffset = pu["vertexOffset"]?.Type == JTokenType.Boolean && (bool)pu["vertexOffset"];
                 }
                 return g;
+            }
+        }
+
+        /// <summary>An unlit look (a glTF material's "extras": { "unlit": {...} }, GoF2/ModUnlit; remake 2026-11-22, for Galaxy on
+        /// Fire 3's map materials): "blend" opaque | alpha | add | addAlpha | screen | premultiplied | multiply |
+        /// multiplyAlpha | subtract (GoF3's BlendStateDescriptor table: One Zero, SrcAlpha 1-SrcAlpha, One One, SrcAlpha One,
+        /// One 1-SrcColor, One 1-SrcAlpha, Zero SrcColor, Zero SrcAlpha, reverse SrcAlpha One), "color" [r, g, b, a] (gamma,
+        /// may pass 1), "vertexColors", "colorize" { "color1" (null: the vertex colours), "color2", "multiplier", "mode": "tint" |
+        /// "multiply" }, "alpha",
+        /// "rim" { "color", "min", "max" }, "scroll" [u, v] a second, "cull" back | front | none, "depthWrite", "layer" (its
+        /// draw order among the blended ones, GoF3's RenderLayer).</summary>
+        public sealed class Unlit
+        {
+            public string blend = "opaque", cull = "back";
+            public float[] color = { 1f, 1f, 1f, 1f };
+            public bool vertexColors, colorize, colorizeVertex = true, colorizeMultiply, depthWrite = true;
+            public float[] color1 = { 1f, 1f, 1f, 1f }, color2 = { 1f, 1f, 1f, 1f };
+            public float multiplier = 1f, alpha = 1f;
+            public float[] rimColor;
+            public float rimMin, rimMax = 1f;
+            public UnityEngine.Vector2 scroll;
+            public int layer;
+
+            public static Unlit From(JObject u)
+            {
+                var r = new Unlit();
+                if (u["blend"]?.Type == JTokenType.String) r.blend = (string)u["blend"];
+                if (u["cull"]?.Type == JTokenType.String) r.cull = (string)u["cull"];
+                r.color = Floats(u["color"], 4, r.color);
+                if (u["vertexColors"]?.Type == JTokenType.Boolean) r.vertexColors = (bool)u["vertexColors"];
+                if (u["depthWrite"]?.Type == JTokenType.Boolean) r.depthWrite = (bool)u["depthWrite"];
+                if (u["colorize"] is JObject c)
+                {
+                    r.colorize = true;
+                    r.colorizeVertex = c["color1"] == null || c["color1"].Type == JTokenType.Null;
+                    r.color1 = Floats(c["color1"], 4, r.color1); r.color2 = Floats(c["color2"], 4, r.color2);
+                    r.multiplier = Number(c["multiplier"], 1f);
+                    r.colorizeMultiply = c["mode"]?.Type == JTokenType.String && (string)c["mode"] == "multiply";
+                }
+                r.alpha = Number(u["alpha"], 1f);
+                if (u["rim"] is JObject rim) { r.rimColor = Floats(rim["color"], 3, new[] { 0f, 0f, 0f }); r.rimMin = Number(rim["min"], 0f); r.rimMax = Number(rim["max"], 1f); }
+                if (u["scroll"] is JArray sc && sc.Count >= 2) r.scroll = new UnityEngine.Vector2(Number(sc[0], 0f), Number(sc[1], 0f));
+                if (u["layer"] != null && (u["layer"].Type == JTokenType.Integer || u["layer"].Type == JTokenType.Float)) r.layer = (int)(float)u["layer"];
+                return r;
+            }
+
+            static float[] Floats(JToken t, int n, float[] fallback)
+            {
+                if (!(t is JArray a) || a.Count < Math.Min(n, 3)) return fallback;
+                var v = new float[n];
+                for (int i = 0; i < n; i++) v[i] = i < a.Count ? Number(a[i], 1f) : 1f;
+                return v;
             }
         }
 

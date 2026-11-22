@@ -614,6 +614,38 @@ namespace GoF2Remake.Modding
             }
             return s;
         }
+        /// <summary>A system's star map view as a 3D scene (systems.json "mapScene"), null: the game's planets round its sun.</summary>
+        public static MapScene MapSceneOf(int system) => mapScenes.TryGetValue(system, out var s) ? s : null;
+        /// <summary>The node of its system's map scene a station's ring stands on (stations.json "mapArea"), null: none.</summary>
+        public static string MapAreaOf(int station) => mapAreas.TryGetValue(station, out var a) ? a : null;
+        /// <summary>Every map scene model, one per mod and file (ModStations loads them).</summary>
+        public static List<MapScene> MapSceneModels()
+        {
+            Database.Load();
+            var seen = new HashSet<string>(); var list = new List<MapScene>();
+            foreach (var s in mapScenes.Values) if (seen.Add(s.Key)) list.Add(s);
+            return list;
+        }
+        /// <summary>A system's own star map marker images (systems.json "mapMarkers"), null: the game's.</summary>
+        public static MapMarkers MapMarkersOf(int system) => mapMarkers.TryGetValue(system, out var m) ? m : null;
+        /// <summary>systems.json "mapMarkers": { "ring": "textures/ring.png", "selected": "...", "pulse": "..." }, each optional.</summary>
+        static MapMarkers ParseMapMarkers(ModInfo mod, JToken t, string where, bool check)
+        {
+            if (!(t is JObject o)) throw new ModJsonException($"{where}: \"mapMarkers\" must be {{ \"ring\": \"textures/ring.png\", \"selected\": ..., \"pulse\": ... }}");
+            var m = new MapMarkers { mod = mod, ring = ModJson.Str(o, "ring"), selected = ModJson.Str(o, "selected"), pulse = ModJson.Str(o, "pulse") };
+            if (check)
+                foreach (var f in new[] { m.ring, m.selected, m.pulse })
+                    if (f != null && !mod.Source.Exists(f)) throw new ModJsonException($"{where}: the mapMarkers image {f} isn't in the mod");
+            return m;
+        }
+        /// <summary>systems.json "mapScene": { "model": "models/map.glb", "camera": "&lt;name&gt;", "fov": degrees (default 22) }.</summary>
+        static MapScene ParseMapScene(ModInfo mod, JToken t, string where, bool check)
+        {
+            if (!(t is JObject o) || !(ModJson.Str(o, "model") is string model) || !(ModJson.Str(o, "camera") is string camera))
+                throw new ModJsonException($"{where}: \"mapScene\" must be {{ \"model\": \"models/map.glb\", \"camera\": \"<name>\", \"fov\": 22 }}");
+            if (check && !mod.Source.Exists(model)) throw new ModJsonException($"{where}: the mapScene model {model} isn't in the mod");
+            return new MapScene { mod = mod, model = model, camera = camera, fov = Mathf.Clamp(ModJson.Float(o, "fov", 22f, SystemsFile), 5f, 120f) };
+        }
         /// <summary>stations.json "mapPlace": { "angle": degrees, "distance": map units }.</summary>
         static MapPlace ParseMapPlace(JToken t, string where)
         {

@@ -6,7 +6,8 @@
 // far). OrbitBuilder.StationAssembly names it "modstation_NNN" (pack "mod"), AssembledObject.LoadPrefab hands the template
 // out; while it isn't built (or failed) the "looksLike" station stands in. Also its collision (Volumes) and the mods'
 // planet / sun textures, decoded in the background beside the models (ModBackdrop). Loaded like the ships, all at once in
-// the background from the main menu's start (Preload; ModLoading's loading screen waits for Ready).
+// the background from the main menu's start (Preload; ModLoading's loading screen waits for Ready). Also the star map's
+// system scenes (systems.json "mapScene", MapScene): each model once, kept whole under the holder for StarMap to copy.
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -26,6 +27,7 @@ namespace GoF2Remake.Modding
 
         static readonly Dictionary<int, GameObject> templates = new Dictionary<int, GameObject>();
         static readonly Dictionary<int, GameObject> lifeUnits = new Dictionary<int, GameObject>();
+        static readonly Dictionary<string, GameObject> mapScenes = new Dictionary<string, GameObject>();
         static readonly List<GLTFast.GltfImport> imports = new List<GLTFast.GltfImport>();
         static GameObject holder;
         static GLTFast.TimeBudgetPerFrameDeferAgent agent;
@@ -36,7 +38,7 @@ namespace GoF2Remake.Modding
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            templates.Clear(); lifeUnits.Clear(); imports.Clear(); current.Clear();
+            templates.Clear(); lifeUnits.Clear(); mapScenes.Clear(); imports.Clear(); current.Clear();
             holder = null; agent = null; loadingRevision = loadedRevision = -1; steps = stepsDone = 0; Count = Done = Backdrops = 0;
         }
 
@@ -73,6 +75,8 @@ namespace GoF2Remake.Modding
             templates.Clear();
             foreach (var t in lifeUnits.Values) if (t != null) Object.Destroy(t);
             lifeUnits.Clear();
+            foreach (var t in mapScenes.Values) if (t != null) Object.Destroy(t);
+            mapScenes.Clear();
             foreach (var i in imports) i.Dispose();
             imports.Clear();
             if (holder == null)
@@ -92,16 +96,18 @@ namespace GoF2Remake.Modding
             var models = new List<ModWorld.StationModel>(ModWorld.Models());
             var interiors = new List<ModInteriors.Def>(ModInteriors.All());
             var backdrops = new List<string>(ModWorld.BackdropTextures());
-            Count = models.Count + interiors.Count;
+            var scenes = ModWorld.MapSceneModels();
+            Count = models.Count + interiors.Count + scenes.Count;
             Backdrops = backdrops.Count;
             Done = 0;
-            steps = (models.Count + interiors.Count) * 3 + backdrops.Count;
+            steps = (models.Count + interiors.Count + scenes.Count) * 3 + backdrops.Count;
             stepsDone = 0;
             current.Clear();
             var tasks = new List<Task>();
             foreach (var m in models) tasks.Add(LoadOne(rev, m));
             foreach (var d in interiors) tasks.Add(LoadInterior(rev, d));
             foreach (var b in backdrops) tasks.Add(LoadBackdrop(rev, b));
+            foreach (var s in scenes) tasks.Add(LoadMapScene(rev, s));
             await Task.WhenAll(tasks);
             if (rev != ModManager.Revision) return;
             loadedRevision = rev;
@@ -203,6 +209,47 @@ namespace GoF2Remake.Modding
                 current.Remove(label);
             }
         }
+
+        /// <summary>A star map system scene's model (systems.json "mapScene"): read once per mod and file, its glTF scene kept
+        /// whole (its node names are the cameras and areas StarMap looks up) under the hidden holder.</summary>
+        static async Task LoadMapScene(int rev, ModWorld.MapScene s)
+        {
+            string label = s.model;
+            current.Add(label);
+            int counted = 0;
+            try
+            {
+                var bytes = await Task.Run(() => s.mod.Source.ReadBytes(s.model));
+                counted++; stepsDone++;
+                if (rev != ModManager.Revision) return;
+                if (bytes == null) { Warn(s.mod, $"systems.json: mapScene model {s.model} not found"); return; }
+                var import = await ModGltf.Load(s.mod, bytes, agent);
+                bytes = null;
+                if (import == null) { Warn(s.mod, $"{s.model}: not a glTF model glTFast can read"); return; }
+                imports.Add(import);
+                counted++; stepsDone++;
+                if (rev != ModManager.Revision || holder == null) return;
+                var scene = new GameObject("map scene " + s.Key);
+                scene.transform.SetParent(holder.transform, false);
+                if (!await ModGltf.InstantiateMain(import, scene.transform)) { Object.Destroy(scene); Warn(s.mod, $"{s.model}: no scene to show"); return; }
+                if (rev != ModManager.Revision || holder == null) return;
+                ModGltf.LoopAnimations(scene);
+                foreach (var r in scene.GetComponentsInChildren<Renderer>(true)) { r.shadowCastingMode = ShadowCastingMode.Off; r.receiveShadows = false; }
+                mapScenes[s.Key] = scene;
+                Debug.Log($"Mods: {s.mod.Id}: map scene {s.model} built");
+            }
+            catch (System.Exception e) when (rev == ModManager.Revision) { Warn(s.mod, $"{s.model}: {e.Message}"); if (!ModFileException.IsFileError(e)) Debug.LogException(e); }
+            catch (System.Exception) { }
+            finally
+            {
+                if (rev == ModManager.Revision) { stepsDone += 3 - counted; Done++; }
+                current.Remove(label);
+            }
+        }
+
+        /// <summary>A system's map scene model as loaded (inactive, under the holder: copy it), null while it loads or when it
+        /// failed.</summary>
+        public static GameObject MapScene(ModWorld.MapScene s) => s != null && mapScenes.TryGetValue(s.Key, out var g) ? g : null;
 
         /// <summary>Remake (2026-11-04): a station's life unit (stations.json "life", World.StationLife): its model file's scene
         /// "life.scene", dressed in the station's materials, kept beside the template.</summary>

@@ -45,7 +45,8 @@ namespace GoF2Remake.Modding
             // A material's GoF3 environment cube (its "extras"), loaded once per mod and path (ModMaterials.Texture's cache).
             System.Func<string, Texture2D> cubes = stripped == null || stripped.gof3Cube.Count == 0 ? null
                 : name => stripped.gof3Cube.TryGetValue(name, out var path) ? ModMaterials.Texture(mod, path, true) : null;
-            var import = new GLTFast.GltfImport(null, agent, new ModGltfMaterials(images, stripped?.gof3, cubes, stripped != null && stripped.glow.Count > 0 ? stripped.glow : null), log);
+            var import = new GLTFast.GltfImport(null, agent, new ModGltfMaterials(images, stripped?.gof3, cubes, stripped != null && stripped.glow.Count > 0 ? stripped.glow : null,
+                stripped != null && stripped.unlit.Count > 0 ? stripped.unlit : null), log);
             var settings = new GLTFast.ImportSettings { GenerateMipMaps = true, AnisotropicFilterLevel = 8 };
             if (await import.Load(bytes, null, settings)) return import;
             import.Dispose();

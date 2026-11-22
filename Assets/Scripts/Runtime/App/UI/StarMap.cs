@@ -260,6 +260,17 @@ namespace GoF2Remake.UI
         readonly List<Transform> planetObjects = new List<Transform>(), orbitObjects = new List<Transform>();
         readonly List<Vector3> planetScales = new List<Vector3>();
         readonly List<Transform> planetDiscs = new List<Transform>();   // remake mods: a station's planetTexture facing the camera
+        // Remake mods (systems.json "mapScene", StarMapMapScene): the system view as one 3D scene, seen from its own camera.
+        Modding.ModWorld.MapScene mapSceneSpec;
+        GameObject mapScene;
+        Vector3 mapSceneCam, mapSceneTarget, mapSceneUp;   // the scene's camera nodes, in its root's space
+        readonly List<Transform> mapSceneAreas = new List<Transform>();   // per planet: the node its ring stands on (null: none)
+        readonly List<Renderer> mapSceneRenderers = new List<Renderer>();
+        // ... and the galaxy view's nebulae of those scenes ("map_galaxy"), fitted to their systems' suns
+        readonly List<(GameObject go, List<Renderer> renderers)> mapGalaxies = new List<(GameObject, List<Renderer>)>();
+        float mapGalaxyFade = -1f;
+        readonly List<Renderer> mapSceneHidden = new List<Renderer>();     // the galaxy's suns and background while it shows
+        float mapSceneFade = -1f, mapSceneNear;
         static readonly Dictionary<string, Material> modPlanetMaterials = new Dictionary<string, Material>();
         static int modPlanetRevision = -1;
         readonly List<Camera> disabledCameras = new List<Camera>();
@@ -480,6 +491,7 @@ namespace GoF2Remake.UI
             }
             else
             {
+                if (autoRotate && selectedPlanet >= 0 && HasMapScene) { autoRotate = false; frontPlanet = selectedPlanet; }   // a map scene's areas don't turn
                 if (autoRotate && selectedPlanet >= 0)
                 {
                     float target = 32768f - planets[selectedPlanet].angle;
@@ -504,6 +516,7 @@ namespace GoF2Remake.UI
             spin += dtMs * 0.0002f;
             UpdateCamera();
             UpdateSystemTransforms();
+            UpdateMapGalaxies();
             UpdateWormhole();
             UpdateOverlay();
         }

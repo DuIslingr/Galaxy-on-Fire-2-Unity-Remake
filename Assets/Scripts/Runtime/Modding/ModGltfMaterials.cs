@@ -17,17 +17,21 @@ namespace GoF2Remake.Modding
         readonly System.Collections.Generic.Dictionary<string, UnityEngine.Vector4> gof3;   // by material name (ModGlbImages)
         readonly System.Func<string, UnityEngine.Texture2D> gof3Cube;   // a material's GoF3 environment strip, by its name
         readonly System.Collections.Generic.Dictionary<string, ModGlbImages.Glow> glow;   // glow layers, by material name
+        readonly System.Collections.Generic.Dictionary<string, ModGlbImages.Unlit> unlit;   // unlit looks, by material name
 
         public ModGltfMaterials(System.Func<int, ModGlbImages.Role, float, float, UnityEngine.Texture2D> images = null,
             System.Collections.Generic.Dictionary<string, UnityEngine.Vector4> gof3 = null,
             System.Func<string, UnityEngine.Texture2D> gof3Cube = null,
-            System.Collections.Generic.Dictionary<string, ModGlbImages.Glow> glow = null)
-        { this.images = images; this.gof3 = gof3; this.gof3Cube = gof3Cube; this.glow = glow; }
+            System.Collections.Generic.Dictionary<string, ModGlbImages.Glow> glow = null,
+            System.Collections.Generic.Dictionary<string, ModGlbImages.Unlit> unlit = null)
+        { this.images = images; this.gof3 = gof3; this.gof3Cube = gof3Cube; this.glow = glow; this.unlit = unlit; }
 
         public UnityEngine.Material GetDefaultMaterial(bool pointsSupport = false) => ModMaterials.Default();
 
         public UnityEngine.Material GenerateMaterial(MaterialBase gltfMaterial, IGltfReadable gltf, bool pointsSupport = false) =>
-            glow != null && gltfMaterial.name != null && glow.TryGetValue(gltfMaterial.name, out var g)
+            unlit != null && gltfMaterial.name != null && unlit.TryGetValue(gltfMaterial.name, out var u)
+                ? ModMaterials.UnlitFromGltf(gltfMaterial, gltf, images, u) ?? ModMaterials.Default()
+                : glow != null && gltfMaterial.name != null && glow.TryGetValue(gltfMaterial.name, out var g)
                 ? ModMaterials.GlowFromGltf(gltfMaterial, gltf, images, g) ?? ModMaterials.Default()
                 : ModMaterials.FromGltf(gltfMaterial, gltf, images,
                 gof3 != null && gltfMaterial.name != null && gof3.TryGetValue(gltfMaterial.name, out var p) ? p : (UnityEngine.Vector4?)null,

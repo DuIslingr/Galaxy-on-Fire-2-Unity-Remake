@@ -22,6 +22,9 @@
 // each a station number or a mod's station key ("mod_id:id", ModWorld.StationIndexOf), e.g. a mod's stations and its own
 // hangar (-gof2stations gof3_ships:manticore -gof2dock gof3_ships:manticore). Each view also reports its glowing materials
 // (_EMISSION and a colour) by emission flag and shader.
+// -gof2map <system,system,...> (mod system keys or numbers) opens the star map in the first orbit and shows each system's
+// view straight away (StarMap.ShowSystemNow), screen-captured with its overlay into map_<n>.png: the mods' map scenes
+// (systems.json "mapScene", 2026-11-22).
 
 using System;
 using System.Collections;
@@ -47,6 +50,7 @@ namespace GoF2Remake
         int fpsCap;   // -gof2cap: the fps samples' frame cap (0: uncapped)
         string[] stations = { "0", "27", "101" };   // -gof2stations
         string dock = "0";   // -gof2dock
+        string[] mapSystems = new string[0];   // -gof2map
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Begin()
@@ -72,6 +76,8 @@ namespace GoF2Remake
             if (st >= 0 && st + 1 < args.Length) c.stations = args[st + 1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray();
             int dk = Array.IndexOf(args, "-gof2dock");
             if (dk >= 0 && dk + 1 < args.Length) c.dock = args[dk + 1];
+            int mp = Array.IndexOf(args, "-gof2map");
+            if (mp >= 0 && mp + 1 < args.Length) c.mapSystems = args[mp + 1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray();
             Directory.CreateDirectory(c.folder);
             c.StartCoroutine(c.Run());
         }
@@ -173,6 +179,7 @@ namespace GoF2Remake
                 Glow($"orbit_{station:000}");
                 StationShots($"orbit_{station:000}");
                 yield return Fps($"orbit_{station:000}");
+                if (mapSystems.Length > 0) { yield return MapShots(); mapSystems = new string[0]; }
             }
             Session.ResetNewGame();
             Session.FreePlay = true;
@@ -204,6 +211,44 @@ namespace GoF2Remake
             Line(bad == 0 ? "OK" : $"FAILED: {bad} problem(s)");
             File.WriteAllText(Path.Combine(folder, "report.txt"), report.ToString());
             Application.Quit(bad == 0 ? 0 : 1);
+        }
+
+        /// <summary>-gof2map: the star map's view of each system, with its overlay (the screen as presented).</summary>
+        IEnumerator MapShots()
+        {
+            var map = UI.StarMap.Open(Database.Load(), UI.StarMapMode.Station, true, _ => { });
+            if (map == null) { bad++; Line("FAILED: the star map didn't open"); yield break; }
+            yield return Wait(() => map != null && map.WorldReady, 30f, "the star map");
+            yield return new WaitForSecondsRealtime(1f);
+            // the galaxy view round the first of them, and the full map (the mods' map scene nebulae, their markers)
+            int first = int.TryParse(mapSystems[0], out int f0) ? f0 : Modding.ModWorld.SystemIndexOf(mapSystems[0]);
+            foreach (bool full in new[] { false, true })
+            {
+                if (!map.ShowGalaxyNow(first, full)) continue;
+                yield return new WaitForSecondsRealtime(1.5f);
+                yield return new WaitForEndOfFrame();
+                var g = ScreenCapture.CaptureScreenshotAsTexture();
+                string gname = full ? "map_full" : "map_galaxy";
+                File.WriteAllBytes(Path.Combine(folder, gname + ".png"), g.EncodeToPNG());
+                Destroy(g);
+                Line($"{gname}: {map.MapGalaxyReport()}");
+            }
+            foreach (string key in mapSystems)
+            {
+                int system = int.TryParse(key, out int n) ? n : Modding.ModWorld.SystemIndexOf(key);
+                if (system < 0 || !map.ShowSystemNow(system)) { bad++; Line($"FAILED: no system {key} on the map"); continue; }
+                yield return new WaitForSecondsRealtime(1.5f);
+                yield return new WaitForEndOfFrame();
+                var tex = ScreenCapture.CaptureScreenshotAsTexture();
+                string name = $"map_{system:000}";
+                File.WriteAllBytes(Path.Combine(folder, name + ".png"), tex.EncodeToPNG());
+                Destroy(tex);
+                string mapReport = map.MapSceneReport();
+                if (!mapReport.Contains("(0 with a lost shader)") && mapReport != "no map scene") bad++;
+                Line($"{name} ({key}): {mapReport}");
+            }
+            map.CloseForCheck();
+            yield return new WaitForSecondsRealtime(0.5f);
         }
 
         /// <summary>A station by number or by a mod's key ("mod_id:id"); -1 (and a problem) when it isn't there.</summary>

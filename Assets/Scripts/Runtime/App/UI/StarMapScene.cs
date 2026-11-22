@@ -84,6 +84,7 @@ namespace GoF2Remake.UI
                 if (mat != null) foreach (var r in sun.GetComponentsInChildren<Renderer>()) r.sharedMaterial = mat;
                 suns[s.index] = sun.transform;
             }
+            BuildMapGalaxies();   // remake mods: the map scenes' nebulae behind their systems
             // The wormhole (galaxymap_wormhole, looping animation, rotation (0, pi, 0)) at the attacked system's sun, turned to
             // the camera every frame; scale 0.02 - 0.014 * zoom; in that system's view it moves to the attacked station's planet.
             int wsys = Session.VoidInvasionSystem;
@@ -243,6 +244,7 @@ namespace GoF2Remake.UI
             selectedPlanet = frontPlanet = -1;
             autoRotate = false;
             BuildPlanetItems();
+            BuildMapScene(system);   // remake mods: systems.json "mapScene"
             UpdateSystemTransforms();
         }
         /// <summary>Remake: StarMap::initStarSystem's ring (map_planet_ring 16853, on the planet's matrix) for the stations whose
@@ -290,6 +292,7 @@ namespace GoF2Remake.UI
         }
         void DestroySystem()
         {
+            DestroyMapScene();
             if (systemRoot != null) Destroy(systemRoot);
             systemRoot = null;
             planets.Clear();
@@ -332,6 +335,7 @@ namespace GoF2Remake.UI
                 }
             }
             FaceDiscs();
+            UpdateMapScene();
         }
         /// <summary>Remake mods: the planetTexture discs face the map's camera (like the planet billboards in orbit).</summary>
         void FaceDiscs()

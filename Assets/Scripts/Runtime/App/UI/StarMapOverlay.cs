@@ -15,6 +15,14 @@ namespace GoF2Remake.UI
 {
     public partial class StarMap
     {
+        /// <summary>A map marker image: the system's own (systems.json "mapMarkers") for "map_ring", "map_ring_selected" or
+        /// "map_pulse", else the game's.</summary>
+        Texture2D MarkerTex(int system, string name)
+        {
+            var m = system >= 0 ? ModWorld.MapMarkersOf(system) : null;
+            string own = m == null ? null : name == "map_ring" ? m.ring : name == "map_ring_selected" ? m.selected ?? m.ring : name == "map_pulse" ? m.pulse : null;
+            return (own != null ? ModRaces.Emblem(m.mod, own) : null) ?? Tex(name);
+        }
         Item MakeItem(bool planet)
         {
             var it = new Item { root = new VisualElement { pickingMode = PickingMode.Ignore } };
@@ -114,6 +122,7 @@ namespace GoF2Remake.UI
                 bool fully = s.stations.Count > 0 && s.stations.TrueForAll(st => Session.VisitedStations.Contains(st));
                 it.visited.style.display = fully ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = s.index == currentSystem ? DisplayStyle.Flex : DisplayStyle.None;
+                it.pulse.style.backgroundImage = new StyleBackground(MarkerTex(s.index, "map_pulse"));
                 it.story.style.display = s.stations.Exists(StoryMarked) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.freelance.style.display = FreelanceSystem >= 0 && FreelanceSystem == s.index ? DisplayStyle.Flex : DisplayStyle.None;
                 it.products.style.display = Session.PendingProducts.Exists(pp => s.stations.Contains(pp.station)) ? DisplayStyle.Flex : DisplayStyle.None;
@@ -133,6 +142,7 @@ namespace GoF2Remake.UI
                 it.visited.style.display = Session.VisitedStations.Contains(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.gate.style.display = p.gate ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = p.station == currentStation ? DisplayStyle.Flex : DisplayStyle.None;
+                it.pulse.style.backgroundImage = new StyleBackground(MarkerTex(zoomSystem, "map_pulse"));
                 it.story.style.display = StoryMarked(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.freelance.style.display = p.station == FreelanceTarget ? DisplayStyle.Flex : DisplayStyle.None;
                 it.products.style.display = Session.PendingProducts.Exists(pp => pp.station == p.station) ? DisplayStyle.Flex : DisplayStyle.None;
@@ -201,7 +211,7 @@ namespace GoF2Remake.UI
                 float labelScale = Mathf.Lerp(1f, 0.75f, OverviewEase);
                 it.root.style.scale = new Scale(new Vector3(labelScale, labelScale, 1f));
                 it.ring.EnableInClassList("map-ring--selected", sel);
-                it.ring.style.backgroundImage = new StyleBackground(Tex(sel ? "map_ring_selected" : "map_ring"));
+                it.ring.style.backgroundImage = new StyleBackground(MarkerTex(i, sel ? "map_ring_selected" : "map_ring"));
                 it.ring.style.opacity = other ? 64f / 255f : 1f;
                 it.name.EnableInClassList("map-name--selected", sel);
                 it.name.style.opacity = other ? 64f / 255f : 1f;
@@ -228,7 +238,7 @@ namespace GoF2Remake.UI
                 bool sel = k == selectedPlanet, other = selectedPlanet >= 0 && !sel;
                 it.root.style.opacity = systemAlpha;
                 it.ring.EnableInClassList("map-ring--selected", sel);
-                it.ring.style.backgroundImage = new StyleBackground(Tex(sel ? "map_ring_selected" : "map_ring"));
+                it.ring.style.backgroundImage = new StyleBackground(MarkerTex(zoomSystem, sel ? "map_ring_selected" : "map_ring"));
                 it.ring.style.opacity = other ? 64f / 255f : 1f;
                 it.name.EnableInClassList("map-name--selected", sel);
                 it.name.style.opacity = other ? 64f / 255f : 1f;

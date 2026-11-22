@@ -1078,6 +1078,68 @@ namespace GoF2Remake.Modding
             return m;
         }
 
+        static Shader unlitShader;
+
+        /// <summary>A glTF material with an "unlit" look in its extras (ModGlbImages.Unlit) as a GoF2/ModUnlit material: the
+        /// base colour texture, GoF3's colour terms, its blend factors, depth write, cull and draw order (Transparent +
+        /// layer for the blended ones, Geometry for an opaque one).</summary>
+        public static Material UnlitFromGltf(GLTFast.Schema.MaterialBase g, GLTFast.IGltfReadable gltf,
+            System.Func<int, ModGlbImages.Role, float, float, Texture2D> images, ModGlbImages.Unlit u)
+        {
+            if (unlitShader == null) unlitShader = Resources.Load<Shader>("GoF2Mods/ModUnlit");
+            if (unlitShader == null) { Debug.LogWarning("Mods: no GoF2/ModUnlit shader"); return null; }
+            var m = new Material(unlitShader) { name = string.IsNullOrEmpty(g.name) ? "glTF unlit" : g.name };
+            var info = g.PbrMetallicRoughness?.BaseColorTexture;
+            if (info != null && info.index >= 0)
+            {
+                var t = images?.Invoke(info.index, ModGlbImages.Role.Color, 0f, 1f) ?? gltf.GetTexture(info.index);
+                if (t != null)
+                {
+                    m.SetTexture("_MainTex", t);
+                    if (gltf.IsTextureYFlipped(info.index)) { m.SetTextureScale("_MainTex", new Vector2(1f, -1f)); m.SetTextureOffset("_MainTex", new Vector2(0f, 1f)); }
+                }
+            }
+            m.SetColor("_Color", new Color(u.color[0], u.color[1], u.color[2], u.color[3]));
+            m.SetFloat("_UseVertexColor", u.vertexColors ? 1f : 0f);
+            m.SetFloat("_Colorize", u.colorize ? 1f : 0f);
+            m.SetFloat("_ColorizeVertex", u.colorizeVertex ? 1f : 0f);
+            m.SetFloat("_ColorizeMode", u.colorizeMultiply ? 1f : 0f);
+            m.SetColor("_Color1", new Color(u.color1[0], u.color1[1], u.color1[2], u.color1[3]));
+            m.SetColor("_Color2", new Color(u.color2[0], u.color2[1], u.color2[2], u.color2[3]));
+            m.SetFloat("_ColorizeMul", u.multiplier);
+            m.SetFloat("_Alpha", u.alpha);
+            if (u.rimColor != null)
+            {
+                m.SetColor("_RimColor", new Color(u.rimColor[0], u.rimColor[1], u.rimColor[2], 0f));
+                m.SetVector("_Rim", new Vector4(u.rimMin, u.rimMax, 0f, 0f));
+            }
+            m.SetVector("_Scroll", new Vector4(u.scroll.x, u.scroll.y, 0f, 0f));
+            var (src, dst, op) = UnlitBlend(u.blend);
+            m.SetFloat("_SrcBlend", (float)src); m.SetFloat("_DstBlend", (float)dst); m.SetFloat("_BlendOp", (float)op);
+            m.SetFloat("_ZWrite", u.depthWrite ? 1f : 0f);
+            m.SetFloat("_Cull", (float)(u.cull == "none" ? UnityEngine.Rendering.CullMode.Off : u.cull == "front" ? UnityEngine.Rendering.CullMode.Front : UnityEngine.Rendering.CullMode.Back));
+            m.renderQueue = u.blend == "opaque" ? 2000 : 3000 + Mathf.Clamp(u.layer, -200, 200);
+            return m;
+        }
+
+        /// <summary>An unlit look's blend (GoF3's BlendStateDescriptor kSolid .. kForkAddAlpha).</summary>
+        public static (UnityEngine.Rendering.BlendMode src, UnityEngine.Rendering.BlendMode dst, UnityEngine.Rendering.BlendOp op) UnlitBlend(string blend)
+        {
+            const UnityEngine.Rendering.BlendOp Add = UnityEngine.Rendering.BlendOp.Add;
+            switch (blend)
+            {
+                case "alpha": return (UnityEngine.Rendering.BlendMode.SrcAlpha, UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha, Add);
+                case "addAlpha": return (UnityEngine.Rendering.BlendMode.SrcAlpha, UnityEngine.Rendering.BlendMode.One, Add);
+                case "subtract": return (UnityEngine.Rendering.BlendMode.SrcAlpha, UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendOp.ReverseSubtract);
+                case "multiply": return (UnityEngine.Rendering.BlendMode.Zero, UnityEngine.Rendering.BlendMode.SrcColor, Add);
+                case "multiplyAlpha": return (UnityEngine.Rendering.BlendMode.Zero, UnityEngine.Rendering.BlendMode.SrcAlpha, Add);
+                case "add": return (UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendMode.One, Add);
+                case "screen": return (UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendMode.OneMinusSrcColor, Add);
+                case "premultiplied": return (UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha, Add);
+                default: return (UnityEngine.Rendering.BlendMode.One, UnityEngine.Rendering.BlendMode.Zero, Add);
+            }
+        }
+
         /// <summary>A "shimmer" entry: a copy of GoF2/ModNozzleShimmer in the entry's colour (emissionColor x emissionIntensity,
         /// the kit colour slots' emission target too), its glow pattern (emission) and noise (flameNoise).</summary>
         static Material Shimmer(ModInfo mod, CustomShipMaterial e, string name, ModAssets a)

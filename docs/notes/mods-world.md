@@ -59,6 +59,36 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   (`FaceDiscs`, a copy of `ModAssets.fxAlpha`, the sphere's renderers off), else the game's planet; `"mapRing": true` adds
   `AddPlanetRing`'s copy of planet 9's ring (`ModWorld.MapTexture` / `MapRing`; the map image is preloaded with the other
   backdrops). The example's Kepler Prime has both (`textures/kepler_prime_map.png`).
+  **Star map system scenes** (remake, 2026-11-22, the user's request: the GoF3 Systems mod's systems as Galaxy on Fire 3's
+  map shows them; another player's take hung pre-rendered pictures by a Lua script): systems.json `"mapScene"`
+  (`ModWorld.MapScene`: model, camera, fov) and stations.json `"mapArea"`. `ModStations.LoadMapScene` loads each model
+  once per mod and file with the station models (the loading screen's steps); `StarMap.BuildMapScene`
+  (`StarMapMapScene.cs`) copies it into the system root, finds `map_camera:` / `map_target:` / `map_up:<camera>`
+  (positions only: no axis convention to get wrong) and each station's `map_area:<area>`, hides the planets' renderers and
+  orbits, and `UpdateMapScene` turns, scales and moves the scene each frame so its camera is the system view's
+  (`SystemCameraGame` looking at the sun, world up), sets the camera's vertical fov to the scene's and the near plane to
+  0.5, holds each planet object on its area (rings, names, picking, travel unchanged; a station without one at the
+  target), fades the scene in over the last quarter of the zoom (`GoF2/ModUnlit` `_Fade`; the other suns, the galaxy
+  background and the wormhole off from half way), and maps the drag's yaw / pitch to a lean of at most 6 degrees about
+  the target that springs back (0.9 a 60 Hz frame; GoF3 leans its map with the device's tilt); picking an area turns
+  nothing (`autoRotate` ends at once). The materials: glTF extras `"unlit"` (`ModGlbImages.Unlit`,
+  `ModMaterials.UnlitFromGltf`, `Resources/GoF2Mods/ModUnlit.shader`: GoF3's map terms worked in gamma, its
+  BlendStateDescriptor blends, depth write, cull, the blended ones at Transparent + layer). The GoF3 importer's
+  `tools/gof3_map_scene.py` writes the whole galaxymap_000 scene as one GLB (cameras from the decompiled
+  `GalaxyMapCameraController::setStarFocus` and each sector's galaxyMapCamRotation; see its docstring) and the fields.
+  The fade is per renderer (`SetFade`, a MaterialPropertyBlock: the galaxy's copy shares the materials). GoF3's two
+  colorize modes (`_ColorizeMode`: its Options 2 tint, Options 1 multiply: the black hole's swirl) and its LDR framebuffer
+  (each fragment clamped to 1: no bloom off the additive layers). **The galaxy view's nebulae** (the user's request, after the
+  other player's nebula script): for each map scene model shared by three or more visible systems, `BuildMapGalaxies`
+  copies it with only its `map_galaxy` node on (the GoF3 importer puts GoF3's nebula sheets there) and fits it onto their
+  suns (`FitOntoSuns`: each system's `map_target` node on its sun, least squares in the two axes its stars spread along,
+  scaled apart, the third the depth at their mean, turned unmirrored); it fades out over the zoom into a system
+  (`UpdateMapGalaxies`). **systems.json `"mapMarkers"`** (`ModWorld.MapMarkers`: ring, selected, pulse images; the
+  overlay's `MarkerTex` via `ModRaces.Emblem`'s cache) on the system's sun in the galaxy view and its stations' rings in
+  its view (GoF3's orange rings in the GoF3 Systems mod).
+  Tests `ModWorldTests.ASystemsMapScene` / `AMapScene*` / `MapMarkersNeedTheirImages` / `MapNebulaeFitOntoTheSuns` /
+  `AnUnlitLookFromItsExtras`; the player check's `-gof2map` (`PlayerAssetsCheck.MapShots`, `StarMap.ShowSystemNow` /
+  `ShowGalaxyNow`) shoots the galaxy view round the first system, the full map and each system's view with the overlay.
   **Station lore** (remake, 2026-10-25, the user's request; stations.json `"subtitle"` / `"description"`, new or
   override, translated as `stations.<id>.subtitle` / `.description`; `ModWorld.Subtitle` / `Description` /
   `StationsWithLore`): the subtitle under the planet's name on the star map, the description in a panel at the map's

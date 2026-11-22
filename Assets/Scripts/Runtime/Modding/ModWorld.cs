@@ -33,7 +33,9 @@
 // its position, where travel arrives, docking pads outside the station ("pads": [{ "position", "approach", "facing" }] like
 // npcships.json's: docked at like the story's objects, SpaceLevel.SpawnStationPads), the asteroid field (none, count, centre, spread, kind, ores), fog, the sun's and the
 // orbit planet's direction and size); systems: "sunTexture" (a PNG), "sunColor" [r, g, b]
-// 0..1 (the sun's light; default from "sky").
+// 0..1 (the sun's light; default from "sky"), "mapScene" ({ "model", "camera", "fov" }: the star map's system view as one
+// 3D scene seen from its own camera, the stations' rings on its "mapArea" nodes; StarMap, ModStations.MapScene),
+// "mapMarkers" ({ "ring", "selected", "pulse" }: images for its star map rings and pulse).
 // stations.json: { "id", "system": "mod:id" | number, "name", "techLevel" (0-10), "planet" (its planet texture: 0-22 or
 //   24-26 like the originals), "looksLike": a station number (its model and collision; default the first original
 //   station of the system's race) } or { "override": n | "mod:id", name, techLevel }. Both may have "subtitle" (what the
@@ -91,11 +93,12 @@ namespace GoF2Remake.Modding
 
         static readonly HashSet<string> SystemFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "race", "security", "visible", "position", "sky", "gates", "gateStation", "spaceMusic", "stationMusic",
-              "battleMusic", "sunTexture", "sunColor", "skybox", "available", "traffic", "locals", "raiders", "jumpgate", "pirateHeld", "pirateHideout" };
+              "battleMusic", "sunTexture", "sunColor", "skybox", "available", "traffic", "locals", "raiders", "jumpgate", "pirateHeld", "pirateHideout",
+              "mapScene", "mapMarkers" };
         static readonly HashSet<string> StationFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "system", "techLevel", "planet", "looksLike", "music", "model", "modelSize", "modelYaw", "modelCentre",
               "materials", "collision", "volumes", "interior", "planetTexture", "mapTexture", "mapRing", "mapPlace", "orbit", "hangar", "bar", "mobile",
-              "subtitle", "description", "life", "planetSphere", "spaceMusic", "battleMusic" };
+              "subtitle", "description", "life", "planetSphere", "spaceMusic", "battleMusic", "mapArea" };
 
         /// <summary>ModContent.Parse: a mod's systems.json and stations.json into 'systems' / 'stations'.</summary>
         public static void Parse(ModInfo mod, List<Def> systems, List<Def> stations)
@@ -109,6 +112,8 @@ namespace GoF2Remake.Modding
                 if (ModJson.Has(o, "sunColor") && !(ModJson.Get(o, "sunColor") is JArray c && c.Count == 3))
                     throw new ModJsonException($"{d.where}: \"sunColor\" must be [r, g, b] (0..1)");
                 if (ModJson.Get(o, "skybox") is JToken sb) ParseSkybox(mod, sb, d.where);
+                if (ModJson.Get(o, "mapScene") is JToken ms) ParseMapScene(mod, ms, d.where, check: true);
+                if (ModJson.Get(o, "mapMarkers") is JToken mk) ParseMapMarkers(mod, mk, d.where, check: true);
                 if (ModJson.Get(o, "jumpgate") is JToken jg && !(jg is JObject jo && ModJson.Str(jo, "model") != null))
                     throw new ModJsonException($"{d.where}: \"jumpgate\" must be {{ \"model\": \"models/gate.glb\", \"size\": 15000 }}");
                 if (d.localId != null)
@@ -148,6 +153,8 @@ namespace GoF2Remake.Modding
                 }
                 if (ModJson.Get(o, "planetSphere") is JToken sphereToken) ParsePlanetSphere(mod, sphereToken, d.where, check: true);
                 if (ModJson.Get(o, "mapPlace") is JToken placeToken) ParseMapPlace(placeToken, d.where);
+                if (ModJson.Has(o, "mapArea") && !(ModJson.Get(o, "mapArea") is JToken areaToken && areaToken.Type == JTokenType.String && ((string)areaToken).Length > 0))
+                    throw new ModJsonException($"{d.where}: \"mapArea\" must be the name of a node in its system's mapScene model");
                 if (ModJson.Get(o, "mobile") is JToken mobileToken)
                 {
                     if (d.localId == null) throw new ModJsonException($"{d.where}: only a new station can be \"mobile\"");
@@ -517,6 +524,31 @@ namespace GoF2Remake.Modding
 
         static readonly Dictionary<int, OrbitSpec> orbits = new Dictionary<int, OrbitSpec>();
         static readonly Dictionary<int, MapPlace> mapPlaces = new Dictionary<int, MapPlace>();
+
+        /// <summary>A system's star map view as one 3D scene (systems.json "mapScene", remake 2026-11-22: the GoF3 Systems
+        /// mod's systems as Galaxy on Fire 3's map shows them). The model holds the scene; the nodes "map_camera:&lt;camera&gt;",
+        /// "map_target:&lt;camera&gt;" and "map_up:&lt;camera&gt;" (positions: the camera, the point it looks at, a point above
+        /// the camera along its up) give the view, "fov" its vertical field of view; a station's "mapArea" names the node
+        /// "map_area:&lt;area&gt;" its ring stands on.</summary>
+        public sealed class MapScene
+        {
+            public ModInfo mod;
+            public string model, camera;
+            public float fov = 22f;
+            /// <summary>The key ModStations loads the model under (one load per mod and file, however many systems use it).</summary>
+            public string Key => mod.Id + "|" + model;
+        }
+        /// <summary>A system's own star map markers (systems.json "mapMarkers", remake 2026-11-22: the GoF3 Systems mod's
+        /// orange GoF3 rings): images in its mod for the ring, the selected ring and the pulse, on its sun in the galaxy view
+        /// and on its stations in its system view; null: the game's.</summary>
+        public sealed class MapMarkers
+        {
+            public ModInfo mod;
+            public string ring, selected, pulse;
+        }
+        static readonly Dictionary<int, MapMarkers> mapMarkers = new Dictionary<int, MapMarkers>();
+        static readonly Dictionary<int, MapScene> mapScenes = new Dictionary<int, MapScene>();
+        static readonly Dictionary<int, string> mapAreas = new Dictionary<int, string>();
 
         static readonly HashSet<string> OrbitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "station", "jumpgate", "jumpgatePosition", "arrival", "asteroids", "fog", "sun", "planet", "pads", "externalDocks", "pirateHeld", "skyRotation", "skybox", "light2", "ambient", "wrecks", "hazards", "containers", "lanes", "level", "ambience", "gasClouds", "locals", "raiders", "storm", "minefields", "acidSacks", "props", "propMaterials" };

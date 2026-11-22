@@ -20,7 +20,7 @@ namespace GoF2Remake.Modding
             EnsureMapping();
             systemSpaceMusic.Clear(); systemStationMusic.Clear(); systemBattleMusic.Clear(); stationMusic.Clear(); stationSpaceMusic.Clear(); stationBattleMusic.Clear(); stationSubtitle.Clear(); stationLore.Clear();
             stationModels.Clear(); gateModels.Clear(); stationInterior.Clear(); planetTextures.Clear(); planetSpheres.Clear(); sunTextures.Clear(); sunColors.Clear(); skyboxes.Clear();
-            mapTextures.Clear(); mapRings.Clear(); orbits.Clear(); mapPlaces.Clear();
+            mapTextures.Clear(); mapRings.Clear(); orbits.Clear(); mapPlaces.Clear(); mapScenes.Clear(); mapAreas.Clear(); mapMarkers.Clear();
             stationHangar.Clear(); stationBar.Clear(); mobiles.Clear();
             modTrafficSystems.Clear(); systemLocals.Clear(); systemRaiders.Clear(); systemPirateHeld.Clear(); systemPirateHideout.Clear();
             if (systemAt.Count == 0 && stationAt.Count == 0 && missingSystems.Count == 0 && missingStations.Count == 0
@@ -94,6 +94,8 @@ namespace GoF2Remake.Modding
                         ReadBattleMusic(mod, o, d.where, systemBattleMusic, s.index);
                         if (ModJson.Str(o, "sunTexture") is string sun) sunTextures[s.index] = BackdropName(mod, sun);
                         if (ModJson.Get(o, "skybox") is JToken skyToken) skyboxes[s.index] = ParseSkybox(mod, skyToken, d.where);
+                        if (ModJson.Get(o, "mapScene") is JToken sceneToken && ParseMapScene(mod, sceneToken, d.where, check: false) is MapScene scene) mapScenes[s.index] = scene;
+                        if (ModJson.Get(o, "mapMarkers") is JToken markerToken && ParseMapMarkers(mod, markerToken, d.where, check: false) is MapMarkers markers) mapMarkers[s.index] = markers;
                         if (ModJson.Get(o, "jumpgate") is JObject jgo && ModJson.Str(jgo, "model") is string gm)
                         {
                             var gate = new StationModel
@@ -165,6 +167,7 @@ namespace GoF2Remake.Modding
                         if (ModJson.Get(o, "orbit") is JToken orbitToken)
                             orbits[st.index] = ParseOrbit(mod, orbitToken, d.where, r => ModContent.TryResolveItem(r, out int item) && db.Item(item) != null ? item : -1);
                         if (ModJson.Get(o, "mapPlace") is JToken placeToken) mapPlaces[st.index] = ParseMapPlace(placeToken, d.where);
+                        if (ModJson.Str(o, "mapArea") is string area) mapAreas[st.index] = area;
                         // A custom room: "mod_id:interior_id", or this mod's own id.
                         if (ModJson.Str(o, "hangar") is string hk) stationHangar[st.index] = hk.Contains(":") ? hk : mod.Id + ":" + hk;
                         // ("bar": "none": the station has no Space Lounge, NoBar)
