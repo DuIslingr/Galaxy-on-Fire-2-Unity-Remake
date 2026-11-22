@@ -170,14 +170,14 @@ namespace GoF2Remake.UI
         }
         /// <summary>What the icon is drawn from: the model file, its turn and the hull textures. The leading version goes up
         /// when ShipIconMaker draws differently, so the icons it drew before are drawn again (2: wide hulls no longer turned; 3: the
-        /// flames parked).</summary>
+        /// flames parked; 4: light-only cards and nozzle shimmers left out).</summary>
         string IconKey(ProjectShip s)
         {
             if (s.IsKitShip)
             {
                 // A kit ship: its default build, the kit's parts and their files.
                 var kit = Project.FindKit(s.Kit);
-                var sb = new System.Text.StringBuilder("kit3|" + Project.IconTurn(s) + "|" + s.Kit + "|" + s.KitType + "|" + s.BuildText());
+                var sb = new System.Text.StringBuilder("kit4|" + Project.IconTurn(s) + "|" + s.Kit + "|" + s.KitType + "|" + s.BuildText());
                 if (kit != null)
                 {
                     kit.Flush();
@@ -194,7 +194,7 @@ namespace GoF2Remake.UI
             var file = new System.IO.FileInfo(System.IO.Path.Combine(Project.Folder, s.Model));
             string stamp = file.Exists ? file.Length + "@" + file.LastWriteTimeUtc.Ticks : "missing";
             var materials = s.ToJson()["materials"];
-            return $"3|{Project.IconTurn(s)}|{s.Model}|{stamp}|{s.ModelYaw}|{s.ModelPitch}|{s.ModelRoll}|{materials?.ToString(Newtonsoft.Json.Formatting.None)}";
+            return $"4|{Project.IconTurn(s)}|{s.Model}|{stamp}|{s.ModelYaw}|{s.ModelPitch}|{s.ModelRoll}|{materials?.ToString(Newtonsoft.Json.Formatting.None)}";
         }
         void ReadKeys(float dt)
         {

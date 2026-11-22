@@ -21,7 +21,7 @@ namespace GoF2Remake.Modding
     public static class ModShipIcons
     {
         /// <summary>Bumped when ShipIconMaker draws differently: the icons drawn before are drawn again.</summary>
-        const int IconVersion = 1;
+        const int IconVersion = 2;   // 2: nozzle shimmers left out
         /// <summary>Main-thread time per frame for the pass (at least one ship): a draw is a few renders and reads back.</summary>
         const double FrameMs = 12.0;
 

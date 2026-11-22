@@ -8,7 +8,8 @@
 // but a mod ship's nose is +Z, and a wide-winged fighter (the Betty, 39 x 28 m) came out with its nose away from the camera.
 // It renders on a stage far below the station on the item window's layer (30); while it renders, the scene's own lights,
 // ambient and fog are kept off that layer so every icon is lit alike whatever hangar the builder is in. The model's own
-// flames are left out (their engine inputs at 0), and so are its light-only cards (IsGlowCard). Also every mod ship without an icon of its own (ModShipIcons).
+// flames are left out (their engine inputs at 0), and so are its light-only cards (IsGlowCard) and
+// nozzle shimmers (IsShimmer). Also every mod ship without an icon of its own (ModShipIcons).
 
 using System.Collections.Generic;
 using GoF2Remake.Visuals;
@@ -71,7 +72,7 @@ namespace GoF2Remake.Modding
                     for (int i = 0; i < mats.Length; i++)
                     {
                         bool flame = EngineFlame.IsFlame(mats[i]);
-                        if (!flame && !IsGlowCard(mats[i])) continue;
+                        if (!flame && !IsGlowCard(mats[i]) && !IsShimmer(mats[i])) continue;
                         var off = new Material(mats[i]) { name = mats[i].name + " (icon)" };
                         if (flame) foreach (var id in FlameInputs) { if (off.HasProperty(id)) off.SetFloat(id, 0f); }
                         else foreach (var pass in AllPasses) off.SetShaderPassEnabled(pass, false);   // drawn by no pass at all
@@ -146,6 +147,10 @@ namespace GoF2Remake.Modding
         /// their beams and light streaks as such faces, T_Structures_FX_Lights: the ES2 importer's "opacity" materials with
         /// a black colour). Left out of the icon (no pass draws them: a clear colour still showed their reflection as a grey box), which
         /// they stretched to several times the hull.</summary>
+        /// <summary>A nozzle shimmer layer (GoF2/ModNozzleShimmer: EngineMaterialGlow keeps it dark on a parked ship; Chorus's
+        /// supercharged Forsaken's shield-wing sheets covered its whole hull in white). Left out like the glow cards.</summary>
+        static bool IsShimmer(Material m) => m != null && m.shader != null && m.shader.name == "GoF2/ModNozzleShimmer";
+
         static bool IsGlowCard(Material m)
         {
             if (m == null || !m.HasProperty(Surface) || m.GetFloat(Surface) < 0.5f || !m.HasProperty(BaseColor) || !m.HasProperty(EmissionColor)) return false;

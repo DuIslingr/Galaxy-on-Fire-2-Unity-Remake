@@ -69,7 +69,7 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   is made again only when that changes, and an icon the modder set by hand is never replaced. The model is never turned for
   it (2026-10-23, the user's report: the Hull Icons builder's rule laying a hull wider than long along the icon turned
   wide-winged fighters such as the Betty, 39 x 28 m, nose away from the camera; that rule stays for the Editor's capital
-  hulls; `IconKey`'s leading version 2 redraws the icons drawn before; 3, 2026-11-21: the model's own flames drawn parked, so EVERSPACE 2 style flames no longer streak behind the hull). The Ship tab's **Shop icon** row: the icon,
+  hulls; `IconKey`'s leading version 2 redraws the icons drawn before; 3, 2026-11-21: the model's own flames drawn parked, so EVERSPACE 2 style flames no longer streak behind the hull; 4: light-only cards and nozzle shimmers left out too). The Ship tab's **Shop icon** row: the icon,
   Recreate icon (`MaybeMakeIcon(force)`, also over the modder's own; undoable) and -90 / +90 deg (`ModProject.IconTurn`,
   builder.json "iconTurns", in the key) for a model whose nose comes out elsewhere. Test fly: the project read again,
   the loadout mounted, the cheats granted (`Cheats.Grant`, honoured while

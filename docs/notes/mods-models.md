@@ -94,7 +94,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `ModShips.ShipSlots`), each holding its GLB until glTFast has read it. Shop icon: the entry's PNG
   (`ItemInfo.ShipIcon`), else one drawn from the built template on the loading screen (`ModShipIcons`, 2026-11-21: the
   Mod Builder's `ShipIconMaker`, GoF2's camera, light and ship frame, the model's own flames and its light-only cards
-  left out (`IsGlowCard`: ES2's freighters' beams stretched the framing); `ModLoading.Busy` waits for it, "Ship icons n / m";
+  left out (`IsGlowCard`: ES2's freighters' beams stretched the framing), so are nozzle shimmers (`IsShimmer`: the
+  supercharged Forsaken's shield-wing sheets hid its hull); `ModLoading.Busy` waits for it, "Ship icons n / m";
   cached as `ModCache/ShipIcons/<mod id>/<key>.png`, the key the hull's triangles, its materials' shaders and main
   textures, the mod's version and `IconVersion`; pruned like the hangar shadows; none in batch mode), else the
   Phantom's (a ship whose model failed). The GoF3 importer ships no ship icons since then; the dialogue tints mod
